@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#312e81"/><stop offset=".6" stop-color="#db2777"/><stop offset="1" stop-color="#fb923c"/></linearGradient>
+    <linearGradient id="h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7c2d12"/><stop offset="1" stop-color="#1c0a05"/></linearGradient>
+  </defs>
+  <rect width="400" height="200" fill="url(#s)"/>
+  <path d="M0 110 L60 70 L95 92 L150 50 L190 80 L240 45 L300 85 L350 60 L400 90 L400 200 L0 200Z" fill="#4c1d95" opacity=".55"/>
+  <path d="M140 60 l10 -10 l12 8 l-10 4z M232 52 l8 -7 l10 8 l-8 2z M342 66 l8 -6 l8 7 z" fill="#f8fafc" opacity=".8"/>
+  <path d="M0 150 q60 -30 120 -18 q50 10 100 -6 q60 -18 180 10 V200 H0Z" fill="url(#h)"/>
+  <g fill="#9a3412">
+    <rect x="120" y="108" width="26" height="30"/><rect x="146" y="118" width="70" height="20"/><rect x="216" y="100" width="22" height="38"/><rect x="238" y="114" width="60" height="22"/><rect x="298" y="106" width="20" height="30"/>
+    <path d="M120 108 h26 v-5 h-4 v3 h-4 v-3 h-5 v3 h-4 v-3 h-5 v3 h-4z M216 100 h22 v-5 h-4 v3 h-4 v-3 h-5 v3 h-4 v-3 h-5z"/>
+  </g>
+  <g fill="#fdba74" opacity=".55"><rect x="126" y="116" width="4" height="7"/><rect x="136" y="116" width="4" height="7"/><rect x="222" y="108" width="4" height="7"/><rect x="230" y="108" width="4" height="7"/><rect x="304" y="114" width="4" height="7"/></g>
+  <path d="M40 40 l60 -10 l-8 6 l40 2 l-40 4 l8 6z" fill="#fff7ed" opacity=".85"/>
+</svg>

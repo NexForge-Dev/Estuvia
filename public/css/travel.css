@@ -1,0 +1,205 @@
+/* Minha Viagem — planejador visual. Usa só as variáveis do tema da Estuvia. */
+
+.tv { max-width: 1120px; margin: 0 auto; display: grid; gap: 22px; padding-bottom: 36px; }
+.tv h1 { font-size: clamp(1.7rem, 3vw, 2.3rem); margin: 0; letter-spacing: -.02em; }
+.tv h2 { font-size: 1.25rem; margin: 0 0 4px; letter-spacing: -.01em; }
+.tv-sub { color: var(--muted); margin: 6px 0 0; font-size: 1.05rem; }
+.tv-eyebrow { display: block; font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+.tv-lead { font-size: 1.02rem; margin: 0; }
+.tv-link { background: none; border: 0; color: var(--accent); font: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; padding: 4px 0; }
+.tv-pill { display: inline-flex; align-items: center; gap: 4px; font-size: .72rem; font-weight: 800; padding: 4px 10px; border-radius: 999px; background: var(--surface-3); color: var(--muted); white-space: nowrap; text-decoration: none; }
+.tv-pill.is-ok { background: var(--ok-soft); color: var(--ok); }
+.tv-pill.is-warn { background: var(--warn-soft); color: var(--warn); }
+.tv-pill.is-info { background: var(--info-soft); color: var(--info); }
+.tv-pill.is-accent { background: var(--accent-soft); color: var(--accent); }
+
+/* Hero */
+.tv-hero { position: relative; overflow: hidden; display: grid; gap: 22px; padding: 30px 32px; border-radius: 24px; border: 1px solid var(--border);
+  background: radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--purple) 22%, transparent), transparent 55%), radial-gradient(90% 120% at 0% 100%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 60%), var(--surface); }
+.tv-hero-top, .tv-planned-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.tv-route-line { display: grid; gap: 16px; grid-template-columns: 1fr; align-items: center; }
+@media (min-width: 900px) { .tv-route-line { grid-template-columns: 1fr minmax(120px, 1.2fr) 1fr 1fr 1fr; } }
+.tv-place { display: flex; flex-direction: column; gap: 3px; padding: 14px 16px; border-radius: 16px; background: color-mix(in srgb, var(--bg) 55%, transparent); border: 1px solid var(--border); min-width: 0; }
+.tv-place small { font-size: .7rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--faint); }
+.tv-place strong { font-size: 1.12rem; overflow-wrap: anywhere; }
+.tv-place span { color: var(--muted); font-size: .84rem; }
+.tv-flight-path { display: none; align-items: center; gap: 6px; color: var(--accent); }
+@media (min-width: 900px) { .tv-flight-path { display: flex; } .tv-route-line > .tv-place:first-child { grid-column: 1; } }
+.tv-flight-path .tv-dash { flex: 1; height: 2px; background: repeating-linear-gradient(90deg, var(--accent) 0 6px, transparent 6px 12px); opacity: .7; }
+.tv-flight-path .tv-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.tv-plane { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--accent-soft); animation: tv-fly 3.5s ease-in-out infinite; }
+@keyframes tv-fly { 0%, 100% { transform: translateX(-6px); } 50% { transform: translateX(6px); } }
+@media (prefers-reduced-motion: reduce) { .tv-plane { animation: none; } }
+.tv-origin { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 14px; border-radius: 14px; background: var(--info-soft); font-size: .9rem; }
+.tv-origin select { width: auto; max-width: 320px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border-2); background: var(--bg-2); color: var(--text); font: inherit; }
+.tv-hero-actions { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+
+.tv-visa { max-width: 360px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--warn) 35%, var(--border)); background: color-mix(in srgb, var(--warn) 7%, var(--surface)); font-size: .84rem; }
+.tv-visa.is-high { border-color: color-mix(in srgb, var(--danger) 45%, var(--border)); background: color-mix(in srgb, var(--danger) 8%, var(--surface)); }
+.tv-visa summary { cursor: pointer; padding: 8px 12px; display: flex; align-items: center; gap: 6px; color: var(--warn); font-weight: 700; }
+.tv-visa.is-high summary { color: var(--danger); }
+.tv-visa > div { padding: 0 12px 10px; color: var(--muted); }
+.tv-visa p { margin: 4px 0 0; }
+
+/* Busca guiada */
+.tv-wizard { display: grid; gap: 14px; padding: 26px 28px; border-radius: 22px; background: var(--surface); border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border)); animation: tv-in .25s ease; }
+@keyframes tv-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.tv-wizard-dots { display: flex; gap: 6px; }
+.tv-wizard-dots span { width: 28px; height: 5px; border-radius: 999px; background: var(--surface-3); }
+.tv-wizard-dots span.on { background: var(--accent); }
+.tv-wizard-q { display: grid; gap: 12px; max-width: 560px; }
+.tv-wizard-q h3 { margin: 0; font-size: 1.3rem; }
+.tv-wizard-q select, .tv-wizard-q input[type=date], .tv-wizard-q input[type=number] { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border-2); background: var(--bg-2); color: var(--text); font: inherit; font-size: 1rem; }
+.tv-wizard-q .btn { justify-self: start; }
+.tv-choices { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+.tv-choice { display: inline-flex; align-items: center; gap: 8px; padding: 12px 16px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font: inherit; cursor: pointer; transition: border-color .15s, background .15s, transform .15s; }
+.tv-choice:hover { transform: translateY(-1px); border-color: var(--accent); }
+.tv-choice.on { border-color: var(--accent); background: var(--accent-soft); }
+.tv-choice svg { color: var(--accent); }
+
+/* Seções */
+.tv-section { display: grid; gap: 14px; }
+.tv-section-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.tv-section-head p { margin: 2px 0 0; }
+
+/* Cards de rota */
+.tv-routes { display: grid; gap: 18px; grid-template-columns: 1fr; }
+@media (min-width: 680px) { .tv-routes { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1040px) { .tv-routes { grid-template-columns: repeat(3, 1fr); } }
+.tv-route { display: flex; flex-direction: column; overflow: hidden; border-radius: 22px; border: 1px solid var(--border); background: var(--surface); transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
+.tv-route:hover { transform: translateY(-4px); border-color: var(--border-2); box-shadow: 0 16px 36px rgb(0 0 0 / 30%); }
+.tv-route.is-chosen { border-color: color-mix(in srgb, var(--ok) 55%, var(--border)); }
+.tv-route-img { position: relative; aspect-ratio: 2 / 1; overflow: hidden; background: var(--surface-3); }
+.tv-route-img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .4s ease; }
+.tv-route:hover .tv-route-img img { transform: scale(1.04); }
+.tv-route-badge { position: absolute; top: 12px; left: 12px; }
+.tv-route-body { display: flex; flex-direction: column; gap: 10px; padding: 18px 20px 20px; flex: 1; }
+.tv-route-body h3 { margin: 0; font-size: 1.2rem; }
+.tv-route-path { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-weight: 700; font-size: .92rem; }
+.tv-arrow { color: var(--accent); }
+.tv-route-facts { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; color: var(--muted); font-size: .85rem; }
+.tv-route-facts li { display: flex; align-items: center; gap: 6px; }
+.tv-route-foot { margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+.tv-price { display: flex; flex-direction: column; }
+.tv-price strong { font-size: 1.35rem; font-variant-numeric: tabular-nums; color: var(--accent); }
+.tv-price small { color: var(--faint); font-size: .74rem; }
+.tv-price.is-unknown strong { font-size: 1rem; color: var(--muted); }
+
+/* Comparador */
+.tv-quotes { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.tv-quote { display: grid; gap: 10px; padding: 18px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); }
+.tv-quote.is-chosen { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); }
+.tv-quote header { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+.tv-quote header > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tv-costs { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; margin: 0; font-size: .9rem; }
+.tv-costs dt { color: var(--muted); }
+.tv-costs dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.tv-costs .tv-total { font-weight: 800; font-size: 1.05rem; padding-top: 8px; border-top: 1px solid var(--border); color: var(--text); }
+.tv-bar { height: 8px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
+.tv-bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent-2), var(--accent)); }
+.tv-good { color: var(--ok); font-weight: 700; }
+.tv-warn { color: var(--warn); }
+.tv-cons { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: .8rem; color: var(--muted); }
+.tv-cons .n-risco { color: var(--danger); }
+.tv-cons .n-atencao { color: var(--warn); }
+.tv-quote-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* Painel da viagem escolhida */
+.tv-status { display: grid; gap: 18px; padding: 26px 28px; border-radius: 24px; border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: radial-gradient(100% 140% at 100% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 60%), var(--surface); }
+.tv-status h2 { font-size: 1.6rem; margin: 4px 0 0; }
+.tv-status-main { display: grid; gap: 16px; }
+.tv-status-grid, .tv-cost-row { display: grid; gap: 12px; grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 820px) { .tv-status-grid { grid-template-columns: repeat(4, 1fr); } .tv-cost-row { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); } }
+.tv-stat { display: flex; flex-direction: column; gap: 3px; padding: 12px 14px; border-radius: 14px; background: color-mix(in srgb, var(--bg) 50%, transparent); border: 1px solid var(--border); }
+.tv-stat small { font-size: .72rem; font-weight: 700; color: var(--faint); }
+.tv-stat strong { font-size: 1.05rem; overflow-wrap: anywhere; }
+.tv-stat.is-main strong { color: var(--accent); font-size: 1.25rem; }
+.tv-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 4px; }
+.tv-steps li { display: flex; align-items: center; gap: 6px; font-size: .8rem; color: var(--faint); padding-right: 10px; }
+.tv-steps li span { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border-2); }
+.tv-steps li.done { color: var(--muted); }
+.tv-steps li.done span { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.tv-steps li.now { color: var(--text); font-weight: 800; }
+.tv-status-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.tv-act { display: inline-flex; align-items: center; gap: 6px; padding: 9px 13px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font: inherit; font-size: .86rem; cursor: pointer; text-decoration: none; transition: border-color .15s, transform .15s; }
+.tv-act:hover { border-color: var(--accent); transform: translateY(-1px); }
+.tv-buy { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 16px; background: color-mix(in srgb, var(--bg) 50%, transparent); border: 1px dashed var(--border-2); }
+.tv-buy > div { flex: 1 1 240px; }
+.tv-buy p { margin: 2px 0 0; color: var(--muted); }
+.tv-buy select { width: auto; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border-2); background: var(--bg-2); color: var(--text); font: inherit; }
+
+/* Itinerário */
+.tv-timeline { list-style: none; margin: 0; padding: 22px 24px; border-radius: 22px; background: var(--surface); border: 1px solid var(--border); display: grid; gap: 0; }
+.tv-seg { position: relative; display: grid; grid-template-columns: 44px 1fr; gap: 14px; padding-bottom: 22px; }
+.tv-seg:last-child { padding-bottom: 0; }
+.tv-seg-node { position: relative; z-index: 1; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); border: 2px solid color-mix(in srgb, var(--accent) 45%, transparent); }
+.tv-seg.s-comprado .tv-seg-node { background: var(--ok-soft); color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, transparent); }
+.tv-seg.s-a-definir .tv-seg-node { background: var(--surface-3); color: var(--muted); border-style: dashed; border-color: var(--border-2); }
+.tv-seg-line { position: absolute; left: 21px; top: 44px; bottom: 0; width: 2px; background: linear-gradient(var(--accent), color-mix(in srgb, var(--accent) 20%, transparent)); }
+.tv-seg-body { display: flex; flex-direction: column; gap: 3px; padding-top: 4px; align-items: flex-start; }
+.tv-seg-body strong { font-size: 1.02rem; }
+.tv-seg-how { color: var(--muted); font-size: .88rem; }
+.tv-seg-body small { color: var(--faint); font-size: .8rem; }
+
+/* Chegada */
+.tv-arrival { padding: 24px 26px; border-radius: 22px; background: var(--surface); border: 1px solid var(--border); }
+.tv-arrival-grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
+@media (min-width: 820px) { .tv-arrival-grid { grid-template-columns: repeat(3, 1fr); } }
+.tv-arrival-card { display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 14px; background: var(--bg-2); border: 1px solid var(--border); align-items: flex-start; }
+.tv-arrival-card small { font-size: .72rem; font-weight: 700; color: var(--faint); }
+.tv-arrival-card span { color: var(--muted); font-size: .84rem; }
+.tv-arrival-card input, .tv-agenda input[type=time] { padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border-2); background: var(--surface); color: var(--text); font: inherit; min-width: 0; }
+.tv-legs { padding: 12px 14px; border-radius: 14px; background: var(--info-soft); }
+.tv-legs p { margin: 6px 0 0; font-size: .88rem; }
+.tv-sources { font-size: .8rem; color: var(--muted); }
+.tv-sources a { color: var(--accent); }
+
+/* Custos, agenda, mentor */
+.tv-cost, .tv-agenda { padding: 22px 24px; border-radius: 22px; background: var(--surface); border: 1px solid var(--border); }
+.tv-agenda-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.tv-agenda-list li { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 12px; border-radius: 12px; background: var(--bg-2); border: 1px solid var(--border); font-size: .9rem; }
+.tv-changes { padding: 14px; border-radius: 14px; background: var(--warn-soft); }
+.tv-changes ul { margin: 6px 0 10px; padding-left: 18px; }
+.tv-mentor { display: flex; gap: 12px; align-items: flex-start; padding: 16px 18px; border-radius: 18px; border: 1px dashed var(--border-2); }
+.tv-mentor-ic { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, var(--purple), var(--accent-2)); color: #fff; flex: none; }
+.tv-mentor .chips { margin-top: 8px; }
+.tv-mentor .chip { font-size: .8rem; padding: 6px 11px; }
+.tv-foot { text-align: center; }
+
+/* Painel lateral (detalhes e cotação) */
+.tv-sheet { position: fixed; inset: 0; z-index: 60; display: flex; justify-content: flex-end; background: rgb(0 0 0 / 0); transition: background .18s ease; }
+.tv-sheet.open { background: rgb(0 0 0 / 50%); }
+.tv-sheet-card { width: min(620px, 100vw); height: 100%; overflow-y: auto; background: var(--bg-2); border-left: 1px solid var(--border); transform: translateX(100%); transition: transform .2s ease; outline: none; }
+.tv-sheet.open .tv-sheet-card { transform: none; }
+.tv-sheet-head { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 12px; padding: 16px 20px; background: var(--bg-2); border-bottom: 1px solid var(--border); }
+.tv-sheet-head h2 { flex: 1; margin: 0; font-size: 1.12rem; }
+.tv-ic { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); }
+.tv-sheet-body { padding: 20px; display: grid; gap: 16px; }
+.tv-detail-img { width: 100%; aspect-ratio: 2 / 1; object-fit: cover; border-radius: 16px; }
+.tv-mini-itin { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.tv-mini-itin li { display: flex; gap: 10px; align-items: center; }
+.tv-mini-itin li > div { display: flex; flex-direction: column; }
+.tv-mini-itin small { color: var(--muted); }
+.tv-node { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); flex: none; }
+.tv-notes p { margin: 0 0 6px; font-size: .86rem; color: var(--warn); }
+.tv-detail-actions { display: grid; gap: 12px; }
+.tv-form { display: grid; gap: 14px; }
+.tv-form label { display: grid; gap: 4px; font-size: .86rem; }
+.tv-form label > span { color: var(--muted); }
+.tv-form input, .tv-form select { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border-2); background: var(--surface); color: var(--text); font: inherit; min-width: 0; }
+.tv-form .row { display: flex; gap: 8px; }
+.tv-form .row input { flex: 1; }
+.tv-form .check { display: flex; align-items: center; gap: 8px; }
+.tv-big input { padding: 14px 16px; font-size: 1rem; border-color: color-mix(in srgb, var(--accent) 45%, var(--border-2)); }
+.tv-form-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.tv-more summary { cursor: pointer; font-weight: 700; color: var(--muted); padding: 4px 0; }
+.tv-more[open] > .tv-form-grid { margin-top: 10px; }
+.tv-found p { margin: 0; }
+.tv-ok { color: var(--ok); font-weight: 600; }
+
+@media (max-width: 640px) {
+  .tv-hero, .tv-status, .tv-wizard, .tv-arrival, .tv-cost, .tv-agenda { padding: 20px 18px; border-radius: 20px; }
+  .tv-route-foot { flex-wrap: wrap; }
+  .tv-hero-actions .btn { width: 100%; justify-content: center; }
+}

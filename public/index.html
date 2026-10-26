@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark" data-accent="turquesa">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Estuvia — planeje, organize e execute sua jornada para estudar um mestrado na Espanha.">
+  <meta name="color-scheme" content="dark light">
+  <title>Estuvia — sua jornada de mobilidade acadêmica</title>
+  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/achievements.css">
+  <link rel="stylesheet" href="/css/radar.css">
+  <link rel="stylesheet" href="/css/progression.css">
+  <link rel="stylesheet" href="/css/finance.css">
+  <link rel="stylesheet" href="/css/housing.css">
+  <link rel="stylesheet" href="/css/minimal.css">
+  <script type="module" src="/js/app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#app">Pular para o conteúdo</a>
+  <div class="shell">
+    <aside class="sidebar" id="sidebar" aria-label="Navegação principal">
+      <a class="brand" href="#/" aria-label="Estuvia — início">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span id="brand-name">Estuvia</span>
+      </a>
+      <nav id="nav"></nav>
+      <div class="sidebar-foot" id="sidebar-foot"></div>
+    </aside>
+    <div class="sidebar-scrim" id="scrim" hidden></div>
+    <div class="content">
+      <header class="topbar">
+        <button class="icon-btn menu-btn" id="menu-btn" type="button" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <a class="brand brand-sm" href="#/"><span class="brand-mark" aria-hidden="true"></span><span>Estuvia</span></a>
+        <div class="topbar-actions" id="topbar-actions"></div>
+      </header>
+      <main id="app" tabindex="-1">
+        <p class="loading">Carregando…</p>
+      </main>
+      <footer class="footer">
+        <p>A Estuvia orienta e organiza: candidatura, matrícula, visto e demais pedidos oficiais são feitos nos sistemas competentes. Confirme sempre nas fontes oficiais do seu ciclo.</p>
+        <p><a href="#/fontes">Central de fontes</a> · <a href="#/manual">Manual completo</a></p>
+      </footer>
+    </div>
+  </div>
+  <nav class="tabbar" id="tabbar" aria-label="Navegação rápida" hidden></nav>
+  <div id="assistant-root"></div>
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+</body>
+</html>

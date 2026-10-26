@@ -1,0 +1,176 @@
+/* Progressão (mapa de rodadas, bloqueios, desbloqueios) e missão como guia passo a passo.
+   Princípio: poucos elementos por tela, uma ação principal destacada, o resto discreto. */
+
+/* ---------- Mapa da jornada ---------- */
+.journey-continue { align-self: flex-start; display: inline-flex; gap: 12px; padding: 14px 22px; white-space: normal; text-align: left; }
+.journey-continue span { display: flex; flex-direction: column; }
+.journey-continue small { font-size: .72rem; font-weight: 700; opacity: .85; text-transform: uppercase; letter-spacing: .08em; }
+.round-map { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+.round-card.is-locked { background: var(--surface); border-style: dashed; }
+.round-card.is-locked:hover { transform: none; box-shadow: none; }
+.round-card.is-future { opacity: .72; }
+.round-card.is-future .rc-body { padding: 12px 16px 14px; }
+.round-card.is-next { border-color: var(--border-2); opacity: 1; }
+.rc-lock { position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; color: #fff; }
+.rc-lock svg { filter: drop-shadow(0 2px 8px rgb(0 0 0 / 60%)); }
+.rc-preview { color: var(--muted); font-size: .86rem; margin: 2px 0 6px; }
+.rc-unlock { margin-top: 6px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); }
+.rc-unlock small { color: var(--muted); font-weight: 700; font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; }
+.rc-unlock ul { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; font-size: .84rem; }
+.rc-unlock li { display: flex; gap: 6px; align-items: flex-start; }
+.rc-seal { position: absolute; top: 12px; right: 12px; z-index: 1; display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 999px; background: var(--ok); color: #04140c; font-weight: 800; font-size: .74rem; }
+.rc-review { margin-top: 8px; color: var(--accent); font-size: .82rem; font-weight: 700; display: inline-flex; gap: 4px; align-items: center; }
+.flag-info { color: var(--info); }
+.early-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+.early-list a { display: flex; flex-direction: column; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); color: var(--text); text-decoration: none; border: 1px solid var(--border); }
+.early-list a:hover { border-color: var(--accent); }
+.early-list small { color: var(--muted); }
+.deadline-list { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 6px; }
+.trail.is-locked { display: flex; flex-direction: column; gap: 18px; max-width: 760px; }
+.trail-head.locked img { filter: grayscale(.8) brightness(.5); }
+.lock-badge { display: inline-grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: rgb(0 0 0 / 45%); color: #fff; margin-bottom: 8px; }
+.mission-node.n-ignorada .mn-circle { background: var(--surface-2); color: var(--faint); }
+.st-ignorada { background: var(--surface-3); color: var(--faint); }
+.lg-ignorada i { background: var(--surface-3); }
+
+/* ---------- Missão: guia passo a passo ---------- */
+.guide { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+.guide-head h1 { font-size: clamp(1.5rem, 4vw, 2rem); margin: 2px 0 10px; line-height: 1.15; }
+.guide-progress { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: .86rem; font-weight: 700; }
+.guide-progress .bar { flex: 1; }
+.guide-what { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 16px; background: var(--accent-soft); }
+.guide-what-ic { display: grid; place-items: center; width: 38px; height: 38px; flex: none; border-radius: 12px; background: var(--accent); color: var(--accent-ink); }
+.guide-what small { color: var(--muted); font-weight: 800; text-transform: uppercase; letter-spacing: .08em; font-size: .68rem; }
+.guide-what p { margin: 2px 0 0; font-size: 1.05rem; font-weight: 600; }
+.guide-alert { display: flex; gap: 10px; align-items: center; padding: 10px 14px; border-radius: 12px; background: var(--warn-soft); color: var(--text); font-size: .92rem; }
+.guide-alert.is-hot { background: var(--danger-soft); }
+.guide-alert small { margin-left: auto; color: var(--muted); white-space: nowrap; }
+.guide-stage { display: flex; flex-direction: column; gap: 12px; }
+.guide-dots { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; padding: 0; margin: 0; justify-content: center; }
+.guide-dots button { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--border-2); background: var(--surface); color: var(--muted); font: inherit; font-weight: 800; font-size: .8rem; cursor: pointer; display: grid; place-items: center; }
+.guide-dots button.done { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+.guide-dots button.on { border-color: var(--accent); color: var(--text); box-shadow: 0 0 0 3px var(--accent-soft); }
+.guide-card { background: var(--surface); border: 1px solid var(--border); border-radius: 22px; padding: 24px 22px; display: flex; flex-direction: column; gap: 10px; box-shadow: var(--shadow-sm); animation: rise .25s ease; }
+.guide-card h2 { font-size: 1.3rem; margin: 0; line-height: 1.25; }
+.guide-card.is-step h2 { font-size: 1.4rem; }
+.guide-card.done, .guide-card.is-done { border-color: color-mix(in srgb, var(--ok) 50%, var(--border)); }
+.guide-card-ic { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; background: var(--surface-2); color: var(--accent); }
+.guide-card.is-done .guide-card-ic { background: var(--ok-soft); color: var(--ok); }
+.guide-card-ic.is-lock { color: var(--faint); }
+.guide-text { color: var(--muted); margin: 0; font-size: 1rem; }
+.guide-actions { display: flex; flex-direction: column; align-items: stretch; gap: 10px; margin-top: 6px; }
+.guide-primary { white-space: normal; text-align: center; width: 100%; }
+.guide-secondary { align-self: center; background: none; border: 0; color: var(--muted); font: inherit; font-size: .9rem; font-weight: 600; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; padding: 6px 8px; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--border-2); }
+.guide-secondary:hover { color: var(--text); }
+.guide-input { width: 100%; min-height: 48px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border-2); background: var(--surface-2); color: var(--text); font: inherit; font-size: 1rem; }
+.guide-official { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 12px 14px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--border); }
+.guide-official div { display: flex; flex-direction: column; }
+.guide-official small { color: var(--muted); }
+.guide-alt { padding-top: 6px; }
+.guide-alt p { margin: 0 0 8px; font-weight: 600; }
+.choice-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.choice { display: flex; align-items: center; gap: 10px; min-height: 54px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--border-2); background: var(--surface-2); color: var(--text); font: inherit; font-weight: 600; text-align: left; cursor: pointer; text-decoration: none; transition: border-color .15s, transform .12s; }
+.choice:hover { border-color: var(--accent); }
+.choice:active { transform: scale(.98); }
+.choice svg { color: var(--accent); flex: none; }
+.ok-line { color: var(--ok); font-weight: 700; display: flex; align-items: center; gap: 6px; margin: 0; }
+.guide-number { display: flex; flex-direction: column; gap: 4px; padding: 14px; border-radius: 14px; background: var(--surface-2); }
+.guide-number strong { font-size: 1.8rem; }
+.guide-help { padding: 16px; border-radius: 18px; border: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; gap: 10px; }
+.guide-help h2 { font-size: 1rem; margin: 0; display: flex; gap: 8px; align-items: center; }
+.guide-terms { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.guide-terms > small { color: var(--muted); margin-right: 4px; }
+.term-wrap { display: contents; }
+.term { display: inline-flex; gap: 4px; align-items: center; border: 1px dashed var(--border-2); background: none; color: var(--text); border-radius: 999px; padding: 4px 10px; font: inherit; font-size: .8rem; cursor: pointer; }
+.term[aria-expanded="true"] { border-style: solid; border-color: var(--accent); }
+.term-def { flex-basis: 100%; padding: 8px 12px; border-radius: 10px; background: var(--surface-2); font-size: .88rem; }
+.guide-plan { display: flex; flex-direction: column; gap: 8px; }
+.guide-plan > .guide-secondary { align-self: flex-start; }
+.guide-help > .guide-secondary { align-self: flex-start; }
+.guide-secondary-sections { display: flex; flex-direction: column; gap: 10px; }
+.guide-more { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); padding: 0; }
+.guide-more > summary { cursor: pointer; padding: 14px 16px; font-weight: 700; list-style: none; display: flex; align-items: center; gap: 6px; }
+.guide-more > summary::-webkit-details-marker { display: none; }
+.guide-more > summary::after { content: "+"; margin-left: auto; color: var(--muted); font-weight: 800; }
+.guide-more[open] > summary::after { content: "–"; }
+.guide-more > :not(summary) { padding: 0 16px 16px; }
+.guide-howto { padding-left: 18px; display: grid; gap: 10px; }
+.guide-howto p { margin: 2px 0 0; color: var(--muted); }
+.guide-sources { list-style: none; padding: 0; display: grid; gap: 8px; }
+.guide-sources li { display: flex; flex-direction: column; }
+.mission-content.embedded { padding-top: 4px; }
+.mission-content.embedded .mc-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+.locked-card { text-align: left; }
+.locked-missing { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.locked-missing li { display: flex; gap: 8px; align-items: center; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); }
+.center { text-align: center; }
+.arrival-form { width: 100%; }
+
+/* ---------- Agenda rápida ---------- */
+.quick-plan { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 14px; background: var(--surface-2); }
+.qp-q { margin: 0; font-weight: 700; }
+.qp-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.qp-list li { display: flex; flex-direction: column; padding: 8px 10px; border-radius: 10px; background: var(--surface); }
+.qp-list strong { text-transform: capitalize; font-size: .86rem; }
+.qp-list span { color: var(--muted); font-size: .86rem; }
+
+/* ---------- Celebrações ---------- */
+.celebrate-card.is-mission .celebrate-badge { background: linear-gradient(135deg, var(--ok), var(--accent)); color: #04140c; animation: none; }
+.celebrate-badge.pop { animation: pop .5s cubic-bezier(.2, 1.4, .4, 1) both; }
+.celebrate-card.is-round .celebrate-badge.pop { animation: pop .5s cubic-bezier(.2, 1.4, .4, 1) both, pulse-badge 1.6s ease-in-out .5s infinite; }
+.celebrate-card .eyebrow { text-transform: uppercase; letter-spacing: .12em; font-weight: 900; color: var(--accent); }
+.celebrate-progress { display: flex; flex-direction: column; gap: 4px; margin: 10px 0; }
+.celebrate-progress .bar-fill { transition: width 1s cubic-bezier(.2, .8, .2, 1); width: 0; }
+.celebrate-milestone { display: inline-flex; gap: 6px; align-items: center; color: var(--gold); font-weight: 700; font-size: .9rem; }
+.unlock-next, .unlock-round { display: flex; gap: 12px; align-items: center; text-align: left; padding: 12px; margin: 10px 0 14px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--accent); animation: rise .4s ease .35s both; }
+.unlock-next div, .unlock-round div { display: flex; flex-direction: column; }
+.unlock-next small, .unlock-round small { color: var(--muted); font-weight: 700; font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; }
+.unlock-ic { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); flex: none; }
+.unlock-round img { width: 84px; height: 56px; object-fit: cover; border-radius: 10px; flex: none; }
+.row.center { justify-content: center; }
+@keyframes pop { 0% { transform: scale(.3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .celebrate-badge.pop, .unlock-next, .unlock-round, .guide-card { animation: none; }
+  .celebrate-progress .bar-fill { transition: none; }
+}
+
+/* ---------- Manual de referência ---------- */
+.manual-round > summary { display: flex; gap: 14px; align-items: center; cursor: pointer; list-style: none; }
+.manual-round > summary::-webkit-details-marker { display: none; }
+.manual-round > summary img { width: 92px; height: 60px; object-fit: cover; border-radius: 12px; flex: none; }
+.manual-round > summary span { display: flex; flex-direction: column; }
+.manual-round > summary small { color: var(--muted); font-weight: 700; font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; }
+.manual-list { margin: 14px 0 8px; padding-left: 22px; display: grid; gap: 6px; }
+.manual-list li span { margin-right: 6px; }
+.manual-summary { padding-left: 22px; display: grid; gap: 4px; }
+.glossary { display: grid; grid-template-columns: minmax(120px, max-content) 1fr; gap: 8px 16px; margin: 0; }
+.glossary dt { font-weight: 800; }
+.glossary dd { margin: 0; color: var(--muted); }
+@media (max-width: 560px) {
+  .glossary { grid-template-columns: 1fr; }
+  .glossary dd { margin-bottom: 6px; }
+  .guide-card { padding: 20px 16px; }
+  .guide-alert small { display: none; }
+  .choice-grid { grid-template-columns: 1fr; }
+}
+
+/* ---------- Complexidade adaptativa ---------- */
+.guide-alert.is-risk-alto { background: var(--danger-soft); }
+.guide-alert.is-risk-medio { background: var(--warn-soft); }
+.guide-card.is-simple h2 { font-size: 1.35rem; }
+.simple-confirm { display: flex; flex-direction: column; gap: 10px; padding: 14px; margin-top: 4px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--accent); animation: rise .25s ease; }
+.simple-confirm p { margin: 0; }
+.simple-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; font-size: .9rem; color: var(--muted); }
+.simple-list li { display: flex; gap: 6px; align-items: flex-start; }
+.chip-more { border-style: dashed; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .simple-confirm { animation: none; } }
+.choice[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+/* Rodadas futuras: só uma faixa do banner — visão geral sem ocupar a tela. */
+.round-card.is-future .rc-banner { aspect-ratio: 16 / 4.5; }
+.round-card.is-future .rc-lock svg { width: 18px; height: 18px; }
+@media (max-width: 560px) {
+  .round-map { gap: 10px; }
+  .round-card.is-future { flex-direction: row; }
+  .round-card.is-future .rc-banner { width: 34%; aspect-ratio: auto; min-height: 76px; }
+  .round-card.is-future .rc-number { font-size: 1.4rem; }
+}

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" preserveAspectRatio="xMidYMid slice">
+<defs>
+<linearGradient id="r4-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a1a2e"/><stop offset="1" stop-color="#16537e"/></linearGradient>
+<radialGradient id="r4-glow" cx="600" cy="220" r="420" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#5bc0be" stop-opacity="0.3"/><stop offset="1" stop-color="#5bc0be" stop-opacity="0"/></radialGradient>
+<linearGradient id="r4-fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0.55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.45"/></linearGradient>
+</defs>
+<rect width="1200" height="520" fill="url(#r4-sky)"/>
+<rect width="1200" height="520" fill="url(#r4-glow)"/>
+<path d="M600 110 L860 220 L600 330 L340 220Z" fill="#1c2541"/><path d="M600 110 L860 220 L600 330 L340 220Z" fill="none" stroke="#5bc0be" stroke-width="4"/>
+<path d="M450 268 v90 c80 60 220 60 300 0 v-90 L600 330Z" fill="#0b132b"/>
+<path d="M860 220 v110" stroke="#f2c14e" stroke-width="6"/><circle cx="860" cy="340" r="14" fill="#f2c14e"/>
+<g transform="translate(150 330) rotate(-12)"><rect width="220" height="110" rx="12" fill="#f4efe1"/><rect x="24" y="30" width="150" height="8" rx="4" fill="#b8ad8f"/><rect x="24" y="52" width="110" height="8" rx="4" fill="#b8ad8f"/><circle cx="180" cy="80" r="16" fill="#e8615f"/></g>
+<rect width="1200" height="520" fill="url(#r4-fade)"/>
+</svg>

@@ -1,0 +1,142 @@
+/* Planejador Financeiro Inteligente: resultado em destaque, ajustes em segundo plano. */
+.fp { display: flex; flex-direction: column; gap: 18px; max-width: 1120px; }
+.fp .card { padding: 18px; }
+.fp h2 { font-size: 1.1rem; margin: 0 0 6px; display: flex; align-items: center; gap: 6px; }
+
+/* Etapa 1 */
+.fp-intro { max-width: 620px; margin: 24px auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.fp-intro h1 { margin: 0; font-size: clamp(1.6rem, 4vw, 2.2rem); }
+.fp-intro-ic { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 20px; background: var(--accent-soft); color: var(--accent); }
+.fp-dest { display: flex; flex-direction: column; gap: 2px; padding: 14px 18px; border-radius: 16px; background: var(--surface-2); width: 100%; }
+.fp-dest strong { font-size: 1.15rem; }
+.fp-lead { font-size: 1.05rem; margin: 6px 0; }
+
+/* Cabeçalho e resultado */
+.fp-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.fp-head h1 { margin: 0; font-size: clamp(1.5rem, 4vw, 2rem); }
+.fp-hero { display: grid; gap: 14px; grid-template-columns: 1fr; }
+@media (min-width: 900px) { .fp-hero { grid-template-columns: 1.15fr 1fr; } .fp-meter { grid-column: 1 / -1; } }
+.fp-main { display: flex; flex-direction: column; gap: 6px; background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 18%, var(--surface)), var(--surface)); border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
+.fp-main .eyebrow { color: var(--accent); }
+.fp-big { font-size: clamp(2.4rem, 7vw, 3.4rem); font-weight: 900; line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.fp-brl { margin: 0; font-size: 1.05rem; font-weight: 700; }
+.fp-brl small { font-weight: 500; color: var(--muted); font-size: .78rem; }
+.fp-partial { align-self: flex-start; display: inline-flex; gap: 6px; align-items: center; border: 1px dashed var(--warn); background: var(--warn-soft); color: var(--text); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: .82rem; cursor: pointer; }
+.fp-cards { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.fp-stat { display: flex; flex-direction: column; gap: 2px; position: relative; padding: 14px !important; }
+.fp-stat small { color: var(--muted); font-weight: 700; font-size: .74rem; }
+.fp-stat strong { font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+.fp-stat.ok strong { color: var(--ok); }
+.fp-stat.warn strong { color: var(--warn); }
+.fp-stat-ic { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: var(--surface-2); color: var(--accent); margin-bottom: 4px; }
+.fp-meter { display: flex; flex-direction: column; gap: 8px; }
+.fp-pct { font-weight: 900; font-size: 1.2rem; color: var(--accent); }
+.fp-gap { margin: 0; font-weight: 700; }
+.fp-meter .btn { align-self: flex-start; }
+
+/* A · B · C */
+.fp-three { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.fp-calc { position: relative; display: flex; flex-direction: column; gap: 4px; }
+.fp-calc small { color: var(--muted); font-weight: 700; }
+.fp-calc strong { font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.fp-calc p { margin: 0; }
+.fp-calc-letter { position: absolute; top: 14px; right: 16px; font-weight: 900; color: var(--faint); font-size: 1.1rem; }
+.fp-calc-ic { display: none; }
+.fp-calc.is-visa { border-color: color-mix(in srgb, var(--info) 45%, var(--border)); }
+.fp-mini { display: flex; align-items: center; gap: 8px; font-size: .8rem; color: var(--muted); }
+.fp-mini .bar { flex: 1; }
+
+/* Para onde vai o dinheiro: uma série, um tom, rótulos diretos */
+.fp-mid { display: grid; gap: 14px; grid-template-columns: 1fr; }
+@media (min-width: 900px) { .fp-mid { grid-template-columns: 1fr 1fr; align-items: start; } }
+.fp-bars { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 10px; }
+.fp-bars li { display: grid; grid-template-columns: 110px 1fr auto; gap: 10px; align-items: center; font-size: .88rem; }
+.fp-bar-label { color: var(--muted); }
+.fp-bar-track { height: 12px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+.fp-bar-fill { display: block; height: 100%; background: var(--accent); border-radius: 0 4px 4px 0; transition: width .4s ease; }
+.fp-bar-value { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; min-width: 70px; }
+.fp-bars li:hover .fp-bar-fill { filter: brightness(1.15); }
+
+/* Situação financeira */
+.fp-sit { display: flex; flex-direction: column; gap: 12px; }
+.fp-q { display: flex; flex-direction: column; gap: 8px; }
+.fp-q > span { font-weight: 700; }
+.fp-money { display: flex; gap: 8px; align-items: stretch; flex-wrap: nowrap; }
+.fp-money .guide-input { flex: 1; min-width: 0; }
+.fp-cur { min-height: 44px; border-radius: 12px; border: 1px solid var(--border-2); background: var(--surface-2); color: var(--text); font: inherit; padding: 0 8px; }
+.fp-helpform { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 14px; background: var(--surface-2); }
+.fp-groups { display: grid; gap: 8px; }
+.fp-group { padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); }
+.fp-group.counts { border-color: color-mix(in srgb, var(--ok) 45%, var(--border)); }
+.fp-group ul { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 4px; }
+.fp-group li { display: flex; gap: 8px; align-items: center; justify-content: space-between; font-size: .88rem; }
+.fp-group li span:first-child { flex: 1; }
+
+/* Alternativas */
+.fp-alt { display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 22px; background: color-mix(in srgb, var(--warn) 10%, var(--surface)); border: 1px solid color-mix(in srgb, var(--warn) 35%, var(--border)); }
+.fp-alt-head h2 { font-size: 1.3rem; margin: 0; }
+.fp-alt-head p { margin: 2px 0 0; }
+.fp-alt-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.fp-alt-card { display: flex; flex-direction: column; gap: 6px; }
+.fp-alt-card p { margin: 0; }
+.fp-alt > .btn { align-self: flex-start; }
+
+/* Cenários */
+.fp-scen-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.fp-scen-card { display: flex; flex-direction: column; gap: 6px; }
+.fp-scen-card.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.fp-scen-card dl { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; margin: 4px 0; font-size: .88rem; }
+.fp-scen-card dt { color: var(--muted); }
+.fp-scen-card dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.fp-scen-card dd.strong { font-weight: 800; }
+.fp-scen-card dd.neg { color: var(--warn); } .fp-scen-card dd.pos { color: var(--ok); }
+.fp-scen-card .btn { align-self: flex-start; margin-top: auto; }
+.fp-premises { margin: 8px 0 0; }
+.fp-saved { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.fp-saved-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.fp-saved-list li { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); }
+.fp-saved-list li > div { flex: 1; display: flex; flex-direction: column; }
+.fp-saved .row .guide-input { flex: 1; min-width: 180px; }
+
+/* Editar meus custos */
+.fp-edit > summary { cursor: pointer; font-weight: 800; display: flex; gap: 8px; align-items: center; list-style: none; }
+.fp-edit > summary::-webkit-details-marker { display: none; }
+.fp-edit > summary::after { content: "+"; margin-left: auto; color: var(--muted); }
+.fp-edit[open] > summary::after { content: "–"; }
+.fp-edit > div { margin-top: 12px; }
+.fp-edit-group h3 { font-size: .95rem; margin: 6px 0; }
+.fp-items { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.fp-item { display: grid; grid-template-columns: 32px 1fr; gap: 10px; padding: 12px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); align-items: start; }
+.fp-item.unknown { border-style: dashed; border-color: color-mix(in srgb, var(--warn) 45%, var(--border)); }
+.fp-item-ic { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: var(--surface-2); color: var(--accent); }
+.fp-item-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.fp-item-main small.warn { color: var(--warn); }
+.fp-item-edit { grid-column: 2; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.fp-item > .tag { grid-column: 2; justify-self: start; }
+.fp-item-value { grid-column: 2; font-weight: 800; font-variant-numeric: tabular-nums; }
+.fp-input, .fp-status, .fp-due { min-height: 44px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--border-2); background: var(--surface-2); color: var(--text); font: inherit; }
+.fp-input { width: 120px; }
+.fp-item-edit .fp-money { flex: 0 1 auto; }
+.fp-inline { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-weight: 700; }
+.fp-inline .fp-input { width: 80px; }
+@media (min-width: 900px) {
+  .fp-item { grid-template-columns: 32px minmax(0, 1.4fr) auto auto; align-items: center; }
+  .fp-item-edit, .fp-item > .tag, .fp-item-value { grid-column: auto; }
+}
+
+/* Câmbio e acompanhamento */
+.fp-fx-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.fp-fx-grid .fp-input { width: 100%; }
+.fp-track-list { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 6px; }
+.fp-track-list li { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; font-size: .9rem; }
+.fp-track-list .neg { color: var(--warn); }
+
+@media (max-width: 560px) {
+  .fp-cards { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .fp-stat strong { font-size: 1.1rem; }
+  .fp-bars li { grid-template-columns: 84px 1fr auto; font-size: .8rem; }
+  .fp-track-list li { grid-template-columns: 1fr; }
+}
+.fp-money .fp-cur { width: auto; flex: 0 0 auto; }
+.fp-money .guide-input, .fp-money .fp-input { flex: 1 1 auto; min-width: 90px; }
+.fp-three { align-items: start; }

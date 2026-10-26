@@ -1,0 +1,155 @@
+/* =========================================================================
+   Estuvia — camada minimalista
+   Carregada por último. Deixa a interface mais plana e calma: sem sombras,
+   sem gradientes decorativos, cantos menores, pesos de fonte mais leves.
+   Os seletores começam com `html` para valer também sobre os CSS dos módulos
+   carregados sob demanda (mentor, comunidade, viagem...). Para voltar ao
+   visual anterior, basta remover o <link> deste arquivo no index.html.
+   ========================================================================= */
+:root {
+  --bg: #0b0e13;
+  --bg-2: #0b0e13;
+  --surface: #11161d;
+  --surface-2: #161c24;
+  --surface-3: #1d2530;
+  --border: #1f2833;
+  --border-2: #29333f;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: none;
+  --shadow-sm: none;
+}
+:root[data-theme="light"] {
+  --bg: #fafafa; --bg-2: #fafafa; --surface: #ffffff; --surface-2: #f5f6f7; --surface-3: #eceef1;
+  --border: #e6e8eb; --border-2: #d9dde2;
+}
+
+/* ---------- Tipografia ---------- */
+html h1 { font-weight: 700; letter-spacing: -.02em; }
+html h2 { font-weight: 650; }
+html h3 { font-weight: 600; }
+html .eyebrow, html .small-title { font-weight: 600; letter-spacing: .06em; color: var(--muted); }
+html .brand { font-weight: 700; }
+
+/* ---------- Estrutura ---------- */
+html .sidebar { border-right-color: var(--border); padding: 20px 12px; gap: 20px; }
+html #nav a { padding: 8px 12px; border-radius: 8px; font-weight: 500; gap: 10px; }
+html #nav a.active { background: var(--surface-2); color: var(--text); }
+html #nav a.active .icon { color: var(--accent); }
+html .nav-more { margin-top: 14px; }
+html .nav-more summary { list-style: none; cursor: pointer; padding: 6px 12px; font-size: .78rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); display: flex; align-items: center; justify-content: space-between; }
+html .nav-more summary::-webkit-details-marker { display: none; }
+html .nav-more summary::after { content: "+"; font-size: 1rem; }
+html .nav-more[open] summary::after { content: "–"; }
+html .nav-more summary:hover { color: var(--text); }
+html .me-card { background: transparent; border-color: transparent; }
+html .me-card:hover, html .me-card.active { background: var(--surface-2); border-color: transparent; }
+html .topbar { backdrop-filter: none; background: var(--bg); }
+html main { max-width: 1120px; }
+html .footer { border-top: 0; }
+
+/* ---------- Superfícies ---------- */
+html * { box-shadow: none !important; text-shadow: none !important; }
+html .card, html .panel { border-radius: var(--radius); }
+html .sheet, html .celebrate { backdrop-filter: none; }
+html .sheet-card, html .modal-card, html .celebrate-card { border-radius: 14px; }
+html .next-mission, html .mc-progress, html .mc-card.is-primary, html .exec-now { background: var(--surface); }
+html .alert-item { border-radius: 10px; font-weight: 500; border-left-width: 1px; }
+html .alert-item.t-danger, html .alert-item.t-warn, html .alert-item.t-info { border-left-width: 3px; }
+
+/* ---------- Botões e chips ---------- */
+html .btn { border-radius: 8px; font-weight: 600; }
+html .btn-sm { border-radius: 7px; }
+html .btn-cta, html .n-disponivel .mn-circle, html .ai-logo { background: var(--accent); }
+html .btn-cta:hover { filter: brightness(1.08); }
+html .chip { background: transparent; }
+html .chip-status, html .chip-demo { font-weight: 600; }
+html .bar-fill { background: var(--accent); }
+
+/* ---------- Menos movimento ---------- */
+html .mission-node.is-current .mn-circle { animation: none; }
+html .page-enter { animation-duration: .15s; }
+
+/* =========================================================================
+   Celular
+   ========================================================================= */
+html body { overflow-x: clip; }
+html .tabbar { display: none; }
+
+@media (max-width: 960px) {
+  /* Barra inferior estilo app (só com login). */
+  html .tabbar:not([hidden]) {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 35;
+    background: var(--bg); border-top: 1px solid var(--border);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+  html .tabbar a, html .tabbar button {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    min-height: 48px; padding: 4px 2px; border: 0; background: none; border-radius: 8px;
+    color: var(--faint); font: inherit; font-size: .68rem; font-weight: 500; text-decoration: none; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html .tabbar span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  html .tabbar .active { color: var(--accent); }
+
+  /* Espaço para a barra inferior; botões flutuantes sobem acima dela. */
+  html body.has-tabbar .content { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+  html body.has-tabbar .mt-fab, html body.has-tabbar .ai-fab { bottom: calc(76px + env(safe-area-inset-bottom)); right: 14px; }
+  html body.has-tabbar:has(.sticky-cta) .mt-fab, html body.has-tabbar .trail ~ .mt-fab { bottom: calc(150px + env(safe-area-inset-bottom)); }
+  html body.has-tabbar .sticky-cta { bottom: calc(72px + env(safe-area-inset-bottom)); }
+  html body.has-tabbar .toasts { bottom: calc(80px + env(safe-area-inset-bottom)); }
+  html body.nav-open .tabbar { visibility: hidden; }
+
+  /* Topo: com a barra inferior o hambúrguer é redundante. */
+  html body.has-tabbar .menu-btn { display: none; }
+  html .topbar { padding: 10px 16px; padding-top: calc(10px + env(safe-area-inset-top)); }
+  html .sidebar { padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+}
+
+@media (max-width: 640px) {
+  html body { font-size: 15px; }
+  html main { padding: 16px 16px 40px; }
+  html .footer { font-size: .74rem; }
+  html h1 { font-size: 1.45rem; }
+  html .stack-lg { gap: 18px; }
+
+  /* Campos com 16px: evita o zoom automático do iPhone ao tocar. */
+  html input, html select, html textarea { font-size: 16px; min-height: 44px; }
+
+  /* Toques confortáveis. */
+  html .btn { min-height: 44px; }
+  html .btn-sm { min-height: 38px; }
+  html .btn-lg { width: 100%; }
+
+  /* Cards e painéis mais compactos. */
+  html .card, html .panel { padding: 16px; }
+
+  /* Heróis (início, jornada, landing): anel pequeno no topo, texto embaixo. */
+  html .journey-hero, html .home-hero, html .landing-hero { border-radius: 12px; min-height: 0; }
+  html .journey-hero::after, html .home-hero::after, html .landing-hero::after { background: rgb(6 9 14 / 80%); }
+  html .jh-content, html .home-hero-content, html .landing-hero-content { padding: 20px 16px; gap: 16px; flex-direction: column-reverse; align-items: flex-start; }
+  html .jh-content h1, html .home-hero-content h1 { font-size: 1.3rem; }
+  html .jh-ring svg { width: 84px; height: 84px; }
+  html .jh-ring-label strong { font-size: 1.05rem; }
+  html .jh-ring-label span { font-size: .65rem; }
+
+  /* Listas e grades em uma coluna. */
+  html .alerts { grid-template-columns: 1fr; }
+  html .fin-3 { grid-template-columns: 1fr 1fr; }
+  html .fin-3 > div:last-child { grid-column: 1 / -1; }
+  html .page-head { align-items: flex-start; }
+  html .section-head { align-items: center; }
+
+  /* Mentor flutuante só com ícone, para não cobrir conteúdo. */
+  html .mt-fab span, html .ai-fab span { display: none; }
+  html .mt-fab, html .ai-fab { padding: 12px; }
+
+  /* Modais ocupam a largura toda e abrem de baixo. */
+  html .modal { padding: 0; place-items: end stretch; }
+  html .modal-card { width: 100%; border-radius: 14px 14px 0 0; padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); }
+  html .sheet-card { border-radius: 14px 14px 0 0; }
+
+  /* Tabela do Mentor rola na horizontal em vez de estourar a gaveta. */
+  html .mt-table { display: block; max-width: 100%; overflow-x: auto; }
+}
