@@ -69,7 +69,7 @@ export async function landingView() {
     trust(),
     faq(),
     finalCta(primary, logged),
-    footer(appName),
+    footer(appName, logged),
     logged ? null : stickyBar(),
   );
   setupReveal(root);
@@ -100,7 +100,7 @@ function hero(primary, logged) {
         h('h1', {}, 'Seu mestrado na Espanha, ', h('span', { class: 'lp-grad' }, 'missão por missão.')),
         h('p', { class: 'lp-lead' }, 'A Estuvia transforma o processo real — escolher o mestrado, candidatar-se no DUA, financiar, tirar o visto, mudar e se regularizar — numa jornada clara, com prazos, documentos, agenda inteligente e um mentor de IA ao seu lado.'),
         h('div', { class: 'lp-ctas' }, primary(),
-          logged ? h('a', { href: '#/manual', class: 'btn btn-ghost btn-lg' }, 'Manual de referência')
+          logged ? null
             : h('a', { href: '#diagnostico', class: 'btn btn-ghost btn-lg', onClick: scrollTo('diagnostico') }, icon('target', { size: 16 }), 'Descobrir onde estou')),
         h('a', { href: '#video', class: 'lp-watch', onClick: (e) => { scrollTo('video')(e); playVideo(); } }, h('span', { class: 'lp-watch-icon' }, icon('play', { size: 14 })), 'Assistir ao vídeo', h('small', {}, '1 min 30')),
         h('ul', { class: 'lp-checks' },
@@ -514,7 +514,7 @@ function finalCta(primary, logged) {
           logged ? null : h('a', { href: '#/entrar', class: 'btn btn-ghost btn-lg' }, 'Já tenho conta')))));
 }
 
-function footer(appName) {
+function footer(appName, logged) {
   return h('footer', { class: 'lp-footer' },
     h('div', { class: 'lp-wrap lp-footer-inner' },
       h('div', {},
@@ -522,9 +522,10 @@ function footer(appName) {
         h('p', {}, 'A Estuvia orienta e organiza: candidatura, matrícula, visto e demais pedidos oficiais são feitos nos sistemas competentes. Confirme sempre nas fontes oficiais do seu ciclo.')),
       h('nav', { class: 'lp-footer-links', 'aria-label': 'Links do rodapé' },
         h('a', { href: '#/fontes' }, 'Central de fontes'),
-        h('a', { href: '#/manual' }, 'Manual completo'),
-        h('a', { href: '#/entrar' }, 'Entrar'),
-        h('a', { href: '#/cadastro' }, 'Criar conta'))),
+        logged ? null : [
+          h('a', { href: '#/manual' }, 'Como funciona'),
+          h('a', { href: '#/entrar' }, 'Entrar'),
+          h('a', { href: '#/cadastro' }, 'Criar conta')])),
     h('p', { class: 'lp-wrap lp-copy' }, `© ${new Date().getFullYear()} ${appName}`));
 }
 

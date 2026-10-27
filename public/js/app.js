@@ -101,7 +101,7 @@ const routes = [
   { path: /^\/sobre$/, view: landingView },
   { path: /^\/entrar$/, view: loginView, guestOnly: true },
   { path: /^\/cadastro$/, view: registerView, guestOnly: true },
-  { path: /^\/manual$/, view: manualView, auth: true },
+  { path: /^\/manual$/, view: manualView, guestOnly: true }, // explica a plataforma a quem ainda não tem conta
   { path: /^\/fontes$/, view: sourcesView, auth: true },
   { path: /^\/jornadas\/nova$/, view: onboardingView, auth: true },
   { path: /^\/jornadas$/, view: journeysView, auth: true },
@@ -232,7 +232,6 @@ const NAV_MORE = [
   { href: '/comunidade', label: 'Comunidade', icon: 'users' },
   { href: '/conquistas', label: 'Conquistas', icon: 'trophy' },
   { href: '/assistente', label: 'Mentor IA', icon: 'chat' },
-  { href: '/manual', label: 'Manual', icon: 'book' },
 ];
 // Só aparece para a conta de administrador (ADMIN_EMAIL no .env).
 const NAV_ADMIN = { href: '/admin', label: 'Painel admin', icon: 'shield' };
