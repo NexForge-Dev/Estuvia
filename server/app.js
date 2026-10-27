@@ -17,10 +17,14 @@ import radarAdminRoutes from './routes/radar-admin.js';
 import mentorRoutes from './routes/mentor.js';
 import travelRoutes from './routes/travel.js';
 import documentRoutes from './routes/documents.js';
+import adminRoutes from './routes/admin.js';
+import trackRoutes from './routes/track.js';
+import { ensureAdminAccount } from './admin-seed.js';
 import { initRadar } from './radar/service.js';
 
 export function createApp() {
   initRadar().catch((err) => console.error('[radar] falha ao iniciar:', err.message));
+  ensureAdminAccount().catch((err) => console.error('[admin] falha ao preparar conta:', err.message));
   const app = express();
   app.disable('x-powered-by');
   if (config.isProd) app.set('trust proxy', 1);
@@ -46,6 +50,8 @@ export function createApp() {
   api.use('/mentor', mentorRoutes);
   api.use('/travel', travelRoutes);
   api.use('/documents', documentRoutes);
+  api.use('/admin', adminRoutes);
+  api.use('/track', trackRoutes);
   api.use('/content', contentRoutes);
   api.use('/assistant', assistantRoutes);
   api.use((req, res) => res.status(404).json({ error: 'Rota não encontrada.' }));

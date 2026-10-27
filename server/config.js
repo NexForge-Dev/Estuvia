@@ -43,6 +43,9 @@ export const config = {
   docsKey: crypto.hkdfSync('sha256', process.env.DOCUMENTS_KEY || jwtSecret, 'padapal', 'documentos-v1', 32),
   // Moderadores da comunidade (verificação de oportunidades, denúncias). Lista separada por vírgula.
   moderatorEmails: (process.env.MODERATOR_EMAILS || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean),
+  // Conta de administrador (painel #/admin). Criada/atualizada na inicialização a partir do .env.
+  adminEmail: (process.env.ADMIN_EMAIL || '').trim().toLowerCase() || null,
+  adminPassword: process.env.ADMIN_PASSWORD || null,
   publicDir: path.join(here, '..', 'public'),
   anthropicModel: process.env.ANTHROPIC_MODEL || 'claude-opus-5-5',
   // A IA só é ativada quando há credencial; sem ela o assistente usa a base local (modo offline).

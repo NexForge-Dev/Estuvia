@@ -41,6 +41,7 @@ Crie uma conta → onboarding (5 passos) → sua primeira jornada é gerada. Par
 | Mestrados | `#/mestrados` | Catálogo com filtros, requisitos, "Minhas opções" (até 6) |
 | Mentor IA | painel flutuante + `#/assistente` | Contexto da jornada/missão, ações rápidas, ações propostas com confirmação |
 | Oportunidades, Comunidade, Conquistas | `#/oportunidades`, `#/comunidade`, `#/conquistas` | Módulos integrados (docs 11, 12 e 06) |
+| Painel admin | `#/admin` | Só para a conta `ADMIN_EMAIL`/`ADMIN_PASSWORD` do `.env` (criada ao iniciar o servidor). A conta admin vê **só** o painel: **status da IA** (chaves do Mentor/Assistente, uso, falhas e botão "Testar agora"), **inscrições** de todos (candidatura, matrícula, visto), lista de alunos com filtros (com alerta, sem entrar há 7+ dias, admitidos…) e **ficha de acompanhamento de cada aluno** em `#/admin/aluno/:id` (dias sem entrar, jornadas e inscrição, prazos, documentos, finanças e bolsas, moradia, viagem, agenda, pontos de atenção e anotações internas), quem está online e em que tela, **módulos mais acessados** (acessos, pessoas, tempo médio; 7/30/90 dias), ativos por dia (30 dias), lista de usuários com último acesso, IP e dispositivo, eventos (cadastros, logins, logins falhos), encerrar sessões e suspender contas |
 
 **Navegação:** menu com Início, Minha jornada, Agenda, Documentos e Financiamento; o resto fica em **Mais**. No celular, barra inferior com os 4 primeiros + Menu (doc 22).
 

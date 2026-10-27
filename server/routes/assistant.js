@@ -4,6 +4,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import Anthropic from '@anthropic-ai/sdk';
+import { recordAI } from '../ai-health.js';
 import { config } from '../config.js';
 import { requireAuth, assistantLimiter } from '../security.js';
 import { FAQ, knowledgeAsText } from '../content/knowledge.js';
@@ -102,6 +103,7 @@ router.post('/ask', requireAuth, assistantLimiter, async (req, res) => {
   };
 
   if (!client) {
+    recordAI('assistente', 'offline', { user: req.user });
     const ans = localAnswer();
     send('delta', { text: ans.texto });
     send('done', { fontes: ans.fontes, acoes: ans.acoes || [], modo: 'offline' });
@@ -145,6 +147,7 @@ router.post('/ask', requireAuth, assistantLimiter, async (req, res) => {
       }
     }
     const final = await stream.finalMessage();
+    recordAI('assistente', 'ok', { user: req.user });
     if (final.stop_reason === 'refusal') {
       send('replace', { text: 'Não consigo responder essa pergunta. Que tal reformular ou consultar as fontes oficiais na Central de fontes?' });
       send('done', { fontes: [], modo: 'claude' });
@@ -153,6 +156,7 @@ router.post('/ask', requireAuth, assistantLimiter, async (req, res) => {
     }
   } catch (err) {
     if (abort.signal.aborted) return res.end();
+    recordAI('assistente', 'erro', { erro: err instanceof Anthropic.APIError ? `erro da API ${err.status}` : err.message, user: req.user });
     if (err instanceof Anthropic.RateLimitError) console.warn('[assistant] rate limit da API');
     else if (err instanceof Anthropic.AuthenticationError) console.error('[assistant] credencial Anthropic inválida');
     else if (err instanceof Anthropic.APIError) console.error(`[assistant] erro da API ${err.status}: ${err.message}`);

@@ -7,6 +7,7 @@
 
 import { SYSTEM_PROMPT, MENTOR_NAME, GUIDED_NAME } from './prompt.js';
 import { getProvider } from './providers/index.js';
+import { recordAI } from '../ai-health.js';
 import { guidedReply, QUICK_ACTIONS } from './guided.js';
 import { buildContext } from './context.js';
 import { catalog, useTool, makeCtx, TOOLS } from './tools/index.js';
@@ -22,11 +23,17 @@ export function mode() {
 
 export async function handleMessage(user, { mensagem, acao, contexto = {}, historico = [] }, { signal } = {}) {
   const provider = getProvider();
-  if (!provider.disponivel) return guidedReply(user, { mensagem, acao, contexto, historico });
+  if (!provider.disponivel) {
+    recordAI('mentor', 'guiado', { user });
+    return guidedReply(user, { mensagem, acao, contexto, historico });
+  }
   try {
-    return await agentReply(provider, user, { mensagem: mensagem || QUICK_ACTIONS.find((q) => q.id === acao)?.mensagem || '', contexto, historico }, signal);
+    const reply = await agentReply(provider, user, { mensagem: mensagem || QUICK_ACTIONS.find((q) => q.id === acao)?.mensagem || '', contexto, historico }, signal);
+    recordAI('mentor', 'ok', { user });
+    return reply;
   } catch (err) {
     if (signal?.aborted) throw err;
+    recordAI('mentor', 'erro', { erro: `${provider.id}: ${err.message}`, user });
     console.error(`[mentor] IA indisponível (${provider.id}): ${err.message}`);
     const r = await guidedReply(user, { mensagem, acao, contexto, historico });
     return { ...r, aviso: 'A IA está indisponível agora: respondi pelo Modo Guiado, com os seus dados reais.' };

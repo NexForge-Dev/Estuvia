@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { users, audit, newId } from '../store.js';
-import { hashPassword, verifyPassword, issueSession, clearSession, requireAuth, authLimiter, DUMMY_HASH } from '../security.js';
+import { hashPassword, verifyPassword, issueSession, clearSession, requireAuth, authLimiter, DUMMY_HASH, clientInfo } from '../security.js';
 import { publicUser } from './me.js';
 
 const router = Router();
@@ -52,7 +52,7 @@ router.post('/register', authLimiter, async (req, res) => {
     documents: {},
     budget: [],
   });
-  await audit.log({ action: 'register', userId: user.id });
+  await audit.log({ action: 'register', userId: user.id, ...clientInfo(req) });
   issueSession(res, user);
   res.status(201).json({ user: publicUser(user) });
 });
@@ -65,10 +65,14 @@ router.post('/login', authLimiter, async (req, res) => {
   const user = users.findByEmail(email);
   const ok = await verifyPassword(senha, user ? user.passwordHash : DUMMY_HASH);
   if (!user || !ok) {
-    await audit.log({ action: 'login-failed', email: email.toLowerCase() });
+    await audit.log({ action: 'login-failed', email: email.toLowerCase(), ...clientInfo(req) });
     return res.status(401).json({ error: 'E-mail ou senha incorretos.' });
   }
-  await audit.log({ action: 'login', userId: user.id });
+  if (user.blocked) {
+    await audit.log({ action: 'login-blocked', userId: user.id, ...clientInfo(req) });
+    return res.status(403).json({ error: 'Sua conta está suspensa. Fale com a equipe Estuvia.' });
+  }
+  await audit.log({ action: 'login', userId: user.id, ...clientInfo(req) });
   issueSession(res, user);
   res.json({ user: publicUser(user) });
 });

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { users, audit } from '../store.js';
-import { requireAuth, clearSession, verifyPassword, isModerator } from '../security.js';
+import { requireAuth, clearSession, verifyPassword, isModerator, isAdmin } from '../security.js';
 import { communityExport, purgeCommunityUser } from './community.js';
 import { forgetUser, exportUser } from '../radar/service.js';
 import { purgeUserDocuments } from './documents.js';
@@ -22,6 +22,7 @@ export function publicUser(u) {
     choices: u.choices || [],
     documents: u.documents || {},
     moderador: isModerator(u),
+    admin: isAdmin(u),
   };
 }
 

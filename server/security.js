@@ -57,12 +57,49 @@ export function requireAuth(req, res, next) {
     const user = users.findById(payload.sub);
     // tokenVersion permite invalidar todas as sessões (logout geral / troca de senha).
     if (!user || user.tokenVersion !== payload.v) throw new Error('sessão inválida');
+    if (user.blocked) {
+      clearSession(res);
+      return res.status(403).json({ error: 'Sua conta está suspensa. Fale com a equipe Estuvia.' });
+    }
     req.user = user;
+    trackActivity(req, user);
     next();
   } catch {
     clearSession(res);
     res.status(401).json({ error: 'Sessão expirada. Entre novamente.' });
   }
+}
+
+// ---------- Atividade (painel admin: quem está acessando) ----------
+
+export const clientInfo = (req) => ({
+  ip: String(req.ip || req.socket?.remoteAddress || '').replace(/^::ffff:/, '').slice(0, 64),
+  ua: String(req.get('User-Agent') || '').slice(0, 200),
+});
+
+// Grava no máximo uma vez por minuto por usuário (evita escrever na base a cada requisição).
+const TOUCH_MS = 60 * 1000;
+function trackActivity(req, user) {
+  const now = Date.now();
+  if (user.lastSeenAt && now - Date.parse(user.lastSeenAt) < TOUCH_MS) return;
+  const { ip, ua } = clientInfo(req);
+  const today = new Date(now).toISOString().slice(0, 10);
+  users.touch(user.id, (u) => {
+    // Nova "visita" quando volta após 30 min sem atividade.
+    if (!u.lastSeenAt || now - Date.parse(u.lastSeenAt) > 30 * 60 * 1000) u.visits = (u.visits || 0) + 1;
+    u.lastSeenAt = new Date(now).toISOString();
+    u.lastIp = ip;
+    u.lastUserAgent = ua;
+    u.activeDays = [...new Set([...(u.activeDays || []), today])].slice(-60);
+  }).catch(() => {});
+}
+
+// Administrador: papel gravado no usuário ou e-mail definido em ADMIN_EMAIL.
+export const isAdmin = (user) => user?.role === 'admin' || (!!config.adminEmail && user?.email === config.adminEmail);
+
+export function requireAdmin(req, res, next) {
+  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Área restrita ao administrador.' });
+  next();
 }
 
 // Moderação da comunidade: papel gravado no usuário ou e-mail listado em MODERATOR_EMAILS.

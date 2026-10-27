@@ -120,6 +120,8 @@ const routes = [
   { path: /^\/oportunidades$/, view: lazy('./views/radar.js', 'radarView'), auth: true },
   { path: /^\/oportunidades\/([\w-]+)$/, view: lazy('./views/radar.js', 'radarDetailView'), auth: true },
   { path: /^\/radar\/admin$/, view: lazy('./views/radar-admin.js', 'radarAdminView'), auth: true },
+  { path: /^\/admin$/, view: lazy('./views/admin.js', 'adminView'), auth: true },
+  { path: /^\/admin\/aluno\/([\w-]+)$/, view: lazy('./views/admin.js', 'adminStudentView'), auth: true },
   { path: /^\/conquistas$/, view: lazy('./achievements.js', 'achievementsView'), auth: true },
   { path: /^\/comunidade(?:\/(post|grupos|grupo|radar|salvos|oportunidades|moderacao|missao)(?:\/([\w.-]+))?)?$/, view: lazy('./views/community.js', 'communityView'), auth: true },
 ];
@@ -128,6 +130,29 @@ const routes = [
 export async function checkAchievements() {
   try { (await import('./achievements.js')).checkAchievements?.(); } catch { /* módulo opcional */ }
 }
+
+// A conta de administrador só enxerga o painel admin (nada de jornada, agenda, finanças…).
+const isAdminMode = () => !!state.me?.user?.admin;
+
+// Uso por módulo (painel admin): avisa o servidor a cada tela aberta e quanto tempo ficou na anterior.
+let lastView = null;
+function trackView(path) {
+  if (!state.me || isAdminMode()) return;
+  const now = Date.now();
+  const prev = lastView ? { path: lastView.path, ms: now - lastView.at } : undefined;
+  lastView = { path, at: now };
+  api.post('/track', { path, prev }).catch(() => {});
+}
+document.addEventListener('visibilitychange', () => {
+  if (!lastView) return;
+  if (document.visibilityState === 'hidden') {
+    const body = JSON.stringify({ path: '', prev: { path: lastView.path, ms: Date.now() - lastView.at } });
+    fetch('/api/track', { method: 'POST', keepalive: true, credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'travessia' }, body }).catch(() => {});
+    lastView.at = Infinity; // tempo com a aba escondida não conta
+  } else {
+    lastView.at = Date.now();
+  }
+});
 
 export const go = (path) => { location.hash = `#${path}`; };
 export const currentPath = () => location.hash.replace(/^#/, '').split('#')[0] || '/';
@@ -141,11 +166,14 @@ async function render() {
   if (!route) return mount(main, emptyState('Página não encontrada', 'O endereço que você abriu não existe.', h('a', { href: '#/', class: 'btn' }, 'Ir para o início')));
   if (route.auth && !state.me) return go('/entrar');
   if (route.guestOnly && state.me) return go('/');
+  if (isAdminMode() && !/^\/admin(\/|$)/.test(path)) return go('/admin');
   await loadPrivateContent();
   const params = path.match(route.path).slice(1);
   state.route = { path, params };
   renderNav();
-  mountMentorLauncher();
+  if (!isAdminMode()) mountMentorLauncher();
+  else document.getElementById('assistant-root')?.replaceChildren();
+  trackView(path);
 
   const slow = setTimeout(() => mount(main, skeleton()), 120);
   try {
@@ -203,6 +231,8 @@ const NAV_MORE = [
   { href: '/assistente', label: 'Mentor IA', icon: 'chat' },
   { href: '/manual', label: 'Manual', icon: 'book' },
 ];
+// Só aparece para a conta de administrador (ADMIN_EMAIL no .env).
+const NAV_ADMIN = { href: '/admin', label: 'Painel admin', icon: 'shield' };
 
 function renderNav() {
   const path = currentPath();
@@ -210,8 +240,13 @@ function renderNav() {
   const foot = document.getElementById('sidebar-foot');
   const top = document.getElementById('topbar-actions');
   const tabbar = document.getElementById('tabbar');
-  document.body.classList.toggle('has-tabbar', !!state.me);
-  if (state.me) {
+  document.body.classList.toggle('has-tabbar', !!state.me && !isAdminMode());
+  if (isAdminMode()) {
+    tabbar.hidden = true;
+    mount(nav, h('ul', {}, h('li', {}, h('a', { href: '#/admin', class: 'active', 'aria-current': path === '/admin' ? 'page' : false }, icon(NAV_ADMIN.icon, { size: 18 }), h('span', {}, NAV_ADMIN.label)))));
+    mount(foot, h('button', { class: 'btn btn-ghost btn-block', type: 'button', onClick: logout }, 'Sair'));
+    mount(top, h('button', { class: 'btn btn-sm btn-ghost', type: 'button', onClick: logout }, 'Sair'));
+  } else if (state.me) {
     const p = state.me.user.profile;
     const isActive = (n) => (n.match ? n.match(path) : path.startsWith(n.href));
     const item = (n) => {
@@ -256,6 +291,7 @@ function closeSidebar() {
 
 export async function logout() {
   await api.post('/auth/logout').catch(() => {});
+  lastView = null;
   state.me = null;
   state.content.privado = false;
   invalidate();
