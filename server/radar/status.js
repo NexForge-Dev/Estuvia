@@ -83,7 +83,7 @@ export function opportunityState(o, windows, events, health = {}, channel = null
   return { ...base, estado: 'nao-anunciado' };
 }
 
-/** Próximos marcos oficiais (para cards, alertas e Agenda AI). */
+/** Próximos marcos oficiais (para cards, alertas e Agenda). */
 export function upcoming(windows, events, now = Date.now(), limit = 5) {
   const today = todayMadrid(new Date(now));
   const items = [

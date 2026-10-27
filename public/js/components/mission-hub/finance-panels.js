@@ -5,7 +5,7 @@ import { icon } from '../../icons.js';
 import { api } from '../../api.js';
 import { hubIcon } from './hub-icons.js';
 
-export const eur = (v) => (v === null || v === undefined ? '—' : `€ ${Math.round(v).toLocaleString('pt-BR')}`);
+export const eur = (v) => (v === null || v === undefined ? '-' : `€ ${Math.round(v).toLocaleString('pt-BR')}`);
 const plan = async () => api.get('/finance');
 // A CSP bloqueia o atributo style inline: a largura é aplicada via CSSOM.
 const fill = (attrs, pct) => { const el = h('span', attrs); el.style.width = `${Math.max(0, Math.min(100, pct))}%`; return el; };
@@ -45,9 +45,9 @@ export async function SimulatorPanel(m, ctx, hub) {
           stat('Por mês', eur(f.mensal), { note: `× ${f.meses} meses` }),
           stat('Total estimado', eur(f.orcamento), { tone: 'is-main' }))
       : h('div', { class: 'mh-empty' }, hubIcon('calculator', { size: 28 }), h('p', {}, 'Ainda não calculamos o custo da sua jornada. Começamos com estimativas da Estuvia para a sua cidade e você ajusta o que souber.'),
-          h('button', { type: 'button', class: 'btn btn-cta', onClick: start }, icon('sparkles', { size: 16 }), ' Calcular minha estimativa')),
+          h('button', { type: 'button', class: 'btn btn-cta', onClick: start }, icon('euro', { size: 16 }), ' Calcular minha estimativa')),
     f.planoIniciado && f.parcial ? notice(`Ainda faltam ${f.faltamInformar.length} item(ns) sem valor (ex.: matrícula, seguro). Eles não entram como zero: complete no simulador.`, 'clock') : null,
-    h('p', { class: 'hint' }, 'Valores são estimativas — não são taxas oficiais. A comprovação do visto é outra coisa (veja "Comprovação financeira").'),
+    h('p', { class: 'hint' }, 'Valores são estimativas, não são taxas oficiais. A comprovação do visto é outra coisa (veja "Comprovação financeira").'),
     h('div', { class: 'row wrap' }, linkBtn(f.planoIniciado ? 'Ajustar no simulador completo' : 'Abrir simulador completo', '#/financiamento', 'btn btn-cta'), hub.button('Quanto preciso comprovar?', 'comprovacao')));
   return host;
 }
@@ -62,9 +62,9 @@ export async function ProofPanel(m) {
     h('div', { class: 'mh-abc' },
       h('div', { class: 'mh-abc-item a' }, h('span', { class: 'mh-abc-tag' }, 'A'), h('small', {}, 'Precisa comprovar (visto)'), h('strong', {}, eur(v.valor)),
         h('p', {}, `${Math.round(f.iprem.percentual * 100)}% do IPREM (€ ${f.iprem.mensal}/mês${f.iprem.aproximado ? ', valor aproximado' : ''}) × ${f.meses} meses.`)),
-      h('div', { class: 'mh-abc-item b' }, h('span', { class: 'mh-abc-tag' }, 'B'), h('small', {}, 'Custo real da mudança'), h('strong', {}, f.planoIniciado ? eur(f.orcamento) : '—'),
+      h('div', { class: 'mh-abc-item b' }, h('span', { class: 'mh-abc-tag' }, 'B'), h('small', {}, 'Custo real da mudança'), h('strong', {}, f.planoIniciado ? eur(f.orcamento) : '-'),
         h('p', {}, f.planoIniciado ? `Sua estimativa${f.parcial ? ' (ainda parcial)' : ''}. Pode ser maior ou menor que A.` : 'Ainda não calculado no simulador.')),
-      h('div', { class: 'mh-abc-item c' }, h('span', { class: 'mh-abc-tag' }, 'C'), h('small', {}, 'Seu dinheiro garantido'), h('strong', {}, f.informouRecursos ? eur(f.confirmados) : '—'),
+      h('div', { class: 'mh-abc-item c' }, h('span', { class: 'mh-abc-tag' }, 'C'), h('small', {}, 'Seu dinheiro garantido'), h('strong', {}, f.informouRecursos ? eur(f.confirmados) : '-'),
         h('p', {}, f.informouRecursos ? (f.previstos ? `+ ${eur(f.previstos)} prometidos ou solicitados (não contam).` : 'Só conta o que já é seu ou foi concedido.') : 'Você ainda não informou.'))),
     f.informouRecursos
       ? h('div', { class: 'mh-meter' }, h('div', { class: 'bar' }, fill({ class: 'bar-fill' }, v.cobertoPct * 100)), h('small', {}, v.falta ? `Para a comprovação, faltam ${eur(v.falta)} (estimativa).` : 'Seu dinheiro garantido cobre a referência do visto.'))
@@ -97,8 +97,8 @@ export async function MissionResourcePanel(m, ctx, hub) {
     const form = choice ? resourceForm(choice) : null;
     mount(host,
       h('div', { class: 'mh-stats' },
-        stat('Garantido', f.informouRecursos ? eur(f.confirmados) : '—', { tone: 'is-ok', note: 'já é seu ou foi concedido' }),
-        stat('Previsto', f.informouRecursos ? eur(f.previstos) : '—', { tone: 'is-warn', note: 'prometido ou a confirmar (não conta)' })),
+        stat('Garantido', f.informouRecursos ? eur(f.confirmados) : '-', { tone: 'is-ok', note: 'já é seu ou foi concedido' }),
+        stat('Previsto', f.informouRecursos ? eur(f.previstos) : '-', { tone: 'is-warn', note: 'prometido ou a confirmar (não conta)' })),
       !f.informouRecursos ? h('p', { class: 'mh-lead' }, 'Você já tem dinheiro para comprovar seus estudos?') : h('p', { class: 'mh-lead' }, 'Quer registrar mais alguma fonte?'),
       h('div', { class: 'mh-choices' }, KINDS.map((k) => h('button', { type: 'button', class: `mh-choice ${choice?.id === k.id ? 'on' : ''}`, 'aria-pressed': String(choice?.id === k.id), onClick: () => draw(k) }, hubIcon(k.ic, { size: 20 }), h('span', {}, k.rotulo))),
         !f.informouRecursos ? h('button', { type: 'button', class: 'mh-choice', onClick: async () => { try { await api.put('/finance', { informouRecursos: true }); hub.dirty(); toast('Registrado: por enquanto você não tem recursos. Isso é diferente de "não informado".', 'ok'); draw(); } catch (e) { toast(e.message, 'err'); } } }, icon('minus', { size: 20 }), h('span', {}, 'Ainda não tenho nada')) : null),
@@ -129,7 +129,7 @@ export async function MissionResourcePanel(m, ctx, hub) {
       const v = Number(valor.value);
       if (!Number.isFinite(v) || v < 0) return toast('Informe um valor.', 'err');
       try {
-        await api.post('/finance/resources', { tipo: k.tipo, descricao: quem?.value.trim() ? `${k.descricao} — ${quem.value.trim()}` : k.descricao, valor: v, moeda: moeda.value, status: status ? status.value : k.status, ...(quem?.value.trim() ? { apoiador: quem.value.trim() } : {}) });
+        await api.post('/finance/resources', { tipo: k.tipo, descricao: quem?.value.trim() ? `${k.descricao} - ${quem.value.trim()}` : k.descricao, valor: v, moeda: moeda.value, status: status ? status.value : k.status, ...(quem?.value.trim() ? { apoiador: quem.value.trim() } : {}) });
         hub.dirty();
         toast('Recurso registrado.', 'ok');
         draw();
@@ -146,7 +146,7 @@ export async function MissionResourcePanel(m, ctx, hub) {
 export async function AlternativesPanel(m, ctx, hub) {
   const { plano: f } = await plan();
   if (!f.informouRecursos) {
-    return h('div', { class: 'stack' }, h('div', { class: 'mh-empty' }, hubIcon('piggy', { size: 28 }), h('p', {}, 'Para eu saber quanto falta, primeiro me diga quanto você já tem — mesmo que seja zero.'), hub.button('Registrar meu dinheiro', 'dinheiro', 'btn btn-cta')),
+    return h('div', { class: 'stack' }, h('div', { class: 'mh-empty' }, hubIcon('piggy', { size: 28 }), h('p', {}, 'Para eu saber quanto falta, primeiro me diga quanto você já tem, mesmo que seja zero.'), hub.button('Registrar meu dinheiro', 'dinheiro', 'btn btn-cta')),
       h('p', { class: 'small muted' }, 'Enquanto isso, você já pode olhar as bolsas.'), hub.button('Ver bolsas disponíveis', 'bolsas'));
   }
   if (!f.caminhos.length) return h('div', { class: 'mh-empty ok' }, icon('check', { size: 28 }), h('p', {}, 'Pelos seus dados, o dinheiro garantido cobre o plano. Confirme com o consulado quais comprovantes ele aceita.'));
@@ -176,7 +176,7 @@ export async function ScholarshipsPanel(m, ctx, hub) {
           h('div', { class: 'mh-schol-top' }, h('strong', {}, s.nome), h('span', { class: `mh-pill ${tone}` }, d.statusBolsa[s.status])),
           h('small', { class: 'muted' }, s.entidade), h('p', {}, s.financia || s.abrangencia),
           h('div', { class: 'row wrap' },
-            s.status === 'encerrada' ? null : h('button', { type: 'button', class: 'btn btn-ghost btn-sm', disabled: Boolean(app), onClick: async () => { try { await api.post('/finance/scholarships', { catalogId: s.id }); hub.dirty(); toast('Bolsa salva — tarefas criadas na Agenda AI.', 'ok'); draw(); } catch (e) { toast(e.message, 'err'); } } }, app ? `Acompanhando (${app.status})` : 'Acompanhar'),
+            s.status === 'encerrada' ? null : h('button', { type: 'button', class: 'btn btn-ghost btn-sm', disabled: Boolean(app), onClick: async () => { try { await api.post('/finance/scholarships', { catalogId: s.id }); hub.dirty(); toast('Bolsa salva, tarefas criadas na Agenda.', 'ok'); draw(); } catch (e) { toast(e.message, 'err'); } } }, app ? `Acompanhando (${app.status})` : 'Acompanhar'),
             s.url ? h('a', { class: 'btn btn-ghost btn-sm', href: s.url, target: '_blank', rel: 'noopener noreferrer' }, 'Site oficial ', icon('external', { size: 12 })) : null));
       })),
       h('p', { class: 'hint' }, 'Nenhuma bolsa cobre automaticamente o seu mestrado: a elegibilidade é do edital vigente. Bolsa só entra no seu dinheiro quando for concedida.'),

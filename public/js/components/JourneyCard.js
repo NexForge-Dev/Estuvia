@@ -57,7 +57,7 @@ export function JourneyCard(j, { onRemove } = {}) {
 
 export function NewJourneyCard({ disabled } = {}) {
   return h(disabled ? 'div' : 'a', { class: `journey-card journey-new ${disabled ? 'is-disabled' : ''}`, href: disabled ? null : '#/jornadas/nova' },
-    h('span', { class: 'jn-plus' }, icon('sparkles', { size: 28 })),
+    h('span', { class: 'jn-plus' }, icon('compass', { size: 28 })),
     h('h3', {}, 'Nova jornada'),
     h('p', { class: 'muted' }, disabled ? 'Você atingiu o limite de jornadas.' : 'Planeje outro destino: cada jornada tem rodadas, missões e progresso próprios.'),
   );

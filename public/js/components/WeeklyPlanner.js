@@ -1,4 +1,4 @@
-// Agenda AI — calendário com visão de semana e de dia (padrão no celular), linha da hora atual,
+// Agenda — calendário com visão de semana e de dia (padrão no celular), linha da hora atual,
 // clicar-e-arrastar para criar, arrastar para reagendar, puxar a borda para mudar a duração,
 // filtros por categoria, proposta automática (aprovar/editar) e replanejamento. Nunca conclui missões.
 import { h, mount, toast } from '../ui.js';
@@ -92,7 +92,7 @@ export function WeeklyPlanner({ initialWeek, autoOrganize = false } = {}) {
         h('h2', { class: 'wp-week' }, label)),
       h('div', { class: 'wp-actions' },
         h('div', { class: 'wp-seg', role: 'group', 'aria-label': 'Visão' }, viewBtn('dia', 'Dia'), viewBtn('semana', 'Semana')),
-        h('button', { class: 'btn btn-ghost', type: 'button', id: 'organizar', onClick: organize }, icon('sparkles', { size: 16 }), h('span', { class: 'wp-hide-sm' }, 'Organizar com IA')),
+        h('button', { class: 'btn btn-ghost', type: 'button', id: 'organizar', onClick: organize }, icon('calendar', { size: 16 }), h('span', { class: 'wp-hide-sm' }, 'Organizar semana')),
         h('button', { class: 'btn btn-cta', type: 'button', onClick: () => newAt(view === 'dia' ? day : weekDays().find((d) => d >= todayIso()) || week) }, icon('calendar', { size: 16 }), 'Novo')));
   }
 
@@ -142,7 +142,7 @@ export function WeeklyPlanner({ initialWeek, autoOrganize = false } = {}) {
     madrid.addEventListener('change', () => { showMadrid = madrid.checked; draw(); });
     const body = [
       h('label', { class: 'check' }, madrid, h('span', {}, 'Mostrar também o horário da Espanha')),
-      h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onClick: replan }, icon('refresh', { size: 14 }), 'Replanejar a semana com IA'),
+      h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onClick: replan }, icon('refresh', { size: 14 }), 'Replanejar a semana'),
       av ? availabilityForm(av) : null,
     ];
     const box = h('details', { class: 'wp-settings' },
@@ -167,7 +167,7 @@ export function WeeklyPlanner({ initialWeek, autoOrganize = false } = {}) {
       h('div', { class: 'grid-2 tight' },
         h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Prefiro atividades'), h('select', { name: 'preferencia' }, [['curtas', 'Curtas (até 45 min)'], ['longas', 'Longas (até 2 h)']].map(([v, l]) => h('option', { value: v, selected: v === av.preferencia }, l)))),
         h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Meu fuso horário'), h('select', { name: 'fuso' }, FUSOS.map(([v, l]) => h('option', { value: v, selected: v === av.fuso }, l))))),
-      h('p', { class: 'hint' }, 'Horários de trabalho e estudo já ocupados? Cadastre-os como compromissos: a Agenda AI não sugere nada por cima deles.'),
+      h('p', { class: 'hint' }, 'Horários de trabalho e estudo já ocupados? Cadastre-os como compromissos: a Agenda não sugere nada por cima deles.'),
       h('button', { class: 'btn btn-ghost', type: 'submit' }, 'Salvar disponibilidade'));
     f.addEventListener('submit', async (ev) => {
       ev.preventDefault();
@@ -188,7 +188,7 @@ export function WeeklyPlanner({ initialWeek, autoOrganize = false } = {}) {
     const height = Math.max(20, dur * PX_PER_MIN - 2);
     const cat = CATEGORY[e.categoria] || CATEGORY.pessoal;
     const tag = e.missaoId ? ['target', `Missão ${e.missaoId.startsWith('9.') ? `F.${e.missaoId.split('.')[1]}` : e.missaoId}`]
-      : e.origem === 'mentor' ? ['sparkles', 'Mentor'] : e.origem === 'viagem' ? ['plane', 'Viagem'] : e.origem === 'documentos' ? ['file', 'Documentos'] : e.motivo === 'Meu Novo Lar' ? ['home2', 'Meu Novo Lar'] : null;
+      : e.origem === 'mentor' ? ['chat', 'Mentor'] : e.origem === 'viagem' ? ['plane', 'Viagem'] : e.origem === 'documentos' ? ['file', 'Documentos'] : e.motivo === 'Meu Novo Lar' ? ['home2', 'Meu Novo Lar'] : null;
     const time = `${e.inicio}–${e.fim}${showMadrid ? ` · ${madridTime(e.data, e.inicio, fuso())} Madri` : ''}`;
     const el = h(proposed ? 'div' : 'button', {
       type: proposed ? null : 'button',
@@ -368,7 +368,7 @@ export function WeeklyPlanner({ initialWeek, autoOrganize = false } = {}) {
     // Linha de prazos só aparece quando há prazo nos dias visíveis.
     const allDay = deadlines.some((x) => x.length) ? h('div', { class: 'wp-allday' }, h('span', {}, icon('flag', { size: 12 })),
       deadlines.map((list) => h('div', { class: 'wp-allday-cell' }, list.map((x) =>
-        h('button', { type: 'button', class: `wp-deadline ${x.tipo}`, title: `${x.rotulo || x.titulo} — ${x.tipo === 'prazo-oficial' ? 'prazo oficial (regra cadastrada)' : 'prazo declarado por você'}`, onClick: () => x.missaoId && x.journeyId && go(`/j/${x.journeyId}/m/${x.missaoId}`) },
+        h('button', { type: 'button', class: `wp-deadline ${x.tipo}`, title: `${x.rotulo || x.titulo} - ${x.tipo === 'prazo-oficial' ? 'prazo oficial (regra cadastrada)' : 'prazo declarado por você'}`, onClick: () => x.missaoId && x.journeyId && go(`/j/${x.journeyId}/m/${x.missaoId}`) },
           icon(x.tipo === 'prazo-oficial' ? 'shield' : 'flag', { size: 11 }), h('span', {}, x.titulo)))))) : null;
 
     const hours = h('div', { class: 'wp-hours', 'aria-hidden': 'true' }, Array.from({ length: END_H - START_H }, (_, i) => h('span', {}, i ? `${String(START_H + i).padStart(2, '0')}:00` : '')));
@@ -421,18 +421,18 @@ export function WeeklyPlanner({ initialWeek, autoOrganize = false } = {}) {
     return h('div', { class: 'wp-proposal panel' },
       h('div', { class: 'row between wrap' },
         h('div', {},
-          h('h3', { class: 'panel-title' }, icon('sparkles', { size: 18 }), 'Proposta da Agenda AI'),
+          h('h3', { class: 'panel-title' }, icon('calendar', { size: 18 }), 'Sugestão para a semana'),
           h('p', { class: 'muted small' }, `${proposal.proposta.length} bloco(s) · ${Math.round(proposal.resumo.planejadoMin / 60 * 10) / 10}h de ${Math.round(proposal.resumo.metaMin / 60 * 10) / 10}h da sua meta. Os blocos tracejados ainda não foram salvos: remova o que não quiser e aprove.`)),
         h('div', { class: 'row' },
           h('button', { class: 'btn btn-ghost', type: 'button', onClick: () => { proposal = null; draw(); } }, 'Descartar'),
           h('button', { class: 'btn btn-cta', type: 'button', disabled: !proposal.proposta.length, onClick: approve }, icon('check', { size: 16 }), 'Aprovar'))),
-      proposal.removidos?.length ? h('div', { class: 'notice' }, h('strong', {}, 'Replanejamento: '), `${proposal.removidos.length} bloco(s) removido(s) — `, proposal.removidos.map((r) => `${r.titulo} (${r.motivo})`).join('; ')) : null,
+      proposal.removidos?.length ? h('div', { class: 'notice' }, h('strong', {}, 'Replanejamento: '), `${proposal.removidos.length} bloco(s) removido(s): `, proposal.removidos.map((r) => `${r.titulo} (${r.motivo})`).join('; ')) : null,
       proposal.proposta.length ? h('ol', { class: 'wp-plist' }, proposal.proposta.map((p) => h('li', {},
         h('span', { class: `wp-dot ${CATEGORY[p.categoria]?.cls}` }), h('strong', {}, `${fmtDay(p.data, { weekday: 'short', day: '2-digit' })} ${p.inicio}`), ` ${p.titulo} `,
         h('span', { class: 'muted small' }, `· ${PRIORITY[p.prioridade] || 'Normal'} · ${p.motivo || ''}`))))
         : h('p', { class: 'muted' }, 'Não há horários livres nesta semana pela sua disponibilidade, ou não há missões disponíveis. Ajuste sua disponibilidade em "Ajustes" ou escolha outra semana.'),
-      proposal.naoAgendadas?.length ? h('details', {}, h('summary', {}, `${proposal.naoAgendadas.length} tarefa(s) não couberam nesta semana`), h('ul', {}, proposal.naoAgendadas.map((n) => h('li', {}, `${n.titulo} — ${PRIORITY[n.prioridade]}${n.prazo ? ` · prazo ${n.prazo}` : ''}`)))) : null,
-      h('p', { class: 'hint' }, 'A Agenda AI sugere, organiza e lembra. Ela não marca missões como concluídas quando o horário passa: só você conclui uma missão.'));
+      proposal.naoAgendadas?.length ? h('details', {}, h('summary', {}, `${proposal.naoAgendadas.length} tarefa(s) não couberam nesta semana`), h('ul', {}, proposal.naoAgendadas.map((n) => h('li', {}, `${n.titulo} - ${PRIORITY[n.prioridade]}${n.prazo ? ` · prazo ${n.prazo}` : ''}`)))) : null,
+      h('p', { class: 'hint' }, 'A Agenda sugere, organiza e lembra. Ela não marca missões como concluídas quando o horário passa: só você conclui uma missão.'));
   }
 
   async function organize() {

@@ -296,7 +296,7 @@ export function computeFinance(user, jr, now = new Date()) {
   };
 }
 
-// Compromissos financeiros com data (para a Agenda AI): itens com vencimento ainda não pagos.
+// Compromissos financeiros com data (para a Agenda): itens com vencimento ainda não pagos.
 export function financialDeadlines(user) {
   const fin = ensureFinance(user);
   return Object.entries(fin.itens).filter(([id, i]) => i?.vencimento && i.status !== 'pago' && itemById(id))

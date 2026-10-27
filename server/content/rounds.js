@@ -12,7 +12,7 @@
 //   regra                          — aplicabilidade (requisito do programa, perfil ou situação)
 //   condicional / condicaoTexto    — o estudante pode marcar "não se aplica" após conferir
 //   opcional                       — recomendação: não conta como pendência se não for iniciada
-//   prioridade: alta|media|baixa, tempoEstimado, duracaoMin (Agenda AI), documentos[], fontes[]
+//   prioridade: alta|media|baixa, tempoEstimado, duracaoMin (Agenda), documentos[], fontes[]
 //   tag, criterio, prazo, marco, acoes[], ferramenta
 
 const SITUACAO = {
@@ -344,7 +344,7 @@ export const ROUNDS = [
         resumo: 'Consulte o resultado e registre a sua situação.', objetivo: 'Saber o resultado e agir conforme a situação.',
         porque: 'Admitido, lista de espera, não admitido e "exige ação" pedem ações diferentes — às vezes com prazo curto.',
         comoExecutar: [
-          { titulo: 'Datas', texto: 'Cadastre as datas de publicação da sua fase no campo "Prazo" para a Agenda AI lembrar você.' },
+          { titulo: 'Datas', texto: 'Cadastre as datas de publicação da sua fase no campo "Prazo" para a Agenda lembrar você.' },
           { titulo: 'Enquanto aguarda', texto: 'Adiante a trilha financeira, o dossiê do visto (Rodada 5) e a pesquisa de moradia.' },
         ],
         objetivos: [{ id: 'datas', texto: 'Cadastrar a data de publicação dos resultados (campo "Prazo")' }, { id: 'situacao', texto: 'Resultado da adjudicação', tipo: 'situacao', campo: 'adjudicacao', concluiQuandoNao: ['nao-enviada', 'aguardando'] }],
@@ -564,7 +564,7 @@ export const ROUNDS = [
       { id: '7.4', titulo: 'Ativar os acessos acadêmicos', resumo: 'E-mail institucional, plataformas e cartão universitário.', objetivo: 'Acessos acadêmicos ativos.', porque: 'Comunicações do mestrado chegam pelos canais institucionais.',
         objetivos: [{ id: 'email', texto: 'Ativar o e-mail institucional' }, { id: 'cartao', texto: 'Obter o cartão universitário' }], dependencias: ['7.3'], prioridade: 'media', tempoEstimado: '1 h', duracaoMin: 60, fontes: ['M'], tag: 'pratica', criterio: 'Acessos ativos.' },
       { id: '7.5', titulo: 'Conferir horários, disciplinas e início das aulas', resumo: 'Calendário acadêmico do mestrado.', objetivo: 'Calendário acadêmico organizado.', porque: 'Evita perder a primeira semana de aulas ou prazos internos.',
-        objetivos: [{ id: 'horarios', texto: 'Conferir horários e disciplinas' }, { id: 'agenda', texto: 'Registrar compromissos na Agenda AI' }], dependencias: ['7.4'], prioridade: 'media', tempoEstimado: '30 min', duracaoMin: 30, fontes: ['M'], tag: 'pratica', criterio: 'Calendário acadêmico conferido.' },
+        objetivos: [{ id: 'horarios', texto: 'Conferir horários e disciplinas' }, { id: 'agenda', texto: 'Registrar compromissos na Agenda' }], dependencias: ['7.4'], prioridade: 'media', tempoEstimado: '30 min', duracaoMin: 30, fontes: ['M'], tag: 'pratica', criterio: 'Calendário acadêmico conferido.' },
       { id: '7.6', titulo: 'Organizar telefone e conectividade', resumo: 'Número local e internet.', objetivo: 'Comunicação local resolvida.', porque: 'Muitos trâmites pedem número de telefone local.',
         objetivos: [{ id: 'chip', texto: 'Ativar um chip local' }], dependencias: ['7.1'], prioridade: 'media', tempoEstimado: '1 h', duracaoMin: 60, fontes: ['M'], tag: 'pratica', criterio: 'Chip ativo.', ferramenta: 'guia-cidade' },
       { id: '7.7', titulo: 'Organizar meios de pagamento e banco', resumo: 'Conta e cartões para o dia a dia.', objetivo: 'Finanças locais organizadas.', porque: 'Pagar aluguel e serviços com conta local costuma ser mais simples.',

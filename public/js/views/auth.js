@@ -26,7 +26,7 @@ export function loginView() {
     try {
       await api.post('/auth/login', formData(form));
       await refreshMe();
-      toast(`Que bom te ver de novo, ${state.me.user.profile.apelido}! 💛`, 'ok');
+      toast(`Oi de novo, ${state.me.user.profile.apelido}.`, 'ok');
       go('/');
     } catch (ex) {
       showError(err, ex.message);
@@ -66,7 +66,7 @@ export function registerView() {
     try {
       await api.post('/auth/register', data);
       await refreshMe();
-      toast('Bem-vindo(a) à família! 🎉 Sua jornada começou.', 'ok');
+      toast('Conta criada. Sua jornada já está pronta.', 'ok');
       go('/jornadas/nova');
     } catch (ex) {
       showError(err, ex.message);

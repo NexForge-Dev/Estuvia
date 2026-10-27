@@ -196,7 +196,7 @@ router.put('/scholarships/:id', async (req, res) => {
   const { tarefa, ...fields } = parsed.data;
   res.json(await save(req, (u) => {
     const app = u.scholarshipApps.find((a) => a.id === req.params.id);
-    // Bolsa concedida: cria as tarefas de aceite e comprovação (Situação C da Agenda AI).
+    // Bolsa concedida: cria as tarefas de aceite e comprovação (Situação C da Agenda).
     if (fields.status === 'concedida' && app.status !== 'concedida') {
       GRANTED_TASKS.forEach((texto) => { if (!app.tarefas.some((t) => t.texto === texto)) app.tarefas.push({ id: newId(), texto, feito: false }); });
     }

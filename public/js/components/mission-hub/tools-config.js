@@ -18,7 +18,7 @@ const T = {
   agenda: { painel: 'agenda', titulo: 'Meu planejamento', desc: 'Organize suas próximas atividades.', ic: 'calendarDays', cor: 'amarelo' },
   documentos: { painel: 'documentos', titulo: 'Meus documentos', desc: 'Situação de cada documento desta missão.', ic: 'file', cor: 'verde' },
   oficial: { painel: 'oficial', titulo: 'Site oficial', desc: 'Onde o procedimento é feito de verdade.', ic: 'globe', cor: 'azul' },
-  ajuda: { painel: 'ajuda', titulo: 'Preciso de ajuda', desc: 'O Mentor já conhece esta missão.', ic: 'sparkles', cor: 'roxo' },
+  ajuda: { painel: 'ajuda', titulo: 'Preciso de ajuda', desc: 'O Mentor já conhece esta missão.', ic: 'chat', cor: 'roxo' },
   entender: { painel: 'entender', titulo: 'Entender melhor', desc: 'Por quê, resultado esperado e erros comuns.', ic: 'book', cor: 'laranja' },
 };
 const tool = (id, extra = {}) => ({ id, ...T[id], ...extra });

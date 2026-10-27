@@ -11,13 +11,13 @@ export const QUIZ_KEY = 'estuvia:quiz';
 const FEATURES = [
   ['map', 'Jornada visual', 'Rodadas em cards e uma trilha de missões em zigue-zague, com dependências reais e trilhas paralelas.'],
   ['target', 'Missões executáveis', 'Cada missão é uma central: o que fazer numa frase, guia, documentos, prazos, link oficial e confirmação.'],
-  ['calendar', 'Agenda AI', 'Organiza sua semana com as missões certas, respeita seus horários e replaneja quando algo muda.'],
+  ['calendar', 'Agenda', 'Encaixa as missões na sua semana com as missões certas, respeita seus horários e replaneja quando algo muda.'],
   ['euro', 'Planejador financeiro', 'Separa o custo de preparar, o de morar lá e o que o visto exige comprovar. Mostra se o plano fecha.'],
   ['file', 'Documentos', 'Minha pasta com arquivos cifrados, carteira por etapa, status, validade e o que falta para cada envio.'],
   ['cap', 'Mestrados', 'Catálogo com filtros por cidade, área e duração, requisitos e até 6 opções salvas para comparar.'],
   ['home2', 'Meu novo lar', 'Compare moradias, confira antes de pagar com o checklist antifraude e ligue a escolha ao orçamento.'],
   ['plane', 'Minha viagem', 'Rotas cotadas pelo custo total, itinerário e uma chegada planejada passo a passo.'],
-  ['sparkles', 'Mentor IA', 'Conhece sua jornada, prazos e finanças. Cita fontes, não inventa requisitos e pede confirmação antes de agir.'],
+  ['chat', 'Mentor', 'Conhece sua jornada, prazos e finanças. Cita fontes, não inventa requisitos e pede confirmação antes de agir.'],
   ['globe', 'Radar de oportunidades', 'Acompanha fontes oficiais e avisa quando saem novas datas, editais e convocatórias.'],
   ['users', 'Comunidade', 'Pergunte a quem já passou pelo processo, num espaço moderado e focado na sua etapa.'],
   ['trophy', 'Conquistas', 'Marcos e conquistas que mostram o quanto você já avançou, para manter o ritmo até o fim.'],
@@ -29,7 +29,7 @@ const FAQ = [
   ['Preciso já saber qual mestrado quero?', 'Não. A Rodada 1 existe justamente para isso: explorar universidades, comparar programas e verificar se você atende aos requisitos antes de gastar com documentos.'],
   ['E se eu não tiver dinheiro guardado?', 'Você começa do mesmo jeito. A trilha "Como vou financiar meus estudos?" roda desde a Rodada 1: mostra quanto o projeto custa, quanto o visto exige comprovar, bolsas e caminhos alternativos. Sem promessas: só números com fonte.'],
   ['As informações são confiáveis?', 'Cada regra tem um selo: verificada em norma ou página oficial (com data de revisão), prática de quem já passou, estimativa com premissas explícitas ou pendente de confirmação. A Central de fontes reúne tudo.'],
-  ['O Mentor IA pode errar?', 'O Mentor responde com base na sua jornada e nas fontes da plataforma, cita de onde tirou cada informação e nunca executa uma ação sem a sua confirmação. Para decisões oficiais, confirme sempre na fonte indicada.'],
+  ['O Mentor pode errar?', 'O Mentor responde com base na sua jornada e nas fontes da plataforma, cita de onde tirou cada informação e nunca executa uma ação sem a sua confirmação. Para decisões oficiais, confirme sempre na fonte indicada.'],
   ['Meus documentos ficam seguros?', 'Os arquivos da Minha pasta ficam cifrados na sua conta e só você acessa. Guardar um documento na Estuvia não é validação oficial: universidade e consulado conferem os originais.'],
 ];
 
@@ -69,7 +69,7 @@ export async function landingView() {
     trust(),
     faq(),
     finalCta(primary, logged),
-    footer(appName),
+    footer(appName, logged),
     logged ? null : stickyBar(),
   );
   setupReveal(root);
@@ -81,7 +81,7 @@ export async function landingView() {
 function nav(logged, appName) {
   return h('header', { class: 'lp-nav' },
     h('div', { class: 'lp-wrap lp-nav-inner' },
-      h('a', { class: 'brand', href: '#/', 'aria-label': `${appName} — início` }, h('span', { class: 'brand-mark', 'aria-hidden': 'true' }), h('span', {}, appName)),
+      h('a', { class: 'brand', href: '#/', 'aria-label': `${appName}, início` }, h('span', { class: 'brand-mark', 'aria-hidden': 'true' }), h('span', {}, appName)),
       h('nav', { class: 'lp-links', 'aria-label': 'Seções da página' },
         anchor('video', 'Vídeo'), anchor('diagnostico', 'Onde você está'), anchor('rodadas', 'Rodadas'), anchor('mentor', 'Mentor'), anchor('perguntas', 'Perguntas')),
       h('div', { class: 'lp-nav-actions' },
@@ -92,15 +92,13 @@ function nav(logged, appName) {
 
 function hero(primary, logged) {
   return h('section', { class: 'lp-hero' },
-    h('div', { class: 'lp-glow lp-glow-a', 'aria-hidden': 'true' }),
-    h('div', { class: 'lp-glow lp-glow-b', 'aria-hidden': 'true' }),
-    h('div', { class: 'lp-wrap lp-hero-grid' },
+        h('div', { class: 'lp-wrap lp-hero-grid' },
       h('div', { class: 'lp-hero-copy' },
-        h('span', { class: 'lp-pill' }, icon('pin', { size: 14 }), 'Mestrado oficial na Espanha · começando por Granada'),
-        h('h1', {}, 'Seu mestrado na Espanha, ', h('span', { class: 'lp-grad' }, 'missão por missão.')),
-        h('p', { class: 'lp-lead' }, 'A Estuvia transforma o processo real — escolher o mestrado, candidatar-se no DUA, financiar, tirar o visto, mudar e se regularizar — numa jornada clara, com prazos, documentos, agenda inteligente e um mentor de IA ao seu lado.'),
+        h('span', { class: 'lp-pill' }, 'Mestrado oficial na Espanha, começando por Granada'),
+        h('h1', {}, 'Seu mestrado na Espanha, um passo de cada vez.'),
+        h('p', { class: 'lp-lead' }, 'Escolher o curso, se candidatar no DUA, juntar o dinheiro, tirar o visto, achar onde morar e se regularizar na chegada. A Estuvia põe tudo isso numa lista de passos, com os prazos oficiais e os documentos de cada um.'),
         h('div', { class: 'lp-ctas' }, primary(),
-          logged ? h('a', { href: '#/manual', class: 'btn btn-ghost btn-lg' }, 'Manual de referência')
+          logged ? null
             : h('a', { href: '#diagnostico', class: 'btn btn-ghost btn-lg', onClick: scrollTo('diagnostico') }, icon('target', { size: 16 }), 'Descobrir onde estou')),
         h('a', { href: '#video', class: 'lp-watch', onClick: (e) => { scrollTo('video')(e); playVideo(); } }, h('span', { class: 'lp-watch-icon' }, icon('play', { size: 14 })), 'Assistir ao vídeo', h('small', {}, '1 min 30')),
         h('ul', { class: 'lp-checks' },
@@ -116,9 +114,9 @@ function playableMock(logged) {
   ];
   const MENTOR = [
     'Faltam 12 dias para a 1ª fase do DUA. Quer reservar 2 h na quinta para o histórico?',
-    'Boa! Histórico pronto. Agora vale conferir se o seu mestrado exige certificado de idioma.',
+    'Histórico pronto. Agora vale conferir se o seu mestrado exige certificado de idioma.',
     'Idioma conferido. Última missão da rodada: organizar a documentação para o envio.',
-    'Rodada concluída! Agora imagine isso com a sua jornada real.',
+    'Rodada concluída. Na sua conta, a lista é montada para o seu caso.',
   ];
   let step = 0;
   const pctEl = h('span', {}, '38%');
@@ -126,7 +124,7 @@ function playableMock(logged) {
   const mentorText = h('p', {}, MENTOR[0]);
   const hint = h('span', { class: 'lp-mock-hint' }, icon('target', { size: 14 }), 'Toque na missão atual para concluí-la');
   const finale = h('div', { class: 'lp-mock-finale', hidden: true },
-    h('strong', {}, 'Rodada 2 concluída 🎉'),
+    h('strong', {}, 'Rodada 2 concluída'),
     h('p', {}, 'Assim é avançar na Estuvia: um passo claro de cada vez.'),
     logged ? h('a', { href: '#/', class: 'btn btn-cta' }, 'Ir para a minha jornada', icon('arrow', { size: 14 }))
       : h('a', { href: '#/cadastro', class: 'btn btn-cta' }, 'Criar a minha jornada', icon('arrow', { size: 14 })));
@@ -172,7 +170,7 @@ function playableMock(logged) {
         h('p', { class: 'lp-mock-label' }, 'Rodada 2 · Preparando minha candidatura'),
         h('ul', { class: 'lp-mm-list' }, items), hint, finale)),
     h('div', { class: 'lp-float lp-float-mentor', 'aria-live': 'polite' },
-      h('span', { class: 'lp-float-icon' }, icon('sparkles', { size: 16 })),
+      h('span', { class: 'lp-float-icon' }, icon('chat', { size: 16 })),
       h('div', {}, h('strong', {}, 'Mentor'), mentorText)),
     h('div', { class: 'lp-float lp-float-agenda', 'aria-hidden': 'true' },
       h('span', { class: 'lp-float-icon lp-ic-warn' }, icon('calendar', { size: 16 })),
@@ -183,9 +181,9 @@ function stats(nRounds) {
   const stat = (value, label) => h('div', { class: 'lp-stat' }, h('strong', {}, value), h('span', {}, label));
   return h('section', { class: 'lp-wrap lp-stats lp-reveal', 'aria-label': 'A plataforma em números' },
     stat(nRounds, 'rodadas até a estadia regularizada'),
-    stat('2 min', 'para gerar sua jornada personalizada'),
-    stat(FEATURES.length, 'módulos integrados numa só conta'),
-    stat('24/7', 'Mentor IA que conhece sua jornada'));
+    stat('2 min', 'para criar a conta e montar a jornada'),
+    stat(FEATURES.length, 'ferramentas na mesma conta'),
+    stat('Fonte', 'citada em cada regra'));
 }
 
 // ---------- Vídeo de apresentação (public/video, gerado em video/) ----------
@@ -204,7 +202,7 @@ function videoSection(primary) {
 
   return h('section', { class: 'lp-section lp-video-section', id: 'video' },
     h('div', { class: 'lp-wrap' },
-      sectionHead('Em 1 minuto e meio', 'Veja a Estuvia funcionando', 'Do sonho de estudar na Europa até a chegada em Granada: a jornada, o Mentor, a Agenda AI, as finanças e os documentos, em telas reais da plataforma.'),
+      sectionHead('Em 1 minuto e meio', 'Veja a Estuvia funcionando', 'Telas reais da plataforma: a jornada, o Mentor, a agenda, as finanças e os documentos.'),
       h('div', { class: 'lp-video lp-reveal' }, video, cover),
       h('div', { class: 'lp-ctas lp-ctas-center lp-reveal' }, primary('Quero começar a minha'))));
 }
@@ -260,7 +258,7 @@ function quiz(rounds, facts, logged) {
 
     return h('div', { class: 'lp-quiz-result' },
       h('span', { class: 'eyebrow' }, 'Seu ponto de partida'),
-      h('h3', {}, `Sua jornada começa na Rodada ${start}: `, h('span', { class: 'lp-grad' }, startRound.titulo)),
+      h('h3', {}, `Sua jornada começa na Rodada ${start}: `, startRound.titulo),
       h('ol', { class: 'lp-quiz-track', 'aria-label': 'Rodadas da sua jornada' }, rounds.map((r) => h('li', {
         class: r.numero < start ? 'is-done' : r.numero === start ? 'is-here' : '',
       }, h('span', {}, r.numero < start ? icon('check', { size: 12 }) : r.numero), h('small', {}, r.titulo)))),
@@ -316,7 +314,7 @@ function journeyMap(rounds, transversal) {
 
   return h('section', { class: 'lp-section', id: 'rodadas' },
     h('div', { class: 'lp-wrap' },
-      sectionHead('A jornada', `${rounds.length} rodadas até a sua estadia regularizada`, 'Clique em cada rodada para ver o que acontece. As rodadas são desbloqueadas conforme você avança, e os prazos oficiais aparecem desde o início.'),
+      sectionHead('A jornada', `${rounds.length} rodadas até a sua estadia regularizada`, 'Clique numa rodada para ver o que tem nela. Cada uma abre quando a anterior termina, mas os prazos oficiais ficam visíveis desde o começo.'),
       h('div', { class: 'lp-map lp-reveal' },
         h('div', { class: 'lp-map-steps', role: 'tablist', 'aria-label': 'Rodadas' }, h('span', { class: 'lp-map-line' }, fill), tabs),
         detail),
@@ -361,7 +359,7 @@ function beforeAfter() {
   draw();
   return h('section', { class: 'lp-section lp-alt' },
     h('div', { class: 'lp-wrap lp-narrow' },
-      sectionHead('O problema', 'Estudar fora não precisa ser um quebra-cabeça', 'Hoje a informação está espalhada em dezenas de sites oficiais, grupos e vídeos. Compare os dois jeitos de fazer.'),
+      sectionHead('Sem a Estuvia', 'Hoje a informação está espalhada', 'Site da universidade, do DUA, do consulado, grupo de WhatsApp, vídeo no YouTube. Veja a diferença.'),
       h('div', { class: 'lp-switch lp-reveal', role: 'group', 'aria-label': 'Comparar' }, btnOff, btnOn),
       h('div', { class: 'lp-reveal' }, card)));
 }
@@ -400,12 +398,12 @@ function mentorDemo(facts) {
     }, reducedMotion() ? 0 : 650);
   };
   const chips = QA.map(([q, a]) => { const b = h('button', { type: 'button', class: 'lp-chip' }, q); b.addEventListener('click', () => ask(q, a, b)); return b; });
-  log.append(h('p', { class: 'lp-bubble' }, 'Oi! Eu sou o Mentor Estuvia. Escolha uma pergunta abaixo para ver como eu ajudo.'));
+  log.append(h('p', { class: 'lp-bubble' }, 'Oi. Escolha uma das perguntas abaixo.'));
 
   return h('section', { class: 'lp-section lp-alt', id: 'mentor' },
     h('div', { class: 'lp-wrap lp-spot' },
       h('div', { class: 'lp-spot-copy lp-reveal' },
-        h('span', { class: 'eyebrow' }, 'Mentor IA'),
+        h('span', { class: 'eyebrow' }, 'Mentor'),
         h('h3', {}, 'Pergunte. Ele conhece o seu caso.'),
         h('p', {}, 'Na plataforma, o Mentor lê a sua jornada, prazos, documentos e finanças. Responde curto, explica os termos e propõe ações, que só acontecem se você confirmar.'),
         h('ul', { class: 'lp-bullets' },
@@ -414,7 +412,7 @@ function mentorDemo(facts) {
           h('li', {}, icon('check', { size: 16 }), h('span', {}, 'Você vê e controla o que ele lembra')))),
       h('div', { class: 'lp-spot-visual lp-reveal' },
         h('div', { class: 'lp-vis lp-chat lp-chat-live' },
-          h('div', { class: 'lp-chat-head' }, h('span', { class: 'lp-float-icon' }, icon('sparkles', { size: 16 })), h('strong', {}, 'Mentor Estuvia'), h('small', {}, 'exemplo de conversa')),
+          h('div', { class: 'lp-chat-head' }, h('span', { class: 'lp-float-icon' }, icon('chat', { size: 16 })), h('strong', {}, 'Mentor Estuvia'), h('small', {}, 'exemplo de conversa')),
           log,
           h('div', { class: 'lp-chips' }, chips)))));
 }
@@ -445,9 +443,9 @@ function spotlights() {
 
   return h('section', { class: 'lp-section' },
     h('div', { class: 'lp-wrap lp-spots' },
-      sectionHead('Por dentro', 'Ferramentas que trabalham juntas', 'Cada módulo conversa com a sua jornada: uma missão concluída atualiza a agenda, o orçamento e os documentos.'),
-      spot('Agenda AI', 'Sua semana organizada sozinha', 'Diga quando você tem tempo livre e a Agenda AI distribui as missões liberadas, sempre respeitando os prazos oficiais.',
-        ['Clique e arraste para criar, mover ou mudar a duração', 'Organizar minha semana com IA, com sua aprovação', 'Replanejar o que ficou para trás', 'Horário da Espanha lado a lado'], agendaVisual),
+      sectionHead('Por dentro', 'As partes se falam', 'Concluiu uma missão? A agenda, o orçamento e a lista de documentos já se ajustam.'),
+      spot('Agenda', 'Sua semana organizada sozinha', 'Diga quando você tem tempo livre e a Agenda distribui as missões liberadas, sempre respeitando os prazos oficiais.',
+        ['Clique e arraste para criar, mover ou mudar a duração', 'Sugere horários para as missões, e você aprova', 'Replanejar o que ficou para trás', 'Horário da Espanha lado a lado'], agendaVisual),
       spot('Documentos', 'Tudo pronto para a imigração', 'Guarde passaporte, carta de aceitação, seguro e passagem num só lugar e saiba exatamente o que falta para cada etapa.',
         ['Arquivos cifrados: só você acessa', 'Carteira por etapa com status e validade', 'Foto do documento direto do celular', 'Baixe tudo antes de embarcar'], docsVisual, true)));
 }
@@ -455,7 +453,7 @@ function spotlights() {
 function featureGrid() {
   return h('section', { class: 'lp-section lp-alt', id: 'recursos' },
     h('div', { class: 'lp-wrap' },
-      sectionHead('Recursos', 'Tudo o que você precisa, num só lugar', 'Do sonho de estudar fora até a chegada com a estadia regularizada.'),
+      sectionHead('Recursos', 'O que tem na plataforma', null),
       h('div', { class: 'lp-features' },
         FEATURES.map(([ic, title, text]) => h('article', { class: 'lp-feature lp-reveal' },
           h('span', { class: 'lp-feature-icon' }, icon(ic, { size: 20 })), h('h3', {}, title), h('p', {}, text))))));
@@ -464,7 +462,7 @@ function featureGrid() {
 function trust() {
   return h('section', { class: 'lp-section' },
     h('div', { class: 'lp-wrap' },
-      sectionHead('Confiança', 'Informação séria para uma decisão importante', 'Você vai investir tempo e dinheiro. Por isso a Estuvia é transparente sobre a origem de cada informação e sobre os próprios limites.'),
+      sectionHead('De onde vem a informação', 'Cada regra mostra a fonte', 'Você vai gastar tempo e dinheiro com isso. Por isso cada informação diz de onde veio, e a plataforma deixa claro o que ela não faz.'),
       h('div', { class: 'lp-trust' },
         h('div', { class: 'lp-trust-card lp-reveal' },
           h('span', { class: 'lp-feature-icon' }, icon('shield', { size: 20 })),
@@ -496,7 +494,7 @@ function trust() {
 function faq() {
   return h('section', { class: 'lp-section lp-alt', id: 'perguntas' },
     h('div', { class: 'lp-wrap lp-narrow' },
-      sectionHead('Perguntas frequentes', 'Ficou alguma dúvida?', null),
+      sectionHead('Perguntas frequentes', 'Dúvidas comuns', null),
       h('div', { class: 'lp-faq' },
         FAQ.map(([q, a], i) => h('details', { class: 'lp-qa lp-reveal', open: i === 0 },
           h('summary', {}, h('span', {}, q), icon('chevron', { size: 18 })),
@@ -508,13 +506,13 @@ function finalCta(primary, logged) {
     h('div', { class: 'lp-wrap' },
       h('div', { class: 'lp-final lp-reveal' },
         h('div', { class: 'lp-glow lp-glow-c', 'aria-hidden': 'true' }),
-        h('h2', {}, logged ? 'Sua jornada continua.' : 'Granada está a algumas missões de distância.'),
-        h('p', {}, logged ? 'Volte ao painel e siga o próximo passo recomendado.' : 'Crie sua conta, responda 5 perguntas e receba hoje mesmo a sua jornada personalizada.'),
+        h('h2', {}, logged ? 'Sua jornada continua.' : 'Comece pela primeira rodada.'),
+        h('p', {}, logged ? 'Volte ao painel e siga o próximo passo recomendado.' : 'Crie a conta e responda 5 perguntas. A jornada sai na hora, montada para o seu caso.'),
         h('div', { class: 'lp-ctas lp-ctas-center' }, primary(),
           logged ? null : h('a', { href: '#/entrar', class: 'btn btn-ghost btn-lg' }, 'Já tenho conta')))));
 }
 
-function footer(appName) {
+function footer(appName, logged) {
   return h('footer', { class: 'lp-footer' },
     h('div', { class: 'lp-wrap lp-footer-inner' },
       h('div', {},
@@ -522,9 +520,10 @@ function footer(appName) {
         h('p', {}, 'A Estuvia orienta e organiza: candidatura, matrícula, visto e demais pedidos oficiais são feitos nos sistemas competentes. Confirme sempre nas fontes oficiais do seu ciclo.')),
       h('nav', { class: 'lp-footer-links', 'aria-label': 'Links do rodapé' },
         h('a', { href: '#/fontes' }, 'Central de fontes'),
-        h('a', { href: '#/manual' }, 'Manual completo'),
-        h('a', { href: '#/entrar' }, 'Entrar'),
-        h('a', { href: '#/cadastro' }, 'Criar conta'))),
+        logged ? null : [
+          h('a', { href: '#/manual' }, 'Como funciona'),
+          h('a', { href: '#/entrar' }, 'Entrar'),
+          h('a', { href: '#/cadastro' }, 'Criar conta')])),
     h('p', { class: 'lp-wrap lp-copy' }, `© ${new Date().getFullYear()} ${appName}`));
 }
 

@@ -1,5 +1,5 @@
 // Comunidade colaborativa: feed, interações, grupos, verificação de oportunidades, Radar,
-// integração com missões e Agenda AI, denúncias e moderação.
+// integração com missões e Agenda, denúncias e moderação.
 import fs from 'node:fs';
 import path from 'node:path';
 import express, { Router } from 'express';
@@ -297,7 +297,7 @@ router.post('/posts', communityWriteLimiter, async (req, res) => {
     if (prep.campos.oportunidade) {
       const dup = findDuplicate(c, prep.campos.oportunidade);
       if (dup && !parsed.data.ignorarDuplicata) {
-        return { erro: [409, 'Esta oportunidade parece já ter sido compartilhada. Veja a publicação existente — você pode comentar nela.'], extra: { duplicata: { id: dup.id, titulo: dup.titulo } } };
+        return { erro: [409, 'Esta oportunidade parece já ter sido compartilhada. Veja a publicação existente, você pode comentar nela.'], extra: { duplicata: { id: dup.id, titulo: dup.titulo } } };
       }
       possivelDuplicata = dup?.id || null;
     }
@@ -486,7 +486,7 @@ router.get('/missions/:missaoId', (req, res) => {
   const { missaoId, universidadeId, limit } = parsed.data;
   res.json({
     missaoId,
-    aviso: 'Experiências de outros estudantes — não são regra oficial. Confirme sempre na fonte oficial.',
+    aviso: 'Experiências de outros estudantes, não são regra oficial. Confirme sempre na fonte oficial.',
     relatos: community.read((c) => c.posts
       .filter((p) => p.missaoId === missaoId && p.tipo === 'publicacao' && p.natureza !== 'orientacao-oficial' && p.moderacao.estado === 'publicado')
       .map((p) => ({ p, score: relevance(p, { viewer: req.user, commentsCount: 0 }) + (universidadeId && p.local?.universidadeId === universidadeId ? 1000 : 0) }))
@@ -641,7 +641,7 @@ router.delete('/my-opportunities/:id', async (req, res) => {
   res.json({ oportunidades: myOpportunities(user) });
 });
 
-// ---------- Integração com a Agenda AI ----------
+// ---------- Integração com a Agenda ----------
 
 export const AGENDA_CATEGORY = {
   'vagas-mestrado': 'academico', bolsas: 'financeiro', 'estagios-empregos': 'pessoal', moradia: 'viagem',
@@ -656,7 +656,7 @@ function agendaEvents(post) {
   const base = {
     categoria: AGENDA_CATEGORY[post.categoria] || 'pessoal', oportunidadeId: post.id, origem: 'comunidade',
     nota: `Fonte: ${op.linkOficial}`.slice(0, 300),
-    motivo: verified ? 'Prazo verificado pela equipe no edital oficial.' : 'Prazo informado pela comunidade — confirme no edital oficial.',
+    motivo: verified ? 'Prazo verificado pela equipe no edital oficial.' : 'Prazo informado pela comunidade, confirme no edital oficial.',
   };
   const events = [{ ...base, id: newId(), oportunidadeTipo: 'prazo', titulo: `Prazo: ${op.titulo}`.slice(0, 120), data: op.prazo, inicio: '09:00', fim: '09:30', prioridade: 'critica', criadoEm: now() }];
   const review = addDays(op.prazo, -REVIEW_DAYS_BEFORE);
@@ -697,7 +697,7 @@ mod.get('/queue', (req, res) => {
       comentarios: c.comments.filter((x) => x.moderacao.estado === 'em-revisao').map((cm) => ({ ...commentView(cm, req.user), postId: cm.postId })),
       denuncias: c.reports.filter((r) => r.status === 'aberta').sort(byDate).map((r) => {
         const alvo = r.alvo === 'post' ? findPost(c, r.alvoId) : c.comments.find((x) => x.id === r.alvoId);
-        return { ...r, autorId: undefined, motivoLabel: REPORT_REASONS[r.motivo], trecho: alvo ? `${alvo.titulo ? `${alvo.titulo} — ` : ''}${alvo.texto}`.slice(0, 280) : '(conteúdo removido)' };
+        return { ...r, autorId: undefined, motivoLabel: REPORT_REASONS[r.motivo], trecho: alvo ? `${alvo.titulo ? `${alvo.titulo} - ` : ''}${alvo.texto}`.slice(0, 280) : '(conteúdo removido)' };
       }),
     };
   }));

@@ -4,7 +4,7 @@ import { h, mount, toast } from '../ui.js';
 import { icon } from '../icons.js';
 import { progressBar, statusChip, priorityTag, deadlineTag, fmtDate, pctLabel } from './common.js';
 import { MissionTool } from './MissionTools.js';
-import { listFiles, addFile, removeFile, fmtSize, ACCEPT } from '../localfiles.js';
+import { MissionDocuments } from './documents/MissionDocuments.js';
 
 export const DOC_STATUS = [['pendente', 'Pendente'], ['em-preparacao', 'Em preparação'], ['pronto', 'Pronto para envio'], ['enviado', 'Enviado'], ['correcao', 'Necessita correção'], ['nao-se-aplica', 'Não se aplica']];
 const EXIG = { requerido: ['Requerido', 'req-requerido'], condicional: ['Conforme o caso', 'req-verificar'], verificar: ['Verificar', 'req-verificar'] };
@@ -36,40 +36,12 @@ export function MissionChecklist(objetivos, { disabled, situacaoAberta, onToggle
   }));
 }
 
-// ---------- Documentos (status no servidor + anexos só neste dispositivo) ----------
+// ---------- Documentos: sempre na Carteira (cifrados na conta), nunca só neste navegador ----------
 
-export function DocumentsBlock(m, { scope, onDocStatus }) {
-  const wrap = h('ul', { class: 'mdocs' });
-  for (const d of m.documentos) {
-    const sel = h('select', { 'aria-label': `Status: ${d.nome}`, class: `doc-st st-doc-${d.status}` }, DOC_STATUS.map(([v, l]) => h('option', { value: v, selected: v === d.status }, l)));
-    sel.addEventListener('change', () => { sel.className = `doc-st st-doc-${sel.value}`; onDocStatus(d, sel.value); });
-    const files = h('div', { class: 'mdoc-files' });
-    const fileInput = h('input', { type: 'file', accept: ACCEPT, class: 'sr-only', id: `f-${d.id}` });
-    const fileScope = `${scope}:${d.id}`;
-    const drawFiles = async () => {
-      const list = await listFiles(fileScope);
-      mount(files, ...list.map((f) => h('span', { class: 'file-pill' }, icon('file', { size: 13 }),
-        h('a', { href: URL.createObjectURL(f.blob), target: '_blank', rel: 'noopener', download: f.nome }, f.nome), h('small', { class: 'muted' }, fmtSize(f.tamanho)),
-        h('button', { type: 'button', class: 'icon-btn sm', 'aria-label': `Remover ${f.nome}`, onClick: async () => { await removeFile(f.id); drawFiles(); } }, icon('x', { size: 12 })))));
-    };
-    fileInput.addEventListener('change', async () => {
-      const f = fileInput.files[0];
-      fileInput.value = '';
-      if (!f) return;
-      try { await addFile(fileScope, f); toast('Arquivo guardado neste dispositivo.', 'ok'); drawFiles(); } catch (e) { toast(e.message, 'err'); }
-    });
-    drawFiles();
-    const [label, cls] = EXIG[d.exigencia];
-    wrap.append(h('li', { class: 'mdoc' },
-      h('div', { class: 'mdoc-head' },
-        h('span', { class: 'mdoc-icon' }, icon('file', { size: 18 })),
-        h('div', {}, h('strong', {}, d.nome), ' ', h('span', { class: `req ${cls}` }, label), h('p', { class: 'muted small' }, d.dica)),
-        sel),
-      h('div', { class: 'mdoc-actions' }, fileInput, h('label', { for: `f-${d.id}`, class: 'btn btn-ghost btn-sm' }, icon('link', { size: 14 }), 'Anexar arquivo'), files),
-    ));
-  }
-  return h('div', {}, wrap,
-    h('p', { class: 'hint' }, icon('shield', { size: 12 }), ' Anexos ficam só neste navegador e não são enviados ao servidor. Marcar "pronto" ou "enviado" não significa validação por nenhum órgão oficial.'));
+/** Documentos da missão, lidos e gravados na Carteira. scope: "<userId>:<journeyId>" (formato antigo). */
+export function DocumentsBlock(m, { scope }) {
+  const journeyId = String(scope || '').split(':')[1];
+  return MissionDocuments({ journeyId, missionId: m.id });
 }
 
 // ---------- Tela completa ----------
@@ -105,7 +77,7 @@ export function MissionDetail(m, ctx) {
     banners.push(h('div', { class: 'md-banner-state locked' }, icon('lock', { size: 20 }), h('div', {},
       h('strong', {}, externas.length && !internas.length ? 'Aguardando uma decisão externa' : 'Missão bloqueada por dependência'),
       internas.length ? h('p', {}, 'Para liberar, conclua: ', internas.map((b, i) => [i ? ', ' : '', h('a', { href: `#/j/${journey.id}/m/${b.id}` }, `${b.label} ${b.titulo}`)])) : null,
-      externas.length ? h('p', {}, `Depende de: ${externas.map((b) => b.titulo).join(', ')}. Isso não é atraso seu — registre a decisão quando ela sair (painel "Situação" da jornada).`) : null)));
+      externas.length ? h('p', {}, `Depende de: ${externas.map((b) => b.titulo).join(', ')}. Isso não é atraso seu, registre a decisão quando ela sair (painel "Situação" da jornada).`) : null)));
   }
   if (na) banners.push(h('div', { class: 'md-banner-state na' }, icon('minus', { size: 20 }), h('div', {}, h('strong', {}, 'Não se aplica ao seu caso'), h('p', {}, m.motivoNaoAplicavel))));
   if (done) {
@@ -113,7 +85,7 @@ export function MissionDetail(m, ctx) {
       h('div', {}, h('strong', {}, 'Missão concluída'), h('p', {}, `Registrada em ${fmtDate(m.concluidaEm)}.`)),
       journey.proximaMissao ? h('a', { class: 'btn btn-cta btn-sm', href: `#/j/${journey.id}/m/${journey.proximaMissao.id}` }, `Próxima: ${journey.proximaMissao.label}`, icon('arrow', { size: 14 })) : null));
   }
-  if (m.aguardandoAuto) banners.push(h('div', { class: 'md-banner-state wait' }, icon('hourglass', { size: 20 }), h('p', {}, 'Aguardando terceiros pela situação que você registrou. Enquanto isso, adiante outras missões — a Agenda AI reserva só uma verificação curta para esta.')));
+  if (m.aguardandoAuto) banners.push(h('div', { class: 'md-banner-state wait' }, icon('hourglass', { size: 20 }), h('p', {}, 'Aguardando terceiros pela situação que você registrou. Enquanto isso, adiante outras missões, a Agenda reserva só uma verificação curta para esta.')));
   m.alertas.forEach((a) => banners.push(h('div', { class: 'md-banner-state warn' }, icon('alert', { size: 20 }), h('p', {}, a.texto))));
   if (m.info) banners.push(h('div', { class: 'md-banner-state info' }, icon('lang', { size: 20 }), h('p', {}, m.info)));
   if (def.condicional && !na) banners.push(h('div', { class: 'md-banner-state info' }, icon('target', { size: 20 }), h('p', {}, `Missão condicional: ${def.condicaoTexto}`)));
@@ -179,7 +151,7 @@ export function MissionDetail(m, ctx) {
           h('h2', { class: 'panel-title' }, icon('calendar', { size: 18 }), 'Prazo'),
           h('label', { class: 'field' }, h('span', { class: 'field-label' }, def.prazo.rotulo), input),
           m.prazo ? deadlineTag(m.prazo) : null,
-          h('p', { class: 'hint' }, 'Copie a data da fonte oficial do seu ciclo. Ela aparece na Agenda AI como "declarada por você" e gera lembretes.'));
+          h('p', { class: 'hint' }, 'Copie a data da fonte oficial do seu ciclo. Ela aparece na Agenda como "declarada por você" e gera lembretes.'));
       })()
     : m.prazo ? h('section', { class: 'panel' }, h('h2', { class: 'panel-title' }, icon('calendar', { size: 18 }), 'Prazo'), h('p', {}, m.prazo.rotulo), deadlineTag(m.prazo), h('p', { class: 'hint' }, m.prazo.origem === 'previsto' ? 'Calculado a partir da sua data prevista de chegada.' : 'Calculado pela regra oficial a partir da sua data de entrada.')) : null;
 
@@ -188,18 +160,18 @@ export function MissionDetail(m, ctx) {
       h('input', { type: 'date', name: 'data', required: true, 'aria-label': 'Data' }),
       h('input', { type: 'time', name: 'inicio', value: '09:00', required: true, step: 900, 'aria-label': 'Início' }),
       h('input', { type: 'time', name: 'fim', value: '10:00', required: true, step: 900, 'aria-label': 'Fim' })),
-    h('button', { class: 'btn btn-ghost btn-block', type: 'submit' }, icon('calendar', { size: 16 }), 'Reservar horário na Agenda AI'));
+    h('button', { class: 'btn btn-ghost btn-block', type: 'submit' }, icon('calendar', { size: 16 }), 'Reservar horário na Agenda'));
   plan.addEventListener('submit', async (e) => {
     e.preventDefault();
     try {
-      await api.post('/planner', { titulo: `Missão ${m.label} — ${def.titulo}`.slice(0, 120), categoria: ctx.categoryForRound(def.rodada), data: plan.data.value, inicio: plan.inicio.value, fim: plan.fim.value, journeyId: journey.id, missaoId: m.id, prioridade: m.prioridade === 'critica' ? 'critica' : m.prioridade === 'alta' ? 'alta' : 'normal' });
-      toast('Horário reservado na Agenda AI.', 'ok');
+      await api.post('/planner', { titulo: `Missão ${m.label} - ${def.titulo}`.slice(0, 120), categoria: ctx.categoryForRound(def.rodada), data: plan.data.value, inicio: plan.inicio.value, fim: plan.fim.value, journeyId: journey.id, missaoId: m.id, prioridade: m.prioridade === 'critica' ? 'critica' : m.prioridade === 'alta' ? 'alta' : 'normal' });
+      toast('Horário reservado na Agenda.', 'ok');
       plan.reset();
     } catch (err) { toast(err.message, 'err'); }
   });
 
   const assistant = h('section', { class: 'panel md-ai' },
-    h('h2', { class: 'panel-title' }, icon('sparkles', { size: 18 }), 'Mentor da missão'),
+    h('h2', { class: 'panel-title' }, icon('chat', { size: 18 }), 'Mentor da missão'),
     h('p', { class: 'small muted' }, `O Mentor já sabe que você está na Missão ${m.label}.`),
     h('div', { class: 'chips' }, [['dificuldade', 'Estou com dificuldade'], ['simples', 'Explique mais simples'], ['documentos', 'Quais documentos preciso?'], ['custo', 'Quanto isso custa?']].map(([acao, label]) =>
       h('button', { type: 'button', class: 'chip', onClick: () => ctx.openAssistant({ journeyId: journey.id, missaoId: m.id, acao }) }, label))),

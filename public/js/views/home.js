@@ -26,7 +26,7 @@ function smartAlerts(j, user, fin, planner) {
   if (fin && !fin.plano.informouRecursos) alerts.push({ ic: 'euro', tone: 'info', texto: 'Registre seus recursos para saber se o plano financeiro fecha', rota: '/financiamento#recursos' });
   const visa = j.rodadas.find((r) => r.numero === 5);
   if (j.situacao.adjudicacao === 'admitido' && visa && visa.status !== 'concluida' && visa.missoes.some((m) => m.status === 'atencao' || m.status === 'disponivel')) alerts.push({ ic: 'passport', tone: 'warn', texto: 'Procedimento migratório com documentação incompleta (Rodada 5)', rota: `/j/${j.id}/r/5` });
-  if (!planner.events.some((e) => e.data >= new Date().toISOString().slice(0, 10))) alerts.push({ ic: 'sparkles', tone: 'info', texto: 'Sua semana ainda não está planejada: deixe a Agenda AI sugerir', rota: '/agenda#organizar' });
+  if (!planner.events.some((e) => e.data >= new Date().toISOString().slice(0, 10))) alerts.push({ ic: 'calendar', tone: 'info', texto: 'Sua semana ainda não está planejada: deixe a Agenda sugerir', rota: '/agenda#organizar' });
   return alerts.slice(0, 3);
 }
 
@@ -64,10 +64,10 @@ export async function homeView() {
     h('div', { class: 'home-grid' },
       h('section', { class: 'home-round' }, h('div', { class: 'section-head' }, h('h2', {}, 'Minha rodada atual'), h('a', { class: 'link-arrow', href: `#/j/${j.id}` }, 'Todas as rodadas', icon('arrow', { size: 14 }))), RoundCard(atual, { journeyId: j.id, atual: true })),
       h('section', { class: 'panel' },
-        h('div', { class: 'section-head' }, h('h2', { class: 'panel-title' }, icon('calendar', { size: 18 }), 'Agenda AI'), h('a', { class: 'link-arrow', href: '#/agenda' }, 'Abrir', icon('arrow', { size: 14 }))),
+        h('div', { class: 'section-head' }, h('h2', { class: 'panel-title' }, icon('calendar', { size: 18 }), 'Agenda'), h('a', { class: 'link-arrow', href: '#/agenda' }, 'Abrir', icon('arrow', { size: 14 }))),
         upcoming.length
           ? h('ul', { class: 'agenda-mini' }, upcoming.map((e) => h('li', {}, h('span', { class: `wp-dot ${CATEGORY[e.categoria]?.cls}` }), h('div', {}, h('strong', {}, e.titulo), h('small', { class: 'muted' }, `${new Date(`${e.data}T12:00:00`).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })} · ${e.inicio}–${e.fim}`)))))
-          : h('div', { class: 'stack' }, h('p', { class: 'muted small' }, 'Nenhuma atividade planejada.'), h('a', { class: 'btn btn-ghost btn-sm', href: '#/agenda#organizar' }, icon('sparkles', { size: 14 }), 'Organizar minha semana com IA'))),
+          : h('div', { class: 'stack' }, h('p', { class: 'muted small' }, 'Nenhuma atividade planejada.'), h('a', { class: 'btn btn-ghost btn-sm', href: '#/agenda#organizar' }, icon('calendar', { size: 14 }), 'Organizar minha semana'))),
       DeadlinesPanel(j),
       h('section', { class: 'panel' },
         h('div', { class: 'section-head' }, h('h2', { class: 'panel-title' }, icon('euro', { size: 18 }), 'Minha situação financeira'), h('a', { class: 'link-arrow', href: '#/financiamento' }, 'Abrir', icon('arrow', { size: 14 }))),

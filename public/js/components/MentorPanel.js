@@ -62,18 +62,18 @@ function card(c, ui) {
     case 'missoes':
       return box(c.titulo || 'Missões', 'flag', c.grupos.map((g) => h('div', { class: 'mt-group' }, h('p', { class: 'mt-group-title' }, `${g.titulo} (${g.itens.length})`),
         h('ul', { class: 'mt-list' }, g.itens.slice(0, 6).map((m) => h('li', {},
-          c.journeyId || state.journeys?.[0]?.id ? h('a', { href: `#/j/${c.journeyId || state.journeys[0].id}/m/${m.id}`, onClick: ui.close }, `${m.label} — ${m.titulo}`) : `${m.label} — ${m.titulo}`,
+          c.journeyId || state.journeys?.[0]?.id ? h('a', { href: `#/j/${c.journeyId || state.journeys[0].id}/m/${m.id}`, onClick: ui.close }, `${m.label} - ${m.titulo}`) : `${m.label} - ${m.titulo}`,
           m.bloqueadaPor?.length ? h('span', { class: 'muted small' }, ` · falta: ${m.bloqueadaPor.join(', ')}`) : m.prazo ? h('span', { class: 'muted small' }, ` · prazo ${fmt(m.prazo.data)}`) : null))))));
     case 'jornada': {
       const j = c.jornada;
       return box(j.destino.programa || 'Sua jornada', 'compass', h('div', { class: 'mt-progress' }, fill({}, j.progresso)),
-        h('p', { class: 'small' }, `${j.progresso}% · Rodada ${j.rodadaAtual.numero} — ${j.rodadaAtual.titulo}`),
+        h('p', { class: 'small' }, `${j.progresso}% · Rodada ${j.rodadaAtual.numero} - ${j.rodadaAtual.titulo}`),
         h('ul', { class: 'mt-rounds' }, j.rodadas.map((r) => h('li', { class: r.status }, h('span', {}, r.numero), r.titulo))));
     }
     case 'eventos':
       return box(c.titulo || 'Agenda', 'calendar',
         c.eventos.length ? h('ul', { class: 'mt-list' }, c.eventos.map((e) => h('li', {}, h('strong', {}, `${fmt(e.data).slice(0, 5)} ${time(e.inicio)}`), ` ${e.titulo}`, e.prazoOficial ? h('span', { class: 'mt-pill' }, 'prazo oficial') : null))) : null,
-        c.prazos?.length ? h('ul', { class: 'mt-list' }, c.prazos.map((p) => h('li', {}, icon('flag', { size: 13 }), ` ${fmt(p.data)} — ${p.titulo} `, h('span', { class: `mt-pill o-${p.origem}` }, p.origem === 'oficial' ? 'oficial' : p.origem === 'previsto' ? 'previsão' : 'informado por você')))) : null,
+        c.prazos?.length ? h('ul', { class: 'mt-list' }, c.prazos.map((p) => h('li', {}, icon('flag', { size: 13 }), ` ${fmt(p.data)} - ${p.titulo} `, h('span', { class: `mt-pill o-${p.origem}` }, p.origem === 'oficial' ? 'oficial' : p.origem === 'previsto' ? 'previsão' : 'informado por você')))) : null,
         !c.eventos.length && !c.prazos?.length ? h('p', { class: 'muted' }, 'Nada marcado.') : null);
     case 'agenda-semana': {
       const days = new Map();
@@ -95,7 +95,7 @@ function card(c, ui) {
         h('div', { class: 'mt-money' },
           h('div', {}, h('small', { class: 'muted' }, 'Necessário'), h('strong', {}, eur(c.necessario))),
           h('div', {}, h('small', { class: 'muted' }, 'Garantido'), h('strong', { class: 'ok' }, eur(c.garantidos))),
-          h('div', {}, h('small', { class: 'muted' }, 'Falta'), c.deficit === null || c.deficit === undefined ? h('strong', { class: 'muted', title: 'Informe quanto você já tem (mesmo que zero)' }, '—') : h('strong', { class: c.deficit ? 'warn' : 'ok' }, eur(c.deficit)))),
+          h('div', {}, h('small', { class: 'muted' }, 'Falta'), c.deficit === null || c.deficit === undefined ? h('strong', { class: 'muted', title: 'Informe quanto você já tem (mesmo que zero)' }, '-') : h('strong', { class: c.deficit ? 'warn' : 'ok' }, eur(c.deficit)))),
         h('div', { class: 'mt-bar' }, bar(c.garantidos, 'g'), bar(c.naoGarantidos || 0, 'n')),
         h('p', { class: 'small muted' }, `Prometido/solicitado (não conta): ${eur(c.naoGarantidos || 0)}${c.base ? ` · base: ${c.base}` : ''}`),
         c.simulacao ? h('p', { class: 'small' }, icon('wand', { size: 13 }), ` Simulação (nada gravado): com ${eur(c.simulacao.valorEur)}, faltariam ${eur(c.simulacao.deficitDepois)}.`) : null,
@@ -127,13 +127,13 @@ function card(c, ui) {
         h('p', { class: 'hint' }, 'Entrada = caução + 1º mês. Valores informados por você.'));
     case 'viagem': {
       const v = c.viagem;
-      return box(v.escolhida ? `Minha viagem — ${v.escolhida.percurso || v.escolhida.rota}` : 'Minha viagem', 'plane',
+      return box(v.escolhida ? `Minha viagem: ${v.escolhida.percurso || v.escolhida.rota}` : 'Minha viagem', 'plane',
         h('p', { class: 'small' }, `${v.origem?.nome || 'Origem a definir'} → ${v.destino?.cidade || 'destino'} · ${v.statusLabel}${v.dataViagem ? ` · ${fmt(v.dataViagem)}` : ''}`),
-        v.cotacoes?.length ? h('ul', { class: 'mt-list small' }, v.cotacoes.map((q) => h('li', {}, h('strong', {}, q.rota), ` — ${q.total === null ? 'preço a consultar' : eur(q.total)}${q.completo ? '' : ' (faltam itens)'}`, q.escolhida ? h('span', { class: 'mt-pill o-oficial' }, q.comprada ? 'comprada' : 'escolhida') : null))) : h('p', { class: 'small muted' }, 'Nenhuma cotação salva ainda.'),
+        v.cotacoes?.length ? h('ul', { class: 'mt-list small' }, v.cotacoes.map((q) => h('li', {}, h('strong', {}, q.rota), ` - ${q.total === null ? 'preço a consultar' : eur(q.total)}${q.completo ? '' : ' (faltam itens)'}`, q.escolhida ? h('span', { class: 'mt-pill o-oficial' }, q.comprada ? 'comprada' : 'escolhida') : null))) : h('p', { class: 'small muted' }, 'Nenhuma cotação salva ainda.'),
         h('a', { class: 'btn btn-sm btn-ghost', href: '#/viagem', onClick: ui.close }, 'Abrir Minha viagem'));
     }
     case 'riscos':
-      return box('Sinais de risco', 'shield', c.sinais.length ? h('ul', { class: 'mt-list warn' }, c.sinais.map((s) => h('li', {}, icon('alert', { size: 13 }), ` ${s}`))) : h('p', {}, 'Nenhum sinal identificado no texto — isso não garante segurança.'),
+      return box('Sinais de risco', 'shield', c.sinais.length ? h('ul', { class: 'mt-list warn' }, c.sinais.map((s) => h('li', {}, icon('alert', { size: 13 }), ` ${s}`))) : h('p', {}, 'Nenhum sinal identificado no texto, isso não garante segurança.'),
         c.checklist?.length ? h('details', {}, h('summary', {}, `Checklist antifraude (${c.checklist.length} pendente(s))`), h('ul', { class: 'mt-list small' }, c.checklist.map((x) => h('li', {}, x)))) : null);
     case 'email': {
       const text = `Assunto: ${c.assunto}\n\n${c.corpo}`;
@@ -145,6 +145,29 @@ function card(c, ui) {
     }
     case 'fontes':
       return box('Base de conhecimento', 'book', h('ul', { class: 'mt-list' }, c.trechos.map((t) => h('li', {}, h('strong', {}, t.titulo), h('p', { class: 'small' }, t.texto), h('small', { class: 'muted' }, `${t.naturezaLabel}${t.fonte ? ` · ${t.fonte.orgao}` : ''}${t.verificadoEm ? ` · verificado em ${fmt(t.verificadoEm)}` : ''}`)))));
+    case 'web':
+      // Resultados de busca: título (link), quem publicou, natureza e data — o estudante julga cada fonte.
+      return box(`Na web: "${c.consulta}"`, 'globe',
+        h('ul', { class: 'mt-web' }, c.itens.map((i) => h('li', { class: `n-${i.natureza}` },
+          h('a', { href: i.url, target: '_blank', rel: 'noopener noreferrer' }, i.titulo, ' ', icon('external', { size: 11 })),
+          i.resumo ? h('p', { class: 'small muted' }, i.resumo) : null,
+          h('small', {}, h('span', { class: 'mt-nat' }, i.naturezaLabel), i.fonte ? ` · ${i.fonte}` : '', i.publicadoEm ? ` · ${fmt(i.publicadoEm.slice(0, 10))}` : '')))),
+        h('p', { class: 'small muted' }, `${c.aviso} Consultado em ${new Date(c.consultadoEm).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}.`));
+    case 'videos': {
+      const player = h('div', { class: 'mt-player' });
+      const play = (v) => {
+        // Player sem cookies (youtube-nocookie), carregado só quando o estudante toca no vídeo.
+        mount(player, h('iframe', { src: `${v.embedUrl}?autoplay=1&rel=0`, title: v.titulo, allow: 'autoplay; encrypted-media; picture-in-picture', allowfullscreen: true, loading: 'lazy', referrerpolicy: 'strict-origin-when-cross-origin' }),
+          h('a', { class: 'small', href: v.url, target: '_blank', rel: 'noopener noreferrer' }, 'Abrir no YouTube ', icon('external', { size: 11 })));
+      };
+      return box(c.itens?.length ? 'Vídeos e aulas' : 'Buscar no YouTube', 'play',
+        c.itens?.length ? [player, h('ul', { class: 'mt-videos' }, c.itens.map((v) => h('li', {},
+          h('button', { type: 'button', class: 'mt-video', onClick: () => play(v), 'aria-label': `Assistir: ${v.titulo}` },
+            h('img', { src: v.thumb, alt: '', loading: 'lazy', width: 160, height: 90 }),
+            h('span', {}, h('strong', {}, v.titulo), h('small', { class: 'muted' }, `${v.canal}${v.publicadoEm ? ` · ${fmt(v.publicadoEm.slice(0, 10))}` : ''}`))))))] : null,
+        h('a', { class: 'btn btn-sm btn-ghost', href: c.linkBusca, target: '_blank', rel: 'noopener noreferrer' }, icon('search', { size: 13 }), ` Ver "${c.consulta}" no YouTube`),
+        h('p', { class: 'small muted' }, c.aviso));
+    }
     case 'lista':
       return box(c.titulo, 'check', h('ul', { class: 'mt-list' }, c.itens.map((x) => h('li', {}, x))));
     case 'memoria':
@@ -236,7 +259,7 @@ function proposalCard(p, ui) {
 // Eventos de progresso devolvidos pelo motor (missão concluída, rodada desbloqueada…).
 function eventsCards(r) {
   const evs = (r.resultados || []).flatMap((x) => x.dados?.eventos || []);
-  const lines = evs.map((e) => (e.tipo === 'missao-concluida' ? `Missão ${e.label} concluída 🎉` : e.tipo === 'rodada-desbloqueada' ? `Rodada ${e.numero} desbloqueada: ${e.titulo}` : e.tipo === 'desbloqueio' ? `Novas missões liberadas: ${e.missoes.map((m) => m.label).join(', ')}` : e.tipo === 'marco' ? `Marco conquistado: ${e.titulo}` : null)).filter(Boolean);
+  const lines = evs.map((e) => (e.tipo === 'missao-concluida' ? `Missão ${e.label} concluída` : e.tipo === 'rodada-desbloqueada' ? `Rodada ${e.numero} desbloqueada: ${e.titulo}` : e.tipo === 'desbloqueio' ? `Novas missões liberadas: ${e.missoes.map((m) => m.label).join(', ')}` : e.tipo === 'marco' ? `Marco conquistado: ${e.titulo}` : null)).filter(Boolean);
   return lines.length ? [{ tipo: 'lista', titulo: 'Progresso', itens: lines }] : [];
 }
 
@@ -257,7 +280,7 @@ export function MentorPanel({ compact = false, onClose = null } = {}) {
   const title = h('h2', {}, 'Mentor Estuvia');
   const subtitle = h('p', { class: 'muted small' }, 'Consulta seus dados reais e executa ações quando você confirma.');
   const ctxBar = h('div', { class: 'mt-context' }, icon('target', { size: 13 }),
-    h('span', {}, j ? `${j.destino.universidade?.sigla || 'Jornada'} · Rodada ${j.rodadaAtual}${mission ? ` · Missão ${mission.label} — ${mission.titulo}` : ''}` : 'Contexto: suas jornadas e dados cadastrados'));
+    h('span', {}, j ? `${j.destino.universidade?.sigla || 'Jornada'} · Rodada ${j.rodadaAtual}${mission ? ` · Missão ${mission.label} - ${mission.titulo}` : ''}` : 'Contexto: suas jornadas e dados cadastrados'));
 
   const log = h('div', { class: 'mt-log', 'aria-live': 'polite' });
   const input = h('textarea', { rows: 1, maxlength: 3000, placeholder: mission ? `Pergunte sobre a Missão ${mission.label}…` : 'Ex.: "Agende para amanhã a tarefa de pedir meu histórico"', 'aria-label': 'Sua mensagem' });
@@ -281,7 +304,7 @@ export function MentorPanel({ compact = false, onClose = null } = {}) {
   };
 
   const bubble = (role, nodes) => {
-    const el = h('div', { class: `mt-msg ${role}` }, role === 'assistant' ? h('span', { class: 'mt-avatar' }, icon('sparkles', { size: 14 })) : null, h('div', { class: 'mt-bubble' }, nodes));
+    const el = h('div', { class: `mt-msg ${role}` }, role === 'assistant' ? h('span', { class: 'mt-avatar' }, icon('chat', { size: 14 })) : null, h('div', { class: 'mt-bubble' }, nodes));
     log.append(el);
     log.scrollTop = log.scrollHeight;
     return el.lastChild;
@@ -333,7 +356,7 @@ export function MentorPanel({ compact = false, onClose = null } = {}) {
 
   const root = h('section', { class: `mt ${compact ? 'mt-compact' : 'mt-page'}` },
     h('header', { class: 'mt-head' },
-      h('span', { class: 'mt-logo' }, icon('sparkles', { size: 20 })),
+      h('span', { class: 'mt-logo' }, icon('chat', { size: 20 })),
       h('div', { class: 'mt-head-text' }, h('div', { class: 'mt-title' }, title, modeBadge), subtitle),
       h('button', { class: 'icon-btn', type: 'button', title: 'O que o Mentor sabe', 'aria-label': 'O que o Mentor sabe', onClick: () => ui.act({ tipo: 'abrir-memoria' }) }, icon('user', { size: 17 })),
       compact ? h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Fechar Mentor', onClick: ui.close }, icon('x', { size: 18 })) : null),
@@ -350,7 +373,7 @@ export function MentorPanel({ compact = false, onClose = null } = {}) {
     if (!history.length) {
       const name = state.me?.user?.profile?.apelido || state.me?.user?.profile?.nome?.split(' ')[0] || '';
       render({
-        texto: `Oi${name ? `, ${name}` : ''}! Eu sou o **${guided ? 'Assistente Estuvia — Modo Guiado' : 'Mentor Estuvia'}**${guided ? '' : ', o mentor de IA da Estuvia'}. ${mission ? `Estou vendo que você está na **Missão ${mission.label} — ${mission.titulo}**. ` : ''}Consulto sua jornada, agenda, documentos e finanças, e faço as ações quando você confirma.\n\nComo posso ajudar?`,
+        texto: `Oi${name ? `, ${name}` : ''}! Eu sou o **${guided ? 'Assistente Estuvia (Modo Guiado)' : 'Mentor Estuvia'}**. ${mission ? `Estou vendo que você está na **Missão ${mission.label} - ${mission.titulo}**. ` : ''}Consulto sua jornada, agenda, documentos e finanças, e faço as ações quando você confirma.\n\nComo posso ajudar?`,
         cartoes: data.avisos?.length ? [{ tipo: 'avisos', itens: data.avisos.slice(0, 3) }] : [],
       }, false);
     } else {
@@ -385,7 +408,7 @@ export function mountMentorLauncher() {
   const show = Boolean(state.me) && !['/assistente', '/mentor'].includes(currentPath());
   if (!show) { closeDrawer(); return mount(host); }
   if (host.querySelector('.mt-fab')) return;
-  mount(host, h('button', { class: 'mt-fab', type: 'button', 'aria-label': 'Abrir Mentor Estuvia', onClick: () => openDrawer() }, icon('sparkles', { size: 22 }), h('span', {}, 'Mentor')));
+  mount(host, h('button', { class: 'mt-fab', type: 'button', 'aria-label': 'Abrir Mentor Estuvia', onClick: () => openDrawer() }, icon('chat', { size: 22 }), h('span', {}, 'Mentor')));
 }
 
 function openDrawer() {

@@ -1,4 +1,4 @@
-// Agenda AI: planejador da jornada. Regras determinísticas e explicáveis:
+// Agenda: planejador da jornada. Regras determinísticas e explicáveis:
 // prioriza (crítica → alta → normal → aguardando resposta), respeita a disponibilidade
 // e os compromissos existentes, e propõe blocos que o estudante aprova ou edita.
 // Nunca marca missões como concluídas e só planeja missões liberadas pela progressão (bloqueadas ficam de fora;

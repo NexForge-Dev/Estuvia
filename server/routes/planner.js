@@ -1,4 +1,4 @@
-// Agenda AI: eventos (AgendaEvent), prazos das jornadas e das bolsas, disponibilidade,
+// Agenda: eventos (AgendaEvent), prazos das jornadas e das bolsas, disponibilidade,
 // proposta automática de semana, aprovação e replanejamento.
 import { Router } from 'express';
 import { z } from 'zod';
@@ -90,7 +90,7 @@ router.delete('/events/:id', async (req, res) => {
   res.json(reply(user));
 });
 
-// ---------- Agenda AI ----------
+// ---------- Agenda ----------
 
 router.put('/availability', async (req, res) => {
   const parsed = z.object({
@@ -132,7 +132,7 @@ router.post('/replan', async (req, res) => {
   const ids = new Set(stale.map((s) => s.id));
   const start = mondayOf(parsed.data.semana);
   const today = new Date().toISOString().slice(0, 10);
-  // Também libera os blocos futuros desta semana criados pela Agenda AI, para redistribuí-los.
+  // Também libera os blocos futuros desta semana criados pela Agenda, para redistribuí-los.
   const user = await users.update(req.user.id, (u) => {
     u.planner = (u.planner || []).filter((e) => !ids.has(e.id) && !(e.origem === 'agenda-ai' && e.data >= today && e.data >= start && e.data <= addDays(start, 6)));
   });

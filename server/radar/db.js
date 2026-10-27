@@ -15,7 +15,7 @@
 //   runs            execuções do atualizador
 //   subscriptions   OpportunitySubscription
 //   alerts          OpportunityAlert
-//   agendaLinks     vínculo entre atividade da Agenda AI e data oficial (para detectar mudanças)
+//   agendaLinks     vínculo entre atividade da Agenda e data oficial (para detectar mudanças)
 
 import fs from 'node:fs';
 import path from 'node:path';

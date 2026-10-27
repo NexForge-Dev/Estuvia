@@ -1,4 +1,4 @@
-// Ferramentas da Agenda AI: disponibilidade, eventos, proposta de semana e criação/alteração de eventos.
+// Ferramentas da Agenda: disponibilidade, eventos, proposta de semana e criação/alteração de eventos.
 // Usa o mesmo motor da Agenda (agenda-engine) e as mesmas regras de validação da rota /planner.
 import { z } from 'zod';
 import { users, newId } from '../../store.js';
@@ -58,7 +58,7 @@ const publicEvent = (e, userId) => ({ id: e.id, titulo: e.titulo, categoria: e.c
 
 export const getUserAvailability = defineTool({
   name: 'get_user_availability', efeito: 'leitura', permissao: 'agenda',
-  descricao: 'Disponibilidade cadastrada na Agenda AI (dias, janelas de horário, horas semanais, fuso) e horários livres de um dia.',
+  descricao: 'Disponibilidade cadastrada na Agenda (dias, janelas de horário, horas semanais, fuso) e horários livres de um dia.',
   entrada: z.object({ dia: date.optional() }).strict(),
   saida: '{ disponibilidade, cadastrada(bool), livresNoDia?[] }',
   run: (ctx, { dia }) => {
@@ -96,7 +96,7 @@ export const getCalendarEvents = defineTool({
 
 export const proposeWeeklySchedule = defineTool({
   name: 'propose_weekly_schedule', efeito: 'leitura', permissao: 'agenda',
-  descricao: 'Monta (sem salvar) uma proposta de semana com as missões abertas, prioridades, prazos e horários livres, usando a Agenda AI. Para salvar, use create_calendar_event com os itens aprovados.',
+  descricao: 'Monta (sem salvar) uma proposta de semana com as missões abertas, prioridades, prazos e horários livres, usando a Agenda. Para salvar, use create_calendar_event com os itens aprovados.',
   entrada: z.object({ semana: date.optional().describe('Qualquer dia da semana desejada; padrão: semana atual.'), journeyId: z.string().max(60).optional(), missaoId: z.string().regex(/^\d\.\d{1,2}$/).optional() }).strict(),
   saida: '{ semana, proposta[{ titulo, data, inicio, fim, categoria, prioridade, motivo, missaoId }], naoAgendadas[], resumo{ livreMin, planejadoMin, metaMin }, prazos[] }',
   run: (ctx, { semana, journeyId, missaoId }) => {
@@ -112,7 +112,7 @@ function describeEvent(e, today) {
 
 export const createCalendarEvent = defineTool({
   name: 'create_calendar_event', efeito: 'escrita', permissao: 'agenda',
-  descricao: 'Cria um ou mais compromissos na Agenda AI (ex.: tarefa de uma missão ou a proposta da semana aprovada). Não marca nada como concluído.',
+  descricao: 'Cria um ou mais compromissos na Agenda (ex.: tarefa de uma missão ou a proposta da semana aprovada). Não marca nada como concluído.',
   entrada: z.object({ itens: z.array(eventInput).min(1).max(40), origem: z.enum(['mentor', 'agenda-ai']).default('mentor') }).strict(),
   saida: '{ resumo, criados[{ id, titulo, data, inicio, fim }] }',
   preview: (ctx, { itens }) => {
@@ -161,7 +161,7 @@ export const updateCalendarEvent = defineTool({
 
 export const replanWeek = defineTool({
   name: 'replan_week', efeito: 'escrita', permissao: 'agenda',
-  descricao: 'Reorganiza a semana: remove os blocos futuros criados pela Agenda AI/Mentor nesta semana (e os que perderam sentido) e salva uma nova distribuição. Compromissos do estudante e prazos oficiais ficam intactos.',
+  descricao: 'Reorganiza a semana: remove os blocos futuros criados pela Agenda/Mentor nesta semana (e os que perderam sentido) e salva uma nova distribuição. Compromissos do estudante e prazos oficiais ficam intactos.',
   entrada: z.object({ semana: date.optional() }).strict(),
   saida: '{ resumo, removidos[], criados[] }',
   preview: (ctx, { semana }) => {
@@ -189,7 +189,7 @@ function planReplan(ctx, semana) {
   return { remover, nova: suggestWeek(virtual, start, ctx.today) };
 }
 
-/** Converte a proposta da Agenda AI nos itens aceitos por create_calendar_event. */
+/** Converte a proposta da Agenda nos itens aceitos por create_calendar_event. */
 export const proposalToItems = (proposta) => proposta.map(pickEvent);
 
 export const categoryForMission = (id) => CATEGORY_BY_ROUND[missionById(id)?.rodada] || 'pessoal';

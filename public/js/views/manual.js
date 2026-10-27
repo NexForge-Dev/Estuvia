@@ -1,6 +1,6 @@
-// Manual de referência (só com conta): o mapa do processo inteiro, em linguagem simples.
+// Manual (só sem conta): explica a plataforma e o mapa do processo, em linguagem simples.
 // Mostra rodadas e nomes das missões — a execução passo a passo fica em "Minha Jornada",
-// liberada conforme o estudante avança.
+// liberada depois do cadastro, conforme o estudante avança.
 import { h } from '../ui.js';
 import { icon } from '../icons.js';
 import { api } from '../api.js';
@@ -20,10 +20,12 @@ export async function manualView() {
 
   return h('article', { class: 'manual stack-lg' },
     h('header', { class: 'page-head' }, h('div', {},
-      h('p', { class: 'eyebrow' }, 'Manual de referência'),
+      h('p', { class: 'eyebrow' }, 'Como funciona'),
       h('h1', {}, 'O caminho até o seu mestrado na Espanha'),
-      h('p', { class: 'muted' }, 'Aqui está o mapa completo, para você ter uma visão geral. Para fazer cada etapa, use a sua jornada: ela mostra um passo de cada vez.'))),
-    h('a', { class: 'btn btn-cta btn-lg', href: '#/jornadas' }, icon('play', { size: 16 }), 'Ir para a minha jornada'),
+      h('p', { class: 'muted' }, 'Aqui está o mapa completo, para você ter uma visão geral. Ao criar sua conta, a plataforma transforma esse mapa numa jornada guiada: um passo de cada vez, com prazos, documentos e o Mentor por perto.'))),
+    h('div', { class: 'lp-ctas' },
+      h('a', { class: 'btn btn-cta btn-lg', href: '#/cadastro' }, icon('play', { size: 16 }), 'Criar minha conta'),
+      h('a', { class: 'btn btn-ghost btn-lg', href: '#/entrar' }, 'Já tenho conta')),
     h('section', { class: 'panel' }, h('h2', {}, 'Em resumo'),
       h('ol', { class: 'manual-summary' },
         h('li', {}, 'Escolher o mestrado e ver o que ele exige.'),

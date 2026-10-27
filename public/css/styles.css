@@ -908,3 +908,23 @@ button.ck:hover:not(:disabled) { border-color: var(--accent); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* Painéis recolhíveis (FoldPanel): começam fechados para deixar a tela limpa */
+html .panel.panel-fold { padding: 0; }
+.panel-fold > summary { list-style: none; cursor: pointer; margin: 0; padding: 16px 20px; border-radius: inherit; user-select: none; }
+.panel-fold > summary::-webkit-details-marker { display: none; }
+.panel-fold > summary:hover { background: var(--surface-2); }
+.panel-fold > summary:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 60%, transparent); outline-offset: -3px; }
+.pf-title { flex: 1; min-width: 0; }
+.pf-hint { font-size: .74rem; font-weight: 700; color: var(--muted); background: var(--surface-3); padding: 3px 9px; border-radius: 999px; white-space: nowrap; max-width: 50%; overflow: hidden; text-overflow: ellipsis; }
+.panel-fold.is-hot .pf-hint { color: var(--warn); background: var(--warn-soft); }
+.pf-chev { color: var(--faint); transition: transform .2s ease; flex: none; }
+.panel-fold[open] .pf-chev { transform: rotate(180deg); }
+.panel-fold[open] > summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.pf-body { padding: 0 20px 18px; display: grid; gap: 10px; }
+
+/* Documentos da rodada (tela da trilha): ligação com a Carteira */
+.trail-docs { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 4px 0 14px; padding: 14px 16px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border); }
+.trail-docs > div { flex: 1; min-width: 200px; display: grid; gap: 2px; }
+.trail-docs p { margin: 0; }
+.trail-docs-ic { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; flex: none; color: var(--green, var(--ok)); background: color-mix(in srgb, var(--ok) 13%, transparent); }

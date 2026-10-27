@@ -168,7 +168,7 @@ export async function onboardingView() {
       h('div', { class: 'stack' }, stepBody()),
       h('div', { class: 'ob-actions' },
         step > 0 ? h('button', { class: 'btn btn-ghost', type: 'button', onClick: () => { step -= 1; draw(); } }, icon('back', { size: 16 }), 'Voltar') : h('a', { class: 'btn btn-ghost', href: '#/jornadas' }, 'Cancelar'),
-        h('button', { class: 'btn btn-cta btn-lg', type: 'button', onClick: () => { if (last) finish(); else { step += 1; draw(); } } }, last ? 'Gerar minha jornada' : 'Continuar', icon(last ? 'sparkles' : 'arrow', { size: 16 })))));
+        h('button', { class: 'btn btn-cta btn-lg', type: 'button', onClick: () => { if (last) finish(); else { step += 1; draw(); } } }, last ? 'Gerar minha jornada' : 'Continuar', icon(last ? 'map' : 'arrow', { size: 16 })))));
   }
   draw();
   return root;

@@ -56,7 +56,7 @@ export function MissionTool(m, { journey, onChange }) {
     const body = `Estimados señores:\n\nMe llamo ${p.nome || '[nombre]'}, de nacionalidad ${p.nacionalidade || 'brasileña'}, residente en ${p.estado || '[estado]'}, Brasil. He sido admitido/a (o estoy en proceso de admisión) en el ${prog} de la ${journey.destino.universidade?.nome || '[universidad]'}, con una duración prevista de ${journey.destino.duracaoMeses || '[n]'} meses.\n\nQuisiera confirmar, para solicitar el visado de estudios:\n1. La lista de documentos necesarios para mi caso.\n2. Cómo solicitar el visado y si es necesario pedir cita previa.\n3. Las tasas aplicables.\n4. Qué documentos financieros se aceptan (incluido el apoyo económico de un familiar, si procede).\n5. Qué documentos requieren traducción o apostilla.\n\nMuchas gracias por su atención.\n\nAtentamente,\n${p.nome || '[nombre]'}`;
     return wrap('E-mail ao consulado', 'mail', info,
       sug?.emailVistos ? h('p', { class: 'small' }, 'Contato do setor de vistos: ', h('strong', {}, sug.emailVistos), h('span', { class: 'tag tag-pending' }, 'Confirme no site oficial'), h('br'), h('span', { class: 'muted small' }, sug.emailFonte)) : null,
-      draftBox(`Consulta visado de estudios — ${p.nome || ''}`.trim(), body, sug?.emailVistos));
+      draftBox(`Consulta visado de estudios: ${p.nome || ''}`.trim(), body, sug?.emailVistos));
   }
 
   if (t === 'contato-academico') {
@@ -100,7 +100,7 @@ export function MissionTool(m, { journey, onChange }) {
         h('li', {}, 'Identifique o coordenador ou o professor relacionado à sua dúvida.'),
         h('li', {}, isUgr ? ['Confirme o e-mail institucional no ', h('a', { href: 'https://directorio.ugr.es/', target: '_blank', rel: 'noopener noreferrer' }, 'diretório oficial da UGR'), ' (portal de másteres: ', h('a', { href: 'https://masteres.ugr.es/', target: '_blank', rel: 'noopener noreferrer' }, 'masteres.ugr.es'), ').'] : 'Confirme o e-mail institucional no diretório oficial da universidade.'),
         h('li', {}, 'Registre o contato abaixo com o link da fonte, revise o rascunho e envie pelo seu e-mail.')),
-      h('p', { class: 'notice' }, 'Recomendação do idealizador, não exigência de admissão. Escrever não aumenta, por si, suas chances — e mensagens genéricas em massa não ajudam.'),
+      h('p', { class: 'notice' }, 'Recomendação do idealizador, não exigência de admissão. Escrever não aumenta, por si, suas chances, e mensagens genéricas em massa não ajudam.'),
       list, f, h('h3', { class: 'small-title' }, 'Rascunho em espanhol'), draftHost);
   }
 
@@ -111,14 +111,14 @@ export function MissionTool(m, { journey, onChange }) {
         h('div', {}, h('dt', {}, 'Exigência do visto (A)'), h('dd', {}, eur(f.exigenciaVisto))),
         h('div', {}, h('dt', {}, 'Orçamento real (B)'), h('dd', {}, eur(f.orcamento))),
         h('div', { class: f.deficit > 0 ? 'neg' : 'pos' }, h('dt', {}, f.deficit > 0 ? 'Falta' : 'Recursos confirmados'), h('dd', {}, eur(f.deficit > 0 ? f.deficit : f.confirmados)))),
-      h('p', { class: 'hint' }, `A = ${Math.round(f.iprem.percentual * 100)}% do IPREM mensal (€${f.iprem.mensal}, ${f.iprem.ano}${f.iprem.aproximado ? ' — ano mais recente cadastrado' : ''}; ${f.iprem.status === 'pendente' ? 'valor pendente de confirmação' : 'verificado'}) × ${f.meses} meses. Confirme deduções e documentos com o consulado.`),
+      h('p', { class: 'hint' }, `A = ${Math.round(f.iprem.percentual * 100)}% do IPREM mensal (€${f.iprem.mensal}, ${f.iprem.ano}${f.iprem.aproximado ? ', ano mais recente cadastrado' : ''}; ${f.iprem.status === 'pendente' ? 'valor pendente de confirmação' : 'verificado'}) × ${f.meses} meses. Confirme deduções e documentos com o consulado.`),
       h('a', { class: 'btn btn-ghost btn-sm', href: '#/financiamento' }, 'Abrir "Como vou financiar meus estudos?"', icon('arrow', { size: 14 })));
   }
 
   const links = {
     'novo-lar': ['Meu novo lar', 'home2', '/novo-lar', 'Cadastre e compare moradias, com verificação antifraude. A escolhida entra no seu orçamento.'],
     viagem: ['Planejamento de viagem', 'plane', '/viagem', 'Compare rotas pelo custo total (voo + bagagem + trecho terrestre) e registre sua chegada.'],
-    bolsas: ['Buscador de bolsas', 'trophy', '/financiamento#bolsas', 'Salve oportunidades, acompanhe prazos e o resultado — a Agenda AI cria as tarefas.'],
+    bolsas: ['Buscador de bolsas', 'trophy', '/financiamento#bolsas', 'Salve oportunidades, acompanhe prazos e o resultado, a Agenda cria as tarefas.'],
     documentos: ['Área de documentos', 'file', '/documentos', 'Organize cada documento: pendente, em preparação, pronto para envio, enviado ou necessita correção.'],
     catalogo: ['Catálogo de mestrados', 'cap', '/mestrados', 'Filtre por universidade, cidade, área, modalidade e duração.'],
   };
@@ -129,7 +129,7 @@ export function MissionTool(m, { journey, onChange }) {
 
   if (t === 'guia-cidade') {
     const g = state.content.cityGuides?.[journey.destino.cidade];
-    if (!g) return wrap('Guia da cidade', 'pin', h('p', { class: 'muted' }, `O guia de ${journey.destino.cidade || 'sua cidade'} ainda não está disponível — começamos por Granada.`));
+    if (!g) return wrap('Guia da cidade', 'pin', h('p', { class: 'muted' }, `O guia de ${journey.destino.cidade || 'sua cidade'} ainda não está disponível, começamos por Granada.`));
     return wrap(`Guia de ${g.cidade}`, 'pin', h('p', {}, g.intro), ...g.secoes.map((s) => h('details', { class: 'md-expand' }, h('summary', {}, h('span', {}, s.titulo), icon('chevron', { size: 16, cls: 'chev' })), h('ul', { class: 'md-expand-body' }, s.itens.map((i) => h('li', {}, i))))), h('span', { class: 'tag tag-info' }, 'Orientação prática'));
   }
   return null;

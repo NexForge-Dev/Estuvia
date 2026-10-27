@@ -8,6 +8,7 @@ import { requireAuth } from '../security.js';
 import { ensureFinance, computeFinance } from '../finance-engine.js';
 import { computeTravel, ensureTravel, agendaSuggestions, agendaChanges } from '../travel-engine.js';
 import { BR_AIRPORTS } from '../content/travel.js';
+import { pricesForUser } from '../flight-prices.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -29,6 +30,7 @@ function payload(user, jid) {
     ...plano,
     financeiro: passagens ? { valorEur: passagens.valorEur, status: passagens.status, origem: passagens.origemTipo, nota: passagens.nota || null } : null,
     agenda: { sugestoes: agendaSuggestions(user, plano), alteracoes: agendaChanges(user, plano) },
+    alertaPreco: user.travel.alertaPreco || null,
   };
 }
 const save = async (req, res, mutate, status = 200) => {
@@ -79,7 +81,7 @@ router.post('/quotes/parse-link', (req, res) => {
   if (!parsed.success) return bad(res, parsed);
   const r = parseFlightLink(parsed.data.link);
   if (!r) return res.status(400).json({ error: 'Link inválido.' });
-  res.json({ ...r, aviso: r.extraido.length ? 'Lemos apenas o que está escrito no próprio link. Preço, horários e bagagem você confere no site.' : 'Não conseguimos ler dados deste link. Preencha só o preço e a data — o resto pode ficar para depois.' });
+  res.json({ ...r, aviso: r.extraido.length ? 'Lemos apenas o que está escrito no próprio link. Preço, horários e bagagem você confere no site.' : 'Não conseguimos ler dados deste link. Preencha só o preço e a data, o resto pode ficar para depois.' });
 });
 
 const quoteSchema = z.object({
@@ -153,7 +155,25 @@ router.post('/done', (req, res) => {
   return save(req, res, (u) => { if (parsed.data.concluida) u.travel.concluidaEm = new Date().toISOString(); else delete u.travel.concluidaEm; });
 });
 
-// ---------- Agenda AI: só cria/altera o que o estudante confirmou ----------
+// ---------- Preços de passagens (Aviasales via Travelpayouts, gratuito) e alerta de preço ----------
+// Menores preços vistos por usuários nas últimas ~48 h: referência, não oferta. Nada é comprado aqui.
+router.get('/prices', async (req, res) => {
+  const quando = typeof req.query.quando === 'string' && /^\d{4}-\d{2}(-\d{2})?$/.test(req.query.quando) ? req.query.quando : undefined;
+  res.json(await pricesForUser(req.user, jidOf(req), { quando }));
+});
+
+router.put('/price-alert', (req, res) => {
+  const parsed = z.object({ ativo: z.boolean(), teto: z.number().min(100, 'Informe um teto a partir de R$ 100.').max(100_000).nullable().optional() }).strict().safeParse(req.body);
+  if (!parsed.success) return bad(res, parsed);
+  if (parsed.data.ativo && !(parsed.data.teto > 0)) return res.status(400).json({ error: 'Informe o preço máximo (em R$) para o alerta.' });
+  return save(req, res, (u) => {
+    const atual = u.travel.alertaPreco || {};
+    u.travel.alertaPreco = { ...atual, ativo: parsed.data.ativo, teto: parsed.data.teto ?? atual.teto ?? null, moeda: 'BRL', journeyId: jidOf(req) || atual.journeyId || null, atualizadoEm: new Date().toISOString() };
+    if (!parsed.data.ativo) delete u.travel.alertaPreco.ultimoAviso;
+  });
+});
+
+// ---------- Agenda: só cria/altera o que o estudante confirmou ----------
 const agendaItem = z.object({ chave: z.enum(['documentos', 'bagagem', 'checkin', 'aeroporto', 'voo', 'deslocamento', 'moradia']), data: date, inicio: time, fim: time, titulo: z.string().trim().min(1).max(120) }).strict().refine((i) => i.fim > i.inicio, 'O fim precisa ser depois do início.');
 const DIAS = { documentos: -7, bagagem: -3, checkin: -1, aeroporto: 0, voo: 0, deslocamento: 1, moradia: 1 };
 const CAT = { documentos: 'documentacao', bagagem: 'viagem', checkin: 'viagem', aeroporto: 'viagem', voo: 'viagem', deslocamento: 'viagem', moradia: 'viagem' };

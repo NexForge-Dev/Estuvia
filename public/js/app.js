@@ -20,6 +20,7 @@ import { catalogView } from './views/catalog.js';
 import { documentsView } from './views/documents.js';
 import { sourcesView } from './views/sources.js';
 import { resetChat } from './components/AIJourneyAssistant.js';
+import { startLive, stopLive } from './live.js';
 
 // Estado global: conteúdo público, estudante logado e caches das jornadas calculadas no servidor.
 export const state = { app: null, content: null, me: null, journeys: null, jcache: new Map(), route: { path: '/', params: [] } };
@@ -101,7 +102,7 @@ const routes = [
   { path: /^\/sobre$/, view: landingView },
   { path: /^\/entrar$/, view: loginView, guestOnly: true },
   { path: /^\/cadastro$/, view: registerView, guestOnly: true },
-  { path: /^\/manual$/, view: manualView, auth: true },
+  { path: /^\/manual$/, view: manualView, guestOnly: true }, // explica a plataforma a quem ainda não tem conta
   { path: /^\/fontes$/, view: sourcesView, auth: true },
   { path: /^\/jornadas\/nova$/, view: onboardingView, auth: true },
   { path: /^\/jornadas$/, view: journeysView, auth: true },
@@ -120,7 +121,7 @@ const routes = [
   { path: /^\/oportunidades$/, view: lazy('./views/radar.js', 'radarView'), auth: true },
   { path: /^\/oportunidades\/([\w-]+)$/, view: lazy('./views/radar.js', 'radarDetailView'), auth: true },
   { path: /^\/radar\/admin$/, view: lazy('./views/radar-admin.js', 'radarAdminView'), auth: true },
-  { path: /^\/admin$/, view: lazy('./views/admin.js', 'adminView'), auth: true },
+  { path: /^\/admin(?:\/(inscricoes|uso|ia|eventos|status|logs))?$/, view: lazy('./views/admin.js', 'adminView'), auth: true },
   { path: /^\/admin\/aluno\/([\w-]+)$/, view: lazy('./views/admin.js', 'adminStudentView'), auth: true },
   { path: /^\/conquistas$/, view: lazy('./achievements.js', 'achievementsView'), auth: true },
   { path: /^\/comunidade(?:\/(post|grupos|grupo|radar|salvos|oportunidades|moderacao|missao)(?:\/([\w.-]+))?)?$/, view: lazy('./views/community.js', 'communityView'), auth: true },
@@ -173,9 +174,13 @@ async function render() {
   state.route = { path, params };
   // Landing pública ocupa a tela inteira (sem lateral do app): ver css/landing.css.
   document.body.classList.toggle('landing-mode', path === '/sobre' || (path === '/' && !state.me));
+  document.body.classList.toggle('admin-mode', isAdminMode());
   renderNav();
   if (!isAdminMode()) mountMentorLauncher();
   else document.getElementById('assistant-root')?.replaceChildren();
+  // Avisos ao vivo (Radar, preços de passagem) enquanto o estudante estiver logado.
+  if (state.me && !isAdminMode()) startLive();
+  else stopLive();
   trackView(path);
 
   const slow = setTimeout(() => mount(main, skeleton()), 120);
@@ -231,11 +236,18 @@ const NAV_MORE = [
   { href: '/oportunidades', label: 'Oportunidades', icon: 'globe' },
   { href: '/comunidade', label: 'Comunidade', icon: 'users' },
   { href: '/conquistas', label: 'Conquistas', icon: 'trophy' },
-  { href: '/assistente', label: 'Mentor IA', icon: 'chat' },
-  { href: '/manual', label: 'Manual', icon: 'book' },
+  { href: '/assistente', label: 'Mentor', icon: 'chat' },
 ];
 // Só aparece para a conta de administrador (ADMIN_EMAIL no .env).
-const NAV_ADMIN = { href: '/admin', label: 'Painel admin', icon: 'shield' };
+const NAV_ADMIN = [
+  { href: '/admin', label: 'Alunos', icon: 'users', match: (p) => p === '/admin' || p.startsWith('/admin/aluno') },
+  { href: '/admin/inscricoes', label: 'Inscrições', icon: 'flag' },
+  { href: '/admin/uso', label: 'Uso dos módulos', icon: 'target' },
+  { href: '/admin/ia', label: 'IA', icon: 'chat' },
+  { href: '/admin/eventos', label: 'Eventos', icon: 'clock' },
+  { href: '/admin/status', label: 'Status', icon: 'pulse' },
+  { href: '/admin/logs', label: 'Logs', icon: 'terminal' },
+];
 
 function renderNav() {
   const path = currentPath();
@@ -246,7 +258,8 @@ function renderNav() {
   document.body.classList.toggle('has-tabbar', !!state.me && !isAdminMode());
   if (isAdminMode()) {
     tabbar.hidden = true;
-    mount(nav, h('ul', {}, h('li', {}, h('a', { href: '#/admin', class: 'active', 'aria-current': path === '/admin' ? 'page' : false }, icon(NAV_ADMIN.icon, { size: 18 }), h('span', {}, NAV_ADMIN.label)))));
+    const activeAdmin = (n) => (n.match ? n.match(path) : path === n.href);
+    mount(nav, h('p', { class: 'nav-section' }, 'Painel admin'), h('ul', {}, NAV_ADMIN.map((n) => h('li', {}, h('a', { href: `#${n.href}`, class: activeAdmin(n) ? 'active' : '', 'aria-current': activeAdmin(n) ? 'page' : false }, icon(n.icon, { size: 18 }), h('span', {}, n.label))))));
     mount(foot, h('button', { class: 'btn btn-ghost btn-block', type: 'button', onClick: logout }, 'Sair'));
     mount(top, h('button', { class: 'btn btn-sm btn-ghost', type: 'button', onClick: logout }, 'Sair'));
   } else if (state.me) {
@@ -274,7 +287,7 @@ function renderNav() {
   } else {
     tabbar.hidden = true;
     mount(nav, h('ul', {},
-      [['/', 'Início', 'home'], ['/entrar', 'Entrar', 'user'], ['/cadastro', 'Criar conta', 'sparkles']].map(([href, label, ic]) =>
+      [['/', 'Início', 'home'], ['/entrar', 'Entrar', 'user'], ['/cadastro', 'Criar conta', 'user']].map(([href, label, ic]) =>
         h('li', {}, h('a', { href: `#${href}`, class: path === href ? 'active' : '' }, icon(ic, { size: 18 }), h('span', {}, label))))));
     mount(foot, h('div', { class: 'stack' }, h('a', { href: '#/cadastro', class: 'btn btn-cta btn-block' }, 'Criar conta grátis'), h('a', { href: '#/entrar', class: 'btn btn-ghost btn-block' }, 'Entrar')));
     mount(top, h('a', { href: '#/entrar', class: 'btn btn-sm btn-ghost' }, 'Entrar'));
@@ -297,6 +310,7 @@ export async function logout() {
   lastView = null;
   state.me = null;
   state.content.privado = false;
+  stopLive();
   invalidate();
   resetChat();
   resetMentor();

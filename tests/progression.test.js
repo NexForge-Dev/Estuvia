@@ -67,9 +67,9 @@ const PROFILE = { nacionalidade: 'Brasileira', paisResidencia: 'Brasil', estado:
 let req;
 let jid;
 
-test('acesso: conteúdo da jornada, manual e catálogo exigem conta', async () => {
+test('acesso: manual é público; conteúdo da jornada e catálogo exigem conta', async () => {
   const anon = client();
-  assert.equal((await anon('GET', '/content/manual')).status, 401);
+  assert.equal((await anon('GET', '/content/manual')).status, 200);
   assert.equal((await anon('GET', '/content/catalog')).status, 401);
   assert.equal((await anon('GET', '/content/sources')).status, 401);
   const pub = (await anon('GET', '/content/journey')).data;

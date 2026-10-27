@@ -8,7 +8,7 @@ import { icon } from '../icons.js';
 import { RoundCard } from '../components/RoundCard.js';
 import { JourneyProgress, DeadlinesPanel, FinancePanel, MilestonesPanel } from '../components/JourneyProgress.js';
 import { ArrivalForm } from '../components/MissionGuide.js';
-import { showEvents } from '../components/common.js';
+import { showEvents, FoldPanel } from '../components/common.js';
 
 const SITU_LABEL = { adjudicacao: 'Resultado da candidatura', matricula: 'Matrícula', visto: 'Visto' };
 
@@ -17,8 +17,8 @@ const applyResult = (r) => { cacheJourney(r.journey); showEvents(r.events || [])
 // Painel "Situação": registra decisões externas (admissão, matrícula, visto) — não é progresso do estudante.
 export function SituationPanel(j, { onSaved } = {}) {
   const opts = state.content.situacao;
-  return h('section', { class: 'panel situation' },
-    h('h2', { class: 'panel-title' }, icon('globe', { size: 18 }), 'O que já aconteceu?'),
+  const atual = Object.keys(opts).map((c) => opts[c].find(([v]) => v === j.situacao[c])?.[1]).filter(Boolean);
+  return FoldPanel({ id: 'situacao', title: 'O que já aconteceu?', ic: 'globe', hint: atual[0] || null, cls: 'situation' },
     h('p', { class: 'muted small' }, 'Registre as respostas da universidade e do consulado. A Estuvia não consulta os sistemas oficiais.'),
     h('div', { class: 'situ-grid' }, Object.keys(opts).map((campo) => {
       const sel = h('select', { 'aria-label': SITU_LABEL[campo] }, opts[campo].map(([v, l]) => h('option', { value: v, selected: v === j.situacao[campo] }, l)));
@@ -28,7 +28,7 @@ export function SituationPanel(j, { onSaved } = {}) {
           cacheJourney(r.journey);
           showEvents(r.events);
           const urgent = r.events.find((e) => e.tipo === 'urgente');
-          if (urgent) toast(`Ações urgentes: ${urgent.missoes.map((x) => x.label).join(', ')}. Vale replanejar a Agenda AI.`, 'info');
+          if (urgent) toast(`Ações urgentes: ${urgent.missoes.map((x) => x.label).join(', ')}. Vale replanejar a Agenda.`, 'info');
           else if (!r.events.some((e) => e.tipo === 'rodada-desbloqueada')) toast('Situação registrada.', 'ok');
           onSaved ? onSaved(r.journey) : rerender();
         } catch (e) { toast(e.message, 'err'); }

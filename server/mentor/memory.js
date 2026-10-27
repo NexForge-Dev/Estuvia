@@ -14,7 +14,7 @@ import { users, newId, audit } from '../store.js';
 
 export const PERMISSIONS = {
   jornada: 'Jornada, rodadas e missões',
-  agenda: 'Agenda AI e compromissos',
+  agenda: 'Agenda e compromissos',
   financas: 'Planejamento financeiro e bolsas',
   documentos: 'Situação dos documentos',
   moradia: 'Moradia e viagem',

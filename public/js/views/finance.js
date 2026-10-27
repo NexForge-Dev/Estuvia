@@ -8,7 +8,7 @@ import { loadJourneys, invalidate, checkAchievements, currentAnchor } from '../a
 import { fmtDate, pct } from '../components/common.js';
 import { openAssistant } from '../components/AIJourneyAssistant.js';
 
-const eur = (v) => (v === null || v === undefined ? '—' : `€ ${Math.round(v).toLocaleString('pt-BR')}`);
+const eur = (v) => (v === null || v === undefined ? '-' : `€ ${Math.round(v).toLocaleString('pt-BR')}`);
 const brl = (v) => `R$ ${Math.round(v).toLocaleString('pt-BR')}`;
 const APP_STATUS = [['interesse', 'Interesse'], ['verificando', 'Verificando elegibilidade'], ['preparando', 'Preparando'], ['enviada', 'Enviada'], ['concedida', 'Concedida'], ['negada', 'Negada'], ['desisti', 'Desisti']];
 const ORIGEM = { premissa: ['Estimativa Estuvia', 'tag-info'], usuario: ['Você informou', 'tag-ok'], moradia: ['Meu novo lar', 'tag-ok'], viagem: ['Viagem', 'tag-ok'] };
@@ -63,11 +63,11 @@ export async function financeView() {
       h('h1', {}, 'Seu destino 🇪🇸'),
       h('div', { class: 'fp-dest' },
         h('strong', {}, dd.universidade?.nome || 'Universidade a definir'),
-        h('span', {}, `${dd.cidade || '—'}, ${dd.pais}`),
-        h('span', { class: 'muted' }, `${dd.programa?.nome || 'Mestrado a definir'}${dd.anoAcademico ? ` — ${dd.anoAcademico}` : ''} · ${p.meses} meses`),
+        h('span', {}, `${dd.cidade || '-'}, ${dd.pais}`),
+        h('span', { class: 'muted' }, `${dd.programa?.nome || 'Mestrado a definir'}${dd.anoAcademico ? ` - ${dd.anoAcademico}` : ''} · ${p.meses} meses`),
         dd.programa?.demo ? h('span', { class: 'chip-demo' }, 'Mestrado demonstrativo') : null),
       h('p', { class: 'fp-lead' }, 'Vamos descobrir quanto você vai precisar para estudar aqui. A Estuvia já prepara uma estimativa; você ajusta o que quiser.'),
-      h('button', { class: 'btn btn-cta btn-lg', type: 'button', onClick: () => call('put', '/finance', { iniciar: true }) }, icon('sparkles', { size: 16 }), 'Calcular meus custos'),
+      h('button', { class: 'btn btn-cta btn-lg', type: 'button', onClick: () => call('put', '/finance', { iniciar: true }) }, icon('euro', { size: 16 }), 'Calcular meus custos'),
       h('p', { class: 'hint' }, 'Usamos só valores com fonte identificada. O que não tiver fonte fica marcado para você informar.'))];
   }
 
@@ -86,7 +86,7 @@ export async function financeView() {
         stat('Custos de instalação', eur(p.instalacao), p.reembolsavel ? `inclui ${eur(p.reembolsavel)} de caução (costuma voltar)` : 'pagos uma vez', 'luggage'),
         stat('Custo mensal estimado', `${eur(p.mensal)}/mês`, `× ${p.meses} meses = ${eur(p.mensalTotal)}`, 'calendar'),
         stat('Recursos disponíveis', eur(p.confirmados), p.previstos ? `+ ${eur(p.previstos)} ainda não garantidos` : 'só o que já é seu', 'shield', 'ok'),
-        stat('Quanto ainda falta?', p.informouRecursos ? eur(p.falta) : '—', p.informouRecursos ? (p.falta ? 'para a meta da jornada' : 'nada: meta coberta 🎉') : 'conte quanto você já tem', 'target', p.informouRecursos && p.falta ? 'warn' : '')),
+        stat('Quanto ainda falta?', p.informouRecursos ? eur(p.falta) : '-', p.informouRecursos ? (p.falta ? 'para a meta da jornada' : 'nada: meta coberta') : 'conte quanto você já tem', 'target', p.informouRecursos && p.falta ? 'warn' : '')),
       h('div', { class: 'fp-meter card' },
         h('div', { class: 'row between' }, h('strong', {}, 'Minha preparação financeira'), h('span', { class: 'fp-pct' }, `${Math.round(p.metaPct * 100)}%`)),
         bar(p.metaPct, 'Meta financeira alcançada'),
@@ -154,7 +154,7 @@ export async function financeView() {
           h('dt', {}, 'Reserva'), h('dd', {}, eur(c.reserva)),
           p.informouRecursos ? [h('dt', {}, 'Seus recursos'), h('dd', { class: c.diferenca < 0 ? 'neg' : 'pos' }, c.diferenca < 0 ? `faltam ${eur(-c.diferenca)}` : `sobram ${eur(c.diferenca)}`)] : null),
         p.perfil === c.perfil ? null : h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onClick: () => call('put', '/finance', { perfil: c.perfil }) }, 'Usar este cenário')))),
-      estimated.length ? h('p', { class: 'fp-premises small muted' }, icon('book', { size: 12 }), ' Premissas: ', estimated.map((i, k) => [k ? ' · ' : '', `${i.label.split(' (')[0]} ${eur(i.valorEur)} (`, h('a', { href: i.fonte.url, target: '_blank', rel: 'noopener noreferrer' }, i.fonte.orgao.split(' — ')[0]), ')'])) : null,
+      estimated.length ? h('p', { class: 'fp-premises small muted' }, icon('book', { size: 12 }), ' Premissas: ', estimated.map((i, k) => [k ? ' · ' : '', `${i.label.split(' (')[0]} ${eur(i.valorEur)} (`, h('a', { href: i.fonte.url, target: '_blank', rel: 'noopener noreferrer' }, i.fonte.orgao.split(' - ')[0]), ')'])) : null,
       savedScenarios(p));
   }
 
@@ -280,7 +280,7 @@ export async function financeView() {
       h('div', { class: 'grid-3 tight' }, h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Situação'), sel), h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Prazo do edital'), prazo),
         h('label', { class: 'field' }, h('span', { class: 'field-label' }, a.status === 'concedida' ? 'Valor concedido (€ total)' : 'Valor previsto (€ total)'), valor)),
       h('p', { class: 'hint' }, a.status === 'concedida' ? 'Bolsa concedida: o valor entra nos seus recursos garantidos.' : 'Enquanto não for concedida, a bolsa aparece como "solicitada" e não conta na meta.'),
-      h('details', {}, h('summary', {}, `Tarefas (${done}/${a.tarefas.length}) — aparecem na Agenda AI`),
+      h('details', {}, h('summary', {}, `Tarefas (${done}/${a.tarefas.length}), aparecem na Agenda`),
         h('ul', { class: 'checklist' }, a.tarefas.map((t) => {
           const b = h('button', { type: 'button', class: `ck ${t.feito ? 'done' : ''}`, role: 'checkbox', 'aria-checked': String(t.feito) }, h('span', { class: 'ck-box' }, t.feito ? icon('check', { size: 14 }) : null), h('span', { class: 'ck-text' }, t.texto));
           b.addEventListener('click', () => call('put', `/finance/scholarships/${a.id}`, { tarefa: { id: t.id, feito: !t.feito } }));
@@ -300,7 +300,7 @@ export async function financeView() {
       const input = h('input', { type: 'number', min: 0, step: 10, class: 'fp-input', value: ov && ov.valor !== null && ov.valor !== undefined ? ov.valor : i.origemTipo === 'premissa' ? Math.round(i.valorEur) : '', placeholder: 'Informe', 'aria-label': i.label, dataset: { key: `v-${i.id}` } });
       const cur = moneySelect(ov?.moeda, `m-${i.id}`);
       const status = h('select', { class: 'fp-status', 'aria-label': `Situação de ${i.label}`, dataset: { key: `s-${i.id}` } }, STATUS.map(([v, l]) => h('option', { value: v, selected: v === (ov?.status || 'estimado') }, l)));
-      const due = i.grupo === 'instalacao' ? h('input', { type: 'date', class: 'fp-due', value: ov?.vencimento || '', 'aria-label': `Data de pagamento de ${i.label}`, title: 'Data de pagamento (vai para a Agenda AI)', dataset: { key: `d-${i.id}` } }) : null;
+      const due = i.grupo === 'instalacao' ? h('input', { type: 'date', class: 'fp-due', value: ov?.vencimento || '', 'aria-label': `Data de pagamento de ${i.label}`, title: 'Data de pagamento (vai para a Agenda)', dataset: { key: `d-${i.id}` } }) : null;
       const send = () => {
         const valor = input.value === '' ? null : Number(input.value);
         const body = valor === null && !ov ? null : { valor, moeda: cur.value, status: status.value, ...(due ? { vencimento: due.value } : {}) };
@@ -372,7 +372,7 @@ export async function financeView() {
   function view() {
     const p = d.plano;
     const picker = journeys.length > 1 ? (() => {
-      const s = h('select', { 'aria-label': 'Jornada' }, journeys.map((j) => h('option', { value: j.id, selected: j.id === jid }, `${j.destino.universidade?.sigla} — ${j.destino.programa?.nome || ''}`)));
+      const s = h('select', { 'aria-label': 'Jornada' }, journeys.map((j) => h('option', { value: j.id, selected: j.id === jid }, `${j.destino.universidade?.sigla} - ${j.destino.programa?.nome || ''}`)));
       s.addEventListener('change', async () => { jid = s.value; d = await api.get(qs('/finance')); draw(); });
       return s;
     })() : null;

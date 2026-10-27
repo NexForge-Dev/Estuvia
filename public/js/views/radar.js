@@ -5,6 +5,7 @@ import { h, mount, toast } from '../ui.js';
 import { icon } from '../icons.js';
 import { api } from '../api.js';
 import { state, go, invalidate } from '../app.js';
+import { onLive } from '../live.js';
 
 const fmt = (iso) => (iso ? new Date(`${iso.slice(0, 10)}T12:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : '');
 const fmtDT = (iso) => (iso ? new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'nunca');
@@ -95,19 +96,19 @@ function opportunityCard(c, redraw) {
     cover,
     h('div', { class: 'rd-card-body' },
       h('div', { class: 'rd-card-top' }, statusBadge(c), h('span', { class: 'rd-year' }, icon('calendar', { size: 13 }), c.anoAcademico)),
-      c.demo ? h('p', { class: 'rd-demo-flag' }, 'DADO DEMONSTRATIVO — ambiente de desenvolvimento') : null,
+      c.demo ? h('p', { class: 'rd-demo-flag' }, 'DADO DEMONSTRATIVO, ambiente de desenvolvimento') : null,
       h('p', { class: 'rd-uni' }, u.nome),
       h('h3', { class: 'rd-title' }, h('a', { href: `#/oportunidades/${c.id}` }, c.programa.nome)),
       h('p', { class: 'rd-place' }, icon('pin', { size: 14 }), `${u.cidade}, ${u.pais}`),
       h('div', { class: 'rd-dates' },
-        dateBlock(c.estado === 'abertas' ? 'Aberta desde' : 'Abertura', c.abertura, c.fases.length && !c.abertura ? '—' : 'Aguardando publicação'),
-        dateBlock('Prazo final', c.prazoFinal, c.fases.length && !c.prazoFinal ? '—' : 'Aguardando publicação'),
+        dateBlock(c.estado === 'abertas' ? 'Aberta desde' : 'Abertura', c.abertura, c.fases.length && !c.abertura ? '-' : 'Aguardando publicação'),
+        dateBlock('Prazo final', c.prazoFinal, c.fases.length && !c.prazoFinal ? '-' : 'Aguardando publicação'),
       ),
       c.diasParaPrazo !== null && c.estado === 'abertas' ? h('p', { class: `rd-countdown ${c.diasParaPrazo <= 3 ? 'urgent' : ''}` }, icon('hourglass', { size: 14 }), c.diasParaPrazo === 0 ? 'Último dia (horário de Madri)' : `Faltam ${c.diasParaPrazo} dia(s)`) : null,
-      c.proximos?.[0] && c.estado !== 'abertas' ? h('p', { class: 'rd-next' }, 'Próximo marco oficial: ', h('strong', {}, `${c.proximos[0].rotulo} — ${fmt(c.proximos[0].data)}`)) : null,
+      c.proximos?.[0] && c.estado !== 'abertas' ? h('p', { class: 'rd-next' }, 'Próximo marco oficial: ', h('strong', {}, `${c.proximos[0].rotulo} - ${fmt(c.proximos[0].data)}`)) : null,
       h('p', { class: 'rd-vagas' }, 'Vagas ofertadas: ', c.vagas.ofertadas ? h('strong', {}, String(c.vagas.ofertadas)) : h('span', { class: 'muted' }, c.vagas.texto)),
       chips(c),
-      c.compatibilidade ? h('p', { class: `rd-compat rd-compat-${c.compatibilidade}`, title: 'Estimativa pela área de formação do seu perfil — não é avaliação de admissão.' }, icon('target', { size: 14 }), COMPAT[c.compatibilidade]) : null,
+      c.compatibilidade ? h('p', { class: `rd-compat rd-compat-${c.compatibilidade}`, title: 'Estimativa pela área de formação do seu perfil, não é avaliação de admissão.' }, icon('target', { size: 14 }), COMPAT[c.compatibilidade]) : null,
       c.referenciaHistorica ? h('details', { class: 'rd-history-ref' },
         h('summary', {}, `Referência histórica ${c.referenciaHistorica.anoAcademico}`),
         h('p', { class: 'small muted' }, c.referenciaHistorica.aviso),
@@ -139,7 +140,7 @@ function alertsPanel(me, redraw) {
       h('h2', {}, icon('bell', { size: 18 }), 'Seus alertas', unread.length ? h('span', { class: 'rd-pill' }, `${unread.length} nova(s)`) : null),
       unread.length ? h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onClick: markAll }, 'Marcar como lidas') : null),
     changes.map((c) => h('div', { class: 'rd-alert rd-alert-change' },
-      h('strong', {}, 'Data oficial alterada — confirme sua agenda'),
+      h('strong', {}, 'Data oficial alterada, confirme sua agenda'),
       h('p', {}, `"${c.titulo}": a data oficial mudou de ${fmt(c.dataOficialAnterior)} para ${fmt(c.dataOficialNova)}. ${c.oficial ? 'Prazo oficial: será atualizado para a nova data.' : `Sugestão: mover sua atividade para ${fmt(c.sugestao)}.`}`),
       h('div', { class: 'row wrap' },
         h('button', { class: 'btn btn-sm', type: 'button', onClick: async () => { await api.post(`/radar/agenda-changes/${c.linkId}`, { aceitar: true }); toast('Agenda atualizada.', 'ok'); redraw(true); } }, 'Atualizar minha agenda'),
@@ -152,7 +153,7 @@ function alertsPanel(me, redraw) {
       a.dados.abertura ? h('p', { class: 'small' }, `Abertura: ${fmt(a.dados.abertura)} · Prazo: ${fmt(a.dados.prazo)}`) : null,
       h('div', { class: 'row wrap' },
         h('a', { class: 'btn btn-sm', href: `#/oportunidades/${a.opportunityId}` }, 'Ver oportunidade'),
-        h('a', { class: 'btn btn-ghost btn-sm', href: `#/oportunidades/${a.opportunityId}#agenda` }, 'Adicionar à Agenda AI'),
+        h('a', { class: 'btn btn-ghost btn-sm', href: `#/oportunidades/${a.opportunityId}#agenda` }, 'Adicionar à Agenda'),
         a.dados.fonteUrl || a.dados.candidaturaUrl ? ext(a.dados.fonteUrl || a.dados.candidaturaUrl, 'Fonte oficial') : null),
     )),
   );
@@ -254,7 +255,7 @@ export async function radarView() {
       filterForm(list),
       h('div', { class: 'rd-results-head' },
         h('h2', {}, `${list.total} oportunidade(s) · ${list.anoAcademico}`),
-        h('p', { class: 'muted small' }, 'Ordenadas por situação (abertas primeiro) e compatibilidade. Estados calculados por regras sobre datas oficiais — nunca por IA.')),
+        h('p', { class: 'muted small' }, 'Ordenadas por situação (abertas primeiro) e compatibilidade. Estados calculados por regras sobre datas oficiais, nunca por IA.')),
       list.total ? listEl : h('section', { class: 'rd-empty' }, icon('search', { size: 26 }), h('h3', {}, 'Nenhuma oportunidade com esses filtros'), h('p', { class: 'muted' }, 'Alguns filtros dependem de dados que as fontes oficiais ainda não informam (idioma, nível, preço). Tente remover filtros.')),
       list.items.length < list.total ? h('div', { class: 'center' }, h('button', { class: 'btn btn-ghost', type: 'button', onClick: () => { limit += 24; draw(); } }, `Mostrar mais (${list.total - list.items.length} restantes)`)) : null,
       h('section', { class: 'rd-legend' },
@@ -266,6 +267,12 @@ export async function radarView() {
   }
 
   await draw(true);
+  // Ao vivo: alerta novo ou calendário oficial publicado → atualiza a lista (sem mexer se o estudante está digitando).
+  onLive(root, ['radar-alerta', 'radar-atualizado'], () => {
+    if (root.contains(document.activeElement) && document.activeElement.matches('input, select, textarea')) return;
+    invalidate();
+    draw(true);
+  });
   return root;
 }
 
@@ -305,7 +312,7 @@ function followPanel(o, redraw) {
 
 function agendaPanel(o) {
   if (!o.agenda.length) {
-    return h('section', { class: 'rd-panel', id: 'agenda' }, h('h2', {}, icon('calendar', { size: 18 }), 'Agenda AI'),
+    return h('section', { class: 'rd-panel', id: 'agenda' }, h('h2', {}, icon('calendar', { size: 18 }), 'Agenda'),
       h('p', { class: 'muted' }, o.calendario.length ? 'Não há datas oficiais futuras para este ano acadêmico.' : 'Assim que o calendário oficial for publicado, sugeriremos atividades para antes da abertura, na abertura, antes do encerramento e após o envio.'));
   }
   const MOM = { 'antes-da-abertura': 'Antes da abertura', 'na-abertura': 'Na abertura', 'antes-do-encerramento': 'Antes do encerramento', 'apos-envio': 'Após o envio' };
@@ -321,7 +328,7 @@ function agendaPanel(o) {
     return row;
   });
   const form = h('form', { class: 'rd-panel', id: 'agenda' },
-    h('h2', {}, icon('calendar', { size: 18 }), 'Adicionar à Agenda AI'),
+    h('h2', {}, icon('calendar', { size: 18 }), 'Adicionar à Agenda'),
     h('p', { class: 'muted small' }, 'Sugestões calculadas a partir das datas oficiais. Ajuste os horários e aprove; prazos oficiais mantêm a data original. Se o calendário oficial mudar, avisaremos antes de mexer na sua agenda.'),
     h('ul', { class: 'rd-sugs' }, rows),
     h('button', { class: 'btn', type: 'submit' }, 'Adicionar selecionadas à Agenda'),
@@ -333,7 +340,7 @@ function agendaPanel(o) {
     if (!itens.length) return toast('Selecione ao menos uma atividade.', 'err');
     try {
       const r = await api.post(`/radar/opportunities/${o.id}/agenda`, { itens });
-      toast(r.criadas ? `${r.criadas} atividade(s) adicionada(s) à Agenda AI.` : 'Essas atividades já estavam na sua agenda.', 'ok');
+      toast(r.criadas ? `${r.criadas} atividade(s) adicionada(s) à Agenda.` : 'Essas atividades já estavam na sua agenda.', 'ok');
     } catch (err) { toast(err.message, 'err'); }
   });
   return form;
@@ -348,11 +355,11 @@ function missionsPanel(o) {
       h('span', { class: 'rd-mission-id' }, m.missao),
       h('div', {},
         jr ? h('a', { href: `#/j/${jr.id}/m/${m.missao}` }, m.titulo) : h('strong', {}, m.titulo),
-        h('small', { class: 'muted' }, ` — Rodada ${m.rodada}. ${m.uso}`),
+        h('small', { class: 'muted' }, `: Rodada ${m.rodada}. ${m.uso}`),
         m.datas.length ? h('p', { class: 'small' }, m.datas.slice(0, 3).map((d) => `Fase ${d.fase}: ${d.inicio && d.inicio !== d.fim ? `${fmt(d.inicio)} – ` : ''}${fmt(d.fim || d.inicio)}`).join(' · ')) : m.semDatas ? h('p', { class: 'small rd-pending' }, 'Aguardando datas oficiais deste ano acadêmico.') : null,
       ),
     ))),
-    h('p', { class: 'small muted' }, 'Quando você enviar a candidatura no portal oficial, registre a missão 3.6 como concluída — o Radar não sabe se você se candidatou.'),
+    h('p', { class: 'small muted' }, 'Quando você enviar a candidatura no portal oficial, registre a missão 3.6 como concluída, o Radar não sabe se você se candidatou.'),
   );
 }
 
@@ -365,14 +372,14 @@ export async function radarDetailView(id) {
       h('a', { href: '#/oportunidades', class: 'rd-back' }, icon('back', { size: 16 }), 'Explorar Oportunidades'),
       h('section', { class: `rd-detail-hero rd-card-${o.tom}` },
         h('div', { class: 'rd-card-top' }, statusBadge(o), h('span', { class: 'rd-year' }, icon('calendar', { size: 13 }), `Ano acadêmico ${o.anoAcademico}`)),
-        o.demo ? h('p', { class: 'rd-demo-flag' }, 'DADO DEMONSTRATIVO — ambiente de desenvolvimento') : null,
+        o.demo ? h('p', { class: 'rd-demo-flag' }, 'DADO DEMONSTRATIVO, ambiente de desenvolvimento') : null,
         h('p', { class: 'rd-uni' }, `${u.nome} · ${u.cidade}, ${u.pais}`),
         h('h1', {}, o.programa.nome),
         h('p', { class: 'rd-sub' }, o.estadoDescricao),
         chips(o),
         h('div', { class: 'rd-dates' },
-          dateBlock('Abertura', o.abertura, o.fases.length ? '—' : 'Aguardando publicação'),
-          dateBlock('Prazo final', o.prazoFinal, o.fases.length ? '—' : 'Aguardando publicação'),
+          dateBlock('Abertura', o.abertura, o.fases.length ? '-' : 'Aguardando publicação'),
+          dateBlock('Prazo final', o.prazoFinal, o.fases.length ? '-' : 'Aguardando publicação'),
           h('div', { class: 'rd-date' }, h('span', {}, 'Vagas ofertadas'), h('strong', { class: o.vagas.ofertadas ? '' : 'rd-pending' }, o.vagas.ofertadas ? String(o.vagas.ofertadas) : 'Consultar oferta oficial')),
         ),
         verificationLine(o.verificacao),
@@ -391,7 +398,7 @@ export async function radarDetailView(id) {
           : h('div', {},
             h('p', { class: 'rd-nodata' }, icon('alert', { size: 16 }), 'Ainda não encontramos um calendário oficial confirmado para este ano acadêmico. Não usamos datas de anos anteriores como se fossem deste ano.'),
             o.referenciaHistorica ? h('details', { class: 'rd-history-ref', open: true },
-              h('summary', {}, `Referência histórica — curso ${o.referenciaHistorica.anoAcademico}`),
+              h('summary', {}, `Referência histórica, curso ${o.referenciaHistorica.anoAcademico}`),
               h('p', { class: 'small muted' }, o.referenciaHistorica.aviso),
               h('ul', {}, o.referenciaHistorica.fases.map((f) => h('li', {}, `Fase ${f.fase} (${PUBLICO[f.publico]}): ${fmt(f.abertura)} – ${fmt(f.encerramento)}`)))) : null),
         h('p', { class: 'small muted' }, 'Horários de referência: Madri (Europe/Madrid). Prazos de reclamação não contam sábados e domingos como dias úteis.'),
@@ -416,15 +423,15 @@ export async function radarDetailView(id) {
           ? h('div', { class: 'rd-table-wrap' }, h('table', { class: 'rd-table' },
             h('thead', {}, h('tr', {}, ['Quando', 'Campo', 'Antes', 'Depois', 'Validação', 'Evidência'].map((t) => h('th', {}, t)))),
             h('tbody', {}, o.historico.map((r) => h('tr', {},
-              h('td', {}, fmtDT(r.em)), h('td', {}, r.campo), h('td', {}, r.anterior ?? '—'), h('td', {}, r.novo ?? '—'), h('td', {}, r.validacao),
-              h('td', {}, r.url && /^https?:/.test(r.url) ? h('a', { href: r.url, target: '_blank', rel: 'noopener noreferrer' }, r.fonte || 'fonte') : r.fonte || '—'))))))
+              h('td', {}, fmtDT(r.em)), h('td', {}, r.campo), h('td', {}, r.anterior ?? '-'), h('td', {}, r.novo ?? '-'), h('td', {}, r.validacao),
+              h('td', {}, r.url && /^https?:/.test(r.url) ? h('a', { href: r.url, target: '_blank', rel: 'noopener noreferrer' }, r.fonte || 'fonte') : r.fonte || '-'))))))
           : h('p', { class: 'muted' }, 'Nenhuma alteração registrada desde o primeiro registro verificado.'),
       ),
 
       h('section', { class: 'rd-panel' },
         h('h2', {}, icon('link', { size: 18 }), 'Fontes consultadas'),
         h('ul', { class: 'rd-sources' }, o.fontes.map((s) => h('li', {},
-          h('a', { href: s.url, target: '_blank', rel: 'noopener noreferrer' }, s.titulo), h('span', { class: 'muted small' }, ` — ${s.instituicao}. Última verificação: ${fmtDT(s.ultimaVerificacao)}${s.metodo === 'revisao-manual' ? ' (conferência manual)' : ''}`)))),
+          h('a', { href: s.url, target: '_blank', rel: 'noopener noreferrer' }, s.titulo), h('span', { class: 'muted small' }, ` - ${s.instituicao}. Última verificação: ${fmtDT(s.ultimaVerificacao)}${s.metodo === 'revisao-manual' ? ' (conferência manual)' : ''}`)))),
       ),
     );
     if (location.hash.endsWith('#agenda')) root.querySelector('#agenda')?.scrollIntoView();
