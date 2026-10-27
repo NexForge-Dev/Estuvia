@@ -26,12 +26,39 @@ export function StatusPill(v) {
   return h('span', { class: `dc-pill t-${s.tone}` }, icon(s.ic, { size: 12 }), s.label, v.aguardando ? h('small', {}, ' · aguardando') : null);
 }
 
+/** Estado detalhado (12 estados da carteira): { estado, estadoLabel, estadoTom, estadoIcone, aguardando }. */
+export function EstadoPill(v) {
+  if (!v.estadoLabel) return StatusPill(v);
+  const tone = v.atencao && v.estadoTom !== 'warn' ? 'warn' : v.estadoTom || 'muted';
+  return h('span', { class: `dc-pill t-${tone}` }, icon(v.estadoIcone || 'minus', { size: 12 }), v.estadoLabel);
+}
+
+// Classificação contextual, sempre na ordem: necessários → opcionais → contingência.
+// Contingência = só se algo acontecer (o procedimento pedir, uma condição se confirmar). Nunca "obrigatório" quando depende.
+export const EXIGENCIA = {
+  requerido: { label: 'Necessário', tone: 'hot' },
+  recomendado: { label: 'Opcional', tone: 'soft' },
+  condicional: { label: 'Contingência', tone: '' },
+  verificar: { label: 'Contingência · a confirmar', tone: '' },
+  'nao-necessario': { label: 'Não se aplica', tone: 'soft' },
+};
+export const GRUPOS = [
+  { id: 'necessarios', titulo: 'Documentos necessários', dica: 'exigidos para o seu caso', exigencias: ['requerido'] },
+  { id: 'opcionais', titulo: 'Documentos opcionais', dica: 'não são exigência, mas ajudam', exigencias: ['recomendado'] },
+  { id: 'contingencia', titulo: 'Documentos de contingência', dica: 'só se o seu procedimento pedir ou a sua situação mudar', exigencias: ['condicional', 'verificar'] },
+];
+export function ExigenciaTag(v) {
+  const e = EXIGENCIA[v.exigencia];
+  return e ? h('span', { class: `dc-tag${e.tone ? ` is-${e.tone}` : ''}` }, e.label) : null;
+}
+
 /** Evidências separadas: declarado ≠ anexado ≠ conferido ≠ aceito. */
 export function Evidence(v, { full = false } = {}) {
   const e = v.evidencias;
   const items = [
     e.declarado ? ['user', 'Declarado por você'] : null,
     e.porMissao ? ['flag', `Concluído na Missão ${e.porMissao}`] : null,
+    e.atendidoPor ? ['link', `Atendido pelo documento: ${e.atendidoPor.nome}`] : null,
     e.anexos ? ['file', `${e.anexos} arquivo${e.anexos > 1 ? 's' : ''} na conta`] : null,
     e.conferidoEm ? ['check', 'Conferido por você'] : null,
     ...e.aceito.map((p) => ['shield', `Aceito: ${p} (registrado por você)`]),

@@ -10,6 +10,7 @@
 //   - demais alterações (eventos, dados de catálogo) → publicadas com revisão no histórico
 // Toda alteração gera OpportunityRevision com evidência (fonte, snapshot, trecho original).
 
+import { broadcast } from '../events.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -251,6 +252,24 @@ export function ensureOpportunitiesForCycle(curso, universidadeId = null) {
 
 // ---------- Execução de uma fonte ----------
 
+// Frequência adaptativa: perto de uma abertura, encerramento ou resultado oficial, a fonte de datas
+// de candidatura é conferida com mais frequência (1 h a até 2 dias da data; 3 h a até 14 dias).
+// Fora dessas janelas vale a frequência cadastrada. Com requisição condicional (ETag), conferir
+// sem mudança custa quase nada para o site oficial.
+export function effectiveFrequencyHours(source, now = Date.now()) {
+  if (!source.autoridade?.includes('datas-candidatura')) return source.frequenciaHoras;
+  const d = data();
+  let nearest = Infinity;
+  for (const iso of [...d.windows.flatMap((w) => [w.abertura, w.encerramento]), ...d.events.flatMap((e) => [e.inicio, e.fim])]) {
+    const t = iso ? Date.parse(`${String(iso).slice(0, 10)}T12:00:00Z`) : NaN;
+    if (Number.isFinite(t)) nearest = Math.min(nearest, Math.abs(t - now));
+  }
+  const days = nearest / 86400000;
+  if (days <= 2) return Math.min(source.frequenciaHoras, 1);
+  if (days <= 14) return Math.min(source.frequenciaHoras, 3);
+  return source.frequenciaHoras;
+}
+
 function backoffHours(source) {
   return Math.min(source.frequenciaHoras, 0.25 * 2 ** Math.min(source.falhasSeguidas, 6));
 }
@@ -309,9 +328,18 @@ export async function runSource(sourceId, { fetchImpl, now = Date.now() } = {}) 
 
   const allRevisions = [];
   let failed = null;
+  source.validadores ??= {};
   for (const t of targets) {
     try {
-      const page = await politeFetch(t.url, { fetchImpl });
+      const page = await politeFetch(t.url, { fetchImpl, validadores: source.validadores[t.url] });
+      if (page.etag || page.lastModified) source.validadores[t.url] = { etag: page.etag, lastModified: page.lastModified };
+      if (page.naoModificada) {
+        // 304: a página oficial não mudou desde a última coleta — conta como verificação bem-sucedida.
+        if (t.programId) { const p = data().programs.find((x) => x.id === t.programId); if (p?.ficha) p.ficha.verificadaEm = page.fetchedAt; }
+        run.itens += 1;
+        run.naoModificadas = (run.naoModificadas || 0) + 1;
+        continue;
+      }
       const r = ingest(sourceId, { url: page.url, text: page.text, fetchedAt: page.fetchedAt, programId: t.programId });
       allRevisions.push(...(r.revisions || []));
       if (r.revisao) run.resultado = 'revisao';
@@ -335,12 +363,16 @@ export async function runSource(sourceId, { fetchImpl, now = Date.now() } = {}) 
     source.estado = 'ok';
     source.ultimoErro = failed ? `Parcial: ${failed.message}` : null;
     source.ultimaVerificacaoOk = nowIso(now);
-    source.proximaVerificacao = nowIso(now + source.frequenciaHoras * 3600000);
+    source.frequenciaEfetivaHoras = effectiveFrequencyHours(source, now);
+    source.proximaVerificacao = nowIso(now + source.frequenciaEfetivaHoras * 3600000);
     run.resultado ??= allRevisions.length ? 'alterado' : 'sem-alteracao';
   }
   run.mudancas = allRevisions.length;
   run.fim = new Date().toISOString();
-  if (allRevisions.length) onPublished(allRevisions);
+  if (allRevisions.length) {
+    onPublished(allRevisions);
+    broadcast('radar-atualizado', { fonte: source.rotuloPublico || source.titulo, mudancas: allRevisions.length });
+  }
   await save();
   return run;
 }
@@ -361,7 +393,10 @@ export function approveReview(review, por) {
   review.status = 'aprovada';
   review.resolvidaEm = new Date().toISOString();
   review.por = por;
-  if (result.revisions?.length) onPublished(result.revisions);
+  if (result.revisions?.length) {
+    onPublished(result.revisions);
+    broadcast('radar-atualizado', { fonte: source?.rotuloPublico || source?.titulo || 'Radar', mudancas: result.revisions.length });
+  }
   return result;
 }
 

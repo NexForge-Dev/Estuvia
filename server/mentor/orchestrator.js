@@ -62,6 +62,8 @@ function cardFor(name, d) {
     case 'draft_email': return { tipo: 'email', ...d };
     case 'find_consulate': return d.status === 'sem-estado' ? null : d;
     case 'get_official_sources': return d.trechos.length ? { tipo: 'fontes', trechos: d.trechos } : null;
+    case 'search_web': return { tipo: 'web', consulta: d.consulta, consultadoEm: d.consultadoEm, itens: d.itens, falhas: d.falhas, aviso: d.aviso };
+    case 'search_videos': return { tipo: 'videos', ...d };
     default: return null;
   }
 }

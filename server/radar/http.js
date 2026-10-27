@@ -68,8 +68,12 @@ async function robotsFor(origin, fetchImpl) {
   return text;
 }
 
-/** Baixa uma página pública. Retorna { url, status, text, contentType, fetchedAt }. */
-export async function politeFetch(url, { fetchImpl = fetch } = {}) {
+/**
+ * Baixa uma página pública. Retorna { url, status, text, contentType, fetchedAt, etag, lastModified }.
+ * Com "validadores" (ETag / Last-Modified da coleta anterior) faz uma requisição condicional:
+ * se a página não mudou, o servidor responde 304 e devolvemos { naoModificada: true } sem baixar o conteúdo.
+ */
+export async function politeFetch(url, { fetchImpl = fetch, validadores = null } = {}) {
   const u = new URL(url);
   if (u.protocol !== 'https:' && u.protocol !== 'http:') throw new FetchError('Protocolo não suportado.');
   const robots = await robotsFor(u.origin, fetchImpl);
@@ -77,8 +81,11 @@ export async function politeFetch(url, { fetchImpl = fetch } = {}) {
   await throttle(u.host);
   let res;
   try {
+    const conditional = {};
+    if (validadores?.etag) conditional['If-None-Match'] = validadores.etag;
+    if (validadores?.lastModified) conditional['If-Modified-Since'] = validadores.lastModified;
     res = await fetchImpl(url, {
-      headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,application/xhtml+xml' },
+      headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,application/xhtml+xml,application/rss+xml;q=0.9,*/*;q=0.8', ...conditional },
       redirect: 'follow',
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
@@ -88,10 +95,13 @@ export async function politeFetch(url, { fetchImpl = fetch } = {}) {
   if ([401, 403, 429].includes(res.status)) {
     throw new FetchError(`A fonte recusou a coleta (HTTP ${res.status}). Não tentamos contornar.`, { status: res.status, blocked: true });
   }
+  const etag = res.headers.get('etag') || validadores?.etag || null;
+  const lastModified = res.headers.get('last-modified') || validadores?.lastModified || null;
+  if (res.status === 304 && validadores) return { url, status: 304, naoModificada: true, text: null, fetchedAt: new Date().toISOString(), etag, lastModified };
   if (!res.ok) throw new FetchError(`HTTP ${res.status}`, { status: res.status });
   const contentType = res.headers.get('content-type') || '';
   const text = decode(new Uint8Array(await res.arrayBuffer()), contentType);
-  return { url: res.url || url, status: res.status, text, contentType, fetchedAt: new Date().toISOString() };
+  return { url: res.url || url, status: res.status, text, contentType, fetchedAt: new Date().toISOString(), etag, lastModified };
 }
 
 // ---------- HTML → texto (sem dependências) ----------

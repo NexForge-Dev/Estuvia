@@ -171,3 +171,18 @@ test('encerrar sessões obriga novo login; admin não pode ser suspenso', async 
   const me = await admin('GET', '/me');
   assert.equal((await admin('POST', `/admin/users/${me.data.user.id}/block`, { bloqueado: true })).status, 400);
 });
+
+test('status do sistema e logs: só o admin vê; serviços com estado e métricas da API', async () => {
+  for (const url of ['/admin/status', '/admin/logs']) assert.ok([401, 403].includes((await aluno('GET', url)).status), url);
+  const s = (await admin('GET', '/admin/status?horas=1')).data;
+  assert.ok(['ok', 'aviso', 'erro'].includes(s.geral));
+  const ids = s.servicos.map((x) => x.id);
+  for (const id of ['api', 'base', 'mentor', 'assistente', 'sessoes']) assert.ok(ids.includes(id), id);
+  assert.equal(s.servicos.find((x) => x.id === 'mentor').estado, 'desligado');
+  assert.ok(s.servicos.every((x) => !x.chave || x.chave.startsWith('••••')), 'chaves sempre mascaradas');
+  assert.ok(s.metricas.requisicoes > 0);
+  console.warn('[teste] aviso para o painel de logs');
+  const l = (await admin('GET', '/admin/logs?nivel=aviso&q=painel de logs')).data;
+  assert.ok(l.logs.some((x) => x.mensagem.includes('aviso para o painel de logs')));
+  assert.ok(l.logs.every((x) => x.nivel === 'aviso'));
+});

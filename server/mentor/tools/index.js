@@ -11,8 +11,9 @@ import documents from './documents.js';
 import housing from './housing.js';
 import knowledge, { UNAVAILABLE } from './knowledge.js';
 import travel from './travel.js';
+import web from './web.js';
 
-const ALL = [...journey, ...agenda, ...finance, ...radar, ...documents, ...housing, ...travel, ...knowledge];
+const ALL = [...journey, ...agenda, ...finance, ...radar, ...documents, ...housing, ...travel, ...knowledge, ...web];
 export const TOOLS = new Map(ALL.map((t) => [t.name, t]));
 export { ToolError, makeCtx, UNAVAILABLE };
 

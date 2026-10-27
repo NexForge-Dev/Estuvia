@@ -7,6 +7,7 @@ import { requireAuth } from '../security.js';
 import { UNIVERSITIES, programById, registerProgramSource } from '../content/catalog.js';
 import { programForJourney, officialDeadlines } from '../radar/service.js';
 import { registerOfficialDeadlines } from '../journey-engine.js';
+import { syncDocumentsFromMissions } from '../document-engine.js';
 
 registerProgramSource(programForJourney);
 registerOfficialDeadlines(officialDeadlines);
@@ -15,6 +16,7 @@ import { PRIOR_STAGES, REQUIREMENTS } from '../content/progression.js';
 import {
   computeJourney, setObjective, completeMission, reopenMission, setMissionFlags, setSituacao, diffEvents, JourneyError,
   recordUnlocks, journeyForClient, missionForClient, declarePriorProgress, registerArrival, applyRequirements,
+  addNote, updateNote, deleteNote, NOTE_TYPES,
 } from '../journey-engine.js';
 
 const router = Router();
@@ -170,14 +172,19 @@ async function mutate(req, res, apply, { mission = true } = {}) {
   }
   applyRequirements(req.user, draft);
   const novos = recordUnlocks(draft, computeJourney(req.user, draft));
+  let carteira = [];
   const saved = await users.update(req.user.id, (u) => {
     const target = findJourney(u, jid);
     for (const k of ['missions', 'dados', 'situacao', 'desbloqueios', 'progressoAnterior']) if (draft[k] !== undefined) target[k] = draft[k];
+    // Missão de preparo concluída → o documento entra na Carteira como pronto (na mesma gravação).
+    carteira = syncDocumentsFromMissions(u);
   });
   logUnlocks(req.user.id, jid, novos);
   const jr = findJourney(saved, jid);
   const full = computeJourney(saved, jr);
-  const body = { ...(extra || {}), journey: journeyForClient(full), events: diffEvents(before, full, mission ? id : null) };
+  const events = diffEvents(before, full, mission ? id : null);
+  if (carteira.length) events.push({ tipo: 'carteira', documentos: carteira });
+  const body = { ...(extra || {}), journey: journeyForClient(full), events };
   if (mission) body.mission = missionForClient(saved, jr, id);
   res.json(body);
 }
@@ -267,6 +274,26 @@ router.put('/:jid/missions/:id/state', (req, res) => {
   }).strict().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
   return mutate(req, res, (jr) => { setMissionFlags(req.user, jr, req.params.id, { ...parsed.data, prazo: parsed.data.prazo === null ? '' : parsed.data.prazo }); });
+});
+
+// Anotações da missão: caderno do estudante (lembretes, tarefas e "preciso de ajuda"). Não concluem nada.
+const noteType = z.enum(Object.keys(NOTE_TYPES));
+const noteId = z.string().regex(/^[\w-]{6,40}$/);
+router.post('/:jid/missions/:id/notes', (req, res) => {
+  const parsed = z.object({ texto: z.string().trim().min(1, 'Escreva a anotação.').max(500, 'Anotação muito longa (até 500 caracteres).'), tipo: noteType.default('nota') }).strict().safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Anotação inválida.' });
+  return mutate(req, res, (jr) => ({ anotacao: addNote(jr, req.params.id, parsed.data, newId()) }));
+});
+
+router.put('/:jid/missions/:id/notes/:noteId', (req, res) => {
+  const parsed = z.object({ texto: z.string().trim().min(1, 'A anotação não pode ficar vazia.').max(500).optional(), tipo: noteType.optional(), feito: z.boolean().optional() }).strict().safeParse(req.body);
+  if (!parsed.success || !noteId.safeParse(req.params.noteId).success) return res.status(400).json({ error: parsed.error?.issues[0]?.message || 'Anotação inválida.' });
+  return mutate(req, res, (jr) => ({ anotacao: updateNote(jr, req.params.id, req.params.noteId, parsed.data) }));
+});
+
+router.delete('/:jid/missions/:id/notes/:noteId', (req, res) => {
+  if (!noteId.safeParse(req.params.noteId).success) return res.status(400).json({ error: 'Anotação inválida.' });
+  return mutate(req, res, (jr) => { deleteNote(jr, req.params.id, req.params.noteId); });
 });
 
 export default router;

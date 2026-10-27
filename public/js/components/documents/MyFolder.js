@@ -91,6 +91,7 @@ export function MyFolder({ onChange } = {}) {
       confirm);
   }
 
+  root.reload = load;
   load();
   return root;
 }

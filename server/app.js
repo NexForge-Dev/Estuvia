@@ -1,3 +1,4 @@
+import { requestMetrics } from './ops.js';
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import { config } from './config.js';
@@ -19,6 +20,7 @@ import travelRoutes from './routes/travel.js';
 import documentRoutes from './routes/documents.js';
 import adminRoutes from './routes/admin.js';
 import trackRoutes from './routes/track.js';
+import eventRoutes from './routes/events.js';
 import { ensureAdminAccount } from './admin-seed.js';
 import { initRadar } from './radar/service.js';
 
@@ -34,7 +36,7 @@ export function createApp() {
   app.use(cookieParser());
 
   const api = express.Router();
-  api.use(apiLimiter, csrfGuard);
+  api.use(requestMetrics, apiLimiter, csrfGuard);
   api.use((req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
   api.get('/health', (req, res) => res.json({ ok: true }));
   api.use('/auth', authRoutes);
@@ -52,6 +54,7 @@ export function createApp() {
   api.use('/documents', documentRoutes);
   api.use('/admin', adminRoutes);
   api.use('/track', trackRoutes);
+  api.use('/events', eventRoutes);
   api.use('/content', contentRoutes);
   api.use('/assistant', assistantRoutes);
   api.use((req, res) => res.status(404).json({ error: 'Rota não encontrada.' }));

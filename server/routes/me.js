@@ -93,7 +93,7 @@ router.put('/documents', async (req, res) => {
 router.get('/export', (req, res) => {
   res.setHeader('Content-Disposition', 'attachment; filename="meus-dados.json"');
   const u = req.user;
-  res.json({ ...publicUser(u), journeys: u.journeys || [], requisitos: u.requisitos || {}, mentor: u.mentor || {}, planner: u.planner || [], agenda: u.agenda || {}, finance: u.finance || {}, scholarshipApps: u.scholarshipApps || [], housing: u.housing || [], travel: u.travel || {}, opportunities: u.opportunities || [], docFiles: (u.docFiles || []).map(({ iv, tag, ...f }) => f), docRecords: u.docRecords || {}, comunidade: communityExport(u.id), radar: exportUser(u.id) });
+  res.json({ ...publicUser(u), journeys: u.journeys || [], requisitos: u.requisitos || {}, mentor: u.mentor || {}, planner: u.planner || [], agenda: u.agenda || {}, finance: u.finance || {}, scholarshipApps: u.scholarshipApps || [], housing: u.housing || [], travel: u.travel || {}, opportunities: u.opportunities || [], docFiles: (u.docFiles || []).map(({ iv, tag, ...f }) => f), docRecords: u.docRecords || {}, docConditions: u.docConditions || {}, docConsent: u.docConsent || null, docPrefs: u.docPrefs || {}, comunidade: communityExport(u.id), radar: exportUser(u.id) });
 });
 
 // Exclusão definitiva da conta, com reconfirmação de senha.

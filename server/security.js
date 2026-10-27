@@ -136,7 +136,9 @@ export const securityHeaders = helmet({
       'default-src': ["'self'"],
       'script-src': ["'self'"],
       'style-src': ["'self'"],
-      'img-src': ["'self'", 'data:'],
+      // Miniaturas dos vídeos do YouTube (pesquisa do Mentor) e o player sem cookies, só quando o estudante toca.
+      'img-src': ["'self'", 'data:', 'https://i.ytimg.com'],
+      'frame-src': ['https://www.youtube-nocookie.com'],
       'connect-src': ["'self'"],
       'frame-ancestors': ["'none'"],
       'form-action': ["'self'"],

@@ -50,7 +50,8 @@ const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a
 let req;
 let uid;
 let jid;
-const stage = (d, id) => d.etapas.find((e) => e.id === id);
+const cat = (d, id) => d.categorias.find((c) => c.id === id);
+const doc = async (id) => (await req('GET', `/documents/${id}?journeyId=${jid}`)).data.documento;
 
 test('setup: estudante com jornada (mestrado sem exigência de idioma, 18 meses)', async () => {
   req = client();
@@ -67,14 +68,16 @@ test('dashboard: etapa atual em destaque, futuras só como prévia, próximo doc
   const { status, data: d } = await req('GET', `/documents/dashboard?journeyId=${jid}`);
   assert.equal(status, 200);
   assert.equal(d.etapaAtual, 'candidatura');
-  assert.equal(stage(d, 'candidatura').estado, 'atual');
-  assert.ok(stage(d, 'candidatura').documentos.length >= 5);
-  // Etapas futuras não listam os documentos como pendência: só a prévia.
-  for (const id of ['matricula', 'visto', 'viagem', 'estadia']) {
-    assert.equal(stage(d, id).estado, 'futura', id);
-    assert.equal(stage(d, id).documentos.length, 0, id);
-    assert.ok(stage(d, id).previa.total > 0, id);
-  }
+  assert.equal(d.categorias.length, 17);
+  for (const id of ['pessoais', 'academicos', 'candidatura']) assert.equal(cat(d, id).estado, 'atual', id);
+  // Categorias de etapas futuras ficam como "mais adiante": não entram nas pendências de agora.
+  for (const id of ['matricula', 'visto', 'viagem', 'nie-tie']) assert.equal(cat(d, id).estado, 'futura', id);
+  // Categorias que dependem de uma situação que o estudante não tem ficam ocultas (acompanhantes, trabalho, renovação).
+  for (const id of ['familiares', 'trabalho', 'renovacao']) assert.equal(cat(d, id).estado, 'oculta', id);
+  assert.ok(d.proximos.length >= 4 && d.proximos.length <= 6);
+  assert.ok(d.proximos.every((v) => v.exigencia === 'requerido'));
+  assert.ok(d.indicadores.maisAdiante > 0);
+  assert.equal(d.indicadores.aplicaveis, d.indicadores.prontos + d.indicadores.pendentes + d.indicadores.maisAdiante + d.indicadores.atencao);
   // Exceção: o que precisa de antecedência aparece antes (antecedentes, meios).
   assert.ok(d.antecedencia.some((v) => v.id === 'antecedentes'));
   assert.ok(d.antecedencia.some((v) => v.id === 'meios'));
@@ -86,12 +89,15 @@ test('dashboard: etapa atual em destaque, futuras só como prévia, próximo doc
 
 test('personalização: mestrado sem idioma e sem apoio/bolsa → "Não necessário", fora das pendências', async () => {
   const { data: d } = await req('GET', `/documents/dashboard?journeyId=${jid}`);
-  const idioma = stage(d, 'candidatura').documentos.find((v) => v.id === 'idioma');
+  const idioma = await doc('idioma');
   assert.equal(idioma.status, 'nao-se-aplica');
+  assert.equal(idioma.estado, 'nao-aplicavel');
   assert.equal(idioma.statusLabel, 'Não necessário');
   assert.match(idioma.motivo, /não exige/);
-  assert.ok(stage(d, 'candidatura').contagem.naoNecessarios >= 1);
-  assert.equal(stage(d, 'candidatura').contagem.total + stage(d, 'candidatura').contagem.naoNecessarios, stage(d, 'candidatura').documentos.length);
+  assert.ok(!d.proximos.some((v) => v.id === 'idioma'));
+  assert.ok(cat(d, 'candidatura').naoAplicaveis >= 1);
+  // Estada de 18 meses → EX-17 da TIE exigido.
+  assert.equal((await doc('tie-solicitacao')).exigencia, 'requerido');
   // Estada de 18 meses → antecedentes exigidos; apoio familiar só com apoio registrado.
   const { data: a } = await req('GET', `/documents/antecedentes?journeyId=${jid}`);
   assert.equal(a.documento.exigencia, 'requerido');
@@ -102,8 +108,9 @@ test('personalização: mestrado sem idioma e sem apoio/bolsa → "Não necessá
 test('"O que você já tem?": declarado ≠ anexado ≠ conferido; desfazer só o que foi declarado', async () => {
   const { data: d } = await req('POST', `/documents/declare?journeyId=${jid}`, { itens: { passaporte: 'tenho', diploma: 'tenho' } });
   assert.equal(d.declarou, true);
-  const pass = stage(d, 'candidatura').documentos.find((v) => v.id === 'passaporte');
+  const pass = await doc('passaporte');
   assert.equal(pass.status, 'pronto');
+  assert.equal(pass.estado, 'pronto');
   assert.equal(pass.evidencias.declarado, true);
   assert.equal(pass.evidencias.anexos, 0);
   assert.equal(pass.evidencias.conferidoEm, null);
@@ -111,7 +118,8 @@ test('"O que você já tem?": declarado ≠ anexado ≠ conferido; desfazer só 
   // As regras das missões continuam lendo user.documents.
   assert.equal(users.findById(uid).documents.passaporte, 'pronto');
   const { data: back } = await req('POST', `/documents/declare?journeyId=${jid}`, { itens: { diploma: 'nao-tenho' } });
-  assert.equal(stage(back, 'candidatura').documentos.find((v) => v.id === 'diploma').status, 'pendente');
+  assert.equal(back.declarou, true);
+  assert.equal((await doc('diploma')).status, 'pendente');
 });
 
 test('validade do passaporte: vence antes do fim da estadia → precisa de atenção e vira o próximo', async () => {
@@ -123,7 +131,8 @@ test('validade do passaporte: vence antes do fim da estadia → precisa de aten�
   assert.ok(r.data.documento.evidencias.conferidoEm);
   const { data: d } = await req('GET', `/documents/dashboard?journeyId=${jid}`);
   assert.equal(d.proximo.documento.id, 'passaporte');
-  assert.equal(stage(d, 'candidatura').contagem.atencao, 1);
+  assert.equal(d.resumo.atencao, 1);
+  assert.equal(d.indicadores.atencao, 1);
   assert.equal((await req('PUT', '/documents/diploma', { validade: soon })).status, 400);
   await req('PUT', '/documents/passaporte', { validade: null });
 });
@@ -133,6 +142,7 @@ test('aguardando emissão + lembrete na Agenda: prévia primeiro, evento só com
   assert.equal(w.data.documento.status, 'em-preparacao');
   assert.equal(w.data.documento.aguardando, true);
   assert.equal(w.data.documento.statusLabel, 'Preparando');
+  assert.equal(w.data.documento.estadoLabel, 'Aguardando emissão');
   const before = (users.findById(uid).planner || []).length;
   const p = await req('POST', '/documents/historico/reminder', { tipo: 'verificar' });
   assert.equal(p.data.confirmado, false);
@@ -159,7 +169,7 @@ test('envio por procedimento: enviado ao DUA não é apresentado ao consulado', 
   const noVisto = docView(DOCUMENTS.find((x) => x.id === 'passaporte'), ctx, 'visto');
   assert.equal(noVisto.status, 'pronto');
   assert.equal(noVisto.reutilizado, true);
-  assert.ok(d.etapas.length === 5);
+  assert.equal(d.categorias.length, 17);
   const c = await req('POST', '/documents/passaporte/submissions', { procedimento: 'consulado', resultado: 'aceito' });
   assert.deepEqual(c.data.documento.evidencias.aceito, ['Consulado']);
   const ctx2 = docContext(users.findById(uid), users.findById(uid).journeys[0]);
@@ -169,13 +179,15 @@ test('envio por procedimento: enviado ao DUA não é apresentado ao consulado', 
 test('missão concluída → documento pronto (uma vez; não rebaixa nem repete)', async () => {
   await users.update(uid, (u) => { u.documents.diploma = 'pendente'; u.journeys[0].missions['2.2'] = { objetivos: {}, concluidaEm: new Date().toISOString() }; });
   const { data: d } = await req('GET', `/documents/dashboard?journeyId=${jid}`);
-  const dip = stage(d, 'candidatura').documentos.find((v) => v.id === 'diploma');
+  assert.equal(d.etapaAtual, 'candidatura');
+  const dip = await doc('diploma');
   assert.equal(dip.status, 'pronto');
   assert.equal(dip.evidencias.porMissao, '2.2');
   // O estudante corrige para "pendente": a mesma conclusão não volta a promover.
   await req('PUT', '/documents/diploma', { status: 'pendente' });
   const { data: d2 } = await req('GET', `/documents/dashboard?journeyId=${jid}`);
-  assert.equal(stage(d2, 'candidatura').documentos.find((v) => v.id === 'diploma').status, 'pendente');
+  assert.ok(d2.proximos.some((v) => v.id === 'diploma' && v.status === 'pendente'));
+  assert.equal((await doc('diploma')).status, 'pendente');
   // Contrato das missões.
   const m = await req('GET', `/documents/missions/${jid}/3.5`);
   assert.equal(m.status, 200);
@@ -184,7 +196,14 @@ test('missão concluída → documento pronto (uma vez; não rebaixa nem repete)
   assert.ok(m.data.naoNecessarios.some((x) => x.id === 'idioma'));
 });
 
-test('arquivos: cifrados em disco, só o dono baixa, versões, tipo pelos bytes', async () => {
+test('arquivos: consentimento, cifrados em disco, só o dono baixa por link assinado, versões, tipo pelos bytes', async () => {
+  const noConsent = await req('POST', `/documents/historico/files?journeyId=${jid}`, PDF, { 'Content-Type': 'application/pdf' });
+  assert.equal(noConsent.status, 428);
+  assert.equal(noConsent.data.codigo, 'consentimento');
+  assert.equal((await req('POST', '/documents/consent', { aceito: true, versao: 'antiga' })).status, 400);
+  const ok = await req('POST', '/documents/consent', { aceito: true, versao: '2026-10-27' });
+  assert.equal(ok.status, 200);
+  assert.ok(ok.data.consentimento.em);
   const up = await req('POST', `/documents/historico/files?journeyId=${jid}`, PDF, { 'Content-Type': 'application/pdf', 'X-File-Name': encodeURIComponent('histórico ../../x.pdf') });
   assert.equal(up.status, 201);
   const f = up.data.arquivo;
@@ -194,7 +213,10 @@ test('arquivos: cifrados em disco, só o dono baixa, versões, tipo pelos bytes'
   // Em disco não está o PDF em claro.
   const onDisk = fs.readFileSync(path.join(tmp, 'docfiles', uid, `${f.id}.bin`));
   assert.ok(!onDisk.includes(Buffer.from('%PDF')));
-  const dl = await req('GET', `/documents/files/${f.id}`);
+  assert.match(f.url, /\?t=\d+\./, 'link assinado');
+  assert.equal((await req('GET', `/documents/files/${f.id}`)).status, 403, 'sem assinatura não abre');
+  assert.equal((await req('GET', `/documents/files/${f.id}?t=1.abc`)).status, 403, 'assinatura inválida/expirada não abre');
+  const dl = await req('GET', f.url.replace('/api', ''));
   assert.equal(dl.status, 200);
   assert.ok(Buffer.compare(dl.data, PDF) === 0);
   assert.equal(dl.headers.get('cache-control'), 'private, no-store');
@@ -202,8 +224,8 @@ test('arquivos: cifrados em disco, só o dono baixa, versões, tipo pelos bytes'
   // Outro estudante não acessa.
   const other = client();
   await other('POST', '/auth/register', { nome: 'Caio Reis', email: 'caio@docs.dev', senha: 'segura123', aceite: true });
-  assert.equal((await other('GET', `/documents/files/${f.id}`)).status, 404);
-  assert.equal((await client()('GET', `/documents/files/${f.id}`)).status, 401);
+  assert.equal((await other('GET', f.url.replace('/api', ''))).status, 404, 'o link de um não abre na conta de outro');
+  assert.equal((await client()('GET', f.url.replace('/api', ''))).status, 401, 'sem sessão não abre');
   // Nova versão na mesma série.
   const v2 = await req('POST', `/documents/historico/files?serie=${f.id}`, PNG, { 'Content-Type': 'image/png', 'X-File-Name': 'historico.png' });
   assert.equal(v2.status, 201);

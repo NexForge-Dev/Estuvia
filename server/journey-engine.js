@@ -619,6 +619,9 @@ export function missionDetail(user, jr, id, now = new Date()) {
     }),
     prazoDeclarado: mp.prazo || null,
     nota: mp.nota || '',
+    anotacoes: mp.anotacoes || [],
+    // Documentos da Carteira ligados a esta missão (rounds.js + catálogo): a central mostra o card de documentos.
+    docsCarteira: DOCUMENTS.filter((d) => !d.agregado && (d.prepara === id || (d.missoesExtra || []).includes(id) || (def.documentos || []).includes(d.id))).length,
     naoAplicavelMarcado: Boolean(mp.naoAplicavel),
     ignoradaMarcada: Boolean(mp.ignorada),
     ...extra,
@@ -746,6 +749,58 @@ export function setMissionFlags(user, jr, missionId, { aguardando, naoAplicavel,
     if (execucao && !EXECUCAO.includes(execucao)) throw new JourneyError(400, 'Estado de execução inválido.');
     if (execucao) { mp.execucao = execucao; if (execucao === 'fazendo') mp.iniciadaEm ??= new Date().toISOString(); } else delete mp.execucao;
   }
+}
+
+// ---------- Anotações da missão (só do estudante: lembretes, tarefas e "preciso de ajuda") ----------
+// Não contam como objetivo nem concluem nada: são o caderno do estudante dentro da missão.
+
+export const NOTE_TYPES = { nota: 'Anotação', tarefa: 'Tarefa', ajuda: 'Preciso de ajuda' };
+export const MAX_NOTES = 40;
+
+function noteTarget(jr, missionId) {
+  if (!missionById(missionId)) throw new JourneyError(404, 'Missão não encontrada.');
+  const mp = mp_(jr, missionId);
+  mp.anotacoes ??= [];
+  return mp.anotacoes;
+}
+
+export function addNote(jr, missionId, { texto, tipo = 'nota' }, id, now = new Date()) {
+  const list = noteTarget(jr, missionId);
+  if (!NOTE_TYPES[tipo]) throw new JourneyError(400, 'Tipo de anotação inválido.');
+  const t = String(texto || '').trim().slice(0, 500);
+  if (!t) throw new JourneyError(400, 'Escreva a anotação.');
+  if (list.length >= MAX_NOTES) throw new JourneyError(409, `Limite de ${MAX_NOTES} anotações nesta missão. Apague as que não precisa mais.`);
+  const note = { id, tipo, texto: t, feito: false, criadaEm: now.toISOString() };
+  list.unshift(note);
+  return note;
+}
+
+export function updateNote(jr, missionId, noteId, { texto, tipo, feito }, now = new Date()) {
+  const note = noteTarget(jr, missionId).find((n) => n.id === noteId);
+  if (!note) throw new JourneyError(404, 'Anotação não encontrada.');
+  if (tipo !== undefined) {
+    if (!NOTE_TYPES[tipo]) throw new JourneyError(400, 'Tipo de anotação inválido.');
+    note.tipo = tipo;
+  }
+  if (texto !== undefined) {
+    const t = String(texto).trim().slice(0, 500);
+    if (!t) throw new JourneyError(400, 'A anotação não pode ficar vazia.');
+    note.texto = t;
+  }
+  if (feito !== undefined) {
+    note.feito = Boolean(feito);
+    if (note.feito) note.feitaEm = now.toISOString();
+    else delete note.feitaEm;
+  }
+  note.atualizadaEm = now.toISOString();
+  return note;
+}
+
+export function deleteNote(jr, missionId, noteId) {
+  const list = noteTarget(jr, missionId);
+  const i = list.findIndex((n) => n.id === noteId);
+  if (i < 0) throw new JourneyError(404, 'Anotação não encontrada.');
+  list.splice(i, 1);
 }
 
 // ---------- Progresso anterior e chegada (fatos declarados pelo estudante, com confirmação) ----------
