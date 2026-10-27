@@ -1,0 +1,110 @@
+{
+ "fps": 30,
+ "width": 1920,
+ "height": 1080,
+ "total": 87.32,
+ "scenes": [
+  {
+   "id": "s1-sonho",
+   "title": "The dream and the problem",
+   "start": 0.0,
+   "duration": 11.496,
+   "voiceAt": 1.2,
+   "voiceDuration": 9.696,
+   "onscreen": [
+    "Studying in Europe doesn't have to be complicated."
+   ]
+  },
+  {
+   "id": "s2-estuvia",
+   "title": "Meet Estuvia",
+   "start": 11.496,
+   "duration": 7,
+   "voiceAt": 12.096,
+   "voiceDuration": 5.784,
+   "onscreen": [
+    "Meet Estuvia.",
+    "Your future starts with a plan."
+   ]
+  },
+  {
+   "id": "s3-jornada",
+   "title": "A personalized journey",
+   "start": 18.496,
+   "duration": 13,
+   "voiceAt": 19.096,
+   "voiceDuration": 10.176,
+   "onscreen": [
+    "One journey. One step at a time."
+   ]
+  },
+  {
+   "id": "s4-mentor",
+   "title": "Smart guidance",
+   "start": 31.496,
+   "duration": 10.5,
+   "voiceAt": 32.096,
+   "voiceDuration": 9.24,
+   "onscreen": [
+    "Your Estuvia Mentor."
+   ]
+  },
+  {
+   "id": "s5-agenda",
+   "title": "Agenda AI",
+   "start": 41.996,
+   "duration": 9.5,
+   "voiceAt": 42.596,
+   "voiceDuration": 6.552,
+   "onscreen": [
+    "Plan better. Move forward with confidence."
+   ]
+  },
+  {
+   "id": "s6-financas",
+   "title": "Financial planning",
+   "start": 51.496,
+   "duration": 9.5,
+   "voiceAt": 52.096,
+   "voiceDuration": 6.48,
+   "onscreen": [
+    "Plan your studies and your budget."
+   ]
+  },
+  {
+   "id": "s7-mudanca",
+   "title": "Documents, housing and travel",
+   "start": 60.996,
+   "duration": 10.5,
+   "voiceAt": 61.596,
+   "voiceDuration": 7.128,
+   "onscreen": [
+    "From application to arrival."
+   ]
+  },
+  {
+   "id": "s8-comunidade",
+   "title": "Opportunities and community",
+   "start": 71.496,
+   "duration": 7,
+   "voiceAt": 72.096,
+   "voiceDuration": 5.328,
+   "onscreen": [
+    "Discover. Share. Achieve."
+   ]
+  },
+  {
+   "id": "s9-final",
+   "title": "Closing",
+   "start": 78.496,
+   "duration": 8.824,
+   "voiceAt": 79.096,
+   "voiceDuration": 4.824,
+   "onscreen": [
+    "ESTUVIA",
+    "Your future starts here.",
+    "A Nexforge creation."
+   ]
+  }
+ ]
+}

@@ -1,0 +1,91 @@
+{
+  "voice": "en-US-AvaNeural",
+  "rate": "+4%",
+  "scenes": [
+    {
+      "id": "s1-sonho",
+      "title": "The dream and the problem",
+      "min": 10,
+      "narration": "Dreaming of a master's degree in Europe? Then the questions start. Which university? Which documents? How do I get the visa? And how much will it all cost?",
+      "onscreen": [
+        "Dreaming of a master's degree in Europe?",
+        "Which university? · Which documents? · How do I get the visa? · How much will it all cost?"
+      ]
+    },
+    {
+      "id": "s2-estuvia",
+      "title": "Meet Estuvia",
+      "min": 7,
+      "narration": "Meet Estuvia. The platform that turns studying abroad into a clear, guided plan.",
+      "onscreen": [
+        "Estuvia",
+        "Your future starts with a plan."
+      ]
+    },
+    {
+      "id": "s3-jornada",
+      "title": "A personalized journey",
+      "min": 13,
+      "narration": "Tell us about your background and pick your destination. Your path becomes rounds and missions, from choosing your master's to arriving in Spain, so you always know your next step.",
+      "onscreen": [
+        "One journey. One step at a time."
+      ]
+    },
+    {
+      "id": "s4-mentor",
+      "title": "Smart guidance",
+      "min": 10.5,
+      "narration": "Stuck? The Estuvia Mentor knows your journey, explains each mission and points you to official sources. Nothing happens without your confirmation.",
+      "onscreen": [
+        "Your Estuvia Mentor."
+      ]
+    },
+    {
+      "id": "s5-agenda",
+      "title": "Agenda AI",
+      "min": 9.5,
+      "narration": "Agenda AI plans your week around your missions and official deadlines, and only adds what you approve.",
+      "onscreen": [
+        "Plan better. Move forward with confidence."
+      ]
+    },
+    {
+      "id": "s6-financas",
+      "title": "Financial planning",
+      "min": 9.5,
+      "narration": "Plan your money, too. What it costs to prepare, to live there, and what the visa requires you to prove.",
+      "onscreen": [
+        "Plan your studies and your budget."
+      ]
+    },
+    {
+      "id": "s7-mudanca",
+      "title": "Documents, housing and travel",
+      "min": 10.5,
+      "narration": "Keep your documents safe, compare housing, plan your trip, and know what to do when you land. All connected to your journey.",
+      "onscreen": [
+        "From application to arrival."
+      ]
+    },
+    {
+      "id": "s8-comunidade",
+      "title": "Opportunities and community",
+      "min": 7,
+      "narration": "Discover opportunities from official sources, and learn from students on the same path.",
+      "onscreen": [
+        "Discover. Share. Achieve."
+      ]
+    },
+    {
+      "id": "s9-final",
+      "title": "Closing",
+      "min": 8,
+      "narration": "Your future starts with a plan. Start your journey today. Estuvia.",
+      "onscreen": [
+        "ESTUVIA",
+        "Your future starts here.",
+        "A Nexforge creation."
+      ]
+    }
+  ]
+}

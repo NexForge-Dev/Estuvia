@@ -1,0 +1,10 @@
+{
+  "name": "estuvia-video-tools",
+  "private": true,
+  "type": "module",
+  "description": "Ferramentas de produção do vídeo de apresentação (separadas do app).",
+  "dependencies": {
+    "ffmpeg-static": "^5.2.0",
+    "playwright-core": "^1.48.2"
+  }
+}
