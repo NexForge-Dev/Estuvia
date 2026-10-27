@@ -7,6 +7,8 @@ import { requireAuth, requireAdmin, isAdmin } from '../security.js';
 import { usageReport, userUsage, moduleLabel } from '../usage.js';
 import { studentRow, studentReport, enrollmentOverview } from '../admin-student.js';
 import { aiStatus, checkAI } from '../ai-health.js';
+import { systemStatus } from '../system-status.js';
+import { requestStats, recentLogs } from '../ops.js';
 
 const router = Router();
 router.use(requireAuth, requireAdmin);
@@ -133,6 +135,22 @@ router.post('/ai/check', async (req, res) => {
   const result = await checkAI();
   await audit.log({ action: 'admin-ai-check', userId: req.user.id, mentorOk: result.mentor.ok, assistenteOk: result.assistente.ok });
   res.json({ ...result, status: aiStatus() });
+});
+
+// Status do sistema (serviços e chaves) + métricas de requisições; ?check=1 testa cada serviço de verdade.
+const HOURS = [1, 6, 24, 168];
+router.get('/status', async (req, res) => {
+  const horas = HOURS.includes(Number(req.query.horas)) ? Number(req.query.horas) : 24;
+  const check = req.query.check === '1';
+  const status = await systemStatus({ check });
+  if (check) await audit.log({ action: 'admin-status-check', userId: req.user.id, geral: status.geral });
+  res.json({ ...status, metricas: requestStats(horas) });
+});
+
+// Logs do servidor (memória, desde o último reinício).
+router.get('/logs', (req, res) => {
+  const nivel = ['info', 'aviso', 'erro'].includes(req.query.nivel) ? req.query.nivel : null;
+  res.json(recentLogs({ nivel, q: String(req.query.q || '').slice(0, 100) }));
 });
 
 router.get('/users/:id', (req, res) => {

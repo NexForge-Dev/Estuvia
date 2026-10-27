@@ -37,6 +37,8 @@ export function startScheduler() {
   return true;
 }
 
+export const schedulerRunning = () => timers.length > 0;
+
 export function stopScheduler() {
   timers.forEach((t) => clearTimeout(t));
   timers = [];

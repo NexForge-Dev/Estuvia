@@ -1,3 +1,4 @@
+import './ops.js'; // primeiro: captura os logs da inicialização para o painel admin
 import { createApp } from './app.js';
 import { config } from './config.js';
 import { flush } from './store.js';

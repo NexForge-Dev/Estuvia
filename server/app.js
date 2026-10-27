@@ -1,3 +1,4 @@
+import { requestMetrics } from './ops.js';
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import { config } from './config.js';
@@ -34,7 +35,7 @@ export function createApp() {
   app.use(cookieParser());
 
   const api = express.Router();
-  api.use(apiLimiter, csrfGuard);
+  api.use(requestMetrics, apiLimiter, csrfGuard);
   api.use((req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
   api.get('/health', (req, res) => res.json({ ok: true }));
   api.use('/auth', authRoutes);
