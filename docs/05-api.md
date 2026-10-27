@@ -3,7 +3,7 @@
 Base `/api`, JSON. Erros: `{ "error": "mensagem" }`. Escritas exigem o cabeçalho `X-Requested-With: travessia` (CSRF). Sessão em cookie httpOnly.
 
 ## Público
-`GET /health` · `GET /content/app` · `GET /content/journey` (rodadas, marcos, etiquetas, situações) · `GET /content/sources` · `GET /content/catalog` · `GET /content/documents` · `GET /content/scholarships` · `GET /content/places` · `GET /content/finance-rules` · `GET /content/faq`
+`GET /health` · `GET /content/app` · `GET /content/journey` (rodadas, marcos, etiquetas, situações) · `GET /content/landing` (dados da landing: regra de comprovação do visto/IPREM com fonte e etapas do diagnóstico) · `GET /content/sources` · `GET /content/catalog` · `GET /content/documents` · `GET /content/scholarships` · `GET /content/places` · `GET /content/finance-rules` · `GET /content/faq`
 
 ## Autenticação
 `POST /auth/register {nome,email,senha,aceite}` · `POST /auth/login` · `POST /auth/logout` · `POST /auth/logout-all` · `POST /auth/change-password {atual,nova}`

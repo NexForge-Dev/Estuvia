@@ -5,6 +5,7 @@ import { icon } from '../icons.js';
 import { api } from '../api.js';
 import { state, setMe, invalidate, go } from '../app.js';
 import { getCatalog } from '../data.js';
+import { QUIZ_KEY } from './landing.js';
 
 const LEVELS = [['nenhum', 'Nenhum'], ['A1', 'A1'], ['A2', 'A2'], ['B1', 'B1'], ['B2', 'B2'], ['C1', 'C1'], ['C2', 'C2'], ['nativo', 'Nativo']];
 const ESTADOS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
@@ -37,6 +38,14 @@ export async function onboardingView() {
     universidadeId: 'ugr', programaId: '', anoAcademico: cycles[1], inicioAulas: '', duracaoMeses: null,
     etapa: 'inicio', dataEntrada: '', confirmaEtapa: false,
   };
+  // Respostas do diagnóstico da landing: só no primeiro onboarding e só onde o perfil ainda está vazio.
+  let quiz = null;
+  try { quiz = firstTime ? JSON.parse(localStorage.getItem(QUIZ_KEY) || 'null') : null; } catch { /* sem armazenamento */ }
+  if (quiz) {
+    if (!p.espanhol && LEVELS.some(([v]) => v === quiz.espanhol)) draft.espanhol = quiz.espanhol;
+    if (etapas.some((e) => e.id === quiz.etapa)) draft.etapa = quiz.etapa;
+    if (cycles.includes(quiz.ano)) draft.anoAcademico = quiz.ano;
+  }
   let step = 0;
   const root = h('div', { class: 'onboarding' });
 
@@ -145,6 +154,7 @@ export async function onboardingView() {
         journey = (await api.post(`/journeys/${journey.id}/prior-progress`, { etapa: draft.etapa, confirmo: true, ...(stage?.exigeDataEntrada ? { dataEntrada: draft.dataEntrada } : {}) })).journey;
       }
       invalidate();
+      try { localStorage.removeItem(QUIZ_KEY); } catch { /* sem armazenamento */ }
       mount(root, summary(journey));
     } catch (e) { toast(e.message, 'err'); draw(); }
   }

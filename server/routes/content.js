@@ -8,7 +8,8 @@ import { config } from '../config.js';
 import { requireAuth } from '../security.js';
 import { SCHOLARSHIPS, SCHOLARSHIP_STATUS } from '../content/scholarships.js';
 import { CONSULATES, CITY_GUIDES, CONSULATE_LIST_URL } from '../content/places.js';
-import { IPREM, VISA_RULE } from '../content/finance.js';
+import { IPREM, VISA_RULE, ipremFor } from '../content/finance.js';
+import { PRIOR_STAGES } from '../content/progression.js';
 import { SITUACAO } from '../content/rounds.js';
 import { DOC_STATUS_LABEL } from '../content/documents.js';
 import { trackOf, PARALLEL_TRACKS } from '../content/progression.js';
@@ -21,6 +22,16 @@ const overview = ROUNDS.map(({ numero, sigla, titulo, etapa, banner, icone, resu
 // ---------- Público: painel explicativo, login e cadastro ----------
 router.get('/app', (req, res) => res.json({ nome: config.appName, ia: config.aiEnabled ? 'claude' : 'offline' }));
 router.get('/journey', (req, res) => res.json({ template: JOURNEY_TEMPLATE, rounds: overview, milestones: MILESTONES, tags: TAGS, situacao: SITUACAO }));
+
+// Dados da landing (quiz e Mentor de exemplo): os mesmos da plataforma, com fonte e status.
+const source = (id) => { const s = SOURCES.find((x) => x.id === id); return s ? { id, orgao: s.orgao, url: s.url } : null; };
+router.get('/landing', (req, res) => {
+  const iprem = ipremFor(new Date().getFullYear());
+  res.json({
+    visto: { ipremMensal: iprem.mensal, ano: iprem.ano, status: iprem.status, percentual: VISA_RULE.percentualEstudante, descricao: VISA_RULE.descricao, fonte: source(VISA_RULE.fonte) },
+    etapas: PRIOR_STAGES.map(({ id, rotulo }) => ({ id, rotulo })),
+  });
+});
 
 // ---------- Somente com conta ----------
 router.use(requireAuth);

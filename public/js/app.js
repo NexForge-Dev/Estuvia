@@ -163,6 +163,7 @@ async function render() {
   const route = routes.find((r) => r.path.test(path));
   const main = document.getElementById('app');
   closeSidebar();
+  if (!route) document.body.classList.remove('landing-mode');
   if (!route) return mount(main, emptyState('Página não encontrada', 'O endereço que você abriu não existe.', h('a', { href: '#/', class: 'btn' }, 'Ir para o início')));
   if (route.auth && !state.me) return go('/entrar');
   if (route.guestOnly && state.me) return go('/');
@@ -170,6 +171,8 @@ async function render() {
   await loadPrivateContent();
   const params = path.match(route.path).slice(1);
   state.route = { path, params };
+  // Landing pública ocupa a tela inteira (sem lateral do app): ver css/landing.css.
+  document.body.classList.toggle('landing-mode', path === '/sobre' || (path === '/' && !state.me));
   renderNav();
   if (!isAdminMode()) mountMentorLauncher();
   else document.getElementById('assistant-root')?.replaceChildren();

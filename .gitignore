@@ -2,3 +2,10 @@ node_modules/
 data/
 .env
 *.tmp
+
+# Produção do vídeo: ferramentas e dados de demonstração locais
+video/tools/node_modules/
+video/tools/.venv/
+video/tools/demo-data/
+video/tools/tmp/
+video/assets/audio/*.wav
