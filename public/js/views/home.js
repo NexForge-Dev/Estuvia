@@ -13,7 +13,7 @@ const eur = (v) => `€ ${Math.round(v || 0).toLocaleString('pt-BR')}`;
 function smartAlerts(j, user, fin, planner) {
   const alerts = [];
   const all = j.rodadas.flatMap((r) => r.missoes);
-  all.filter((m) => m.prioridade === 'critica').slice(0, 2).forEach((m) => alerts.push({ ic: 'alert', tone: 'danger', texto: `Ação crítica: Missão ${m.label} — ${m.titulo}`, rota: `/j/${j.id}/m/${m.id}` }));
+  all.filter((m) => m.prioridade === 'critica').slice(0, 2).forEach((m) => alerts.push({ ic: 'alert', tone: 'danger', texto: `Ação crítica: Missão ${m.label} - ${m.titulo}`, rota: `/j/${j.id}/m/${m.id}` }));
   j.prazos.filter((p) => p.diasRestantes >= 0 && p.diasRestantes <= 14).slice(0, 2).forEach((p) => alerts.push({ ic: 'calendar', tone: 'warn', texto: `Prazo próximo: ${p.titulo} (${fmtDate(p.data)}, ${p.diasRestantes} dia(s))`, rota: p.missao ? `/j/${j.id}/m/${p.missao}` : '/agenda' }));
   const pendDocs = Object.entries(user.documents || {}).filter(([, s]) => s === 'correcao').length;
   if (pendDocs) alerts.push({ ic: 'file', tone: 'warn', texto: `${pendDocs} documento(s) precisam de correção`, rota: '/documentos' });
@@ -75,6 +75,6 @@ export async function homeView() {
           h('div', {}, h('dt', {}, 'Orçamento estimado'), h('dd', {}, eur(fin.plano.orcamento))),
           h('div', {}, h('dt', {}, 'Exigência do visto'), h('dd', {}, eur(fin.plano.exigenciaVisto))),
           h('div', { class: fin.plano.deficit > 0 ? 'neg' : 'pos' }, h('dt', {}, 'Recursos registrados'), h('dd', {}, eur(fin.plano.confirmados)))) : h('p', { class: 'muted' }, 'Indisponível.')),
-      journeys.length > 1 ? h('section', { class: 'panel' }, h('h2', { class: 'panel-title' }, icon('map', { size: 18 }), 'Outras jornadas'), h('ul', { class: 'agenda-mini' }, journeys.slice(1).map((x) => h('li', {}, h('a', { href: `#/j/${x.id}` }, `${x.destino.universidade?.sigla} — ${x.destino.programa?.nome || ''}`), h('small', { class: 'muted' }, pctLabel(x.progresso)))))) : null),
+      journeys.length > 1 ? h('section', { class: 'panel' }, h('h2', { class: 'panel-title' }, icon('map', { size: 18 }), 'Outras jornadas'), h('ul', { class: 'agenda-mini' }, journeys.slice(1).map((x) => h('li', {}, h('a', { href: `#/j/${x.id}` }, `${x.destino.universidade?.sigla} - ${x.destino.programa?.nome || ''}`), h('small', { class: 'muted' }, pctLabel(x.progresso)))))) : null),
   );
 }

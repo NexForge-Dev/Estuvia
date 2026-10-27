@@ -88,8 +88,8 @@ export function upcoming(windows, events, now = Date.now(), limit = 5) {
   const today = todayMadrid(new Date(now));
   const items = [
     ...windows.filter((w) => w.confirmacao === 'confirmado').flatMap((w) => [
-      { tipo: 'abertura', fase: w.fase, data: w.abertura, rotulo: `Abertura da candidatura — Fase ${w.fase}` },
-      { tipo: 'encerramento', fase: w.fase, data: w.encerramento, rotulo: `Fim do prazo de candidatura — Fase ${w.fase}` },
+      { tipo: 'abertura', fase: w.fase, data: w.abertura, rotulo: `Abertura da candidatura: Fase ${w.fase}` },
+      { tipo: 'encerramento', fase: w.fase, data: w.encerramento, rotulo: `Fim do prazo de candidatura: Fase ${w.fase}` },
     ]),
     ...events.filter((e) => ['adjudicacao', 'resultas', 'confirmacao'].includes(e.tipo)).map((e) => ({ tipo: e.tipo, fase: e.fase, data: e.inicio || e.fim, fim: e.fim, rotulo: e.rotulo })),
   ].filter((i) => i.data && i.data >= today);

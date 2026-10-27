@@ -121,7 +121,7 @@ function buildItems(user, jr, perfilId, overrides, fx) {
       // Comprada = confirmado; só cotada = estimado.
       origemTipo = 'viagem'; status = route.comprada ? 'confirmado' : 'estimado'; editavel = false;
       const parts = ROUTE_PARTS.filter(([k]) => Number(route[k]) > 0).map(([k, l]) => `${l} ${Math.round(Number(route[k]))}`);
-      nota = `Rota ${route.comprada ? 'comprada' : 'escolhida (cotação)'}: ${route.rota}${parts.length ? ` — ${parts.join(' + ')}` : ''}.`;
+      nota = `Rota ${route.comprada ? 'comprada' : 'escolhida (cotação)'}: ${route.rota}${parts.length ? ` - ${parts.join(' + ')}` : ''}.`;
     } else if (ov && num(ov.valor) !== null) {
       // 2) Valor do estudante.
       moeda = ov.moeda || 'EUR'; valorOriginal = num(ov.valor); valorEur = toEur(valorOriginal, moeda);

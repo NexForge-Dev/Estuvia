@@ -6,6 +6,7 @@
 //   tick(now)               — marcos de calendário que chegam com o tempo (abertura, fim de prazo,
 //                             resultados, confirmação de vaga), calculados das datas oficiais
 
+import { emitTo } from '../events.js';
 import { data, newId, hash } from './db.js';
 import { todayMadrid, daysBetween, startOfDayMadrid, endOfDayMadrid } from './dates.js';
 import { UNIVERSITY_INFO, APPLICATION_CHANNEL } from './registry.js';
@@ -43,6 +44,8 @@ function push(sub, opportunity, evento, { titulo, corpo, dados = {}, chave }) {
     canal: 'app', criadoEm: new Date().toISOString(), enviadoEm: new Date().toISOString(), lidoEm: null, estado: 'nova', dedupeKey,
   };
   d.alerts.push(alert);
+  // Ao vivo: quem está com a Estuvia aberta recebe o aviso na hora (os detalhes vêm da API do Radar).
+  emitTo(sub.userId, 'radar-alerta', { id: alert.id, evento, titulo: alert.titulo, corpo, opportunityId: opportunity.id });
   return alert;
 }
 
@@ -92,7 +95,7 @@ export function onPublished(revisions) {
     for (const { sub, opp } of subscribersFor('requisitos', (o) => o.programId === r.entidadeId)) {
       const a = push(sub, opp, 'requisitos', {
         titulo: 'Dados do programa atualizados',
-        corpo: `A ficha oficial mudou: ${r.campo.replace('ficha.', '')} de "${r.anterior ?? '—'}" para "${r.novo ?? '—'}".`,
+        corpo: `A ficha oficial mudou: ${r.campo.replace('ficha.', '')} de "${r.anterior ?? '-'}" para "${r.novo ?? '-'}".`,
         dados: { fonteUrl: r.evidencia?.url, campo: r.campo, de: r.anterior, para: r.novo },
         chave: r.id,
       });
@@ -140,7 +143,7 @@ export function tick(now = Date.now()) {
       const start = e.inicio || e.fim;
       if (!start || start > today || start < since) continue;
       if (['adjudicacao', 'resultas'].includes(e.tipo) && sub.eventos.includes('resultados') && start === today) {
-        const a = push(sub, opp, 'resultados', { titulo: 'Resultado publicado', corpo: `${e.rotulo} (Fase ${e.fase}) — confira na fonte oficial.`, dados: { data: start, fase: e.fase, candidaturaUrl: channel?.url }, chave: `${e.id}:${start}` });
+        const a = push(sub, opp, 'resultados', { titulo: 'Resultado publicado', corpo: `${e.rotulo} (Fase ${e.fase}), confira na fonte oficial.`, dados: { data: start, fase: e.fase, candidaturaUrl: channel?.url }, chave: `${e.id}:${start}` });
         if (a) created.push(a);
       }
       if (e.tipo === 'confirmacao' && sub.eventos.includes('confirmacao') && today <= (e.fim || start)) {
@@ -170,7 +173,7 @@ export function correctionAlerts(revisionsCorrigidas) {
       const opp = d.opportunities.find((o) => o.id === a.opportunityId);
       if (!sub || !opp) continue;
       const alert = push(sub, opp, 'calendario', {
-        titulo: 'Correção de informação', corpo: `Corrigimos "${r.campo}": ${r.anterior ?? '—'} → ${r.novo ?? '—'}. Confira a oportunidade e sua agenda.`,
+        titulo: 'Correção de informação', corpo: `Corrigimos "${r.campo}": ${r.anterior ?? '-'} → ${r.novo ?? '-'}. Confira a oportunidade e sua agenda.`,
         dados: { campo: r.campo, de: r.anterior, para: r.novo }, chave: `correcao:${r.id}`,
       });
       if (alert) created.push(alert);

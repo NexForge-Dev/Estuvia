@@ -24,7 +24,7 @@ if (!jwtSecret || jwtSecret.length < 32) {
       fs.writeFileSync(secretFile, jwtSecret, { mode: 0o600 });
     } catch { /* sem disco gravável: segue com segredo em memória */ }
   }
-  if (!process.env.DATA_FILE) console.warn('[config] JWT_SECRET não definido — usando segredo local de desenvolvimento (data/.dev-secret).');
+  if (!process.env.DATA_FILE) console.warn('[config] JWT_SECRET não definido, usando segredo local de desenvolvimento (data/.dev-secret).');
 }
 
 export const config = {

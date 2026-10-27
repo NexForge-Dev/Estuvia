@@ -39,15 +39,15 @@ export function workItems(user, today) {
         const prioridade = m.prioridade === 'critica' ? 'critica' : m.prioridade === 'alta' ? 'alta' : 'normal';
         items.push({
           ...base,
-          titulo: `Missão ${m.label} — ${m.titulo}`,
+          titulo: `Missão ${m.label} - ${m.titulo}`,
           minutos: Math.max(15, Math.round(((m.duracaoMin || 60) * restante) / 15) * 15),
           prioridade,
           prazo: m.prazo?.data || null,
-          motivo: prioridade === 'critica' ? (m.prazo ? `Prazo em ${m.prazo.diasRestantes} dia(s)` : 'Ação urgente após mudança na sua situação') : m.status === 'atencao' ? 'Missão com atenção necessária' : m.status === 'em-andamento' ? 'Continuar o que você começou' : m.trilha && !j.rodadas.find((r) => r.numero === m.rodada)?.desbloqueada ? `Preparação antecipada — ${m.trilha.titulo}` : 'Disponível agora',
+          motivo: prioridade === 'critica' ? (m.prazo ? `Prazo em ${m.prazo.diasRestantes} dia(s)` : 'Ação urgente após mudança na sua situação') : m.status === 'atencao' ? 'Missão com atenção necessária' : m.status === 'em-andamento' ? 'Continuar o que você começou' : m.trilha && !j.rodadas.find((r) => r.numero === m.rodada)?.desbloqueada ? `Preparação antecipada: ${m.trilha.titulo}` : 'Disponível agora',
           rodada: m.rodada,
         });
       } else if (m.status === 'aguardando') {
-        items.push({ ...base, titulo: `Verificar resposta — Missão ${m.label}`, minutos: 15, prioridade: 'aguardando', prazo: m.prazo?.data || null, motivo: 'Depende de terceiros: só conferir se houve resposta', rodada: m.rodada });
+        items.push({ ...base, titulo: `Verificar resposta: Missão ${m.label}`, minutos: 15, prioridade: 'aguardando', prazo: m.prazo?.data || null, motivo: 'Depende de terceiros: só conferir se houve resposta', rodada: m.rodada });
       }
     }
   }
@@ -57,7 +57,7 @@ export function workItems(user, today) {
     if (!pend.length) continue;
     const dias = app.prazo ? Math.ceil((new Date(`${app.prazo}T23:59:59Z`) - new Date(`${today}T12:00:00Z`)) / 86400000) : null;
     items.push({
-      titulo: `Bolsa ${app.nome} — ${pend[0].texto}`, minutos: 45, categoria: 'financeiro', bolsaId: app.id,
+      titulo: `Bolsa ${app.nome} - ${pend[0].texto}`, minutos: 45, categoria: 'financeiro', bolsaId: app.id,
       prioridade: dias !== null && dias <= 7 ? 'critica' : dias !== null && dias <= 30 ? 'alta' : 'normal',
       prazo: app.prazo || null, motivo: app.prazo ? `Prazo do edital em ${dias} dia(s)` : 'Tarefa de candidatura à bolsa', rodada: 9,
     });
@@ -149,7 +149,7 @@ export function staleSuggestions(user, today = new Date().toISOString().slice(0,
     if (e.titulo.startsWith('Verificar resposta')) { if (m.status !== 'aguardando') removed.push({ id: e.id, titulo: e.titulo, motivo: 'A missão não está mais aguardando resposta' }); continue; }
     if (m.status === 'concluida') removed.push({ id: e.id, titulo: e.titulo, motivo: 'Missão já concluída' });
     else if (m.status === 'bloqueada') removed.push({ id: e.id, titulo: e.titulo, motivo: `Bloqueada: depende de ${m.bloqueadaPor.map((b) => b.label || b.titulo).join(', ')}` });
-    else if (m.status === 'aguardando') removed.push({ id: e.id, titulo: e.titulo, motivo: 'Aguardando terceiros — o bloco vira uma verificação curta' });
+    else if (m.status === 'aguardando') removed.push({ id: e.id, titulo: e.titulo, motivo: 'Aguardando terceiros, o bloco vira uma verificação curta' });
     else if (m.status === 'nao-aplicavel') removed.push({ id: e.id, titulo: e.titulo, motivo: 'Não se aplica mais' });
   }
   return removed;

@@ -17,7 +17,7 @@ async function syncAdmin() {
     return null;
   }
   if (senha.length < 8) {
-    console.warn('[admin] ADMIN_PASSWORD precisa ter pelo menos 8 caracteres — conta admin não criada.');
+    console.warn('[admin] ADMIN_PASSWORD precisa ter pelo menos 8 caracteres, conta admin não criada.');
     return null;
   }
 

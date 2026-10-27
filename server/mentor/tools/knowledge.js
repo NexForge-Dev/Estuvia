@@ -22,7 +22,7 @@ export const getOfficialSources = defineTool({
 
 export const findConsulate = defineTool({
   name: 'find_consulate', efeito: 'leitura', permissao: null,
-  descricao: 'Identifica o consulado da Espanha que atende o estudante (visto de estudos) pela base verificada de jurisdições consulares: estado de residência no Brasil → repartição, com e-mail, endereço, página oficial do visto de estudos, fonte e data de verificação. Sem estado informado usa o do perfil. Se o estado não estiver na base, devolve status "nao-confirmado" e o procedimento oficial — não deduza o consulado por conta própria.',
+  descricao: 'Identifica o consulado da Espanha que atende o estudante (visto de estudos) pela base verificada de jurisdições consulares: estado de residência no Brasil → repartição, com e-mail, endereço, página oficial do visto de estudos, fonte e data de verificação. Sem estado informado usa o do perfil. Se o estado não estiver na base, devolve status "nao-confirmado" e o procedimento oficial, não deduza o consulado por conta própria.',
   entrada: z.object({ estado: z.enum(Object.keys(UF_NOMES)).optional() }).strict(),
   saida: '{ tipo: "consulado", status: encontrado|nao-confirmado|sem-estado|fora-do-brasil, estado{uf,nome}, consulado{nome,cidade,uf,endereco,telefone,email,emailRotulo,vistoEstudosUrl}, fonte{orgao,url,verificadoEm}, procedimento? }',
   run: (ctx, { estado }) => {
@@ -44,15 +44,15 @@ export function emailDraft(user, programaNome, { destinatario, duvida }) {
   if (destinatario === 'consulado') {
     const c = consulateForState(p.estado);
     return {
-      para: c?.emailVistos || c?.emailContato ? `${c.emailVistos || c.emailContato} (confira no site oficial antes de enviar)` : `[e-mail do consulado — consulte ${CONSULATE_LIST_URL}]`,
-      assunto: 'Consulta sobre visado de estudios — documentación',
+      para: c?.emailVistos || c?.emailContato ? `${c.emailVistos || c.emailContato} (confira no site oficial antes de enviar)` : `[e-mail do consulado, consulte ${CONSULATE_LIST_URL}]`,
+      assunto: 'Consulta sobre visado de estudios, documentación',
       corpo: `Estimados/as señores/as:\n\nMe llamo ${nome}, soy de nacionalidad ${p.nacionalidade || 'brasileña'} y resido en ${p.estado ? `${p.estado}, ` : ''}${p.paisResidencia || 'Brasil'}. He sido admitido/a (o estoy en proceso de admisión) en el ${programa} y voy a solicitar un visado de estudios.\n\nQuisiera confirmar:\n1. La lista de documentos exigidos en mi caso.\n2. Si los documentos brasileños necesitan apostilla y traducción jurada.\n3. Cómo se solicita la cita y cuál es la tasa vigente.\n${duvida ? `4. ${pergunta}\n` : ''}\nMuchas gracias por su atención.\n\nAtentamente,\n${nome}`,
       dicas: ['Uma pergunta clara por item ajuda a receber resposta.', 'Não envie cópia de passaporte nem dados bancários por e-mail sem que o consulado peça.'],
     };
   }
   const saud = destinatario === 'universidade' ? 'Estimados/as señores/as:' : 'Estimado/a profesor/a [apellido]:';
   return {
-    para: destinatario === 'universidade' ? '[e-mail da secretaria ou do serviço internacional — na página oficial]' : '[e-mail institucional encontrado na página oficial do máster]',
+    para: destinatario === 'universidade' ? '[e-mail da secretaria ou do serviço internacional, na página oficial]' : '[e-mail institucional encontrado na página oficial do máster]',
     assunto: `Consulta sobre el ${programa}`,
     corpo: `${saud}\n\nMe llamo ${nome} y soy ${formacion} (${p.paisResidencia || 'Brasil'}). Estoy interesado/a en el ${programa} y voy a presentar mi solicitud a través del Distrito Único Andaluz.\n\nQuisiera consultarle lo siguiente: ${pergunta}\n\nMuchas gracias por su atención.\n\nAtentamente,\n${nome}`,
     dicas: ['Uma dúvida específica tem mais chance de resposta do que uma mensagem genérica.', 'Use o e-mail que aparece na página oficial do mestrado; não invente endereços.'],

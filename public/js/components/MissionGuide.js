@@ -70,7 +70,7 @@ export function MissionGuide(m, ctx) {
   if (m.prazo && m.status !== 'concluida') {
     const late = m.prazo.diasRestantes < 0;
     critical.push(h('div', { class: `guide-alert ${late || m.prazo.diasRestantes <= 14 ? 'is-hot' : ''}` }, icon('calendar', { size: 16 }),
-      h('span', {}, late ? `O prazo era ${fmtDate(m.prazo.data)}. Confira a situação no site oficial.` : `Prazo: ${fmtDate(m.prazo.data)} — faltam ${m.prazo.diasRestantes} dia(s).`),
+      h('span', {}, late ? `O prazo era ${fmtDate(m.prazo.data)}. Confira a situação no site oficial.` : `Prazo: ${fmtDate(m.prazo.data)}, faltam ${m.prazo.diasRestantes} dia(s).`),
       h('small', {}, { oficial: 'regra oficial', declarado: 'informado por você', previsto: 'previsão' }[m.prazo.origem] || '')));
   }
   if (m.riscoInfo?.texto && m.riscoInfo.nivel !== 'baixo' && active) {
@@ -253,7 +253,7 @@ export function MissionGuide(m, ctx) {
     };
     // "Já fiz": confirma no mesmo card o que conta como feito (sem telas extras).
     const askConfirm = () => mount(confirmHost, h('div', { class: 'simple-confirm' },
-      h('p', {}, h('strong', {}, 'Conseguiu? '), 'Confirme só se fez de verdade — ler aqui não conta.'),
+      h('p', {}, h('strong', {}, 'Conseguiu? '), 'Confirme só se fez de verdade, ler aqui não conta.'),
       steps.filter((o) => o.tipo === 'check' && !o.feito).length > 1 ? h('ul', { class: 'simple-list' }, steps.filter((o) => o.tipo === 'check' && !o.feito).map((o) => h('li', {}, icon('check', { size: 12 }), o.texto))) : null,
       fields.map(({ o, el }) => h('label', { class: 'field' }, h('span', { class: 'field-label' }, o.texto), el)),
       ev ? h('label', { class: 'field' }, h('span', { class: 'field-label' }, `${ev.rotulo}${ev.obrigatoria ? '' : ' (opcional)'}`), evInput) : null,
@@ -381,7 +381,7 @@ export function LockedMission(m, journey, { onArrival } = {}) {
   const missing = m.bloqueadaPor.map((b) => {
     if (b.rodada) return h('li', {}, icon('lock', { size: 14 }), h('a', { href: `#/j/${jid}/r/${b.rodada}` }, `Liberar a Rodada ${b.rodada}`));
     if (b.externo) return h('li', {}, icon('hourglass', { size: 14 }), h('span', {}, `Aguardando: ${b.titulo}`));
-    return h('li', {}, icon('target', { size: 14 }), h('a', { href: `#/j/${jid}/m/${b.id}` }, `Missão ${b.label} — ${b.titulo}`));
+    return h('li', {}, icon('target', { size: 14 }), h('a', { href: `#/j/${jid}/m/${b.id}` }, `Missão ${b.label} - ${b.titulo}`));
   });
   const firstMission = m.bloqueadaPor.find((b) => b.id);
   const lockInfo = m.rodadaDesbloqueio;

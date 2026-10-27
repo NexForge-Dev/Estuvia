@@ -60,7 +60,7 @@ export function offlineAnswer(question) {
     .sort((a, b) => b.score - a.score);
   if (!scored.length) {
     return {
-      texto: 'Ainda não tenho essa informação confirmada na minha base. Para não te passar nada errado, sugiro consultar a página oficial do DUA [O3] ou a ficha do seu mestrado. Você também pode reformular a pergunta — sei bastante sobre DUA, documentos, idioma, visto, TIE e moradia.',
+      texto: 'Ainda não tenho essa informação confirmada na minha base. Para não te passar nada errado, sugiro consultar a página oficial do DUA [O3] ou a ficha do seu mestrado. Você também pode reformular a pergunta, sei bastante sobre DUA, documentos, idioma, visto, TIE e moradia.',
       fontes: [sourceById('O3')],
     };
   }
@@ -114,7 +114,7 @@ router.post('/ask', requireAuth, assistantLimiter, async (req, res) => {
   const history = historico.filter((m, i) => !(i === 0 && m.role !== 'user') && m.content.trim());
   const computed = acao ? quickAnswer(acao, req.user, ctx, parsed.data.pergunta) : null;
   const content = [
-    'CONTEXTO DA JORNADA (dados declarados pelo estudante e calculados pela plataforma — use-os, não invente outros):',
+    'CONTEXTO DA JORNADA (dados declarados pelo estudante e calculados pela plataforma, use-os, não invente outros):',
     contextText(req.user, ctx),
     computed ? `\nRESPOSTA-BASE CALCULADA PELA PLATAFORMA (reescreva de forma acolhedora, sem acrescentar fatos):\n${computed.texto}` : '',
     radar.relevante ? `\nRADAR DE OPORTUNIDADES (datas e editais verificados; não invente datas fora daqui):\n${radar.texto}` : '',
@@ -163,7 +163,7 @@ router.post('/ask', requireAuth, assistantLimiter, async (req, res) => {
     else console.error('[assistant] falha:', err.message);
     // Degrada para a base local em vez de deixar o estudante sem resposta.
     const ans = localAnswer();
-    send('replace', { text: `_(A IA está indisponível agora — resposta da base verificada.)_\n\n${ans.texto}` });
+    send('replace', { text: `_(A IA está indisponível agora, resposta da base verificada.)_\n\n${ans.texto}` });
     send('done', { fontes: ans.fontes, acoes: ans.acoes || [], modo: 'offline' });
   }
   res.end();

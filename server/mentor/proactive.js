@@ -57,14 +57,14 @@ export function insights(user, { now = new Date(), limit = 6 } = {}) {
 
     // Prazos se aproximando (missões abertas).
     for (const m of ms.filter((x) => x.prazo && x.prazo.diasRestantes >= 0 && x.prazo.diasRestantes <= 14 && !['concluida', 'nao-aplicavel', 'ignorada', 'bloqueada'].includes(x.status)).slice(0, 2)) {
-      add({ id: sig('prazo', jr.id, m.id, m.prazo.data), tipo: 'prazo', prioridade: m.prazo.diasRestantes <= 3 ? 'alta' : 'media', titulo: `Prazo em ${m.prazo.diasRestantes} dia(s)`, texto: `Missão ${m.label} — ${m.titulo}: prazo em ${fmtDate(m.prazo.data)} (${m.prazo.origem === 'oficial' ? 'prazo oficial' : m.prazo.origem === 'previsto' ? 'previsão' : 'prazo informado por você'}). Quer reservar um horário?`, acao: say(`Agende para amanhã a Missão ${m.label}`, 'Reservar horário'), origem: 'regra:prazo-proximo', base: { journeyId: jr.id, missaoId: m.id, data: m.prazo.data } });
+      add({ id: sig('prazo', jr.id, m.id, m.prazo.data), tipo: 'prazo', prioridade: m.prazo.diasRestantes <= 3 ? 'alta' : 'media', titulo: `Prazo em ${m.prazo.diasRestantes} dia(s)`, texto: `Missão ${m.label} - ${m.titulo}: prazo em ${fmtDate(m.prazo.data)} (${m.prazo.origem === 'oficial' ? 'prazo oficial' : m.prazo.origem === 'previsto' ? 'previsão' : 'prazo informado por você'}). Quer reservar um horário?`, acao: say(`Agende para amanhã a Missão ${m.label}`, 'Reservar horário'), origem: 'regra:prazo-proximo', base: { journeyId: jr.id, missaoId: m.id, data: m.prazo.data } });
     }
 
     // Missões paradas: iniciadas há muito tempo, sem conclusão nem espera de terceiros.
     for (const m of ms.filter((x) => x.status === 'em-andamento')) {
       const ini = jr.missions?.[m.id]?.iniciadaEm;
       if (ini && (now - new Date(ini)) / 86400000 >= STALE_DAYS) {
-        add({ id: sig('parada', jr.id, m.id, ini.slice(0, 10)), tipo: 'missao', prioridade: 'baixa', titulo: 'Missão parada', texto: `Você começou a Missão ${m.label} — ${m.titulo} há mais de ${STALE_DAYS} dias. Travou em alguma parte?`, acao: say(`Estou com dificuldade na Missão ${m.label}`, 'Pedir ajuda'), origem: 'regra:missao-parada', base: { journeyId: jr.id, missaoId: m.id } });
+        add({ id: sig('parada', jr.id, m.id, ini.slice(0, 10)), tipo: 'missao', prioridade: 'baixa', titulo: 'Missão parada', texto: `Você começou a Missão ${m.label} - ${m.titulo} há mais de ${STALE_DAYS} dias. Travou em alguma parte?`, acao: say(`Estou com dificuldade na Missão ${m.label}`, 'Pedir ajuda'), origem: 'regra:missao-parada', base: { journeyId: jr.id, missaoId: m.id } });
         break;
       }
     }

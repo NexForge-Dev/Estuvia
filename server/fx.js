@@ -27,7 +27,7 @@ export async function refreshRate({ force = false, fetchImpl = globalThis.fetch 
       const body = await res.json();
       const taxa = Number(body?.rates?.BRL);
       if (!(taxa > 0)) throw new Error('resposta sem taxa');
-      cache = { taxa, data: body.date, obtidoEm: new Date().toISOString(), fonte: 'Banco Central Europeu — taxa de referência (via Frankfurter)', url: 'https://www.frankfurter.app/' };
+      cache = { taxa, data: body.date, obtidoEm: new Date().toISOString(), fonte: 'Banco Central Europeu, taxa de referência (via Frankfurter)', url: 'https://www.frankfurter.app/' };
       failedAt = 0;
     } catch {
       failedAt = Date.now();

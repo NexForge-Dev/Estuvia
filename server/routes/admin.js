@@ -7,6 +7,11 @@ import { requireAuth, requireAdmin, isAdmin } from '../security.js';
 import { usageReport, userUsage, moduleLabel } from '../usage.js';
 import { studentRow, studentReport, enrollmentOverview } from '../admin-student.js';
 import { aiStatus, checkAI } from '../ai-health.js';
+import { systemStatus } from '../system-status.js';
+import { requestStats, recentLogs } from '../ops.js';
+import { DOCUMENTS } from '../content/documents.js';
+import { SOURCES } from '../content/sources.js';
+import { allDocRules, setDocRule } from '../document-rules.js';
 
 const router = Router();
 router.use(requireAuth, requireAdmin);
@@ -23,7 +28,7 @@ export function describeUA(ua = '') {
   const browser = /Edg\//.test(ua) ? 'Edge' : /OPR\/|Opera/.test(ua) ? 'Opera' : /SamsungBrowser/.test(ua) ? 'Samsung Internet'
     : /Firefox\//.test(ua) ? 'Firefox' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : /node|curl|undici/i.test(ua) ? 'Script' : 'Outro';
   const os = /Android/.test(ua) ? 'Android' : /iPhone|iPad|iPod/.test(ua) ? 'iOS' : /Windows/.test(ua) ? 'Windows'
-    : /Mac OS X|Macintosh/.test(ua) ? 'macOS' : /Linux/.test(ua) ? 'Linux' : '—';
+    : /Mac OS X|Macintosh/.test(ua) ? 'macOS' : /Linux/.test(ua) ? 'Linux' : '-';
   const device = /Mobi|iPhone|Android(?!.*Tablet)/.test(ua) ? 'celular' : /iPad|Tablet/.test(ua) ? 'tablet' : 'computador';
   return { browser, os, device };
 }
@@ -33,7 +38,7 @@ function summary(u) {
   return {
     id: u.id,
     email: u.email,
-    nome: p.nome || '—',
+    nome: p.nome || '-',
     avatar: p.avatar || '🎓',
     createdAt: u.createdAt,
     lastSeenAt: u.lastSeenAt || null,
@@ -135,6 +140,22 @@ router.post('/ai/check', async (req, res) => {
   res.json({ ...result, status: aiStatus() });
 });
 
+// Status do sistema (serviços e chaves) + métricas de requisições; ?check=1 testa cada serviço de verdade.
+const HOURS = [1, 6, 24, 168];
+router.get('/status', async (req, res) => {
+  const horas = HOURS.includes(Number(req.query.horas)) ? Number(req.query.horas) : 24;
+  const check = req.query.check === '1';
+  const status = await systemStatus({ check });
+  if (check) await audit.log({ action: 'admin-status-check', userId: req.user.id, geral: status.geral });
+  res.json({ ...status, metricas: requestStats(horas) });
+});
+
+// Logs do servidor (memória, desde o último reinício).
+router.get('/logs', (req, res) => {
+  const nivel = ['info', 'aviso', 'erro'].includes(req.query.nivel) ? req.query.nivel : null;
+  res.json(recentLogs({ nivel, q: String(req.query.q || '').slice(0, 100) }));
+});
+
 router.get('/users/:id', (req, res) => {
   const u = users.findById(req.params.id);
   if (!u) return res.status(404).json({ error: 'Usuário não encontrado.' });
@@ -186,6 +207,30 @@ router.post('/users/:id/logout', async (req, res) => {
   const user = await users.update(target.id, (u) => { u.tokenVersion += 1; });
   await audit.log({ action: 'admin-logout-user', userId: req.user.id, targetId: user.id });
   res.json({ user: summary(user) });
+});
+
+
+// ---------- Carteira de documentos: revisão editorial das exigências (sem mexer nas telas) ----------
+router.get('/document-rules', (req, res) => {
+  const rules = allDocRules();
+  res.json({
+    documentos: DOCUMENTS.map((d) => ({ id: d.id, nome: d.nome, categoria: d.categoria, fontes: d.fontes || [d.fonte], revisao: rules[d.id] || null })),
+    fontes: SOURCES.filter((s) => s.tipo !== 'demo').map((s) => ({ id: s.id, orgao: s.orgao, titulo: s.titulo, url: s.url, revisadoEm: s.revisadoEm })),
+  });
+});
+
+router.put('/document-rules/:docId', async (req, res) => {
+  if (!DOCUMENTS.some((d) => d.id === req.params.docId)) return res.status(404).json({ error: 'Documento desconhecido.' });
+  const parsed = z.object({
+    aviso: z.string().trim().max(400).optional(),
+    revisadoEm: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    fontes: z.array(z.string().max(10)).max(6).optional(),
+    remover: z.literal(true).optional(),
+  }).strict().safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'Revisão inválida.' });
+  const revisao = await setDocRule(req.params.docId, parsed.data.remover ? null : parsed.data, req.user.email);
+  await audit.log({ action: 'admin-document-rule', userId: req.user.id, docId: req.params.docId });
+  res.json({ revisao });
 });
 
 export default router;

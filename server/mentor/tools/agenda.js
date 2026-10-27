@@ -107,7 +107,7 @@ export const proposeWeeklySchedule = defineTool({
 });
 
 function describeEvent(e, today) {
-  return `${e.titulo} — ${dateLabel(e.data, today)}, ${timeLabel(e.inicio)}–${timeLabel(e.fim)}`;
+  return `${e.titulo} - ${dateLabel(e.data, today)}, ${timeLabel(e.inicio)}–${timeLabel(e.fim)}`;
 }
 
 export const createCalendarEvent = defineTool({

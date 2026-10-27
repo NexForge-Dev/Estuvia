@@ -83,7 +83,7 @@ export function ResultCard(r) {
 
 export function SourceLine(f) {
   return h('footer', { class: 'rc-source' }, icon('shield', { size: 12 }),
-    h('span', {}, 'Fonte oficial: ', f.url ? h('a', { href: f.url, target: '_blank', rel: 'noopener noreferrer' }, f.titulo ? `${f.orgao} — ${f.titulo}` : f.orgao) : f.orgao,
+    h('span', {}, 'Fonte oficial: ', f.url ? h('a', { href: f.url, target: '_blank', rel: 'noopener noreferrer' }, f.titulo ? `${f.orgao} - ${f.titulo}` : f.orgao) : f.orgao,
       f.verificadoEm ? ` · conferido em ${fmtDate(f.verificadoEm)}` : ''));
 }
 

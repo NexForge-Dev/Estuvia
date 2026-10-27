@@ -133,7 +133,7 @@ export function computeTravel(user, jid, now = new Date()) {
       status: chosen?.comprada && e.meio === 'aviao' ? 'comprado' : 'planejado',
     }));
     etapas.push({
-      ordem: etapas.length + 1, de: cidade || 'Destino', para: moradia ? `Minha moradia — ${moradia.nome}${moradia.bairro ? ` (${moradia.bairro})` : ''}` : 'Minha moradia', meio: 'local',
+      ordem: etapas.length + 1, de: cidade || 'Destino', para: moradia ? `Minha moradia: ${moradia.nome}${moradia.bairro ? ` (${moradia.bairro})` : ''}` : 'Minha moradia', meio: 'local',
       rotulo: tr.chegada.meio ? { onibus: 'Ônibus urbano', taxi: 'Táxi', ape: 'A pé', carro: 'Carona / aplicativo', metro: 'Metrô' }[tr.chegada.meio] || 'Transporte local' : 'Transporte local',
       data: null, horario: null, operador: null, custo: num(chosen?.transporteLocal), status: moradia ? 'planejado' : 'a-definir',
     });

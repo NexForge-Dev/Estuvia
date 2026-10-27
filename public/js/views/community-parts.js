@@ -127,14 +127,14 @@ export function PostCard(post, ctx) {
 
   const held = post.moderacao.estado !== 'publicado'
     ? h('p', { class: 'cm-notice cm-notice-warn' }, icon('hourglass', { size: 15 }), h('span', {},
-      { 'em-revisao': 'Em revisão pela moderação — só você e a equipe veem por enquanto.', oculto: 'Ocultada pela moderação.', removido: 'Removida pela moderação.' }[post.moderacao.estado] || '',
+      { 'em-revisao': 'Em revisão pela moderação, só você e a equipe veem por enquanto.', oculto: 'Ocultada pela moderação.', removido: 'Removida pela moderação.' }[post.moderacao.estado] || '',
       post.moderacao.motivos?.length ? h('small', {}, ` Motivos: ${post.moderacao.motivos.join(' ')}`) : null))
     : null;
 
   // Relato pessoal em tema sensível (vistos, documentos, dinheiro) nunca parece orientação oficial.
   const sensitive = cat?.sensivel && post.natureza !== 'orientacao-oficial' && post.tipo !== 'oportunidade'
     ? h('p', { class: 'cm-notice cm-notice-info' }, icon('alert', { size: 15 }),
-      h('span', {}, `${meta.naturezas[post.natureza]?.label || 'Relato'} — não é orientação oficial. Regras de visto, documentos e comprovação financeira mudam por consulado e por ano: confirme sempre na `, h('a', { href: '#/fontes' }, 'Central de fontes'), '.'))
+      h('span', {}, `${meta.naturezas[post.natureza]?.label || 'Relato'}, não é orientação oficial. Regras de visto, documentos e comprovação financeira mudam por consulado e por ano: confirme sempre na `, h('a', { href: '#/fontes' }, 'Central de fontes'), '.'))
     : post.natureza === 'orientacao-oficial' && post.verificacao?.status !== 'verificada'
       ? h('p', { class: 'cm-notice cm-notice-info' }, icon('shield', { size: 15 }), h('span', {}, 'Cita uma fonte oficial, mas ainda não foi conferida pela equipe. Leia a fonte antes de agir.'))
       : null;
@@ -322,7 +322,7 @@ export function Composer({ meta, grupos, initial = null, grupoId = '', missaoId 
     fld('Requisitos', h('textarea', { name: 'requisitos', rows: 3, placeholder: 'Um requisito por linha' }, (o.requisitos || []).join('\n'))),
     h('p', { class: 'hint' }, 'A oportunidade entra como "Não verificada". Só a equipe pode verificá-la, depois de conferir link, requisitos e datas no edital.'));
 
-  const uniSel = h('select', { name: 'universidadeId' }, opt('', 'Universidade (opcional)', ''), meta.universidades.map((u) => opt(u.id, `${u.sigla} — ${u.nome}`, initial?.local?.universidadeId)));
+  const uniSel = h('select', { name: 'universidadeId' }, opt('', 'Universidade (opcional)', ''), meta.universidades.map((u) => opt(u.id, `${u.sigla} - ${u.nome}`, initial?.local?.universidadeId)));
   const cityList = h('datalist', { id: 'cm-cities' }, meta.cidades.map((c) => h('option', { value: c })));
   const grupoSel = h('select', { name: 'grupoId' }, opt('', 'Sem grupo (feed geral)', ''), grupos.map((g) => opt(g.id, g.nome, initial?.grupo?.id || grupoId)));
 
@@ -355,7 +355,7 @@ export function Composer({ meta, grupos, initial = null, grupoId = '', missaoId 
 
   const form = h('form', { class: 'cm-composer card stack', novalidate: true },
     h('div', { class: 'row between wrap' }, h('h2', {}, editing ? 'Editar publicação' : 'Compartilhar com a comunidade'), tabs),
-    (initial?.missaoId || missaoId) ? h('p', { class: 'cm-notice cm-notice-info' }, icon('flag', { size: 15 }), `Relato ligado à missão ${initial?.missaoId || missaoId}. Conte o que viveu — ele aparece como experiência, não como regra oficial.`) : null,
+    (initial?.missaoId || missaoId) ? h('p', { class: 'cm-notice cm-notice-info' }, icon('flag', { size: 15 }), `Relato ligado à missão ${initial?.missaoId || missaoId}. Conte o que viveu, ele aparece como experiência, não como regra oficial.`) : null,
     h('div', { class: 'grid-2' }, fld('Categoria', categoria), natField),
     fld('Título (opcional)', input('titulo', { value: tipo === 'oportunidade' ? '' : initial?.titulo || '', maxlength: 160 })),
     fld('Texto', h('textarea', { name: 'texto', rows: 4, maxlength: 5000, required: true, placeholder: 'Conte sua experiência, dúvida ou dica. Links são analisados automaticamente.' }, initial?.texto || ''),

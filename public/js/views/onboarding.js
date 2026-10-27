@@ -89,7 +89,7 @@ export async function onboardingView() {
         return [
           !firstTime ? h('p', { class: 'lead-sm' }, 'Escolha o destino da nova jornada. Seu perfil, documentos e finanças são reaproveitados.') : null,
           h('div', { class: 'grid-2' },
-            field('Universidade de destino', sel('universidadeId', universities.map((u) => [u.id, `${u.sigla} — ${u.nome} (${u.cidade})`]))),
+            field('Universidade de destino', sel('universidadeId', universities.map((u) => [u.id, `${u.sigla} - ${u.nome} (${u.cidade})`]))),
             field('Ano acadêmico', sel('anoAcademico', cycles.map((c) => [c, c])))),
           h('fieldset', { class: 'program-pick' }, h('legend', {}, 'Mestrado pretendido'),
             list.length ? list.map((pr) => {
@@ -104,7 +104,7 @@ export async function onboardingView() {
             }) : h('p', { class: 'muted' }, 'Ainda não há programas cadastrados para esta universidade no piloto.')),
           h('p', { class: 'hint' }, 'Programas "Demo" são dados demonstrativos: regras diferentes por programa geram jornadas diferentes. Confirme sempre na ficha oficial.'),
           h('div', { class: 'grid-2' },
-            field('Data prevista de início das aulas', input('inicioAulas', { type: 'date' }), 'Opcional — use a data publicada pela universidade.'),
+            field('Data prevista de início das aulas', input('inicioAulas', { type: 'date' }), 'Opcional, use a data publicada pela universidade.'),
             field('Duração da estadia (meses)', input('duracaoMeses', { type: 'number', min: 1, max: 48 }), 'Mais de 6 meses ativa as missões da TIE.')),
           h('fieldset', { class: 'program-pick' }, h('legend', {}, 'Em qual etapa você está?'),
             h('p', { class: 'hint' }, 'Já começou o processo por conta própria? Diga onde está e você não precisa refazer o que já fez.'),

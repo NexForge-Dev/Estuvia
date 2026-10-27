@@ -97,14 +97,14 @@ function History(post) {
   const hist = post.verificacao.historico || [];
   if (!hist.length) return null;
   return h('details', {}, h('summary', {}, `Histórico (${hist.length})`),
-    h('ol', { class: 'small' }, hist.map((x) => h('li', {}, `${fmtDate(x.em)} — ${x.status}${x.alteracao ? ` (alterou ${x.alteracao.join(', ')})` : ''}${x.nota ? `: ${x.nota}` : ''}`))));
+    h('ol', { class: 'small' }, hist.map((x) => h('li', {}, `${fmtDate(x.em)} - ${x.status}${x.alteracao ? ` (alterou ${x.alteracao.join(', ')})` : ''}${x.nota ? `: ${x.nota}` : ''}`))));
 }
 
 function ReviewItem(ctx, post, reload) {
   return h('div', { class: 'cm-mod-item' },
     PostCard(post, { ...ctx, onChange: () => {} }),
     h('div', { class: 'card card-soft stack' },
-      h('p', { class: 'small' }, h('strong', {}, 'Motivos: '), (post.motivosModeracao || []).join(' ') || '—', post.denuncias ? ` · ${post.denuncias} denúncia(s)` : ''),
+      h('p', { class: 'small' }, h('strong', {}, 'Motivos: '), (post.motivosModeracao || []).join(' ') || '-', post.denuncias ? ` · ${post.denuncias} denúncia(s)` : ''),
       ModActions(`/community/mod/posts/${post.id}/moderation`, reload)));
 }
 

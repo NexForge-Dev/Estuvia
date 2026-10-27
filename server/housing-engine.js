@@ -58,7 +58,7 @@ export function compareHousing(list, meses = 12) {
     diferencas.push(`Na estadia de ${meses} meses, a diferença chega a ${eur(dm * meses)}.`);
   }
   for (const o of opts) {
-    if (o.custos.mensal === null) diferencas.push(`${o.nome}: aluguel ainda não informado — não dá para comparar o custo.`);
+    if (o.custos.mensal === null) diferencas.push(`${o.nome}: aluguel ainda não informado, não dá para comparar o custo.`);
     if (o.seguranca.alertas.length) diferencas.push(`${o.nome}: ${o.seguranca.alertas.length} sinal(is) de alerta em "Conferir antes de pagar".`);
   }
   const desconhecidos = opts.map((o) => ({ id: o.id, itens: [o.custos.caucao === null && 'caução', o.custos.contasDesconhecidas && 'contas', !o.duracaoContrato && 'duração do contrato', !o.distancia && 'distância da universidade'].filter(Boolean) }));
