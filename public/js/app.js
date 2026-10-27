@@ -120,7 +120,7 @@ const routes = [
   { path: /^\/oportunidades$/, view: lazy('./views/radar.js', 'radarView'), auth: true },
   { path: /^\/oportunidades\/([\w-]+)$/, view: lazy('./views/radar.js', 'radarDetailView'), auth: true },
   { path: /^\/radar\/admin$/, view: lazy('./views/radar-admin.js', 'radarAdminView'), auth: true },
-  { path: /^\/admin$/, view: lazy('./views/admin.js', 'adminView'), auth: true },
+  { path: /^\/admin(?:\/(inscricoes|uso|ia|eventos|status|logs))?$/, view: lazy('./views/admin.js', 'adminView'), auth: true },
   { path: /^\/admin\/aluno\/([\w-]+)$/, view: lazy('./views/admin.js', 'adminStudentView'), auth: true },
   { path: /^\/conquistas$/, view: lazy('./achievements.js', 'achievementsView'), auth: true },
   { path: /^\/comunidade(?:\/(post|grupos|grupo|radar|salvos|oportunidades|moderacao|missao)(?:\/([\w.-]+))?)?$/, view: lazy('./views/community.js', 'communityView'), auth: true },
@@ -173,6 +173,7 @@ async function render() {
   state.route = { path, params };
   // Landing pública ocupa a tela inteira (sem lateral do app): ver css/landing.css.
   document.body.classList.toggle('landing-mode', path === '/sobre' || (path === '/' && !state.me));
+  document.body.classList.toggle('admin-mode', isAdminMode());
   renderNav();
   if (!isAdminMode()) mountMentorLauncher();
   else document.getElementById('assistant-root')?.replaceChildren();
@@ -235,7 +236,15 @@ const NAV_MORE = [
   { href: '/manual', label: 'Manual', icon: 'book' },
 ];
 // Só aparece para a conta de administrador (ADMIN_EMAIL no .env).
-const NAV_ADMIN = { href: '/admin', label: 'Painel admin', icon: 'shield' };
+const NAV_ADMIN = [
+  { href: '/admin', label: 'Alunos', icon: 'users', match: (p) => p === '/admin' || p.startsWith('/admin/aluno') },
+  { href: '/admin/inscricoes', label: 'Inscrições', icon: 'flag' },
+  { href: '/admin/uso', label: 'Uso dos módulos', icon: 'target' },
+  { href: '/admin/ia', label: 'IA', icon: 'sparkles' },
+  { href: '/admin/eventos', label: 'Eventos', icon: 'clock' },
+  { href: '/admin/status', label: 'Status', icon: 'pulse' },
+  { href: '/admin/logs', label: 'Logs', icon: 'terminal' },
+];
 
 function renderNav() {
   const path = currentPath();
@@ -246,7 +255,8 @@ function renderNav() {
   document.body.classList.toggle('has-tabbar', !!state.me && !isAdminMode());
   if (isAdminMode()) {
     tabbar.hidden = true;
-    mount(nav, h('ul', {}, h('li', {}, h('a', { href: '#/admin', class: 'active', 'aria-current': path === '/admin' ? 'page' : false }, icon(NAV_ADMIN.icon, { size: 18 }), h('span', {}, NAV_ADMIN.label)))));
+    const activeAdmin = (n) => (n.match ? n.match(path) : path === n.href);
+    mount(nav, h('p', { class: 'nav-section' }, 'Painel admin'), h('ul', {}, NAV_ADMIN.map((n) => h('li', {}, h('a', { href: `#${n.href}`, class: activeAdmin(n) ? 'active' : '', 'aria-current': activeAdmin(n) ? 'page' : false }, icon(n.icon, { size: 18 }), h('span', {}, n.label))))));
     mount(foot, h('button', { class: 'btn btn-ghost btn-block', type: 'button', onClick: logout }, 'Sair'));
     mount(top, h('button', { class: 'btn btn-sm btn-ghost', type: 'button', onClick: logout }, 'Sair'));
   } else if (state.me) {
