@@ -381,7 +381,8 @@ function ExecuteCard(m, ctx, base, checklist) {
       m.linkOficial ? h('a', { class: 'btn btn-cta btn-lg', href: m.linkOficial.url, target: '_blank', rel: 'noopener noreferrer' }, icon('external', { size: 16 }), m.linkOficial.rotulo) : null,
       m.linkOficial ? h('p', { class: 'hint' }, 'Abrir o portal não conclui a missão. Volte aqui e registre o que aconteceu.') : null),
     done
-      ? h('button', { type: 'button', class: 'btn btn-ghost', onClick: () => ctx.mutate(api.post(`${base}/reopen`, {})) }, icon('refresh', { size: 16 }), 'Reabrir missão')
+      // Requisito já atendido é desfeito em "Meu perfil → O que eu já tenho", não aqui.
+      ? (m.conclusao === 'requisito-atendido' ? h('p', { class: 'hint' }, 'Você informou que já tem isso. Se mudar, corrija em "Meu perfil".') : h('button', { type: 'button', class: 'btn btn-ghost', onClick: () => ctx.mutate(api.post(`${base}/reopen`, {})) }, icon('refresh', { size: 16 }), 'Reabrir missão'))
       : blocked ? null : [
           h('p', { class: 'small-title' }, 'Registrar a execução'),
           h('div', { class: 'exec-options', role: 'group', 'aria-label': 'Estado da execução' }, options.map(([k, label, ic, fn]) => h('button', { type: 'button', class: `exec-opt ${current === k ? 'on' : ''}`, 'aria-pressed': String(current === k), onClick: fn }, icon(ic, { size: 16 }), label))),

@@ -17,6 +17,12 @@ export const DEFAULT_AVAILABILITY = {
   fuso: 'America/Sao_Paulo',
 };
 
+// "Hoje" no fuso escolhido pelo estudante (à noite no Brasil o UTC já está no dia seguinte).
+export function todayFor(user, now = new Date()) {
+  const fuso = user?.agenda?.disponibilidade?.fuso || DEFAULT_AVAILABILITY.fuso;
+  try { return new Intl.DateTimeFormat('en-CA', { timeZone: fuso, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now); } catch { return now.toISOString().slice(0, 10); }
+}
+
 const toMin = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
 const toTime = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 const addDays = (iso, n) => { const d = new Date(`${iso}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
@@ -66,7 +72,7 @@ export function workItems(user, today) {
   return items;
 }
 
-export function suggestWeek(user, weekStart, today = new Date().toISOString().slice(0, 10), { journeyId, missaoId } = {}) {
+export function suggestWeek(user, weekStart, today = todayFor(user), { journeyId, missaoId } = {}) {
   const av = { ...DEFAULT_AVAILABILITY, ...(user.agenda?.disponibilidade || {}) };
   const start = mondayOf(weekStart);
   const maxBlock = av.preferencia === 'longas' ? 120 : 45;
@@ -135,7 +141,7 @@ export function suggestWeek(user, weekStart, today = new Date().toISOString().sl
 
 // Replanejamento: remove blocos sugeridos futuros que deixaram de fazer sentido
 // (missão concluída, bloqueada ou aguardando terceiros) e explica o porquê.
-export function staleSuggestions(user, today = new Date().toISOString().slice(0, 10)) {
+export function staleSuggestions(user, today = todayFor(user)) {
   const states = new Map();
   for (const jr of user.journeys || []) {
     const j = computeJourney(user, jr);

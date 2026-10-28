@@ -457,7 +457,7 @@ export function WeeklyPlanner({ initialWeek, autoOrganize = false } = {}) {
     try {
       const itens = proposal.proposta.map(({ prioridadeLabel, ...p }) => Object.fromEntries(Object.entries(p).filter(([, v]) => v !== undefined && v !== null)));
       data = await api.post('/planner/approve', { itens });
-      toast(`${data.criados} atividade(s) adicionadas à sua agenda.`, 'ok');
+      toast(data.repetidos && !data.criados ? 'Esses horários já estavam na sua agenda.' : `${data.criados} atividade(s) adicionadas à sua agenda.`, 'ok');
       proposal = null;
       draw();
     } catch (e) { toast(e.message, 'err'); }

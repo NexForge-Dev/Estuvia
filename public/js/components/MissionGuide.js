@@ -96,7 +96,7 @@ export function MissionGuide(m, ctx) {
       m.conclusao === 'requisito-atendido' ? 'Você informou que já tem isso. Se mudar, corrija em "Meu perfil".' : m.declarada ? 'Você informou que já tinha feito isso antes de usar a Estuvia.' : m.resultado,
       nextMission ? primaryLink(`Continuar: ${nextMission.titulo}`, `#/j/${journey.id}/m/${nextMission.id}`, 'arrow') : primaryLink('Ver minha jornada', `#/j/${journey.id}`, 'map'),
       m.evidencia?.valor ? h('p', { class: 'small muted' }, `Registro: ${m.evidencia.valor}`) : null,
-      secondary('Reabrir missão', () => ctx.mutate(api.post(`${base}/reopen`)), 'refresh'));
+      m.conclusao === 'requisito-atendido' ? null : secondary('Reabrir missão', () => ctx.mutate(api.post(`${base}/reopen`)), 'refresh'));
     body.classList.add('is-done');
   } else if (m.status === 'aguardando') {
     const sit = steps.find((o) => o.tipo === 'situacao' && !o.feito);
@@ -408,7 +408,8 @@ export function LockedMission(m, journey, { onArrival } = {}) {
 
 // Registrar a chegada à Espanha (fato declarado, com confirmação): libera as Rodadas 7 e 8.
 export function ArrivalForm(journey, onDone) {
-  const date = h('input', { type: 'date', class: 'guide-input', max: new Date().toISOString().slice(0, 10), 'aria-label': 'Data de entrada na Espanha' });
+  // "Hoje" na Espanha (o servidor valida a data de entrada pelo horário de Madri).
+  const date = h('input', { type: 'date', class: 'guide-input', max: new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Madrid' }).format(new Date()), 'aria-label': 'Data de entrada na Espanha' });
   const chk = h('input', { type: 'checkbox' });
   const btn = h('button', { type: 'button', class: 'btn btn-cta btn-lg guide-primary', onClick: async () => {
     if (!date.value) return toast('Informe a data em que você entrou na Espanha.', 'err');

@@ -109,7 +109,7 @@ export async function onboardingView() {
           h('fieldset', { class: 'program-pick' }, h('legend', {}, 'Em qual etapa você está?'),
             h('p', { class: 'hint' }, 'Já começou o processo por conta própria? Diga onde está e você não precisa refazer o que já fez.'),
             sel('etapa', etapas.map((e) => [e.id, e.rotulo])),
-            etapas.find((e) => e.id === draft.etapa)?.exigeDataEntrada ? field('Quando você entrou na Espanha?', input('dataEntrada', { type: 'date', max: new Date().toISOString().slice(0, 10) })) : null,
+            etapas.find((e) => e.id === draft.etapa)?.exigeDataEntrada ? field('Quando você entrou na Espanha?', input('dataEntrada', { type: 'date', max: new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Madrid' }).format(new Date()) })) : null,
             draft.etapa !== 'inicio' ? (() => {
               const chk = h('input', { type: 'checkbox', checked: draft.confirmaEtapa });
               chk.addEventListener('change', () => { draft.confirmaEtapa = chk.checked; });

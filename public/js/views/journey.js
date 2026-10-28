@@ -41,7 +41,7 @@ export function SituationPanel(j, { onSaved } = {}) {
 // "Já avancei fora da Estuvia": registra etapas anteriores com confirmação (nunca apaga nada).
 export function PriorProgressForm(journeyId, etapas, { onDone, compact = false } = {}) {
   const sel = h('select', { class: 'guide-input', 'aria-label': 'Em qual etapa você está?' }, etapas.map((e) => h('option', { value: e.id }, e.rotulo)));
-  const date = h('input', { type: 'date', class: 'guide-input', max: new Date().toISOString().slice(0, 10), 'aria-label': 'Data de entrada na Espanha' });
+  const date = h('input', { type: 'date', class: 'guide-input', max: new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Madrid' }).format(new Date()), 'aria-label': 'Data de entrada na Espanha' });
   const dateField = h('label', { class: 'field', hidden: true }, h('span', { class: 'field-label' }, 'Quando você entrou na Espanha?'), date);
   const chk = h('input', { type: 'checkbox' });
   sel.addEventListener('change', () => { dateField.hidden = !etapas.find((e) => e.id === sel.value)?.exigeDataEntrada; });

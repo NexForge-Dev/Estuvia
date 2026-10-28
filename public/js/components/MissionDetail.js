@@ -126,7 +126,7 @@ export function MissionDetail(m, ctx) {
     h('h2', { class: 'panel-title' }, icon('flag', { size: 18 }), 'Ação principal'),
     h('p', { class: 'small' }, h('strong', {}, 'Critério de conclusão: '), def.criterio),
     done
-      ? h('button', { class: 'btn btn-ghost btn-block', type: 'button', onClick: () => ctx.mutate(api.post(`${base}/reopen`, {})) }, icon('refresh', { size: 16 }), 'Reabrir missão')
+      ? (m.conclusao === 'requisito-atendido' ? h('p', { class: 'hint' }, 'Você informou que já tem isso. Se mudar, corrija em "Meu perfil".') : h('button', { class: 'btn btn-ghost btn-block', type: 'button', onClick: () => ctx.mutate(api.post(`${base}/reopen`, {})) }, icon('refresh', { size: 16 }), 'Reabrir missão'))
       : na ? null : [
           h('label', { class: `check ${m.podeConcluir ? '' : 'is-disabled'}`, for: 'md-confirm' }, confirm,
             h('span', {}, 'Confirmo que realizei este procedimento (abrir um link não conta).')),
