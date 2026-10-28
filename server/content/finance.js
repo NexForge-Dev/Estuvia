@@ -5,9 +5,9 @@ export const IPREM = {
   2026: {
     mensal: 600,
     moeda: 'EUR',
-    fonte: 'Informado pelo idealizador (IPREM 2026). Confirme no BOE / Lei de Orçamentos do ano.',
+    fonte: 'Ley 31/2022 (PGE 2023, prorrogados em 2026): €600/mês. Nenhuma norma específica de 2026 localizada no BOE em 28/10/2026; confirme antes de usar como valor oficial.',
     status: 'pendente', // passa a "verificado" após revisão editorial com link oficial
-    atualizadoEm: '2026-10-24',
+    atualizadoEm: '2026-10-28',
   },
 };
 

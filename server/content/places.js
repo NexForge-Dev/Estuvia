@@ -33,7 +33,7 @@ const office = (o) => {
     emailContatoTipo: o.emailVistos ? 'vistos' : o.emailContatoTipo,
     pais: 'Brasil',
     servicos: ['visto-estudos'],
-    verificadoEm: VERIFICADO_EM,
+    verificadoEm: o.verificadoEm || VERIFICADO_EM,
   };
 };
 
@@ -41,7 +41,7 @@ export const CONSULATES = [
   office({
     id: 'salvador', nome: 'Consulado Geral da Espanha em Salvador da Bahia', cidade: 'Salvador', uf: 'BA', caminho: '/Consulados/salvadordebahia',
     endereco: 'Av. Oceânica, 8, salas 102/103: Ed. Farol Praia Center, Barra, 40140-130 Salvador (BA)', telefone: '+55 71 3014-7101',
-    emailVistos: 'cog.salvador.vis@maec.es',
+    emailVistos: 'cog.salvador.vis@maec.es', verificadoEm: '2026-10-28', // endereço, telefone e e-mail conferidos na página oficial
     estadosConfirmados: ['BA', 'SE', 'AL', 'PE', 'PB', 'RN', 'CE', 'PI', 'MA'],
     fonte: 'O11',
   }),

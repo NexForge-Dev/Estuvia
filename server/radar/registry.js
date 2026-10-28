@@ -81,7 +81,8 @@ export const SOURCE_SEED = [
     titulo: 'Portal do Distrito Único Andaluz',
     instituicao: 'Junta de Andalucía',
     rotuloPublico: 'Distrito Único Andaluz',
-    url: 'https://lajunta.es/portaldua',
+    // Destino oficial do link curto lajunta.es/portaldua (307 temporário, conferido em 28/10/2026).
+    url: 'https://www.juntadeandalucia.es/economiaconocimientoempresasyuniversidad/sguit',
     tipo: 'portal-candidatura',
     prioridade: 1,
     autoridade: ['canal-candidatura'],
@@ -101,6 +102,11 @@ export const SOURCE_SEED = [
     frequenciaHoras: 72,
   },
 ];
+
+// Únicos domínios que o atualizador pode baixar (inclusive como destino de redirecionamento):
+// os das fontes com coleta automática. URLs de fichas vêm do catálogo da UGR, mas são sempre
+// montadas sobre masteres.ugr.es; nenhuma URL informada por usuário é coletada.
+export const COLLECTION_HOSTS = [...new Set(SOURCE_SEED.filter((s) => s.metodo === 'html-publico').map((s) => new URL(s.url).hostname))];
 
 // Canal oficial onde a candidatura é feita (Estado "abertas" exige canal confirmado).
 export const APPLICATION_CHANNEL = {

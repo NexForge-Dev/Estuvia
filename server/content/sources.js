@@ -69,11 +69,14 @@ export const SOURCES = [
   {
     id: 'O8',
     orgao: 'Junta de Andalucía',
-    titulo: 'Portal do Distrito Único Andaluz (link informado pelo idealizador)',
-    url: 'https://lajunta.es/portaldua',
-    revisadoEm: '2026-10-24',
+    titulo: 'Portal do Distrito Único Andaluz (Acceso a la Universidad)',
+    // O link curto informado pelo idealizador (https://lajunta.es/portaldua) foi conferido em
+    // 28/10/2026: responde HTTP 307 (redirecionamento TEMPORÁRIO) para esta página oficial, cujo
+    // título é "Distrito Único Andaluz". Usamos o endereço de destino, não o encurtador.
+    url: 'https://www.juntadeandalucia.es/economiaconocimientoempresasyuniversidad/sguit',
+    linkCurto: 'https://lajunta.es/portaldua',
+    revisadoEm: '2026-10-28',
     tipo: 'oficial',
-    pendente: true,
   },
   {
     id: 'O9',
@@ -96,7 +99,9 @@ export const SOURCES = [
     orgao: 'Consulado Geral da Espanha em Salvador da Bahia',
     titulo: 'Site oficial do consulado',
     url: 'https://www.exteriores.gob.es/Consulados/salvadordebahia',
-    revisadoEm: '2026-10-24',
+    // Endereço, telefone e e-mail de vistos conferidos em 28/10/2026 na página oficial
+    // "Horario, localización y contacto" (exteriores.gob.es).
+    revisadoEm: '2026-10-28',
     tipo: 'oficial',
   },
   {

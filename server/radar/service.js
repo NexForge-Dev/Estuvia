@@ -78,6 +78,10 @@ export function compatibility(profile, program) {
 
 // ---------- Card / detalhe ----------
 
+const pendingCalendarChange = (opp) => data().reviews.some((r) => r.status === 'aberta' && ['alteracao-critica', 'conflito'].includes(r.tipo)
+  && ['calendar', 'calendario'].includes(r.proposta?.kind) && r.proposta.parsed?.anoAcademico === opp.anoAcademico
+  && (r.proposta.parsed.procedimentoId || opp.procedimentoId) === opp.procedimentoId);
+
 function verification(state, windows, health, opp) {
   const s = health.fonte;
   const base = { fonte: s?.rotuloPublico || 'Distrito Único Andaluz', url: s?.url, ultimaVerificacao: s?.ultimaVerificacaoOk || null, ultimaConsulta: s?.ultimaConsulta || null };
@@ -85,6 +89,9 @@ function verification(state, windows, health, opp) {
   if (state.estado === 'desatualizado') return { ...base, status: 'desatualizada', texto: `Não foi possível confirmar o estado atual: a última verificação bem-sucedida tem mais de ${STALE_AFTER_HOURS} h.` };
   if (!windows.length) return { ...base, status: 'nao-confirmada', texto: 'Não foi possível confirmar as datas deste ano acadêmico.' };
   if (windows.some((w) => w.confirmacao !== 'confirmado')) return { ...base, status: 'prevista', texto: 'Previsão institucional, ainda não confirmada em boletim oficial.' };
+  // A fonte já mostrou datas diferentes das publicadas aqui (alteração crítica ou conflito em
+  // revisão): o dado exibido não pode continuar sendo apresentado como "confirmado".
+  if (pendingCalendarChange(opp)) return { ...base, status: 'pendente', alteracaoEmRevisao: true, texto: 'A fonte oficial publicou uma alteração destas datas, que está em conferência. Confira na fonte oficial antes de agir.' };
   if (state.atualizacaoPendente) return { ...base, status: 'pendente', texto: 'Confirmada em fonte oficial, atualização pendente (exibindo o último dado verificado).' };
   return { ...base, status: 'confirmada', texto: 'Confirmada em fonte oficial' };
 }
@@ -193,7 +200,12 @@ export function listOpportunities(query = {}, { user = null, now = Date.now() } 
   };
 }
 
-const openScholarships = () => scholarships.filter((s) => s.status === 'aberta');
+// "Aberta" só com edital verificável: status editorial + prazo vigente (AAAA-MM-DD) + link do edital.
+// Um status "aberta" sem prazo ou com prazo vencido nunca é contado nem anunciado como aberto.
+const openScholarships = (now = Date.now()) => {
+  const today = todayMadrid(new Date(now));
+  return scholarships.filter((s) => s.status === 'aberta' && /^\d{4}-\d{2}-\d{2}$/.test(s.prazo || '') && s.prazo >= today && /^https:\/\//.test(s.url || ''));
+};
 
 function indicators(cards, user) {
   const d = data();
@@ -408,7 +420,7 @@ export async function forgetUser(userId) {
 }
 export const exportUser = (userId) => {
   const d = data();
-  return { subscriptions: d.subscriptions.filter((s) => s.userId === userId), alerts: d.alerts.filter((a) => a.userId === userId) };
+  return { subscriptions: d.subscriptions.filter((s) => s.userId === userId), alerts: d.alerts.filter((a) => a.userId === userId), agendaLinks: d.agendaLinks.filter((l) => l.userId === userId) };
 };
 
 // ---------- Contratos para jornada, Agenda e assistente ----------
