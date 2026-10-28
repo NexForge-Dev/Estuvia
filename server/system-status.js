@@ -100,7 +100,7 @@ export async function systemStatus({ check = false } = {}) {
   add({ id: 'docs', nome: 'Chave dos documentos (DOCUMENTS_KEY)', grupo: 'Segurança', chave: docsOk ? mask(process.env.DOCUMENTS_KEY) : null,
     estado: docsOk ? 'ok' : config.isProd ? 'aviso' : 'ok', detalhe: docsOk ? 'Definida: arquivos cifrados com chave própria.' : 'Não definida: a chave é derivada do JWT_SECRET. Em produção, defina uma chave própria com backup.' });
   add({ id: 'admin', nome: 'Conta de administrador', grupo: 'Segurança',
-    estado: config.adminEmail && (config.adminPassword || '').length >= 8 ? 'ok' : 'aviso', detalhe: config.adminEmail ? `ADMIN_EMAIL = ${config.adminEmail}` : 'ADMIN_EMAIL não definido.' });
+    estado: config.adminEmail && (config.adminPassword || '').length >= (config.isProd ? 12 : 8) ? 'ok' : 'aviso', detalhe: config.adminEmail ? `ADMIN_EMAIL = ${config.adminEmail}` : 'ADMIN_EMAIL não definido.' });
 
   const geral = servicos.some((s) => s.estado === 'erro') ? 'erro' : servicos.some((s) => s.estado === 'aviso') ? 'aviso' : 'ok';
   return { geral, verificadoEm: new Date().toISOString(), testeCompleto: check, iniciadoEm: startedAtIso(), servicos };

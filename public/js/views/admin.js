@@ -27,7 +27,7 @@ const daysLabel = (n) => (n == null ? '-' : n === 0 ? 'hoje' : n === 1 ? '1 dia'
 const EVENT = {
   register: ['Cadastro', 'ok'], login: ['Entrou', 'ok'], 'login-failed': ['Login falhou', 'bad'], 'login-blocked': ['Login de conta suspensa', 'bad'],
   'password-changed': ['Trocou a senha', 'info'], 'account-deleted': ['Excluiu a conta', 'bad'], 'admin-created': ['Conta admin criada', 'info'],
-  'admin-password-synced': ['Senha admin atualizada pelo .env', 'info'], 'admin-block': ['Admin suspendeu conta', 'bad'], 'admin-unblock': ['Admin reativou conta', 'info'],
+  'admin-password-synced': ['Senha admin atualizada pelo .env', 'info'], 'admin-block': ['Admin suspendeu conta', 'bad'], 'admin-unblock': ['Admin reativou conta', 'info'], 'admin-role': ['Admin alterou papel', 'info'],
   'admin-logout-user': ['Admin encerrou sessões', 'info'], 'admin-ai-check': ['Admin testou a IA', 'info'], 'admin-status-check': ['Admin verificou o status', 'info'], 'community-moderation': ['Moderação da comunidade', 'info'],
   'community-verification': ['Verificação na comunidade', 'info'], 'community-opportunity-change': ['Oportunidade alterada', 'info'],
   'journey.round-unlocked': ['Rodada desbloqueada', 'ok'], 'requirements.updated': ['Atualizou requisitos', 'info'],
@@ -499,6 +499,9 @@ export async function adminStudentView(id) {
             h('h1', {}, `${p.avatar || '🎓'} ${p.nome || '-'}`),
             h('p', { class: 'muted' }, p.email, ' · ', u.online ? h('span', { class: 'adm-ok-text' }, 'online agora') : `visto ${relTime(u.lastSeenAt)}`, u.modulo && u.online ? ` (em ${u.modulo})` : '', u.bloqueado ? ' · ' : '', u.bloqueado ? tag('suspenso', 'bad') : null)),
           h('div', { class: 'row wrap' },
+            u.admin ? null : h('label', { class: 'small row' }, 'Papel ',
+              h('select', { 'aria-label': 'Papel da conta', onChange: (ev) => act(() => api.post(`/admin/users/${u.id}/role`, { papel: ev.target.value }), 'Papel atualizado.') },
+                [['estudante', 'Estudante'], ['moderador', 'Moderação da comunidade'], ['radar', 'Equipe do Radar']].map(([v, l]) => h('option', { value: v, selected: (u.papel || 'estudante') === v }, l)))),
             h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onClick: () => act(() => api.post(`/admin/users/${u.id}/logout`), 'Sessões encerradas.') }, icon('lock', { size: 14 }), 'Encerrar sessões'),
             h('button', { class: `btn btn-sm ${u.bloqueado ? '' : 'adm-btn-danger'}`, type: 'button', onClick: () => act(() => api.post(`/admin/users/${u.id}/block`, { bloqueado: !u.bloqueado }), u.bloqueado ? 'Conta reativada.' : 'Conta suspensa.') },
               icon(u.bloqueado ? 'unlock' : 'shield', { size: 14 }), u.bloqueado ? 'Reativar conta' : 'Suspender conta'))),

@@ -32,7 +32,7 @@ export async function radarAdminView() {
     let o;
     try { o = await api.get('/radar/admin'); } catch (e) {
       return mount(root, h('section', { class: 'rd-empty' }, icon('lock', { size: 26 }), h('h2', {}, 'Acesso restrito'), h('p', { class: 'muted' }, e.message),
-        h('p', { class: 'small muted' }, 'Inclua seu e-mail em RADAR_ADMIN_EMAILS no .env do servidor e reinicie.')));
+        h('p', { class: 'small muted' }, 'Peça ao administrador para conceder o papel "Equipe do Radar" à sua conta (painel admin → aluno → Papel).')));
     }
     const t = o.totais;
     const open = o.revisoes.filter((r) => r.status === 'aberta');

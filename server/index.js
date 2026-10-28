@@ -21,5 +21,7 @@ const shutdown = async () => {
   await Promise.all([flush(), flushRadar()]);
   process.exit(0);
 };
+// Última barreira: uma promessa esquecida não pode derrubar o servidor de todos os estudantes.
+process.on('unhandledRejection', (err) => console.error('[erro] promessa rejeitada sem tratamento:', err?.message || err));
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);

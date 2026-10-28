@@ -7,6 +7,12 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const isProd = process.env.NODE_ENV === 'production';
 
+// Em produção os arquivos da carteira exigem chave própria: derivá-la do JWT_SECRET faria uma troca
+// do segredo das sessões tornar todos os documentos ilegíveis.
+if (isProd && (process.env.DOCUMENTS_KEY || '').length < 32) {
+  throw new Error('DOCUMENTS_KEY ausente ou curta (mínimo 32 caracteres). Defina-a no .env (e guarde com backup) antes de subir em produção.');
+}
+
 let jwtSecret = process.env.JWT_SECRET;
 if (!jwtSecret || jwtSecret.length < 32) {
   if (isProd) {
@@ -42,8 +48,12 @@ export const config = {
   // Trocar a chave (ou o sal 'padapal', nome antigo da plataforma) torna os arquivos já guardados ilegíveis.
   docsKey: crypto.hkdfSync('sha256', process.env.DOCUMENTS_KEY || jwtSecret, 'padapal', 'documentos-v1', 32),
   // Moderadores da comunidade (verificação de oportunidades, denúncias). Lista separada por vírgula.
+  // Só vale FORA de produção (o cadastro não verifica e-mail; em produção o admin concede o papel no painel).
   moderatorEmails: (process.env.MODERATOR_EMAILS || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean),
+  // Papéis por lista de e-mail (MODERATOR_EMAILS, RADAR_ADMIN_EMAILS): desenvolvimento e testes apenas.
+  emailRoles: !isProd,
   // Conta de administrador (painel #/admin). Criada/atualizada na inicialização a partir do .env.
+  // Em produção a senha precisa de pelo menos 12 caracteres (ver admin-seed.js).
   adminEmail: (process.env.ADMIN_EMAIL || '').trim().toLowerCase() || null,
   adminPassword: process.env.ADMIN_PASSWORD || null,
   publicDir: path.join(here, '..', 'public'),
@@ -52,3 +62,7 @@ export const config = {
   aiEnabled: Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN),
   allowedOrigin: process.env.ALLOWED_ORIGIN || null,
 };
+
+if (isProd && (process.env.MODERATOR_EMAILS || process.env.RADAR_ADMIN_EMAILS)) {
+  console.warn('[config] MODERATOR_EMAILS/RADAR_ADMIN_EMAILS são ignorados em produção: conceda papéis em #/admin (Usuários → Papel).');
+}

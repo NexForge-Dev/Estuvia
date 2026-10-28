@@ -1,5 +1,5 @@
 // Radar de Oportunidades — painel administrativo (auditoria e revisão).
-// Acesso: usuários com role "admin" ou e-mail listado em RADAR_ADMIN_EMAILS.
+// Acesso: usuários com role "admin" ou "radar" (RADAR_ADMIN_EMAILS só fora de produção).
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth } from '../security.js';
@@ -10,10 +10,11 @@ import {
 
 const router = Router();
 const adminEmails = () => (process.env.RADAR_ADMIN_EMAILS || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
-export const isRadarAdmin = (user) => user?.role === 'admin' || adminEmails().includes(String(user?.email || '').toLowerCase());
+// Papel "radar" (concedido no painel admin) ou "admin". A lista de e-mails só vale fora de produção.
+export const isRadarAdmin = (user) => ['admin', 'radar'].includes(user?.role) || (config.emailRoles && adminEmails().includes(String(user?.email || '').toLowerCase()));
 
 router.use(requireAuth, (req, res, next) => {
-  if (!isRadarAdmin(req.user)) return res.status(403).json({ error: 'Área restrita à equipe do Radar (RADAR_ADMIN_EMAILS).' });
+  if (!isRadarAdmin(req.user)) return res.status(403).json({ error: 'Área restrita à equipe do Radar.' });
   next();
 });
 

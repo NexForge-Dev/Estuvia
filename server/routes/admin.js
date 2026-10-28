@@ -1,9 +1,9 @@
 // Painel do administrador: quem está acessando, cadastros, eventos de segurança e ações na conta.
-// Acesso: conta ADMIN_EMAIL do .env (ou usuário com role "admin").
+// Acesso: usuário com role "admin" (a conta ADMIN_EMAIL do .env recebe esse papel na inicialização).
 import { Router } from 'express';
 import { z } from 'zod';
 import { users, audit, newId } from '../store.js';
-import { requireAuth, requireAdmin, isAdmin } from '../security.js';
+import { requireAuth, requireAdmin, isAdmin, ROLES } from '../security.js';
 import { usageReport, userUsage, moduleLabel } from '../usage.js';
 import { studentRow, studentReport, enrollmentOverview } from '../admin-student.js';
 import { aiStatus, checkAI } from '../ai-health.js';
@@ -52,6 +52,7 @@ function summary(u) {
     documentos: Object.keys(u.documents || {}).length,
     onboarding: !!p.onboardingConcluido,
     admin: isAdmin(u),
+    papel: u.role || 'estudante',
     bloqueado: !!u.blocked,
   };
 }
@@ -182,6 +183,23 @@ router.post('/users/:id/block', async (req, res) => {
   if (isAdmin(target)) return res.status(400).json({ error: 'Não é possível suspender um administrador.' });
   const user = await users.update(target.id, (u) => { u.blocked = parsed.data.bloqueado; if (u.blocked) u.tokenVersion += 1; });
   await audit.log({ action: parsed.data.bloqueado ? 'admin-block' : 'admin-unblock', userId: req.user.id, targetId: user.id });
+  res.json({ user: summary(user) });
+});
+
+// Papéis da equipe (moderação da comunidade, equipe do Radar). O papel "admin" não é concedido
+// por aqui: só a conta ADMIN_EMAIL do .env é administradora.
+router.post('/users/:id/role', async (req, res) => {
+  const parsed = z.object({ papel: z.enum(ROLES.filter((r) => r !== 'admin')) }).strict().safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'Papel inválido.' });
+  const target = users.findById(req.params.id);
+  if (!target) return res.status(404).json({ error: 'Usuário não encontrado.' });
+  if (isAdmin(target)) return res.status(400).json({ error: 'O papel do administrador não pode ser alterado por aqui.' });
+  const anterior = target.role || 'estudante';
+  const user = await users.update(target.id, (u) => {
+    if (parsed.data.papel === 'estudante') delete u.role; else u.role = parsed.data.papel;
+    if (anterior !== parsed.data.papel) u.tokenVersion += 1; // a sessão aberta passa a refletir o novo papel
+  });
+  await audit.log({ action: 'admin-role', userId: req.user.id, targetId: user.id, de: anterior, para: parsed.data.papel });
   res.json({ user: summary(user) });
 });
 

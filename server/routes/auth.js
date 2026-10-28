@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { users, audit, newId } from '../store.js';
 import { hashPassword, verifyPassword, issueSession, clearSession, requireAuth, authLimiter, DUMMY_HASH, clientInfo } from '../security.js';
 import { publicUser } from './me.js';
+import { config } from '../config.js';
 
 const router = Router();
 
@@ -32,7 +33,8 @@ router.post('/register', authLimiter, async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: firstError(parsed) });
   const { nome, email, senha } = parsed.data;
 
-  if (users.findByEmail(email)) {
+  // O e-mail do admin é reservado: a conta é criada só pelo servidor (ADMIN_EMAIL no .env).
+  if (users.findByEmail(email) || (config.adminEmail && email.toLowerCase() === config.adminEmail)) {
     return res.status(409).json({ error: 'Já existe uma conta com este e-mail. Tente entrar.' });
   }
 
