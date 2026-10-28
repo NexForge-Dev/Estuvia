@@ -176,6 +176,14 @@ Outro fornecedor (ex.: Gemini) entra como um arquivo novo em `providers/` com `c
 
 Modelos locais não cobram por mensagem, mas exigem GPU ou hospedagem: avalie o custo antes. Com IA ligada, o limite é de 40 mensagens por hora por estudante; no Modo Guiado, 200.
 
+## Limites de custo e de tempo
+
+- **Teto diário por estudante:** `AI_DAILY_TOKENS_PER_USER` (padrão 300 000; `0` desliga), somando Mentor e Assistente. Conferido antes do laço e entre as etapas. Esgotado, a resposta vem do Modo Guiado / base local, com aviso explícito de que está sem IA generativa.
+- **Tempo:** `MENTOR_TIMEOUT_MS` por chamada ao modelo (padrão 60 s, SDK com 1 nova tentativa) e `MENTOR_DEADLINE_MS` por mensagem (padrão 120 s). Estourou: Modo Guiado com aviso.
+- **Ferramentas:** no máximo 6 chamadas por etapa e 12 por mensagem; as excedentes recebem `tool_result` de erro e não executam.
+- **Limite de perguntas:** 40/hora **por conta** (não por IP).
+- Tokens usados ficam em `user.aiUso` e no painel admin (status da IA).
+
 ## API
 
 - `GET /api/mentor`: modo, nome, ações rápidas, avisos, permissões e preferências

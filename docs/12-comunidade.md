@@ -35,7 +35,7 @@ Dados: coleção `community` em `data/db.json` (`posts`, `comments`, `groups`, `
 
 ## Moderação e segurança
 
-- Moderadores: `MODERATOR_EMAILS` no `.env` (ou `role: 'moderador'` no usuário). Painel em `#/comunidade/moderacao`; toda decisão vai para o histórico da publicação e para o log de auditoria.
+- Moderadores: `role: 'moderador'`, concedido pelo administrador em `#/admin/aluno/:id` (Papel). `MODERATOR_EMAILS` no `.env` só vale fora de produção (o cadastro não verifica e-mail). Painel em `#/comunidade/moderacao`; toda decisão vai para o histórico da publicação e para o log de auditoria.
 - **Spam**: limite por hora (8 posts, 30 comentários) + limitador de taxa; texto repetido em 24 h bloqueado; pontuação por termos de golpe ("visto garantido", "pix"…), excesso de links, caixa alta, conta recente com links. Pontuação alta → "em revisão" (só autor e equipe veem).
 - **Links suspeitos**: encurtadores, IP, punycode, TLDs de risco, credenciais na URL, domínio que imita órgão/universidade. Ficam não clicáveis e mandam a publicação para revisão.
 - **Dados pessoais**: CPF, NIE/DNI, passaporte, telefone e e-mail pessoal são mascarados antes de gravar; o autor é avisado. Na comunidade só aparecem apelido/primeiro nome e avatar.
