@@ -329,14 +329,18 @@ export function Composer({ meta, grupos, initial = null, grupoId = '', missaoId 
   const preview = h('div', { class: 'cm-upload-preview' });
   const drawPreview = () => preview.replaceChildren(...imagens.map((img) => h('span', { class: 'cm-thumb' },
     h('img', { src: img.url, alt: '' }),
-    h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Remover imagem', onClick: () => { imagens = imagens.filter((x) => x !== img); drawPreview(); } }, icon('x', { size: 14 })))));
+    h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Remover imagem', onClick: () => {
+      imagens = imagens.filter((x) => x !== img); drawPreview();
+      // Enviada nesta composição e ainda sem publicação: descarta no servidor (não fica guardada à toa).
+      if (img.novo) call('DELETE', `/community/media/${img.id}`).catch(() => {});
+    } }, icon('x', { size: 14 })))));
   drawPreview();
   const file = h('input', { type: 'file', accept: 'image/png,image/jpeg,image/webp,image/gif', multiple: true, class: 'cm-file' });
   file.addEventListener('change', async () => {
     for (const f of [...file.files].slice(0, 4 - imagens.length)) {
       if (f.size > 2 * 1024 * 1024) { toast(`${f.name}: máximo 2 MB.`, 'err'); continue; }
       const r = await call('POST', '/community/media', undefined, { raw: f, type: f.type });
-      if (r.ok) imagens.push({ id: r.data.id, url: r.data.url }); else toast(r.data.error || 'Falha no envio da imagem.', 'err');
+      if (r.ok) imagens.push({ id: r.data.id, url: r.data.url, novo: true }); else toast(r.data.error || 'Falha no envio da imagem.', 'err');
     }
     file.value = '';
     drawPreview();

@@ -158,7 +158,7 @@ export function DocumentUpload(doc, { onChange, onDelete, missao }) {
     f.anteriores.length ? h('li', { class: 'du-versions' }, h('details', {}, h('summary', {}, `Versões anteriores (${f.anteriores.length})`), h('ul', { class: 'du-list' }, f.anteriores.map((o) => fileRow(o, { old: true }))))) : null,
   ]));
   return h('div', { class: 'du' }, input, doc.arquivos.length ? list : null, stage, drop,
-    h('p', { class: 'du-note' }, icon('lock', { size: 12 }), 'Cifrado. Só você vê.'));
+    h('p', { class: 'du-note' }, icon('lock', { size: 12 }), 'Cifrado no servidor. Só você acessa pela sua conta.'));
 }
 
 // ---------------------------------------------------------------------------

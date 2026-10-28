@@ -93,7 +93,20 @@ router.put('/documents', async (req, res) => {
 router.get('/export', (req, res) => {
   res.setHeader('Content-Disposition', 'attachment; filename="meus-dados.json"');
   const u = req.user;
-  res.json({ ...publicUser(u), journeys: u.journeys || [], requisitos: u.requisitos || {}, mentor: u.mentor || {}, planner: u.planner || [], agenda: u.agenda || {}, finance: u.finance || {}, scholarshipApps: u.scholarshipApps || [], housing: u.housing || [], travel: u.travel || {}, opportunities: u.opportunities || [], docFiles: (u.docFiles || []).map(({ iv, tag, ...f }) => f), docRecords: u.docRecords || {}, docConditions: u.docConditions || {}, docConsent: u.docConsent || null, docPrefs: u.docPrefs || {}, comunidade: communityExport(u.id), radar: exportUser(u.id) });
+  // Tudo o que está guardado sobre a pessoa, exceto credenciais e segredos internos. Lista de exclusão (e não de
+  // inclusão): um campo novo no usuário entra na exportação sem depender de alguém lembrar de acrescentá-lo aqui.
+  // adminNotes ficam de fora (anotações internas da equipe; o painel promete que o aluno não as vê).
+  // Se o direito de acesso (LGPD art. 18 / RGPD art. 15) exigir incluí-las, é decisão jurídica pendente.
+  const { passwordHash, tokenVersion, docFiles, adminNotes, ...rest } = u;
+  res.json({
+    ...rest,
+    ...publicUser(u),
+    journeys: u.journeys || [], requisitos: u.requisitos || {}, mentor: u.mentor || {}, planner: u.planner || [], agenda: u.agenda || {}, finance: u.finance || {}, scholarshipApps: u.scholarshipApps || [], housing: u.housing || [], travel: u.travel || {}, opportunities: u.opportunities || [],
+    docFiles: (docFiles || []).map(({ iv, tag, ...f }) => f), docRecords: u.docRecords || {}, docConditions: u.docConditions || {}, docConsent: u.docConsent || null, docPrefs: u.docPrefs || {},
+    // Registros de segurança da própria conta (acessos, IP e dispositivo).
+    atividade: audit.recent(5000, (e) => e.userId === u.id || (e.email && e.email === u.email)),
+    comunidade: communityExport(u.id), radar: exportUser(u.id),
+  });
 });
 
 // Exclusão definitiva da conta, com reconfirmação de senha.

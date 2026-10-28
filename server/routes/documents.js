@@ -7,6 +7,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import zlib from 'node:zlib';
 import express, { Router } from 'express';
 import { z } from 'zod';
 import { users, audit, newId } from '../store.js';
@@ -343,20 +344,52 @@ const SIGNATURES = [
 ];
 // PDF com conteúdo ativo (scripts, ações automáticas, arquivos embutidos) é recusado: um documento não precisa disso.
 const ACTIVE_PDF = /\/(JavaScript|JS|Launch|OpenAction|AA|EmbeddedFile|RichMedia|XFA)\b/;
-export const pdfHasActiveContent = (buf) => ACTIVE_PDF.test(buf.toString('latin1'));
+// Nomes PDF aceitam escapes "#xx" (/J#61vaScript = /JavaScript): normaliza antes de procurar.
+const unescapeNames = (s) => s.replace(/\/[^\s/[\]<>(){}%]+/g, (n) => (n.includes('#') ? n.replace(/#([0-9a-fA-F]{2})/g, (_, x) => String.fromCharCode(parseInt(x, 16))) : n));
+// Fluxos de objetos (/Type /ObjStm, PDF 1.5+) guardam dicionários comprimidos: abre e confere também.
+const STREAM = /<<((?:(?!>>\s*stream)[\s\S]){0,4000})>>\s*stream\r?\n/g;
+const MAX_INFLATE = 30 * 1024 * 1024;
+export function pdfHasActiveContent(buf) {
+  const text = buf.toString('latin1');
+  const plain = unescapeNames(text);
+  if (ACTIVE_PDF.test(plain)) return true;
+  let budget = MAX_INFLATE;
+  for (const m of text.matchAll(STREAM)) {
+    const dict = unescapeNames(m[1]);
+    if (!/\/Type\s*\/ObjStm\b/.test(dict)) continue;
+    const start = m.index + m[0].length;
+    const end = text.indexOf('endstream', start);
+    if (end < 0) return true; // fluxo de objetos sem fim: não dá para conferir
+    let body = buf.subarray(start, end);
+    if (/\/Filter\b/.test(dict)) {
+      // Só FlateDecode (o filtro padrão) é aberto; outro filtro num fluxo de objetos não dá para conferir.
+      if (!/\/Filter\s*(\[\s*)?\/FlateDecode\s*\]?\s*(\/|$)/.test(dict)) return true;
+      try { body = zlib.inflateSync(body, { maxOutputLength: budget, finishFlush: zlib.constants.Z_SYNC_FLUSH }); } catch { return true; }
+      budget -= body.length;
+      if (budget <= 0) return true;
+    }
+    if (ACTIVE_PDF.test(unescapeNames(body.toString('latin1')))) return true;
+  }
+  return false;
+}
 
 const userDir = (userId) => path.join(config.docsDir, userId);
 const filePath = (userId, fid) => path.join(userDir(userId), `${fid}.bin`);
 
+// GCM: IV aleatório de 96 bits por arquivo e etiqueta de 128 bits. A decifra exige os 16 bytes da etiqueta
+// (sem authTagLength o Node aceita uma etiqueta truncada, de até 4 bytes).
+const TAG_BYTES = 16;
 function encrypt(buf) {
   const iv = crypto.randomBytes(12);
-  const c = crypto.createCipheriv('aes-256-gcm', config.docsKey, iv);
+  const c = crypto.createCipheriv('aes-256-gcm', config.docsKey, iv, { authTagLength: TAG_BYTES });
   const data = Buffer.concat([c.update(buf), c.final()]);
   return { data, iv: iv.toString('base64'), tag: c.getAuthTag().toString('base64') };
 }
 function decrypt(buf, meta) {
-  const d = crypto.createDecipheriv('aes-256-gcm', config.docsKey, Buffer.from(meta.iv, 'base64'));
-  d.setAuthTag(Buffer.from(meta.tag, 'base64'));
+  const tag = Buffer.from(String(meta.tag || ''), 'base64');
+  if (tag.length !== TAG_BYTES) throw new Error('etiqueta de autenticação inválida');
+  const d = crypto.createDecipheriv('aes-256-gcm', config.docsKey, Buffer.from(meta.iv, 'base64'), { authTagLength: TAG_BYTES });
+  d.setAuthTag(tag);
   return Buffer.concat([d.update(buf), d.final()]);
 }
 const cleanName = (s, ext) => {
@@ -401,8 +434,15 @@ router.post('/:docId/files', documentUploadLimiter, express.raw({ type: ['applic
 
   const id = newId();
   const enc = encrypt(req.body);
-  await fs.promises.mkdir(userDir(req.user.id), { recursive: true, mode: 0o700 });
-  await fs.promises.writeFile(filePath(req.user.id, id), enc.data, { mode: 0o600 });
+  try {
+    await fs.promises.mkdir(userDir(req.user.id), { recursive: true, mode: 0o700 });
+    await fs.promises.writeFile(filePath(req.user.id, id), enc.data, { mode: 0o600 });
+  } catch (err) {
+    // Disco cheio ou sem permissão: apaga o que ficou pela metade e responde (o Express 4 não captura erro assíncrono).
+    await removeFile(req.user.id, { id });
+    console.error('[documentos] falha ao gravar arquivo:', err.message);
+    return res.status(500).json({ error: 'Não foi possível guardar o arquivo agora. Tente novamente.' });
+  }
   const meta = {
     id, docId: doc.id, serie: serie || id, versao: prev.length ? Math.max(...prev.map((f) => f.versao)) + 1 : 1,
     nome: cleanName(req.get('X-File-Name'), sig.ext), mime: sig.mime, ext: sig.ext, tamanho: req.body.length, papel: serie ? prev[0].papel || papel : papel,
@@ -423,6 +463,8 @@ router.post('/:docId/files', documentUploadLimiter, express.raw({ type: ['applic
     }
     r.atualizadoEm = now();
   });
+  // Conta excluída durante o envio: não deixa o arquivo cifrado órfão no disco.
+  if (!user) { await removeFile(req.user.id, meta); return res.status(404).json({ error: 'Conta não encontrada.' }); }
   for (const f of freed) await removeFile(req.user.id, f);
   audit.log({ action: 'documents.file.uploaded', userId: req.user.id, docId: doc.id, papel, tamanho: meta.tamanho }).catch(() => {});
   res.status(201).json({ arquivo: publicFile(meta, fileToken(req.user.id)), documento: personal ? null : detail(user, req, doc.id) });
