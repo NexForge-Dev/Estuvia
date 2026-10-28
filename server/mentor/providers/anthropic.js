@@ -1,10 +1,12 @@
 // Provedor Anthropic (Claude) via SDK oficial. Só é carregado com MENTOR_PROVIDER=anthropic
 // e credencial no backend (ANTHROPIC_API_KEY / ANTHROPIC_AUTH_TOKEN). As chaves nunca vão ao navegador.
 import Anthropic from '@anthropic-ai/sdk';
+import { providerTimeoutMs } from './index.js';
 
 export function anthropicProvider({ model } = {}) {
   if (!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_AUTH_TOKEN) throw new Error('credencial Anthropic ausente');
-  const client = new Anthropic();
+  // Sem isso o SDK espera até 10 min por chamada (com 2 novas tentativas): o laço do Mentor faz até 6.
+  const client = new Anthropic({ timeout: providerTimeoutMs(), maxRetries: 1 });
   const MODEL = model || 'claude-opus-5-5';
 
   const toAnthropic = (messages) => messages.map((m) => {
@@ -34,7 +36,9 @@ export function anthropicProvider({ model } = {}) {
         }, { signal });
         const texto = res.content.filter((b) => b.type === 'text').map((b) => b.text).join('');
         const chamadas = res.content.filter((b) => b.type === 'tool_use').map((b) => ({ id: b.id, nome: b.name, input: b.input }));
-        return { texto, chamadas, parada: res.stop_reason, bruto: res.content };
+        const u = res.usage || {};
+        const uso = { entrada: (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0), saida: u.output_tokens || 0 };
+        return { texto, chamadas, parada: res.stop_reason, bruto: res.content, uso };
       } catch (err) {
         if (err instanceof Anthropic.RateLimitError) throw Object.assign(new Error('limite de uso da IA atingido'), { retry: true });
         if (err instanceof Anthropic.AuthenticationError) throw new Error('credencial Anthropic inválida');

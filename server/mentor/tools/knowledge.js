@@ -73,13 +73,17 @@ export const draftEmail = defineTool({
 
 // ---------- Memória (pendências que o estudante contou) ----------
 
+// CPF, passaporte brasileiro (2 letras + 6 dígitos), cartão/conta (9+ dígitos), senhas.
+// As notas entram no contexto enviado ao provedor de IA: nada disso pode ficar guardado.
+export const SENSITIVE = /\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b|\b[a-z]{2} ?\d{6}\b|\d{9,}|\b(?:\d{4}[ .-]){3}\d{1,7}\b|passaporte n|senha|cart[aã]o \d/i;
+
 export const rememberNote = defineTool({
   name: 'remember_note', efeito: 'escrita', permissao: 'memoria',
   descricao: 'Guarda uma pendência curta que o estudante contou (ex.: "não consegui o histórico"), para retomar depois sem que ele precise repetir. Não guarde dados sensíveis.',
   entrada: z.object({ texto: z.string().trim().min(3).max(200), documentoId: z.string().max(40).optional(), missaoId: z.string().regex(/^\d\.\d{1,2}$/).optional(), journeyId: z.string().max(60).optional() }).strict(),
   saida: '{ resumo, nota }',
   preview: (ctx, input) => {
-    if (/\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b|passaporte n|senha|cart[aã]o \d/i.test(input.texto)) throw new ToolError('sensivel', 'Esse texto parece ter um dado sensível. Não vou guardá-lo.');
+    if (SENSITIVE.test(input.texto)) throw new ToolError('sensivel', 'Esse texto parece ter um dado sensível. Não vou guardá-lo.');
     return { resumo: `Lembrar: "${input.texto}".`, detalhes: [], avisos: ['Você pode ver e apagar o que eu lembro em "O que o Mentor sabe".'] };
   },
   execute: async (ctx, input) => {

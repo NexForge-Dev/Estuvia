@@ -4,7 +4,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import Anthropic from '@anthropic-ai/sdk';
-import { recordAI } from '../ai-health.js';
+import { recordAI, recordTokens, aiBudget } from '../ai-health.js';
 import { config } from '../config.js';
 import { requireAuth, assistantLimiter } from '../security.js';
 import { FAQ, knowledgeAsText } from '../content/knowledge.js';
@@ -13,7 +13,8 @@ import { QUICK_ACTIONS, resolveContext, contextText, quickAnswer, intentOf } fro
 import { radarContext } from '../radar/service.js';
 
 const router = Router();
-const client = config.aiEnabled ? new Anthropic() : null;
+// Prazo explícito: o padrão do SDK é 10 min por chamada, com 2 novas tentativas.
+const client = config.aiEnabled ? new Anthropic({ timeout: 60_000, maxRetries: 1 }) : null;
 
 // System prompt estável (sem dados do usuário) para aproveitar cache de prompt.
 const SYSTEM = `Você é o "Guia", mentor da jornada na plataforma ${config.appName}, que ajuda estudantes brasileiros a conquistar uma vaga em Máster Universitario oficial em universidades públicas da Andaluzia (Espanha), via Distrito Único Andaluz (DUA).
@@ -102,11 +103,13 @@ router.post('/ask', requireAuth, assistantLimiter, async (req, res) => {
     return { ...base, texto: `${base.texto}${extra}`, fontes: [...(base.fontes || []), ...(radarResposta ? radarFontes : [])] };
   };
 
-  if (!client) {
+  // Sem credencial, ou com o teto diário de tokens do estudante atingido: base verificada, sem IA generativa.
+  const semCota = client && aiBudget(req.user).esgotado;
+  if (!client || semCota) {
     recordAI('assistente', 'offline', { user: req.user });
     const ans = localAnswer();
-    send('delta', { text: ans.texto });
-    send('done', { fontes: ans.fontes, acoes: ans.acoes || [], modo: 'offline' });
+    send('delta', { text: semCota ? `_(Você atingiu o limite diário de uso da IA: resposta da base verificada, sem IA generativa. A IA volta amanhã.)_\n\n${ans.texto}` : ans.texto });
+    send('done', { fontes: ans.fontes, acoes: ans.acoes || [], modo: 'offline', ...(semCota ? { limiteDiario: true } : {}) });
     return res.end();
   }
 
@@ -147,6 +150,8 @@ router.post('/ask', requireAuth, assistantLimiter, async (req, res) => {
       }
     }
     const final = await stream.finalMessage();
+    const u = final.usage || {};
+    recordTokens(req.user, 'assistente', { entrada: (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0), saida: u.output_tokens || 0 });
     recordAI('assistente', 'ok', { user: req.user });
     if (final.stop_reason === 'refusal') {
       send('replace', { text: 'Não consigo responder essa pergunta. Que tal reformular ou consultar as fontes oficiais na Central de fontes?' });
