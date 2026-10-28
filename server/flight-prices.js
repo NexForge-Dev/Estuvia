@@ -27,12 +27,16 @@ export const PRICE_SOURCE = {
 export const pricesEnabled = () => Boolean(process.env.TRAVELPAYOUTS_TOKEN);
 
 const cache = new Map();
-export const clearPriceCache = () => cache.clear();
+// Depois de um 429 o provedor não é consultado por alguns minutos (senão cada tela aberta gasta a cota).
+const COOLDOWN_MS = 10 * 60 * 1000;
+let cooldownUntil = 0;
+export const clearPriceCache = () => { cache.clear(); cooldownUntil = 0; };
 
 const minutes = (v) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : null);
+// Só caminhos relativos do próprio Aviasales: "//outro-site" e "/\outro-site" seriam resolvidos para outro domínio.
 const safeLink = (path) => {
-  if (typeof path !== 'string' || !path.startsWith('/')) return null;
-  try { return new URL(path, SITE).href; } catch { return null; }
+  if (typeof path !== 'string' || !path.startsWith('/') || path.startsWith('//') || path.includes('\\')) return null;
+  try { const u = new URL(path, SITE); return u.origin === SITE ? u.href : null; } catch { return null; }
 };
 
 /** Normaliza um item da resposta da API (campos ausentes ficam null). */
@@ -60,11 +64,13 @@ export async function routePrices({ origem, destino, quando, moeda = 'brl', limi
   const key = `${origem}-${destino}-${quando}-${moeda}-${limite}`;
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < TTL_MS) return hit.value;
+  if (Date.now() < cooldownUntil) return { ok: false, ofertas: [], erro: 'limite gratuito de consultas atingido; tente mais tarde', consultadoEm: new Date().toISOString() };
   const params = new URLSearchParams({ origin: origem, destination: destino, departure_at: quando, one_way: 'true', direct: 'false', sorting: 'price', currency: moeda, limit: String(limite), page: '1' });
   let value;
   try {
     const res = await fetchImpl(`${API}?${params}`, { headers: { 'X-Access-Token': token, Accept: 'application/json', 'Accept-Encoding': 'gzip, deflate' }, signal: AbortSignal.timeout(TIMEOUT_MS) });
     if (res.status === 401 || res.status === 403) throw new Error('token do Travelpayouts inválido');
+    if (res.status === 429) cooldownUntil = Date.now() + COOLDOWN_MS;
     if (res.status === 429) throw new Error('limite gratuito de consultas atingido; tente mais tarde');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const body = await res.json();

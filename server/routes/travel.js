@@ -158,7 +158,12 @@ router.post('/done', (req, res) => {
 // ---------- Preços de passagens (Aviasales via Travelpayouts, gratuito) e alerta de preço ----------
 // Menores preços vistos por usuários nas últimas ~48 h: referência, não oferta. Nada é comprado aqui.
 router.get('/prices', async (req, res) => {
-  const quando = typeof req.query.quando === 'string' && /^\d{4}-\d{2}(-\d{2})?$/.test(req.query.quando) ? req.query.quando : undefined;
+  // Só do mês atual até 12 meses à frente: meses arbitrários furavam o cache e gastavam a cota do provedor.
+  const now = new Date();
+  const min = now.toISOString().slice(0, 7);
+  const max = new Date(Date.UTC(now.getUTCFullYear() + 1, now.getUTCMonth(), 1)).toISOString().slice(0, 7);
+  const q = typeof req.query.quando === 'string' && /^\d{4}-\d{2}(-\d{2})?$/.test(req.query.quando) ? req.query.quando : undefined;
+  const quando = q && q.slice(0, 7) >= min && q.slice(0, 7) <= max ? q : undefined;
   res.json(await pricesForUser(req.user, jidOf(req), { quando }));
 });
 

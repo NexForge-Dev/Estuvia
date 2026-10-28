@@ -79,7 +79,7 @@ export async function financeView() {
       h('div', { class: 'fp-main card' },
         h('p', { class: 'eyebrow' }, 'Quanto preciso planejar para minha jornada?'),
         h('strong', { class: 'fp-big' }, eur(p.orcamento)),
-        p.cambio ? h('p', { class: 'fp-brl' }, `≈ ${brl(p.orcamento * p.cambio)}`, h('small', {}, ` · câmbio R$ ${p.cambio.toFixed(2).replace('.', ',')} (${fx.origem === 'manual' ? 'informado por você' : `${fx.fonte}, ${fmtDate(fx.data)}`})`)) : h('p', { class: 'fp-brl muted' }, h('a', { href: '#/financiamento#cambio', onClick: (e) => { e.preventDefault(); go('cambio'); } }, 'Informe o câmbio'), ' para ver em reais.'),
+        p.cambio ? h('p', { class: 'fp-brl' }, `≈ ${brl(p.orcamento * p.cambio)}`, h('small', {}, ` · câmbio R$ ${p.cambio.toFixed(2).replace('.', ',')} (${fx.origem === 'manual' ? 'informado por você' : `${fx.fonte}, ${fmtDate(fx.data)}${fx.desatualizada ? ', pode estar desatualizado' : ''}`})`)) : h('p', { class: 'fp-brl muted' }, h('a', { href: '#/financiamento#cambio', onClick: (e) => { e.preventDefault(); go('cambio'); } }, 'Informe o câmbio'), ' para ver em reais.'),
         p.jaPago ? h('p', { class: 'small muted' }, `Já pago: ${eur(p.jaPago)} · falta desembolsar ${eur(p.aDesembolsar)}`) : null,
         p.parcial ? h('button', { class: 'fp-partial', type: 'button', onClick: () => { const det = document.getElementById('custos'); if (det) det.open = true; go('custos'); } }, icon('alert', { size: 14 }), `Estimativa parcial: ${p.faltamInformar.length} item(ns) sem valor. Completar`) : h('span', { class: 'tag tag-ok' }, 'Todos os itens com valor')),
       h('div', { class: 'fp-cards' },
@@ -345,7 +345,8 @@ export async function financeView() {
     return h('section', { class: 'fp-fx card', id: 'cambio' },
       h('h2', {}, icon('globe', { size: 16 }), ' Câmbio'),
       fx.taxa
-        ? h('p', {}, h('strong', {}, `R$ ${fx.taxa.toFixed(4).replace('.', ',')} por € 1`), h('br'), h('small', { class: 'muted' }, fx.origem === 'manual' ? `Informada por você${fx.data ? ` em ${fmtDate(fx.data)}` : ''}` : `${fx.fonte} · cotação de ${fmtDate(fx.data)} · atualizada às ${new Date(fx.obtidoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`))
+        ? h('p', {}, h('strong', {}, `R$ ${fx.taxa.toFixed(4).replace('.', ',')} por € 1`), h('br'), h('small', { class: 'muted' }, fx.origem === 'manual' ? `Informada por você${fx.data ? ` em ${fmtDate(fx.data)}` : ''}` : `${fx.fonte} · cotação de ${fmtDate(fx.data)} · obtida em ${fmtDate(fx.obtidoEm)} às ${new Date(fx.obtidoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`),
+          fx.desatualizada ? h('small', { class: 'warn' }, h('br'), 'Não conseguimos atualizar a taxa de referência: este valor pode estar desatualizado. Confira ou informe a taxa que você conseguiu.') : null)
         : h('p', { class: 'small' }, 'Sem taxa automática agora. Informe a taxa que você conseguiu (ela fica marcada como "informada por você").'),
       h('div', { class: 'fp-fx-grid' },
         h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Usar outra taxa (R$ por €1)'), rate),

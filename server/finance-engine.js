@@ -11,7 +11,7 @@ import { ipremFor, VISA_RULE, COST_FIELDS } from './content/finance.js';
 import { programById, universityById } from './content/catalog.js';
 import { EXPENSE_ITEMS, itemById, SPEND_PROFILES, PROFILE_IDS, DESTINATION_ASSUMPTIONS, PLANNING_RULES, RESOURCE_GROUPS, CATEGORY_LABEL } from './content/costs.js';
 import { sourceById } from './content/sources.js';
-import { cachedRate } from './fx.js';
+import { cachedRate, rateIsStale } from './fx.js';
 
 export function ensureFinance(user) {
   user.finance ??= {};
@@ -54,12 +54,13 @@ const num = (v) => (v === null || v === undefined || v === '' || !Number.isFinit
 const src = (id) => { const s = sourceById(id); return s ? { id: s.id, titulo: s.titulo, orgao: s.orgao, url: s.url, revisadoEm: s.revisadoEm } : null; };
 
 // Câmbio efetivo: taxa informada pelo estudante > taxa de referência em cache > nenhuma.
-export function exchange(fin) {
+// Taxa de referência antiga (o serviço falhou desde então) continua valendo, mas vem marcada como desatualizada.
+export function exchange(fin, now = new Date()) {
   const manual = num(fin.cambio);
   const spreadPct = num(fin.spreadPct) || 0;
   if (manual) return { taxa: manual, origem: 'manual', fonte: 'Informada por você', data: fin.cambioEm || null, spreadPct };
   const ref = cachedRate();
-  if (ref) return { taxa: ref.taxa, origem: 'referencia', fonte: ref.fonte, data: ref.data, obtidoEm: ref.obtidoEm, url: ref.url, spreadPct };
+  if (ref) return { taxa: ref.taxa, origem: 'referencia', fonte: ref.fonte, data: ref.data, obtidoEm: ref.obtidoEm, url: ref.url, spreadPct, desatualizada: rateIsStale(ref, now) };
   return { taxa: null, origem: null, fonte: null, data: null, spreadPct };
 }
 
@@ -115,7 +116,8 @@ function buildItems(user, jr, perfilId, overrides, fx) {
       else { valorOriginal = v; valorEur = toEur(v, moeda); }
       origemTipo = 'moradia'; status = 'confirmado'; editavel = false;
       if (def.id === 'moradia') nota = `"${housing.nome}": aluguel${num(housing.adicionais) ? ' + despesas adicionais' : ''}.`;
-    } else if (def.derivavel === 'viagem' && route) {
+    } else if (def.derivavel === 'viagem' && route && num(route.voo) !== null) {
+      // Cotação sem preço do voo não vira "passagens = 0": vale o valor do estudante ou fica desconhecido.
       moeda = route.moeda || 'EUR';
       valorOriginal = routeTotal(route); valorEur = toEur(valorOriginal, moeda);
       // Comprada = confirmado; só cotada = estimado.
@@ -151,6 +153,18 @@ function buildItems(user, jr, perfilId, overrides, fx) {
   const reserva = get('reserva');
   if (reserva.origemTipo === null && mensalConhecido > 0) {
     Object.assign(reserva, { valorEur: Math.round(mensalConhecido * PLANNING_RULES.reservaMeses.valor), origemTipo: 'premissa', status: 'estimado', nota: PLANNING_RULES.reservaMeses.nota });
+  }
+  // Taxa de agência da moradia escolhida: gasto único, não reembolsável ("Para entrar" no Meu novo lar).
+  const taxaAgencia = housing ? num(housing.taxaAgencia) : null;
+  if (taxaAgencia !== null && taxaAgencia > 0) {
+    const moeda = housing.moeda || 'EUR';
+    const valorEur = toEur(taxaAgencia, moeda);
+    items.splice(items.indexOf(caucao) + 1, 0, {
+      id: 'taxaAgencia', label: 'Taxa de agência da moradia', grupo: 'instalacao', categoria: 'moradia', categoriaLabel: CATEGORY_LABEL.moradia, icone: 'home2',
+      reembolsavel: false, dica: null, valorEur, valorOriginal: taxaAgencia, moeda, status: 'confirmado', origemTipo: 'moradia', fonte: null, fonteExtra: null,
+      nota: `"${housing.nome}": taxa de agência (não costuma ser devolvida).`, editavel: false, pago: false, vencimento: null,
+      precisaCambio: valorEur === null && moeda === 'BRL',
+    });
   }
   return items;
 }
@@ -208,7 +222,7 @@ function buildResources(user, fx) {
 // ---------- Plano completo ----------
 export function computeFinance(user, jr, now = new Date()) {
   const fin = ensureFinance(user);
-  const fx = exchange(fin);
+  const fx = exchange(fin, now);
   const { program, uni, cidade, pais } = destinationOf(jr);
   const meses = Number(jr?.duracaoMeses) || program?.duracaoMeses || 12;
   const ano = startYear(jr);

@@ -91,9 +91,12 @@ export function computeTravel(user, jid, now = new Date()) {
     return { ...o, percursoId, percursoNome: tpl?.nome || null, custo: quoteCost({ ...o, percursoId }), consideracoes: considerations(o, tpl) };
   });
   // Só cotações completas (com bagagem e trecho por terra conhecidos) disputam o "menor custo".
-  const comparaveis = cotacoes.filter((c) => c.custo.total !== null && c.custo.completo && (c.moeda || 'EUR') === (cotacoes[0]?.moeda || 'EUR'));
+  // Moedas diferentes não se comparam: a referência é a moeda da primeira cotação completa.
+  const completas = cotacoes.filter((c) => c.custo.total !== null && c.custo.completo);
+  const moedaComparacao = completas[0] ? completas[0].moeda || 'EUR' : null;
+  const comparaveis = completas.filter((c) => (c.moeda || 'EUR') === moedaComparacao);
   const menor = comparaveis.length ? Math.min(...comparaveis.map((c) => c.custo.total)) : null;
-  for (const c of cotacoes) c.diferencaParaMenor = c.custo.total !== null && menor !== null ? c.custo.total - menor : null;
+  for (const c of cotacoes) c.diferencaParaMenor = c.custo.total !== null && menor !== null && (c.moeda || 'EUR') === moedaComparacao ? c.custo.total - menor : null;
 
   // ---------- Percursos possíveis (cards) ----------
   const destIatas = destinationAirports(cidade);
@@ -170,7 +173,7 @@ export function computeTravel(user, jid, now = new Date()) {
     origem: { iata: origemIata, nome: origemIata ? BR_AIRPORTS[origemIata] || origemIata : null, sugerido: !perfil.origemIata && Boolean(origemIata), cidadePerfil: p.estado || null, pais: p.paisResidencia || 'Brasil' },
     destino: { cidade, pais: uni?.pais || 'Espanha', universidade: uni ? { id: uni.id, nome: uni.nome, sigla: uni.sigla } : null, aeroportos: destIatas, inicioAulas: jr?.inicioAulas || null, journeyId: jr?.id || null },
     dataViagem, dataReferencia, perfil,
-    percursos, cotacoes, escolhida: chosen ? cotacoes.find((c) => c.id === chosen.id) : null, menorTotal: menor,
+    percursos, cotacoes, escolhida: chosen ? cotacoes.find((c) => c.id === chosen.id) : null, menorTotal: menor, moedaComparacao,
     itinerario, chegada, visto: { situacao: visto, aprovado: vistoAprovado, aviso },
     aeroportosBrasil: BR_AIRPORTS,
     missoes: j ? ['6.3', '6.5'].map((id) => { const m = j.rodadas.flatMap((r) => r.missoes).find((x) => x.id === id); return m ? { id, label: m.label, titulo: m.titulo, status: m.status, statusLabel: m.statusLabel, feitos: m.objetivosFeitos, total: m.objetivosTotal } : null; }).filter(Boolean) : [],

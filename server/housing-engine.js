@@ -4,7 +4,7 @@
 import { ANTIFRAUDE, normStatus, HOUSING_TYPES } from './content/housing.js';
 
 const num = (v) => (v === null || v === undefined || v === '' || !Number.isFinite(Number(v)) ? null : Number(v));
-const eur = (v) => `€ ${Math.round(v).toLocaleString('pt-BR')}`;
+const fmt = (v, moeda = 'EUR') => `${moeda === 'BRL' ? 'R$' : '€'} ${Math.round(v).toLocaleString('pt-BR')}`;
 
 export function housingCosts(h, meses = 12) {
   const aluguel = num(h.aluguel);
@@ -21,6 +21,7 @@ export function housingCosts(h, meses = 12) {
     totalEstadia: mensal === null ? null : mensal * meses + (taxa ?? 0), // gasto definitivo na estadia
     caucaoReembolsavel: caucao, // volta no fim do contrato, se cumpridas as condições
     meses,
+    moeda: h.moeda || 'EUR', // valores na moeda informada no anúncio (sem conversão)
   };
 }
 
@@ -44,7 +45,12 @@ export function decorate(h, meses) {
 export function compareHousing(list, meses = 12) {
   const opts = list.map((h) => decorate(h, meses));
   const diferencas = [];
-  const known = opts.filter((o) => o.custos.mensal !== null).sort((a, b) => a.custos.mensal - b.custos.mensal);
+  // Só compara valores na mesma moeda: euro e real não se subtraem sem câmbio.
+  const withPrice = opts.filter((o) => o.custos.mensal !== null);
+  const moeda = withPrice[0]?.custos.moeda || 'EUR';
+  const known = withPrice.filter((o) => o.custos.moeda === moeda).sort((a, b) => a.custos.mensal - b.custos.mensal);
+  const outraMoeda = withPrice.filter((o) => o.custos.moeda !== moeda);
+  const eur = (v) => fmt(v, moeda);
   const base = known[0];
   for (const o of known.slice(1)) {
     const dm = o.custos.mensal - base.custos.mensal;
@@ -57,6 +63,7 @@ export function compareHousing(list, meses = 12) {
     diferencas.push(`${s}.`);
     diferencas.push(`Na estadia de ${meses} meses, a diferença chega a ${eur(dm * meses)}.`);
   }
+  for (const o of outraMoeda) diferencas.push(`${o.nome}: valores em ${o.custos.moeda === 'BRL' ? 'reais' : 'euros'}, não comparamos com opções em outra moeda.`);
   for (const o of opts) {
     if (o.custos.mensal === null) diferencas.push(`${o.nome}: aluguel ainda não informado, não dá para comparar o custo.`);
     if (o.seguranca.alertas.length) diferencas.push(`${o.nome}: ${o.seguranca.alertas.length} sinal(is) de alerta em "Conferir antes de pagar".`);
