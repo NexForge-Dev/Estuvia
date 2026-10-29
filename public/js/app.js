@@ -2,7 +2,8 @@ import { api } from './api.js';
 import { h, mount, toast } from './ui.js';
 import { icon } from './icons.js';
 import { landingView } from './views/landing.js';
-import { loginView, registerView } from './views/auth.js';
+import { loginView, registerView, forgotPasswordView, resetPasswordView } from './views/auth.js';
+import { privacyView, termsView } from './views/legal.js';
 import { onboardingView } from './views/onboarding.js';
 import { homeView } from './views/home.js';
 import { journeysView } from './views/journeys.js';
@@ -102,6 +103,10 @@ const routes = [
   { path: /^\/sobre$/, view: landingView },
   { path: /^\/entrar$/, view: loginView, guestOnly: true },
   { path: /^\/cadastro$/, view: registerView, guestOnly: true },
+  { path: /^\/esqueci-senha$/, view: forgotPasswordView, guestOnly: true },
+  { path: /^\/redefinir-senha\/([\w-]{20,100})$/, view: resetPasswordView },
+  { path: /^\/privacidade$/, view: privacyView },
+  { path: /^\/termos$/, view: termsView },
   { path: /^\/manual$/, view: manualView, guestOnly: true }, // explica a plataforma a quem ainda não tem conta
   { path: /^\/fontes$/, view: sourcesView, auth: true },
   { path: /^\/jornadas\/nova$/, view: onboardingView, auth: true },

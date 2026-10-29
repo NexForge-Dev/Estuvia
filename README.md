@@ -13,7 +13,7 @@ Requirements: **Node.js 20+** (tested with 22).
 ```bash
 npm install
 npm start          # http://localhost:3000
-npm test           # 235 tests (journey, planner, finances, documents, security, Radar, Community, Achievements, Mentor…)
+npm test           # 237 tests (journey, planner, finances, documents, security, Radar, Community, Achievements, Mentor…)
 ```
 
 Create an account → onboarding (5 steps) → your first journey is generated. How to use it: [23 — User guide](docs/23-guia-de-uso.md).

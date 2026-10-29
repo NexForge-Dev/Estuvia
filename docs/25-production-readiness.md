@@ -59,7 +59,7 @@ Roles come only from the server-side `role` field: `admin` (only the `ADMIN_EMAI
 
 ## Blockers before a paid launch
 
-1. **No password reset / account recovery and no email verification.** There is no email-sending infrastructure. A student who forgets the password loses access to their data. Needs an email provider decision.
+1. **No email verification.** Password reset by email now exists (`POST /api/auth/forgot-password` / `reset-password`, Resend via `RESEND_API_KEY` + `EMAIL_FROM`, 1-hour single-use token stored hashed, resets revoke sessions). Without those variables in production, recovery responds 503. Registration still does not verify the email address.
 2. **Single-instance JSON persistence** with no automated backups. Acceptable for a small pilot on one server with disk backups; not for scale.
 3. **Legal review (LGPD/GDPR)** — see below.
 4. **Official-data status:** IPREM 2026 (€600) still *pending* (matches Ley 31/2022, extended budgets; no 2026-specific norm found in the BOE on 2026-10-28). DUA short link and Salvador consulate contacts verified on 2026-10-28. The local catalog is demonstrative; scholarships show "no confirmed call".

@@ -172,7 +172,11 @@ input:disabled, select:disabled { opacity: .6; }
 .check input { width: 18px; height: 18px; margin-top: 3px; flex: none; }
 .check.is-disabled { opacity: .55; }
 .form-error { background: var(--danger-soft); color: var(--danger); padding: 10px 12px; border-radius: 10px; font-weight: 650; }
+.form-ok { background: var(--ok-soft); color: var(--ok); padding: 10px 12px; border-radius: 10px; font-weight: 650; }
 .auth { max-width: 460px; margin: 24px auto; }
+.auth.legal { max-width: 760px; }
+.legal h2 { font-size: 1.1rem; margin-top: 8px; }
+.legal ul { padding-left: 20px; display: grid; gap: 6px; }
 .money { display: grid; grid-template-columns: 1fr 64px; gap: 6px; }
 .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--muted); }
 .filters select { width: auto; min-width: 150px; }

@@ -97,7 +97,7 @@ router.get('/export', (req, res) => {
   // inclusão): um campo novo no usuário entra na exportação sem depender de alguém lembrar de acrescentá-lo aqui.
   // adminNotes ficam de fora (anotações internas da equipe; o painel promete que o aluno não as vê).
   // Se o direito de acesso (LGPD art. 18 / RGPD art. 15) exigir incluí-las, é decisão jurídica pendente.
-  const { passwordHash, tokenVersion, docFiles, adminNotes, ...rest } = u;
+  const { passwordHash, tokenVersion, passwordReset, docFiles, adminNotes, ...rest } = u;
   res.json({
     ...rest,
     ...publicUser(u),

@@ -1,6 +1,6 @@
 # Estuvia — Documentação completa
 
-> Documento único gerado por `node scripts/build-docs.mjs` a partir do `README.md` e de `docs/*.md` em 2026-10-27. Para alterar, edite os arquivos de origem e gere de novo.
+> Documento único gerado por `node scripts/build-docs.mjs` a partir do `README.md` e de `docs/*.md` em 2026-10-29. Para alterar, edite os arquivos de origem e gere de novo.
 
 ## Índice
 
@@ -31,6 +31,7 @@
   - [03 — Arquitetura](#doc-03)
   - [05 — Referência da API](#doc-05)
   - [04 — Segurança e privacidade](#doc-04)
+  - [25 — Production readiness (audit of 2026-10-28)](#doc-25)
 - [Parte 5 — Apresentação e próximos passos](#parte-5)
   - [09 — Roteiro de apresentação (≈10 min)](#doc-09)
   - [10 — Próximos passos](#doc-10)
@@ -54,7 +55,7 @@ Requirements: **Node.js 20+** (tested with 22).
 ```bash
 npm install
 npm start          # http://localhost:3000
-npm test           # 168 tests (journey, planner, finances, documents, security, Radar, Community, Achievements, Mentor…)
+npm test           # 237 tests (journey, planner, finances, documents, security, Radar, Community, Achievements, Mentor…)
 ```
 
 Create an account → onboarding (5 steps) → your first journey is generated. How to use it: [23 — User guide](#doc-23).
@@ -139,13 +140,14 @@ tests/
 | [22 — Interface and mobile](#doc-22) | Minimalist layer, navigation ("More", bottom bar), mobile rules, how to test |
 | [23 — User guide](#doc-23) | How to use the platform today, step by step (for students) |
 | [24 — Real time, web search, flight prices and notes](#doc-24) | Live updates (SSE), adaptive Radar checks, free web/video search in the Mentor, flight prices and price alerts, mission notes |
+| [25 — Production readiness](#doc-25) | What the code actually does in production, required env vars, roles, backup/restore, verified vs. unverified items, launch blockers and legal questions |
 | [11 — Opportunity Radar](#doc-11) | Monitoring of official sources |
 | [12 — Community](#doc-12) | Moderated community |
 | [01](#doc-01), [02](#doc-02), [03](#doc-03), [08](#doc-08) | Vision, requirements, architecture and manual for version 0.1 (historical context) |
 
 ---
 
-**Data and honesty:** official sources consulted on 10/24/2026. Programs in the local catalog are **demonstrative** ("Demo data" label); the Radar brings real UGR programs. The 2026 IPREM (€600), the DUA short link and the Salvador consulate's email were provided by the founder and appear as **pending confirmation**. Scholarships appear as "no confirmed call" until the current call is checked. There are no verified video tutorials — the tutorial card stays hidden until one exists.
+**Data and honesty:** official sources consulted on 10/24/2026. Programs in the local catalog are **demonstrative** ("Demo data" label); the Radar brings real UGR programs. The 2026 IPREM (€600) stays **pending confirmation**: it matches Ley 31/2022 (2023 budget, automatically extended into 2026), but no 2026-specific norm was found in the BOE on 10/28/2026. The DUA short link (`lajunta.es/portaldua` → Junta de Andalucía DUA page) and the Salvador consulate contacts were checked against the official pages on 10/28/2026. Scholarships appear as "no confirmed call" until the current call is checked. There are no verified video tutorials — the tutorial card stays hidden until one exists.
 
 
 
@@ -916,6 +918,14 @@ Outro fornecedor (ex.: Gemini) entra como um arquivo novo em `providers/` com `c
 
 Modelos locais não cobram por mensagem, mas exigem GPU ou hospedagem: avalie o custo antes. Com IA ligada, o limite é de 40 mensagens por hora por estudante; no Modo Guiado, 200.
 
+### Limites de custo e de tempo
+
+- **Teto diário por estudante:** `AI_DAILY_TOKENS_PER_USER` (padrão 300 000; `0` desliga), somando Mentor e Assistente. Conferido antes do laço e entre as etapas. Esgotado, a resposta vem do Modo Guiado / base local, com aviso explícito de que está sem IA generativa.
+- **Tempo:** `MENTOR_TIMEOUT_MS` por chamada ao modelo (padrão 60 s, SDK com 1 nova tentativa) e `MENTOR_DEADLINE_MS` por mensagem (padrão 120 s). Estourou: Modo Guiado com aviso.
+- **Ferramentas:** no máximo 6 chamadas por etapa e 12 por mensagem; as excedentes recebem `tool_result` de erro e não executam.
+- **Limite de perguntas:** 40/hora **por conta** (não por IP).
+- Tokens usados ficam em `user.aiUso` e no painel admin (status da IA).
+
 ### API
 
 - `GET /api/mentor`: modo, nome, ações rápidas, avisos, permissões e preferências
@@ -1672,7 +1682,7 @@ Estudante (login):
 - `POST /api/radar/opportunities/:id/agenda` — `{ itens: [{ id, data?, inicio?, fim? }] }` (prazo oficial mantém a data)
 - `POST /api/radar/agenda-changes/:linkId` — `{ aceitar }`
 
-Admin (`role: admin` ou e-mail em `RADAR_ADMIN_EMAILS`): `GET /api/radar/admin`, `POST /sources`, `POST /sources/:id/run`, `PUT /sources/:id/availability`, `POST /reviews/:id`, `POST /calendars`, `POST /corrections`, `POST /republish`, `POST /community/import`, e em desenvolvimento `POST|DELETE /dev/simulate`.
+Admin (`role: admin` ou `role: radar`, concedido pelo administrador em `#/admin/aluno/:id`; `RADAR_ADMIN_EMAILS` só vale fora de produção): `GET /api/radar/admin`, `POST /sources`, `POST /sources/:id/run`, `PUT /sources/:id/availability`, `POST /reviews/:id`, `POST /calendars`, `POST /corrections`, `POST /republish`, `POST /community/import`, e em desenvolvimento `POST|DELETE /dev/simulate`.
 
 ### Integrações (contratos em `server/radar/service.js`)
 
@@ -1694,7 +1704,7 @@ Ligados (verificados ponta a ponta em 24/10/2026):
 ### Desenvolvimento
 
 - `RADAR_SCHEDULER=off` desliga o atualizador (os testes fazem isso).
-- `RADAR_ADMIN_EMAILS=email1,email2` libera o painel em `#/radar/admin`.
+- `RADAR_ADMIN_EMAILS=email1,email2` libera o painel em `#/radar/admin` **apenas em desenvolvimento/testes**. Em produção o cadastro não verifica e-mail, então o papel é concedido no painel admin (Papel → Equipe do Radar).
 - `RADAR_DATA_FILE` muda o arquivo da base (padrão: `data/radar.json`).
 - **Simulação**: no painel (somente fora de produção), "Simular publicação" cria um calendário marcado como **DADO DEMONSTRATIVO** em toda a interface para testar alertas e Agenda; nunca sobrescreve calendário oficial e pode ser removido por completo.
 
@@ -1818,7 +1828,7 @@ Dados: coleção `community` em `data/db.json` (`posts`, `comments`, `groups`, `
 
 ### Moderação e segurança
 
-- Moderadores: `MODERATOR_EMAILS` no `.env` (ou `role: 'moderador'` no usuário). Painel em `#/comunidade/moderacao`; toda decisão vai para o histórico da publicação e para o log de auditoria.
+- Moderadores: `role: 'moderador'`, concedido pelo administrador em `#/admin/aluno/:id` (Papel). `MODERATOR_EMAILS` no `.env` só vale fora de produção (o cadastro não verifica e-mail). Painel em `#/comunidade/moderacao`; toda decisão vai para o histórico da publicação e para o log de auditoria.
 - **Spam**: limite por hora (8 posts, 30 comentários) + limitador de taxa; texto repetido em 24 h bloqueado; pontuação por termos de golpe ("visto garantido", "pix"…), excesso de links, caixa alta, conta recente com links. Pontuação alta → "em revisão" (só autor e equipe veem).
 - **Links suspeitos**: encurtadores, IP, punycode, TLDs de risco, credenciais na URL, domínio que imita órgão/universidade. Ficam não clicáveis e mandam a publicação para revisão.
 - **Dados pessoais**: CPF, NIE/DNI, passaporte, telefone e e-mail pessoal são mascarados antes de gravar; o autor é avisado. Na comunidade só aparecem apelido/primeiro nome e avatar.
@@ -2130,6 +2140,92 @@ Módulos de outras frentes: `/radar`, `/radar/admin` (doc 11), `/community` (doc
 - [ ] Monitoramento de erros e alertas
 - [ ] Revisão de segurança independente (pentest leve)
 - [ ] Política de retenção do log de auditoria
+
+<a id="doc-25"></a>
+
+## 25 — Production readiness (audit of 2026-10-28)
+
+This document describes what the code **actually** does today and what must happen before a commercial launch. It replaces assumptions in older docs where they conflict.
+
+### Runtime reality
+
+| Area | Current implementation | Consequence |
+|---|---|---|
+| Persistence | One JSON file (`data/db.json`) held in memory and rewritten atomically (temp file + rename) on every write. Radar uses `data/radar.json`. | **Single process, single instance only.** No horizontal scaling, no concurrent writers, whole-file rewrite cost grows with users. Migration path: reimplement `server/store.js` (interface is isolated). |
+| Write failures | Since this audit, a failed write rejects the request (HTTP 500) and `/api/health` returns **503** until a write succeeds. | Point external monitoring at `/api/health`. |
+| Files | Document wallet: AES-256-GCM at rest in `data/docfiles` (server-held key, **not end-to-end**). Community images in `data/media`. | Back up together with the JSON files and `DOCUMENTS_KEY`. |
+| In-memory state | Mentor action proposals (30 min), rate-limit counters, request metrics, recent logs. | Lost on restart; rate limits are per process. |
+| Async errors | Express 4 does not catch rejected async handlers; `server/app.js` now forwards them to the error handler, and `server/index.js` logs (instead of crashing on) unhandled rejections. | One bad request no longer takes the server down for everyone. |
+| Deployment config | None in the repository (no Dockerfile/Procfile/IaC). | Hosting must be chosen; requirements below. |
+
+### Hosting requirements
+
+- Node ≥ 20 (CI uses 22), one long-running process, persistent writable disk for `data/` (or `DATA_FILE`, `MEDIA_DIR`, `DOCS_DIR`, `RADAR_DATA_FILE`).
+- TLS-terminating reverse proxy in front; `NODE_ENV=production` enables `trust proxy`, `Secure` cookies and HSTS. Set `ALLOWED_ORIGIN` to the public origin.
+- Outbound HTTPS to: `www.juntadeandalucia.es`, `masteres.ugr.es` (Radar), and optionally the AI provider, Travelpayouts, GDELT, Wikipedia, YouTube Data API, ECB FX.
+
+### Environment variables (production)
+
+| Variable | Required | Notes |
+|---|---|---|
+| `NODE_ENV=production` | yes | |
+| `JWT_SECRET` | yes (≥ 32 chars) | Server refuses to start otherwise. Rotating it logs everyone out. |
+| `DOCUMENTS_KEY` | yes (≥ 32 chars) | Server refuses to start otherwise. **Losing it makes every stored document unreadable.** Keep it in a secrets manager with backup. |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | recommended | Password ≥ 12 chars with letters and digits in production. The email is reserved (cannot be registered). On each boot the password is re-synced from env and existing sessions of that account are revoked if it changed. Never logged. |
+| `ALLOWED_ORIGIN` | yes behind a proxy | CSRF origin check. |
+| `MENTOR_PROVIDER`, `MENTOR_MODEL`, `ANTHROPIC_API_KEY` | optional | Without them the Mentor runs in Guided Mode (no generative AI, clearly labeled). |
+| `AI_DAILY_TOKENS_PER_USER`, `MENTOR_TIMEOUT_MS`, `MENTOR_DEADLINE_MS` | optional | Cost and latency caps (see docs/15). |
+| `TRAVELPAYOUTS_TOKEN`, `YOUTUBE_API_KEY` | optional | Indicative prices / videos. |
+| `MODERATOR_EMAILS`, `RADAR_ADMIN_EMAILS` | **ignored in production** | Registration does not verify email, so granting roles by email was a privilege-escalation hole. Grant roles in `#/admin/aluno/:id` → *Papel*. |
+
+### Roles
+
+Roles come only from the server-side `role` field: `admin` (only the `ADMIN_EMAIL` account, set at boot), `moderador`, `radar`. The admin grants/revokes `moderador` and `radar` via `POST /api/admin/users/:id/role`; the change revokes the target's sessions and is audited (`admin-role`).
+
+### Backup and restore
+
+1. Stop the process (or accept a crash-consistent copy: writes are atomic renames).
+2. Copy `db.json`, `radar.json`, `docfiles/`, `media/`, `document-rules.json` together. Store `DOCUMENTS_KEY` separately.
+3. Restore by putting the files back and starting with the **same** `DOCUMENTS_KEY`.
+4. Test a restore before launch. No automated backup exists yet.
+
+### Verified in this audit
+
+- `npm run check` (syntax of all JS) and `npm test`: **235/235** pass (baseline was 171/173; two Radar tests were date-dependent).
+- Manual smoke run: production boot refuses missing `DOCUMENTS_KEY`; dev server serves the SPA, registration, journeys, Radar.
+- CI: `.github/workflows/ci.yml` runs `npm ci`, `npm run check`, `npm test`, `npm audit --omit=dev --audit-level=high` on PRs. `npm audit` reported 0 vulnerabilities on 2026-10-28.
+
+### Not verified (needs credentials, infrastructure or a human)
+
+- Real AI provider calls (tests use a local fake Anthropic server driving the real SDK).
+- Real Travelpayouts, YouTube, GDELT, Wikipedia, ECB calls; live Radar scraping (tests use saved official HTML).
+- Browser end-to-end and accessibility testing at mobile/tablet/desktop sizes (no browser test tooling in the repo).
+- Any staging or production deployment.
+
+### Blockers before a paid launch
+
+1. **No email verification.** Password reset by email now exists (`POST /api/auth/forgot-password` / `reset-password`, Resend via `RESEND_API_KEY` + `EMAIL_FROM`, 1-hour single-use token stored hashed, resets revoke sessions). Without those variables in production, recovery responds 503. Registration still does not verify the email address.
+2. **Single-instance JSON persistence** with no automated backups. Acceptable for a small pilot on one server with disk backups; not for scale.
+3. **Legal review (LGPD/GDPR)** — see below.
+4. **Official-data status:** IPREM 2026 (€600) still *pending* (matches Ley 31/2022, extended budgets; no 2026-specific norm found in the BOE on 2026-10-28). DUA short link and Salvador consulate contacts verified on 2026-10-28. The local catalog is demonstrative; scholarships show "no confirmed call".
+5. **Self-declared official outcomes:** admission/enrollment/visa are student-declared (now recorded with `origem: 'declarado'`, audited, and enrollment/visa require a declared admission first). There is no officially-confirmed state; product decision needed.
+
+### Legal questions for qualified review
+
+- Retention of audit logs (IP, user agent, failed-login emails) after account deletion; Marco Civil art. 15 may require 6 months — define period and legal basis.
+- Whether internal admin notes must be included in the data export (currently **excluded**, matching the admin panel's promise).
+- Consent text says only the student accesses documents, while the server holds the key (encryption at rest, not end-to-end). Changing it may require bumping `CONSENT_VERSION`.
+- Free-text detail of reports by deleted users is kept (author id removed).
+- Visa proof-of-funds is shown as an estimate (100% IPREM × months, single applicant); dependents and deductions are not modelled. Never presented as a guarantee.
+
+### Known limitations (accepted for now)
+
+- Logout clears the cookie but does not revoke the JWT server-side (use "Sair de todos os dispositivos" for revocation). Sessions last 8 h.
+- Login throttling is per IP (20 / 15 min); there is no per-account lockout.
+- Encrypted PDFs cannot be scanned for active content; PDFs are served inline.
+- Radar "Candidaturas abertas" alerts can fire while the source is stale (the card itself shows *desatualizado*).
+- Mentor proposals are lost on restart; partial execution of a multi-step proposal is reported as "not executed" in the UI.
+- A monthly budget item marked "pago" counts as paid for the whole stay; a granted scholarship also added as a resource is counted twice.
 
 ---
 

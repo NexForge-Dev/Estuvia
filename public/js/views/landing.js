@@ -519,11 +519,13 @@ function footer(appName, logged) {
         h('a', { class: 'brand', href: '#/' }, h('span', { class: 'brand-mark', 'aria-hidden': 'true' }), h('span', {}, appName)),
         h('p', {}, 'A Estuvia orienta e organiza: candidatura, matrícula, visto e demais pedidos oficiais são feitos nos sistemas competentes. Confirme sempre nas fontes oficiais do seu ciclo.')),
       h('nav', { class: 'lp-footer-links', 'aria-label': 'Links do rodapé' },
-        h('a', { href: '#/fontes' }, 'Central de fontes'),
+        logged ? h('a', { href: '#/fontes' }, 'Central de fontes') : null, // a central exige login
         logged ? null : [
           h('a', { href: '#/manual' }, 'Como funciona'),
           h('a', { href: '#/entrar' }, 'Entrar'),
-          h('a', { href: '#/cadastro' }, 'Criar conta')])),
+          h('a', { href: '#/cadastro' }, 'Criar conta')],
+        h('a', { href: '#/privacidade' }, 'Privacidade'),
+        h('a', { href: '#/termos' }, 'Termos de uso'))),
     h('p', { class: 'lp-wrap lp-copy' }, `© ${new Date().getFullYear()} ${appName}`));
 }
 

@@ -66,3 +66,9 @@ export const config = {
 if (isProd && (process.env.MODERATOR_EMAILS || process.env.RADAR_ADMIN_EMAILS)) {
   console.warn('[config] MODERATOR_EMAILS/RADAR_ADMIN_EMAILS são ignorados em produção: conceda papéis em #/admin (Usuários → Papel).');
 }
+if (isProd) {
+  // Avisos de configuração de produção (não impedem a inicialização, mas quebram fluxos se ignorados).
+  if (!process.env.ALLOWED_ORIGIN) console.warn('[config] ALLOWED_ORIGIN não definido: defina a origem pública (ex.: https://app.seudominio.com). Sem ela a recuperação de senha fica desligada.');
+  if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) console.warn('[config] RESEND_API_KEY/EMAIL_FROM não definidos: a recuperação de senha por e-mail não funciona.');
+  if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) console.warn('[config] ADMIN_EMAIL/ADMIN_PASSWORD não definidos: não haverá conta de administrador.');
+}
