@@ -192,6 +192,7 @@ test('papéis: o admin concede moderação/Radar; a sessão cai; ninguém vira a
   const r = await mod('POST', '/auth/register', { nome: 'Rui Mod', email: 'rui@exemplo.com', senha: 'segura123', aceite: true });
   const id = r.data.user.id;
   assert.equal(r.data.user.moderador, false);
+  assert.equal((await admin('GET', '/me')).data.user.moderador, true, 'o admin também modera');
   assert.equal((await mod('POST', `/admin/users/${id}/role`, { papel: 'moderador' })).status, 403, 'estudante não se promove');
   assert.equal((await admin('POST', `/admin/users/${id}/role`, { papel: 'admin' })).status, 400);
   const ok = await admin('POST', `/admin/users/${id}/role`, { papel: 'radar' });

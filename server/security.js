@@ -105,8 +105,8 @@ export function requireAdmin(req, res, next) {
   next();
 }
 
-// Moderação da comunidade: papel "moderador" (ou e-mail em MODERATOR_EMAILS, só fora de produção).
-export const isModerator = (user) => user?.role === 'moderador' || (config.emailRoles && config.moderatorEmails.includes(user?.email));
+// Moderação da comunidade: papel "moderador" ou "admin" (ou e-mail em MODERATOR_EMAILS, só fora de produção).
+export const isModerator = (user) => ['moderador', 'admin'].includes(user?.role) || (config.emailRoles && config.moderatorEmails.includes(user?.email));
 
 export function requireModerator(req, res, next) {
   if (!isModerator(req.user)) return res.status(403).json({ error: 'Área restrita à moderação.' });
