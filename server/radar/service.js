@@ -1,4 +1,4 @@
-// Serviço do Radar: consultas da interface, acompanhamento, Agenda AI, jornada e assistente.
+// Serviço do Radar: consultas da interface, acompanhamento, Agenda, jornada e assistente.
 // Tudo aqui lê a base VERIFICADA (db.js). Nada é inferido de anos anteriores: um ciclo sem
 // calendário publicado mostra o anterior apenas como "referência histórica".
 
@@ -78,14 +78,21 @@ export function compatibility(profile, program) {
 
 // ---------- Card / detalhe ----------
 
+const pendingCalendarChange = (opp) => data().reviews.some((r) => r.status === 'aberta' && ['alteracao-critica', 'conflito'].includes(r.tipo)
+  && ['calendar', 'calendario'].includes(r.proposta?.kind) && r.proposta.parsed?.anoAcademico === opp.anoAcademico
+  && (r.proposta.parsed.procedimentoId || opp.procedimentoId) === opp.procedimentoId);
+
 function verification(state, windows, health, opp) {
   const s = health.fonte;
   const base = { fonte: s?.rotuloPublico || 'Distrito Único Andaluz', url: s?.url, ultimaVerificacao: s?.ultimaVerificacaoOk || null, ultimaConsulta: s?.ultimaConsulta || null };
-  if (opp.demo) return { ...base, status: 'demonstrativo', texto: 'DADO DEMONSTRATIVO — ambiente de desenvolvimento. Não é informação oficial.' };
+  if (opp.demo) return { ...base, status: 'demonstrativo', texto: 'DADO DEMONSTRATIVO, ambiente de desenvolvimento. Não é informação oficial.' };
   if (state.estado === 'desatualizado') return { ...base, status: 'desatualizada', texto: `Não foi possível confirmar o estado atual: a última verificação bem-sucedida tem mais de ${STALE_AFTER_HOURS} h.` };
   if (!windows.length) return { ...base, status: 'nao-confirmada', texto: 'Não foi possível confirmar as datas deste ano acadêmico.' };
-  if (windows.some((w) => w.confirmacao !== 'confirmado')) return { ...base, status: 'prevista', texto: 'Previsão institucional — ainda não confirmada em boletim oficial.' };
-  if (state.atualizacaoPendente) return { ...base, status: 'pendente', texto: 'Confirmada em fonte oficial — atualização pendente (exibindo o último dado verificado).' };
+  if (windows.some((w) => w.confirmacao !== 'confirmado')) return { ...base, status: 'prevista', texto: 'Previsão institucional, ainda não confirmada em boletim oficial.' };
+  // A fonte já mostrou datas diferentes das publicadas aqui (alteração crítica ou conflito em
+  // revisão): o dado exibido não pode continuar sendo apresentado como "confirmado".
+  if (pendingCalendarChange(opp)) return { ...base, status: 'pendente', alteracaoEmRevisao: true, texto: 'A fonte oficial publicou uma alteração destas datas, que está em conferência. Confira na fonte oficial antes de agir.' };
+  if (state.atualizacaoPendente) return { ...base, status: 'pendente', texto: 'Confirmada em fonte oficial, atualização pendente (exibindo o último dado verificado).' };
   return { ...base, status: 'confirmada', texto: 'Confirmada em fonte oficial' };
 }
 
@@ -193,7 +200,12 @@ export function listOpportunities(query = {}, { user = null, now = Date.now() } 
   };
 }
 
-const openScholarships = () => scholarships.filter((s) => s.status === 'aberta');
+// "Aberta" só com edital verificável: status editorial + prazo vigente (AAAA-MM-DD) + link do edital.
+// Um status "aberta" sem prazo ou com prazo vencido nunca é contado nem anunciado como aberto.
+const openScholarships = (now = Date.now()) => {
+  const today = todayMadrid(new Date(now));
+  return scholarships.filter((s) => s.status === 'aberta' && /^\d{4}-\d{2}-\d{2}$/.test(s.prazo || '') && s.prazo >= today && /^https:\/\//.test(s.url || ''));
+};
 
 function indicators(cards, user) {
   const d = data();
@@ -231,8 +243,8 @@ export function opportunityDetail(id, { user = null, now = Date.now() } = {}) {
       eventos: events.filter((e) => e.fase === w.fase).sort((a, b) => a.ordem - b.ordem).map((e) => ({ tipo: e.tipo, rotulo: e.rotulo, inicio: e.inicio, fim: e.fim, texto: e.textoOriginal })),
     })),
     requisitos: [
-      { tipo: 'academico', texto: 'Título universitário que dê acesso a estudos de pós-graduação no país emissor. Requisitos específicos (área de formação, critérios de seleção) constam da ficha oficial do máster.', fonte: 'Ficha oficial — UGR', url: p?.fichaUrl, status: 'consultar-ficha' },
-      { tipo: 'idioma', texto: c.programa.idiomaEnsino ? `Idioma de ensino: ${c.programa.idiomaEnsino}.` : 'Idioma de ensino e nível exigido não constam da ficha coletada. Não presuma: confirme na web do máster ou com a coordenação.', fonte: 'Ficha oficial — UGR', url: c.programa.webPropria || p?.fichaUrl, status: c.programa.idiomaEnsino ? 'verificado' : 'nao-informado' },
+      { tipo: 'academico', texto: 'Título universitário que dê acesso a estudos de pós-graduação no país emissor. Requisitos específicos (área de formação, critérios de seleção) constam da ficha oficial do máster.', fonte: 'Ficha oficial: UGR', url: p?.fichaUrl, status: 'consultar-ficha' },
+      { tipo: 'idioma', texto: c.programa.idiomaEnsino ? `Idioma de ensino: ${c.programa.idiomaEnsino}.` : 'Idioma de ensino e nível exigido não constam da ficha coletada. Não presuma: confirme na web do máster ou com a coordenação.', fonte: 'Ficha oficial: UGR', url: c.programa.webPropria || p?.fichaUrl, status: c.programa.idiomaEnsino ? 'verificado' : 'nao-informado' },
       { tipo: 'procedimento', texto: 'Estudantes com título estrangeiro podem concorrer na Fase 1 (exclusiva para estrangeiros) e nas fases seguintes, quando houver vagas.', fonte: 'Distrito Único Andaluz', url: sourceById('dua-calendario')?.url, status: windows.length ? 'verificado' : 'referencia' },
     ],
     documentos: ['Passaporte válido', 'Diploma (ou documento aceito na convocatória)', 'Histórico acadêmico oficial', 'Certificado de idioma, se o máster exigir', 'Documentos específicos pedidos pela ficha (currículo, cartas…)'],
@@ -268,7 +280,7 @@ function missionsFor(opp, windows, events) {
   });
 }
 
-// ---------- Agenda AI: sugestões a partir de datas oficiais ----------
+// ---------- Agenda: sugestões a partir de datas oficiais ----------
 
 const addDays = (iso, n) => new Date(Date.parse(`${iso}T12:00:00Z`) + n * 86400000).toISOString().slice(0, 10);
 
@@ -285,7 +297,7 @@ export function agendaSuggestions(opp, windows, events, now = Date.now()) {
     before(3, 'preferencias', 'Preparar a lista de preferências (até 6 mestrados)', 'academico');
     out.push({ id: id('abrir'), momento: 'na-abertura', titulo: `Acessar o portal oficial e iniciar a candidatura (Fase ${w.fase})`, data: w.abertura, inicio: '10:00', fim: '11:00', categoria: 'academico', oficial: false, base: { tipo: 'abertura', data: w.abertura, windowId: w.id } });
     out.push({ id: id('revisao-final'), momento: 'antes-do-encerramento', titulo: 'Revisar informações e finalizar o envio', data: addDays(w.encerramento, -2), inicio: '19:00', fim: '20:30', categoria: 'academico', oficial: false, base: { tipo: 'encerramento', data: w.encerramento, windowId: w.id } });
-    out.push({ id: id('prazo'), momento: 'antes-do-encerramento', titulo: `Prazo oficial — fim da candidatura Fase ${w.fase}`, data: w.encerramento, inicio: '09:00', fim: '09:30', categoria: 'academico', oficial: true, base: { tipo: 'encerramento', data: w.encerramento, windowId: w.id } });
+    out.push({ id: id('prazo'), momento: 'antes-do-encerramento', titulo: `Prazo oficial, fim da candidatura Fase ${w.fase}`, data: w.encerramento, inicio: '09:00', fim: '09:30', categoria: 'academico', oficial: true, base: { tipo: 'encerramento', data: w.encerramento, windowId: w.id } });
     out.push({ id: id('comprovante'), momento: 'apos-envio', titulo: 'Salvar o comprovante de envio', data: w.encerramento, inicio: '20:30', fim: '21:00', categoria: 'documentacao', oficial: false, base: { tipo: 'encerramento', data: w.encerramento, windowId: w.id } });
     const adj = events.find((e) => e.fase === w.fase && e.tipo === 'adjudicacao' && e.confirmacao === 'confirmado');
     if (adj) out.push({ id: `${adj.id}:acompanhar`, momento: 'apos-envio', titulo: `Consultar a ${adj.rotulo.toLowerCase()}`, data: adj.inicio, inicio: '10:00', fim: '10:30', categoria: 'academico', oficial: true, base: { tipo: 'evento', data: adj.inicio, eventId: adj.id } });
@@ -308,12 +320,12 @@ export async function addToAgenda(user, oppId, items, usersStore) {
     if (d.agendaLinks.some((l) => l.userId === user.id && l.suggestionId === s.id && l.ativo)) continue;
     const event = {
       // origem/oportunidade* são preservados pela Agenda quando o estudante edita o evento;
-      // o "replan" da Agenda AI só remove origem 'agenda-ai', então estes ficam.
+      // o "replan" da Agenda só remove origem 'agenda-ai', então estes ficam.
       id: newId(), origem: 'radar', oportunidadeId: opp.id, oportunidadeTipo: 'radar',
       titulo: s.titulo.slice(0, 80), categoria: s.categoria,
       data: s.oficial ? s.data : (item.data || s.data),
       inicio: item.inicio || s.inicio, fim: item.fim || s.fim,
-      nota: `Radar de Oportunidades — ${s.oficial ? 'prazo oficial (data preservada)' : 'atividade sugerida'}. Base oficial: ${s.base.data}.`.slice(0, 300),
+      nota: `Radar de Oportunidades: ${s.oficial ? 'prazo oficial (data preservada)' : 'atividade sugerida'}. Base oficial: ${s.base.data}.`.slice(0, 300),
       ...(journey ? { journeyId: journey.id } : {}),
       criadoEm: new Date().toISOString(),
     };
@@ -408,7 +420,7 @@ export async function forgetUser(userId) {
 }
 export const exportUser = (userId) => {
   const d = data();
-  return { subscriptions: d.subscriptions.filter((s) => s.userId === userId), alerts: d.alerts.filter((a) => a.userId === userId) };
+  return { subscriptions: d.subscriptions.filter((s) => s.userId === userId), alerts: d.alerts.filter((a) => a.userId === userId), agendaLinks: d.agendaLinks.filter((l) => l.userId === userId) };
 };
 
 // ---------- Contratos para jornada, Agenda e assistente ----------
@@ -431,7 +443,7 @@ export function programForJourney(id) {
     idioma: { status: 'verificar', fonte: 'O10' },
     requisitos: [
       { tipo: 'acesso', descricao: 'Título universitário que dê acesso à pós-graduação no país emissor', status: 'requerido', fonte: 'O1' },
-      { tipo: 'idioma', descricao: 'Exigência de idioma não informada na ficha coletada — confirme com a coordenação', status: 'verificar', fonte: 'O10' },
+      { tipo: 'idioma', descricao: 'Exigência de idioma não informada na ficha coletada, confirme com a coordenação', status: 'verificar', fonte: 'O10' },
     ],
   };
 }
@@ -450,11 +462,11 @@ export function officialDeadlines(user) {
     const proc = UNIVERSITY_INFO[p.universidadeId]?.procedimentoId;
     const src = sourceById('dua-calendario');
     for (const w of d.windows.filter((x) => x.procedimentoId === proc && x.anoAcademico === curso && x.confirmacao === 'confirmado')) {
-      out.push({ id: `radar-${jr.id}-${w.id}-abertura`, titulo: `Abre a candidatura DUA — Fase ${w.fase}`, data: w.abertura, fonteUrl: src?.url, categoria: 'academico', journeyId: jr.id, missaoId: '3.2' });
-      out.push({ id: `radar-${jr.id}-${w.id}-fim`, titulo: `Fim da candidatura DUA — Fase ${w.fase}`, data: w.encerramento, fonteUrl: src?.url, categoria: 'academico', journeyId: jr.id, missaoId: '3.6' });
+      out.push({ id: `radar-${jr.id}-${w.id}-abertura`, titulo: `Abre a candidatura DUA: Fase ${w.fase}`, data: w.abertura, fonteUrl: src?.url, categoria: 'academico', journeyId: jr.id, missaoId: '3.2' });
+      out.push({ id: `radar-${jr.id}-${w.id}-fim`, titulo: `Fim da candidatura DUA: Fase ${w.fase}`, data: w.encerramento, fonteUrl: src?.url, categoria: 'academico', journeyId: jr.id, missaoId: '3.6' });
     }
     for (const e of d.events.filter((x) => x.procedimentoId === proc && x.anoAcademico === curso && x.confirmacao === 'confirmado' && ['adjudicacao', 'resultas'].includes(x.tipo))) {
-      out.push({ id: `radar-${jr.id}-${e.id}`, titulo: `${e.rotulo} — Fase ${e.fase}`, data: e.inicio || e.fim, fonteUrl: src?.url, categoria: 'academico', journeyId: jr.id, missaoId: e.tipo === 'resultas' ? '3.10' : '3.9' });
+      out.push({ id: `radar-${jr.id}-${e.id}`, titulo: `${e.rotulo}: Fase ${e.fase}`, data: e.inicio || e.fim, fonteUrl: src?.url, categoria: 'academico', journeyId: jr.id, missaoId: e.tipo === 'resultas' ? '3.10' : '3.9' });
     }
   }
   return out.sort((a, b) => a.data.localeCompare(b.data));
@@ -493,8 +505,8 @@ export function radarContext(question, { user = null, now = Date.now() } = {}) {
   const asked = /20\d{2}\s*\/\s*(20)?\d{2}/.exec(q)?.[0];
   const ano = longYear(asked) || cycles.at(-1);
   const src = sourceById('dua-calendario');
-  const lines = [`RADAR DE OPORTUNIDADES — dados verificados (consulta em ${new Date(now).toISOString().slice(0, 16)}Z).`];
-  lines.push(`Fonte do calendário: ${src?.rotuloPublico} — ${src?.url}. Última verificação bem-sucedida: ${src?.ultimaVerificacaoOk || 'nunca'}.`);
+  const lines = [`RADAR DE OPORTUNIDADES, dados verificados (consulta em ${new Date(now).toISOString().slice(0, 16)}Z).`];
+  lines.push(`Fonte do calendário: ${src?.rotuloPublico} - ${src?.url}. Última verificação bem-sucedida: ${src?.ultimaVerificacaoOk || 'nunca'}.`);
 
   for (const curso of [...new Set([...cycles, ano])].sort()) {
     const ws = d.windows.filter((w) => w.anoAcademico === curso && w.confirmacao === 'confirmado');
@@ -515,7 +527,7 @@ export function radarContext(question, { user = null, now = Date.now() } = {}) {
   const all = d.opportunities.filter((o) => o.anoAcademico === ano).map((o) => card(o, { user, now }));
   const abertas = all.filter((c) => c.estado === 'abertas');
   lines.push(`Ano ${ano}: ${abertas.length} oportunidade(s) com inscrições abertas; ${all.filter((c) => c.estado === 'anunciadas').length} anunciada(s); ${all.length} programa(s) monitorado(s) (UGR). Bolsas com edital aberto na base: ${openScholarships().length}.`);
-  lines.push('Requisitos de idioma: as fichas da UGR coletadas não informam idioma/nível — não afirme que um máster dispensa certificado de espanhol.');
+  lines.push('Requisitos de idioma: as fichas da UGR coletadas não informam idioma/nível, não afirme que um máster dispensa certificado de espanhol.');
   lines.push('Regra: nunca invente datas nem use o calendário de outro ano como se fosse do ano perguntado; previsões não são anúncios oficiais.');
   const fontes = [{ titulo: src?.titulo, url: src?.url, verificadoEm: src?.ultimaVerificacaoOk }];
   return { relevante: true, texto: lines.join('\n'), resposta: studentAnswer({ q, ano, scored, all, abertas, user, now, src }), fontes };
@@ -530,9 +542,9 @@ function studentAnswer({ q, ano, scored, all, abertas, user, now, src }) {
   const opp = p && data().opportunities.find((o) => o.programId === p.id && o.anoAcademico === ano);
   if (opp) {
     const c = card(opp, { user, now });
-    const out = [`**${p.nome}** (${c.universidade.nome}) — ano acadêmico **${ano}**: ${c.estadoLabel}.`];
+    const out = [`**${p.nome}** (${c.universidade.nome}), ano acadêmico **${ano}**: ${c.estadoLabel}.`];
     if (c.fases.length) {
-      out.push(c.fases.map((f) => `- Fase ${f.fase}${f.publico === 'estrangeiros' ? ' (exclusiva para estrangeiros)' : ''}: candidatura de ${fmt(f.abertura)} a ${fmt(f.encerramento)}${f.confirmacao === 'confirmado' ? '' : ' — previsão, não confirmada'}`).join('\n'));
+      out.push(c.fases.map((f) => `- Fase ${f.fase}${f.publico === 'estrangeiros' ? ' (exclusiva para estrangeiros)' : ''}: candidatura de ${fmt(f.abertura)} a ${fmt(f.encerramento)}${f.confirmacao === 'confirmado' ? '' : ', previsão, não confirmada'}`).join('\n'));
       out.push(`Inscrição: ${c.candidatura?.url}`);
     } else {
       out.push('Ainda não encontrei um calendário oficial confirmado para esse curso acadêmico. Posso adicionar o programa ao seu Radar de Oportunidades para que você receba um alerta quando as datas forem publicadas.');
@@ -544,13 +556,13 @@ function studentAnswer({ q, ano, scored, all, abertas, user, now, src }) {
       const next = data().opportunities.find((o) => o.programId === p.id && o.anoAcademico > ano);
       out.push(`Os prazos de candidatura de ${ano} já passaram${c.estado === 'resultas' || c.estado === 'adjudicacoes' ? ' (seguem as publicações de listas para quem já se candidatou)' : ''}.${next ? ` Próximo passo: acompanhe o curso ${next.anoAcademico} em #/oportunidades/${next.id}.` : ''}`);
     } else {
-      out.push(`Próximo passo: ${c.acompanhando ? 'você já acompanha esta oportunidade.' : c.estado === 'abertas' ? 'acesse o portal oficial e inicie a candidatura; registre o envio na Missão 3.6.' : 'toque em "Avise-me quando abrir"'} — #/oportunidades/${opp.id}.`);
+      out.push(`Próximo passo: ${c.acompanhando ? 'você já acompanha esta oportunidade.' : c.estado === 'abertas' ? 'acesse o portal oficial e inicie a candidatura; registre o envio na Missão 3.6.' : 'toque em "Avise-me quando abrir"'}, #/oportunidades/${opp.id}.`);
     }
     return out.join('\n\n');
   }
   if (/abert/.test(q)) {
     return abertas.length
-      ? [`Com inscrições abertas agora (${ano}):`, abertas.slice(0, 8).map((c) => `- ${c.programa.nome} (${c.universidade.sigla}) — até ${fmt(c.prazoFinal)}`).join('\n'), verif].join('\n\n')
+      ? [`Com inscrições abertas agora (${ano}):`, abertas.slice(0, 8).map((c) => `- ${c.programa.nome} (${c.universidade.sigla}), até ${fmt(c.prazoFinal)}`).join('\n'), verif].join('\n\n')
       : [`No momento não há inscrições abertas confirmadas para ${ano} nos ${all.length} programas que o Radar monitora.`, verif, 'Próximo passo: acompanhe os mestrados que te interessam em #/oportunidades para receber o alerta da abertura.'].join('\n\n');
   }
   if (/certificad|espanhol|idioma/.test(q)) {

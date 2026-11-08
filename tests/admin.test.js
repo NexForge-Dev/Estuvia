@@ -186,3 +186,23 @@ test('status do sistema e logs: só o admin vê; serviços com estado e métrica
   assert.ok(l.logs.some((x) => x.mensagem.includes('aviso para o painel de logs')));
   assert.ok(l.logs.every((x) => x.nivel === 'aviso'));
 });
+test('papéis: o admin concede moderação/Radar; a sessão cai; ninguém vira admin por aqui', async () => {
+  const mod = client();
+  const r = await mod('POST', '/auth/register', { nome: 'Rui Mod', email: 'rui@exemplo.com', senha: 'segura123', aceite: true });
+  const id = r.data.user.id;
+  assert.equal(r.data.user.moderador, false);
+  assert.equal((await admin('GET', '/me')).data.user.moderador, true, 'o admin também modera');
+  assert.equal((await mod('POST', `/admin/users/${id}/role`, { papel: 'moderador' })).status, 403, 'estudante não se promove');
+  assert.equal((await admin('POST', `/admin/users/${id}/role`, { papel: 'admin' })).status, 400);
+  const ok = await admin('POST', `/admin/users/${id}/role`, { papel: 'radar' });
+  assert.equal(ok.status, 200);
+  assert.equal(ok.data.user.papel, 'radar');
+  assert.equal((await mod('GET', '/me')).status, 401, 'troca de papel exige novo login');
+  await mod('POST', '/auth/login', { email: 'rui@exemplo.com', senha: 'segura123' });
+  assert.equal((await mod('GET', '/radar/admin')).status, 200);
+  await admin('POST', `/admin/users/${id}/role`, { papel: 'estudante' });
+  await mod('POST', '/auth/login', { email: 'rui@exemplo.com', senha: 'segura123' });
+  assert.equal((await mod('GET', '/radar/admin')).status, 403);
+  const adminId = (await admin('GET', '/me')).data.user.id;
+  assert.equal((await admin('POST', `/admin/users/${adminId}/role`, { papel: 'estudante' })).status, 400);
+});

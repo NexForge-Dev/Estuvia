@@ -94,16 +94,19 @@ function trackActivity(req, user) {
   }).catch(() => {});
 }
 
-// Administrador: papel gravado no usuário ou e-mail definido em ADMIN_EMAIL.
-export const isAdmin = (user) => user?.role === 'admin' || (!!config.adminEmail && user?.email === config.adminEmail);
+// Papéis vêm do campo `role` gravado no servidor. O cadastro não verifica e-mail, então conceder
+// privilégio só porque o e-mail bate com o .env deixaria qualquer um se cadastrar com o e-mail da
+// equipe e virar admin/moderador. A conta ADMIN_EMAIL recebe role "admin" em admin-seed.js.
+export const ROLES = ['estudante', 'moderador', 'radar', 'admin'];
+export const isAdmin = (user) => user?.role === 'admin';
 
 export function requireAdmin(req, res, next) {
   if (!isAdmin(req.user)) return res.status(403).json({ error: 'Área restrita ao administrador.' });
   next();
 }
 
-// Moderação da comunidade: papel gravado no usuário ou e-mail listado em MODERATOR_EMAILS.
-export const isModerator = (user) => user?.role === 'moderador' || config.moderatorEmails.includes(user?.email);
+// Moderação da comunidade: papel "moderador" ou "admin" (ou e-mail em MODERATOR_EMAILS, só fora de produção).
+export const isModerator = (user) => ['moderador', 'admin'].includes(user?.role) || (config.emailRoles && config.moderatorEmails.includes(user?.email));
 
 export function requireModerator(req, res, next) {
   if (!isModerator(req.user)) return res.status(403).json({ error: 'Área restrita à moderação.' });
@@ -136,7 +139,9 @@ export const securityHeaders = helmet({
       'default-src': ["'self'"],
       'script-src': ["'self'"],
       'style-src': ["'self'"],
-      'img-src': ["'self'", 'data:'],
+      // Miniaturas dos vídeos do YouTube (pesquisa do Mentor) e o player sem cookies, só quando o estudante toca.
+      'img-src': ["'self'", 'data:', 'https://i.ytimg.com'],
+      'frame-src': ['https://www.youtube-nocookie.com'],
       'connect-src': ["'self'"],
       'frame-ancestors': ["'none'"],
       'form-action': ["'self'"],
@@ -151,11 +156,13 @@ export const securityHeaders = helmet({
 
 // RATE_LIMIT_SCALE (padrão 1) existe só para suítes de teste que fazem muitas chamadas seguidas.
 const SCALE = Math.max(1, Number(process.env.RATE_LIMIT_SCALE) || 1);
-const limiter = (windowMin, limit, message) =>
-  rateLimit({ windowMs: windowMin * 60 * 1000, limit: limit * SCALE, standardHeaders: 'draft-7', legacyHeaders: false, message: { error: message } });
+const limiter = (windowMin, limit, message, opts = {}) =>
+  rateLimit({ windowMs: windowMin * 60 * 1000, limit: limit * SCALE, standardHeaders: 'draft-7', legacyHeaders: false, message: { error: message }, ...opts });
+// Rotas autenticadas: limite por conta (várias pessoas atrás do mesmo IP não se bloqueiam; trocar de IP não burla).
+const perUser = { keyGenerator: (req) => (req.user ? `u:${req.user.id}` : `ip:${req.ip}`) };
 
 export const authLimiter = limiter(15, 20, 'Muitas tentativas. Aguarde alguns minutos e tente de novo.');
-export const assistantLimiter = limiter(60, 40, 'Você atingiu o limite de perguntas por hora. Volte daqui a pouco!');
+export const assistantLimiter = limiter(60, 40, 'Você atingiu o limite de perguntas por hora. Volte daqui a pouco!', perUser);
 export const communityWriteLimiter = limiter(10, 60, 'Você está publicando rápido demais. Aguarde alguns minutos.');
 export const documentUploadLimiter = limiter(10, 30, 'Muitos envios de arquivo seguidos. Aguarde alguns minutos.');
 export const apiLimiter = limiter(1, 120, 'Muitas requisições. Respire fundo e tente de novo em instantes.');

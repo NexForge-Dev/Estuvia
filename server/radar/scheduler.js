@@ -17,7 +17,7 @@ async function cycle() {
   try {
     for (const s of dueSources()) {
       const run = await runSource(s.id);
-      console.log(`[radar] ${s.id}: ${run.resultado}${run.erro ? ` — ${run.erro}` : ''}${run.mudancas ? ` (${run.mudancas} alteração/ões)` : ''}`);
+      console.log(`[radar] ${s.id}: ${run.resultado}${run.erro ? ` - ${run.erro}` : ''}${run.mudancas ? ` (${run.mudancas} alteração/ões)` : ''}`);
     }
   } catch (err) {
     console.error('[radar] falha no ciclo do atualizador:', err.message);

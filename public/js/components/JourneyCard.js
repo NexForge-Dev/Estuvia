@@ -40,10 +40,10 @@ export function JourneyCard(j, { onRemove } = {}) {
     ),
     h('div', { class: 'jc-body' },
       h('h3', {}, d.universidade?.nome || 'Universidade a definir'),
-      h('p', { class: 'jc-place' }, icon('pin', { size: 14 }), `${d.cidade || '—'}, ${d.pais}`),
+      h('p', { class: 'jc-place' }, icon('pin', { size: 14 }), `${d.cidade || '-'}, ${d.pais}`),
       h('p', { class: 'jc-course' }, d.programa?.nome || 'Mestrado a definir'),
       h('dl', { class: 'jc-meta' },
-        h('div', {}, h('dt', {}, 'Ano acadêmico'), h('dd', {}, d.anoAcademico || '—')),
+        h('div', {}, h('dt', {}, 'Ano acadêmico'), h('dd', {}, d.anoAcademico || '-')),
         h('div', {}, h('dt', {}, 'Rodada atual'), h('dd', {}, `${j.rodadaAtual.numero} · ${j.rodadaAtual.titulo}`)),
       ),
       h('div', { class: 'jc-progress' },
@@ -57,7 +57,7 @@ export function JourneyCard(j, { onRemove } = {}) {
 
 export function NewJourneyCard({ disabled } = {}) {
   return h(disabled ? 'div' : 'a', { class: `journey-card journey-new ${disabled ? 'is-disabled' : ''}`, href: disabled ? null : '#/jornadas/nova' },
-    h('span', { class: 'jn-plus' }, icon('sparkles', { size: 28 })),
+    h('span', { class: 'jn-plus' }, icon('compass', { size: 28 })),
     h('h3', {}, 'Nova jornada'),
     h('p', { class: 'muted' }, disabled ? 'Você atingiu o limite de jornadas.' : 'Planeje outro destino: cada jornada tem rodadas, missões e progresso próprios.'),
   );

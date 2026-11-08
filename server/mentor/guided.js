@@ -32,6 +32,8 @@ export const QUICK_ACTIONS = [
   { id: 'bolsas', rotulo: 'Procurar bolsas', mensagem: 'Procure bolsas que aceitam brasileiros.' },
   { id: 'simples', rotulo: 'Explicar mais simples', mensagem: 'Explique mais simples.' },
   { id: 'prazos', rotulo: 'Consultar prazos', mensagem: 'Quais são os meus prazos?' },
+  { id: 'novidades', rotulo: 'Novidades na web', mensagem: 'Quais as novidades sobre o meu mestrado?' },
+  { id: 'videos', rotulo: 'Vídeos e aulas', mensagem: 'Mostre vídeos que expliquem a minha missão atual.' },
 ];
 const QUICK = Object.fromEntries(QUICK_ACTIONS.map((q) => [q.id, q]));
 
@@ -94,6 +96,9 @@ const INTENTS = [
   { id: 'anuncio-suspeito', test: (t) => /suspeit|golpe|fraude|confiavel|e seguro|parece (real|verdade)|e verdade esse anuncio/.test(t), run: listingRisk },
   // Pedidos que a Estuvia ainda não executa (explicar e oferecer alternativa)
   { id: 'indisponivel', test: (t) => unavailableFor(t), run: unavailable },
+  // Pesquisa na web e vídeos (fontes gratuitas, com origem e data). Pedido explícito: não captura "quando começam as aulas".
+  { id: 'videos', test: (t) => /\b(videos?|videoaulas?|youtube|tutoria(l|is))\b/.test(t) || (/\baulas?\b.{0,6}\b(sobre|de como|explicando|ensinando|que expliq\w*)\b/.test(t) && !/\b(comec\w*|inicio|inicia\w*)\b/.test(t)), run: videosSearch },
+  { id: 'web', test: (t) => /\b(noticias?|novidades?|manchetes?)\b|\b(pesquis|busc|procur)\w* na (web|internet)\b|\bpesquis\w* (sobre|a respeito)\b|\bo que (saiu|ha de novo|tem de novo)\b/.test(t), run: webSearch },
   // Viagem (antes de agenda e finanças: "reorganiza minha viagem", "quanto vou gastar com bagagem")
   { id: 'viagem-mudou', test: (t) => /(passagem|voo|viagem)\b.{0,20}\b(mudou|mudaram|foi alterad\w*|remarcad\w*|cancelad\w*)|reorganiz\w* (a |minha )?viagem/.test(t), run: travelChanged },
   { id: 'viagem-bagagem', test: (t) => /\bbagage(m|ns)\b/.test(t) && /(quanto|custo|custa|gastar|pagar|preco)/.test(t), run: travelBaggage },
@@ -183,7 +188,7 @@ async function greeting(u) {
   const nome = u.user.profile?.apelido || u.user.profile?.nome?.split(' ')[0] || '';
   const avisos = insights(u.user, { now: u.ctx.now, limit: 2 });
   return reply(u, 'saudacao', {
-    texto: `Oi${nome ? `, ${nome}` : ''}! Eu sou o **Assistente Estuvia — Modo Guiado**. Consulto seus dados reais da Estuvia e executo ações quando você confirma (agenda, missões, documentos, finanças, Radar).\n\nComo posso ajudar agora?`,
+    texto: `Oi${nome ? `, ${nome}` : ''}! Eu sou o **Assistente Estuvia (Modo Guiado)**. Consulto seus dados reais da Estuvia e executo ações quando você confirma (agenda, missões, documentos, finanças, Radar).\n\nComo posso ajudar agora?`,
     cartoes: avisos.length ? [{ tipo: 'avisos', itens: avisos }] : [],
     sugestoes: [msg('O que faço agora?'), msg('Organize minha semana.'), msg('Quanto dinheiro falta para eu conseguir ir?')],
   });
@@ -236,23 +241,23 @@ async function schedule(u) {
   if (!def && !free) return reply(u, 'agendar', { texto: 'Claro! O que você quer que eu coloque na agenda, e para quando?', sugestoes: j?.proximaMissao ? [msg(`Agende para amanhã a Missão ${j.proximaMissao.label}`, `Missão ${j.proximaMissao.label} amanhã`)] : [] });
   if (!date) {
     const base = u.raw.replace(/[.!?\s]+$/, '');
-    return reply(u, 'agendar', { texto: `Para quando eu coloco ${state ? `a **Missão ${state.label} — ${state.titulo}**` : `"${free}"`}?`, sugestoes: [msg(`${base} hoje`, 'Hoje'), msg(`${base} amanhã`, 'Amanhã'), msg(`${base} sexta-feira`, 'Sexta-feira')] });
+    return reply(u, 'agendar', { texto: `Para quando eu coloco ${state ? `a **Missão ${state.label} - ${state.titulo}**` : `"${free}"`}?`, sugestoes: [msg(`${base} hoje`, 'Hoje'), msg(`${base} amanhã`, 'Amanhã'), msg(`${base} sexta-feira`, 'Sexta-feira')] });
   }
   if (date < u.ctx.today) return reply(u, 'agendar', { texto: `A data ${fmtDate(date)} já passou. Para quando você quer?` });
   if (state && state.status === 'bloqueada') {
     const next = j.proximaMissao;
-    return reply(u, 'agendar', { texto: `A **Missão ${state.label} — ${state.titulo}** ainda está bloqueada. Antes, falta: ${state.bloqueadaPor.map((b) => `${b.label ? `${b.label} ` : ''}${b.titulo}`).join(', ')}.${next ? ` Que tal agendar a próxima missão liberada, a **${next.label} — ${next.titulo}**?` : ''}`, sugestoes: next ? [msg(`Agende para ${dateLabel(date, u.ctx.today).split(' (')[0]} a Missão ${next.label}`, `Agendar Missão ${next.label}`)] : [] });
+    return reply(u, 'agendar', { texto: `A **Missão ${state.label} - ${state.titulo}** ainda está bloqueada. Antes, falta: ${state.bloqueadaPor.map((b) => `${b.label ? `${b.label} ` : ''}${b.titulo}`).join(', ')}.${next ? ` Que tal agendar a próxima missão liberada, a **${next.label} - ${next.titulo}**?` : ''}`, sugestoes: next ? [msg(`Agende para ${dateLabel(date, u.ctx.today).split(' (')[0]} a Missão ${next.label}`, `Agendar Missão ${next.label}`)] : [] });
   }
   const minutos = state ? Math.min(60, Math.max(15, Math.round((missionById(def.id).duracaoMin || 45) / 15) * 15)) : 45;
   const slot = findSlot(u.user, date, minutos, time);
   if (!slot) return reply(u, 'agendar', { texto: `Seu dia ${dateLabel(date, u.ctx.today)} já está cheio nos horários livres. Quer outro dia?`, sugestoes: [msg(`${u.raw.replace(/[.!?\s]+$/, '')} amanhã`, 'Outro dia')] });
-  const titulo = state ? `Missão ${state.label} — ${state.titulo}` : free;
+  const titulo = state ? `Missão ${state.label} - ${state.titulo}` : free;
   const item = { titulo, categoria: state ? categoryForMission(state.id) : 'pessoal', data: date, inicio: slot.inicio, fim: slot.fim, motivo: 'Pedido ao Mentor', ...(state && jr ? { journeyId: jr.id, missaoId: state.id } : {}) };
   const p = await u.plan('Novo compromisso', [{ ferramenta: 'create_calendar_event', input: { itens: [item] }, editavel: ['data', 'inicio', 'fim'] }], { confirmarRotulo: 'Confirmar e agendar' });
   if (p.erro) return errorReply(u, 'agendar', p.erro);
   const notas = [];
   if (slot.conflito) notas.push(`Atenção: nesse horário você já tem "${slot.conflito.titulo}".`);
-  else if (slot.foraDaDisponibilidade) notas.push('Esse horário fica fora dos horários livres que você cadastrou na Agenda AI.');
+  else if (slot.foraDaDisponibilidade) notas.push('Esse horário fica fora dos horários livres que você cadastrou na Agenda.');
   return reply(u, 'agendar', {
     texto: `${state ? `Encontrei a tarefa **${state.titulo}** (Missão ${state.label}).` : 'Combinado.'} Vou adicionar um compromisso para **${dateLabel(date, u.ctx.today)}, às ${timeLabel(slot.inicio)}** (${minutos} min) no seu calendário.${notas.length ? `\n\n${notas.join(' ')}` : ''}\n\nConfirma?`,
     proposta: p.proposta,
@@ -283,7 +288,7 @@ async function dayAgenda(u) {
   const texto = !eventos.length && !prazos.length
     ? `Para ${label} você não tem compromissos nem prazos na agenda. Quer que eu distribua suas tarefas da semana?`
     : `Para **${label}**: ${eventos.length ? `${eventos.length} compromisso(s)` : 'nenhum compromisso'}${prazos.length ? ` e ${prazos.length} prazo(s)` : ''}.${eventos[0] ? ` O primeiro é "${eventos[0].titulo}", às ${timeLabel(eventos[0].inicio)}.` : ''}`;
-  return reply(u, 'pendencias-dia', { texto, cartoes: [{ tipo: 'eventos', titulo: capital(label), eventos, prazos }], sugestoes: [!eventos.length && msg('Organize minha semana.'), rota('/agenda', 'Abrir Agenda AI')] });
+  return reply(u, 'pendencias-dia', { texto, cartoes: [{ tipo: 'eventos', titulo: capital(label), eventos, prazos }], sugestoes: [!eventos.length && msg('Organize minha semana.'), rota('/agenda', 'Abrir Agenda')] });
 }
 
 async function week(u) {
@@ -301,10 +306,10 @@ async function week(u) {
     const av = availability(u.user);
     return reply(u, 'semana', {
       texto: s.resumo.livreMin === 0
-        ? 'Não encontrei horários livres nesta semana com a disponibilidade cadastrada. Ajuste seus dias e horários na Agenda AI e eu monto a proposta.'
+        ? 'Não encontrei horários livres nesta semana com a disponibilidade cadastrada. Ajuste seus dias e horários na Agenda e eu monto a proposta.'
         : 'Não há missões liberadas para distribuir agora: as restantes estão concluídas, aguardando terceiros ou bloqueadas.',
-      sugestoes: [rota('/agenda', s.resumo.livreMin === 0 ? 'Ajustar disponibilidade' : 'Abrir Agenda AI'), msg('Quais missões faltam?')],
-      cartoes: s.resumo.livreMin === 0 ? [{ tipo: 'limitacao', motivo: `Disponibilidade atual: ${av.horasSemanais} h/semana.`, alternativa: 'Cadastre mais horários na Agenda AI.' }] : [],
+      sugestoes: [rota('/agenda', s.resumo.livreMin === 0 ? 'Ajustar disponibilidade' : 'Abrir Agenda'), msg('Quais missões faltam?')],
+      cartoes: s.resumo.livreMin === 0 ? [{ tipo: 'limitacao', motivo: `Disponibilidade atual: ${av.horasSemanais} h/semana.`, alternativa: 'Cadastre mais horários na Agenda.' }] : [],
     });
   }
   const unicas = new Set(tarefas.map((p) => p.missaoId || p.bolsaId)).size;
@@ -334,7 +339,7 @@ async function documentsPlan(u) {
   if (!docsMissions.length) return reply(u, 'plano-documentos', { texto: `Suas missões de documentos estão concluídas ou aguardando terceiros. ${abertura}`.trim(), sugestoes: [msg('Quais documentos ainda faltam?'), msg('Organize minha semana.')] });
   const w = await u.use('propose_weekly_schedule', {});
   const blocos = w.ok ? w.dados.proposta.filter((x) => x.missaoId && missionById(x.missaoId)?.rodada === 2) : [];
-  const p = blocos.length ? await u.plan('Plano de documentos — esta semana', [{ ferramenta: 'create_calendar_event', input: { itens: proposalToItems(blocos), origem: 'agenda-ai' }, editavel: ['itens'] }], { confirmarRotulo: 'Salvar na agenda' }) : {};
+  const p = blocos.length ? await u.plan('Plano de documentos, esta semana', [{ ferramenta: 'create_calendar_event', input: { itens: proposalToItems(blocos), origem: 'agenda-ai' }, editavel: ['itens'] }], { confirmarRotulo: 'Salvar na agenda' }) : {};
   return reply(u, 'plano-documentos', {
     texto: `Para chegar à inscrição com tudo pronto, faltam **${docsMissions.length} missão(ões) de documentos**. ${abertura}\n\n${blocos.length ? `Montei ${blocos.length} bloco(s) para esta semana; nas próximas, é só me pedir para reorganizar.` : 'Não encontrei horário livre nesta semana para elas.'}`,
     cartoes: [{ tipo: 'missoes', titulo: 'Missões de documentos', grupos: [{ titulo: 'A fazer', itens: docsMissions }] }, ...(blocos.length ? [{ tipo: 'agenda-semana', semana: w.dados.semana, itens: blocos, naoAgendadas: [], prazos: w.dados.prazos, resumo: null }] : [])],
@@ -353,7 +358,7 @@ async function pendingMissions(u) {
   const abertas = d.atencao.length + d.emAndamento.length + d.agora.length;
   const first = d.atencao[0] || d.emAndamento[0] || d.agora[0];
   return reply(u, 'missoes', {
-    texto: `Você tem **${abertas} missão(ões) para fazer agora**${d.aguardando.length ? `, ${d.aguardando.length} aguardando resposta de terceiros` : ''}${d.bloqueadas.length ? ` e algumas bloqueadas até concluir as anteriores` : ''}.${first ? ` Comece pela **${first.label} — ${first.titulo}**.` : ''}`,
+    texto: `Você tem **${abertas} missão(ões) para fazer agora**${d.aguardando.length ? `, ${d.aguardando.length} aguardando resposta de terceiros` : ''}${d.bloqueadas.length ? ` e algumas bloqueadas até concluir as anteriores` : ''}.${first ? ` Comece pela **${first.label} - ${first.titulo}**.` : ''}`,
     cartoes: [{ tipo: 'missoes', titulo: 'Missões pendentes', journeyId: d.journeyId, grupos: [
       { titulo: 'Precisam de atenção', itens: d.atencao }, { titulo: 'Em andamento', itens: d.emAndamento }, { titulo: 'Disponíveis', itens: d.agora },
       { titulo: 'Aguardando terceiros', itens: d.aguardando }, { titulo: 'Bloqueadas (o que falta)', itens: d.bloqueadas },
@@ -369,11 +374,11 @@ async function nextStep(u) {
   const m = r.dados;
   if (m.nenhuma) return reply(u, 'proximo', { texto: m.motivo, sugestoes: [msg('Quais missões faltam?')] });
   const avisos = insights(u.user, { now: u.ctx.now, limit: 1 }).filter((i) => i.prioridade === 'alta');
-  if (m.bloqueada) return reply(u, 'proximo', { texto: `A **Missão ${m.label} — ${m.titulo}** ainda está bloqueada. Antes, falta: ${m.bloqueadaPor.join(', ')}.`, sugestoes: [msg('Qual é a minha próxima missão?')] });
+  if (m.bloqueada) return reply(u, 'proximo', { texto: `A **Missão ${m.label} - ${m.titulo}** ainda está bloqueada. Antes, falta: ${m.bloqueadaPor.join(', ')}.`, sugestoes: [msg('Qual é a minha próxima missão?')] });
   const pend = m.objetivosLista.find((o) => !o.feito);
   const texto = m.emFoco
-    ? `Nesta missão (**${m.label} — ${m.titulo}**), o próximo passo é: **${pend ? pend.texto : 'confirmar a conclusão'}**.`
-    : `Sua próxima missão é a **${m.label} — ${m.titulo}** (${m.statusLabel.toLowerCase()}).\n\n${m.resumo}${pend ? `\n\n**Comece por:** ${pend.texto}.` : ''}`;
+    ? `Nesta missão (**${m.label} - ${m.titulo}**), o próximo passo é: **${pend ? pend.texto : 'confirmar a conclusão'}**.`
+    : `Sua próxima missão é a **${m.label} - ${m.titulo}** (${m.statusLabel.toLowerCase()}).\n\n${m.resumo}${pend ? `\n\n**Comece por:** ${pend.texto}.` : ''}`;
   return reply(u, 'proximo', {
     texto: `${texto}${avisos[0] ? `\n\n⚠️ ${avisos[0].texto}` : ''}`,
     cartoes: [{ tipo: 'missao', missao: m }, ...(avisos.length ? [{ tipo: 'avisos', itens: avisos }] : [])],
@@ -388,7 +393,7 @@ async function overview(u) {
   if (!r.ok) return errorReply(u, 'chegar-espanha', r.erro);
   const j = r.dados;
   return reply(u, 'chegar-espanha', {
-    texto: `Vamos juntos! Seu caminho até ${j.destino.cidade || 'a Espanha'} está organizado em rodadas. Você está na **Rodada ${j.rodadaAtual.numero} — ${j.rodadaAtual.titulo}** (${j.progresso}% da jornada).\n\n${j.proximaMissao ? `**Próximo passo:** Missão ${j.proximaMissao.label} — ${j.proximaMissao.titulo}.` : 'Nenhuma missão liberada agora.'}`,
+    texto: `Vamos juntos! Seu caminho até ${j.destino.cidade || 'a Espanha'} está organizado em rodadas. Você está na **Rodada ${j.rodadaAtual.numero} - ${j.rodadaAtual.titulo}** (${j.progresso}% da jornada).\n\n${j.proximaMissao ? `**Próximo passo:** Missão ${j.proximaMissao.label} - ${j.proximaMissao.titulo}.` : 'Nenhuma missão liberada agora.'}`,
     cartoes: [{ tipo: 'jornada', jornada: j }],
     sugestoes: [msg('O que faço agora?'), msg('Organize minha semana.'), msg('Quanto dinheiro falta para eu conseguir ir?')],
   });
@@ -410,7 +415,7 @@ async function missionHelp(u, acao) {
   if (!ctx.mission) return reply(u, acao, { texto: 'Não há uma missão liberada agora para eu explicar. Quer ver o que falta?', sugestoes: [msg('Quais missões faltam?')] });
   const q = quickAnswer(acao, u.user, ctx);
   if (!q) return fallback(u);
-  const intro = !missaoId ? `Vou considerar a sua próxima missão, a **${ctx.mission.label} — ${ctx.mission.definicao?.titulo || ctx.mission.titulo}**.\n\n` : '';
+  const intro = !missaoId ? `Vou considerar a sua próxima missão, a **${ctx.mission.label} - ${ctx.mission.definicao?.titulo || ctx.mission.titulo}**.\n\n` : '';
   return reply(u, acao, { texto: `${intro}${q.texto}`, sugestoes: convertActions(q.acoes), fontes: (q.fontes || []).map((f) => f && ({ titulo: f.titulo, url: f.url, orgao: f.orgao })) });
 }
 
@@ -490,10 +495,10 @@ async function finished(u) {
 async function waiting(u) {
   const def = matchMission(u.t) || (u.ctx.contexto.missaoId ? missionById(u.ctx.contexto.missaoId) : null);
   if (!def || !u.jr) return reply(u, 'aguardando', { texto: 'Você está esperando o quê? Por exemplo: "estou esperando meu diploma ficar pronto".', compreendido: false });
-  if (!def.aguardavel) return reply(u, 'aguardando', { texto: `A Missão ${def.id} — ${def.titulo} não depende de terceiros, então não dá para marcá-la como "aguardando". Posso agendar um horário para você avançar nela.`, sugestoes: [msg(`Agende para amanhã a Missão ${def.id}`, 'Agendar para amanhã')] });
+  if (!def.aguardavel) return reply(u, 'aguardando', { texto: `A Missão ${def.id} - ${def.titulo} não depende de terceiros, então não dá para marcá-la como "aguardando". Posso agendar um horário para você avançar nela.`, sugestoes: [msg(`Agende para amanhã a Missão ${def.id}`, 'Agendar para amanhã')] });
   const p = await u.plan('Aguardando terceiros', [{ ferramenta: 'update_mission_progress', input: { journeyId: u.jr.id, missaoId: def.id, operacao: 'aguardando' } }]);
   if (p.erro) return errorReply(u, 'aguardando', p.erro);
-  return reply(u, 'aguardando', { texto: `Entendi. Vou marcar a **Missão ${def.id} — ${def.titulo}** como "aguardando terceiros": ela sai das suas tarefas da semana e vira só uma verificação rápida. Enquanto isso, você pode avançar em outras missões.\n\nConfirma?`, proposta: p.proposta });
+  return reply(u, 'aguardando', { texto: `Entendi. Vou marcar a **Missão ${def.id} - ${def.titulo}** como "aguardando terceiros": ela sai das suas tarefas da semana e vira só uma verificação rápida. Enquanto isso, você pode avançar em outras missões.\n\nConfirma?`, proposta: p.proposta });
 }
 
 // Primeira orientação + pergunta que ajuda a avançar (Conversa 4 da especificação).
@@ -531,7 +536,7 @@ async function arrival(u) {
   const date = parseDate(u.t, u.ctx.today) || u.ctx.today;
   const p = await u.plan('Registrar chegada', [{ ferramenta: 'register_arrival', input: { journeyId: u.jr.id, dataEntrada: date }, editavel: ['dataEntrada'] }], { confirmarRotulo: 'Confirmar chegada' });
   if (p.erro) return reply(u, 'chegada', { texto: `Bem-vindo(a) à Espanha! 🇪🇸 Para eu liberar as missões de chegada, antes ${p.erro.mensagem.charAt(0).toLowerCase()}${p.erro.mensagem.slice(1)}`, sugestoes: [rota(`/j/${u.jr.id}/m/5.9`, 'Abrir Missão 5.9')] });
-  return reply(u, 'chegada', { texto: `Bem-vindo(a) à Espanha! 🇪🇸 Vou te ajudar a organizar os primeiros passos.\n\nPrimeiro, registro a sua chegada em **${fmtDate(date)}** — essa data conta para prazos legais. ${tie}\n\nConfirma a data?`, proposta: p.proposta });
+  return reply(u, 'chegada', { texto: `Bem-vindo(a) à Espanha! 🇪🇸 Vou te ajudar a organizar os primeiros passos.\n\nPrimeiro, registro a sua chegada em **${fmtDate(date)}**, essa data conta para prazos legais. ${tie}\n\nConfirma a data?`, proposta: p.proposta });
 }
 
 // ---------- Finanças ----------
@@ -579,7 +584,7 @@ async function haveMoney(u) {
 async function familySupport(u) {
   const m = parseMoney(u.raw);
   const who = /\b(pai|mae|padrasto|madrasta|tio|tia|avo|avos|irmao|irma|familia|pais|namorad\w*|marido|esposa|parente)\b/.exec(u.t)?.[1] || 'familiar';
-  const p = await u.plan('Registrar apoio familiar', [{ ferramenta: 'update_financial_resource', input: { operacao: 'adicionar', tipo: 'familiar', descricao: `Apoio — ${who}`, valor: m.valor, moeda: m.moeda, status: 'previsto', apoiador: who }, editavel: ['valor', 'status'] }], { confirmarRotulo: 'Registrar como prometido' });
+  const p = await u.plan('Registrar apoio familiar', [{ ferramenta: 'update_financial_resource', input: { operacao: 'adicionar', tipo: 'familiar', descricao: `Apoio: ${who}`, valor: m.valor, moeda: m.moeda, status: 'previsto', apoiador: who }, editavel: ['valor', 'status'] }], { confirmarRotulo: 'Registrar como prometido' });
   if (p.erro) return errorReply(u, 'apoio-familiar', p.erro);
   return reply(u, 'apoio-familiar', {
     texto: `Que bom ter esse apoio! Vou registrar como **apoio prometido** (${m.moeda === 'BRL' ? 'R$' : '€'} ${m.valor.toLocaleString('pt-BR')}, ${who}).\n\nEnquanto não estiver comprovado, ele **não conta como dinheiro garantido** no cálculo. O consulado decide se aceita apoio de terceiros e quais documentos pede (renda do apoiador, declaração, origem dos recursos).\n\nConfirma?`,
@@ -609,7 +614,7 @@ async function biggestCosts(u) {
   if (!r.ok) return errorReply(u, 'maiores-gastos', r.erro);
   const g = r.dados.maioresGastos;
   if (!g.length) return reply(u, 'maiores-gastos', { texto: 'Você ainda não informou custos no planejamento (aluguel, passagens, seguro…). Sem isso não sei quais são seus maiores gastos.', sugestoes: [rota('/financiamento', 'Informar custos')] });
-  return reply(u, 'maiores-gastos', { texto: `Seus maiores gastos estimados:\n${g.slice(0, 3).map((x, i) => `${i + 1}. **${x.rotulo}** — ${eur(x.totalEur)}${x.tipo === 'mensal' ? ` (${eur(x.valorEur)}/mês)` : ''}`).join('\n')}\n\nQuer dicas para reduzir algum deles?`, cartoes: [{ tipo: 'lista', titulo: 'Maiores gastos (estimativa)', itens: g.map((x) => `${x.rotulo}: ${eur(x.totalEur)} — ${x.origem}`) }], sugestoes: [msg('Me ajude a encontrar uma moradia mais barata'), msg('Como consigo economizar €100 por mês?', 'Plano de economia')] });
+  return reply(u, 'maiores-gastos', { texto: `Seus maiores gastos estimados:\n${g.slice(0, 3).map((x, i) => `${i + 1}. **${x.rotulo}**: ${eur(x.totalEur)}${x.tipo === 'mensal' ? ` (${eur(x.valorEur)}/mês)` : ''}`).join('\n')}\n\nQuer dicas para reduzir algum deles?`, cartoes: [{ tipo: 'lista', titulo: 'Maiores gastos (estimativa)', itens: g.map((x) => `${x.rotulo}: ${eur(x.totalEur)} - ${x.origem}`) }], sugestoes: [msg('Me ajude a encontrar uma moradia mais barata'), msg('Como consigo economizar €100 por mês?', 'Plano de economia')] });
 }
 
 async function cityCost(u) {
@@ -626,7 +631,7 @@ async function cityCost(u) {
 }
 
 async function scholarshipGranted(u) {
-  return reply(u, 'bolsa-concedida', { texto: 'Parabéns! 🎉 Para a bolsa entrar como dinheiro garantido, registre-a como **concedida** em Bolsas, com o valor da carta de concessão. Só a concessão oficial conta — bolsa solicitada não entra no cálculo.', sugestoes: [rota('/financiamento#bolsas', 'Registrar a bolsa')] });
+  return reply(u, 'bolsa-concedida', { texto: 'Parabéns! 🎉 Para a bolsa entrar como dinheiro garantido, registre-a como **concedida** em Bolsas, com o valor da carta de concessão. Só a concessão oficial conta, bolsa solicitada não entra no cálculo.', sugestoes: [rota('/financiamento#bolsas', 'Registrar a bolsa')] });
 }
 
 async function scholarships(u) {
@@ -635,7 +640,7 @@ async function scholarships(u) {
   const d = r.dados;
   const naoSalvas = d.bolsas.filter((b) => !b.salva).slice(0, 2);
   return reply(u, 'bolsas', {
-    texto: `${d.abertasConfirmadas ? `Há ${d.abertasConfirmadas} bolsa(s) com edital aberto confirmado na base.` : 'No momento **nenhuma bolsa da nossa base está com edital aberto confirmado**.'} Estas são as fontes para acompanhar${/brasil/.test(u.t) ? ' que já aceitaram candidatos iberoamericanos (inclui brasileiros) — confira o edital vigente' : ''}:\n\n${d.bolsas.slice(0, 3).map((b) => `- **${b.nome}** (${b.entidade}) — ${b.statusLabel}`).join('\n')}\n\nNenhuma bolsa cobre automaticamente o seu mestrado. Quer acompanhar alguma?`,
+    texto: `${d.abertasConfirmadas ? `Há ${d.abertasConfirmadas} bolsa(s) com edital aberto confirmado na base.` : 'No momento **nenhuma bolsa da nossa base está com edital aberto confirmado**.'} Estas são as fontes para acompanhar${/brasil/.test(u.t) ? ' que já aceitaram candidatos iberoamericanos (inclui brasileiros), confira o edital vigente' : ''}:\n\n${d.bolsas.slice(0, 3).map((b) => `- **${b.nome}** (${b.entidade}): ${b.statusLabel}`).join('\n')}\n\nNenhuma bolsa cobre automaticamente o seu mestrado. Quer acompanhar alguma?`,
     cartoes: [{ tipo: 'bolsas', itens: d.bolsas }],
     sugestoes: naoSalvas.map((b) => msg(`Quero acompanhar a bolsa ${b.nome}`, `Acompanhar ${b.nome}`.slice(0, 40))),
   });
@@ -645,7 +650,7 @@ async function saveScholarshipIntent(u) {
   const s = SCHOLARSHIPS.find((x) => u.t.includes(normalize(x.nome)) || u.t.includes(normalize(x.entidade).split(' ')[0]));
   const p = await u.plan('Acompanhar bolsa', [{ ferramenta: 'save_scholarship', input: { catalogId: s.id } }], { confirmarRotulo: 'Acompanhar' });
   if (p.erro) return errorReply(u, 'salvar-bolsa', p.erro);
-  return reply(u, 'salvar-bolsa', { texto: `${p.proposta.passos[0].resumo} As tarefas aparecem na Agenda AI. Confirma?`, proposta: p.proposta });
+  return reply(u, 'salvar-bolsa', { texto: `${p.proposta.passos[0].resumo} As tarefas aparecem na Agenda. Confirma?`, proposta: p.proposta });
 }
 
 // ---------- Radar ----------
@@ -720,7 +725,7 @@ async function howToApply(u) {
         : `Para ${o.anoAcademico}, ainda não há calendário oficial confirmado do seu mestrado.`
     : 'Primeiro, vamos confirmar se o prazo do seu mestrado está aberto.';
   return reply(u, 'como-inscrever', {
-    texto: `Você vai usar o portal do **Distrito Único Andaluz (DUA)** — é o site único onde se faz a candidatura aos mestrados das universidades públicas da Andaluzia.\n\n${situacao}\n\n**Próximo passo:** ${u.jr ? 'Missão 3.1 — acessar o portal do DUA.' : 'escolher o mestrado e criar sua jornada.'}`,
+    texto: `Você vai usar o portal do **Distrito Único Andaluz (DUA)**, é o site único onde se faz a candidatura aos mestrados das universidades públicas da Andaluzia.\n\n${situacao}\n\n**Próximo passo:** ${u.jr ? 'Missão 3.1, acessar o portal do DUA.' : 'escolher o mestrado e criar sua jornada.'}`,
     cartoes: o ? [{ tipo: 'oportunidades', itens: [o] }] : [],
     sugestoes: [u.jr ? rota(`/j/${u.jr.id}/r/3`, 'Abrir a Rodada 3') : rota('/jornadas/nova', 'Criar minha jornada'), o && !o.acompanhando && !o.abertura && msg('Avise-me quando abrirem as candidaturas do meu mestrado', 'Avise-me quando abrir')],
   });
@@ -818,7 +823,7 @@ async function visa(u) {
   const faltam = docs.ok ? docs.dados.documentos.filter((x) => x.pendente) : [];
   const c = docs.ok ? docs.dados.consulado : null;
   return reply(u, 'visto', {
-    texto: `O **visto de estudos** é a autorização para entrar na Espanha para estudar. Você pede no **consulado** que atende o seu estado${c ? ` (${c.nome})` : ''}.\n\n${faltam.length ? `No seu checklist ainda faltam ${faltam.length} documento(s).` : 'No seu checklist, os documentos do visto estão prontos.'} ${next ? `**Próximo passo:** Missão ${next.label} — ${next.titulo}.` : pend.ok && pend.dados.bloqueadas.length ? 'As missões do visto liberam depois da admissão e da matrícula.' : ''}\n\nA lista que vale é a do seu consulado. Não prometo aprovação: o objetivo é você chegar lá com tudo certo.`,
+    texto: `O **visto de estudos** é a autorização para entrar na Espanha para estudar. Você pede no **consulado** que atende o seu estado${c ? ` (${c.nome})` : ''}.\n\n${faltam.length ? `No seu checklist ainda faltam ${faltam.length} documento(s).` : 'No seu checklist, os documentos do visto estão prontos.'} ${next ? `**Próximo passo:** Missão ${next.label} - ${next.titulo}.` : pend.ok && pend.dados.bloqueadas.length ? 'As missões do visto liberam depois da admissão e da matrícula.' : ''}\n\nA lista que vale é a do seu consulado. Não prometo aprovação: o objetivo é você chegar lá com tudo certo.`,
     cartoes: docs.ok ? [{ tipo: 'documentos', itens: docs.dados.documentos, consulado: c, aviso: docs.dados.aviso }] : [],
     sugestoes: [next && rota(`/j/${u.jr.id}/m/${next.id}`, `Abrir Missão ${next.label}`), msg('Escreva para o consulado perguntando quais documentos preciso', 'E-mail ao consulado')],
   });
@@ -873,7 +878,7 @@ async function travelBaggage(u) {
   const malas = t.perfil?.malas;
   if (!comBagagem.length) return reply(u, 'viagem-bagagem', { texto: `Não tenho preço de bagagem nas suas cotações${malas !== undefined && malas !== null ? ` (você disse que vai despachar ${malas} mala${malas === 1 ? '' : 's'})` : ''}. O valor muda por companhia e tarifa: confira no site ao cotar e registre em "Mais detalhes" da cotação.`, sugestoes: [travelLink] });
   return reply(u, 'viagem-bagagem', {
-    texto: `Bagagem nas suas cotações:\n${comBagagem.map((c) => `- **${c.rota}:** ${eur(c.custo.partes.find((p) => p.id === 'bagagem').valor)}`).join('\n')}${t.cotacoes.length > comBagagem.length ? `\n\nEm ${t.cotacoes.length - comBagagem.length} cotação(ões) a bagagem não foi informada — o total delas pode subir.` : ''}`,
+    texto: `Bagagem nas suas cotações:\n${comBagagem.map((c) => `- **${c.rota}:** ${eur(c.custo.partes.find((p) => p.id === 'bagagem').valor)}`).join('\n')}${t.cotacoes.length > comBagagem.length ? `\n\nEm ${t.cotacoes.length - comBagagem.length} cotação(ões) a bagagem não foi informada, o total delas pode subir.` : ''}`,
     sugestoes: [travelLink],
   });
 }
@@ -884,7 +889,7 @@ async function travelConnection(u) {
   if (!c) return reply(u, 'viagem-conexao', { texto: 'Ainda não há cotação salva para eu olhar. Salve a passagem que encontrou (o link basta) e me pergunte de novo.', sugestoes: [travelLink] });
   const riscos = c.consideracoes.filter((x) => x.nivel !== 'info').map((x) => x.texto);
   return reply(u, 'viagem-conexao', {
-    texto: `Não tenho o tempo exato de conexão de **${c.rota}** — esse dado só está no site da companhia, e o mínimo seguro depende do aeroporto. O que eu sei:\n${riscos.length ? riscos.map((r) => `- ${r}`).join('\n') : '- Nenhum alerta pelos dados que você informou.'}\n\nRegra prática: com **bilhete único**, a companhia reacomoda você se perder a conexão; com bilhetes separados, não.`,
+    texto: `Não tenho o tempo exato de conexão de **${c.rota}**, esse dado só está no site da companhia, e o mínimo seguro depende do aeroporto. O que eu sei:\n${riscos.length ? riscos.map((r) => `- ${r}`).join('\n') : '- Nenhum alerta pelos dados que você informou.'}\n\nRegra prática: com **bilhete único**, a companhia reacomoda você se perder a conexão; com bilhetes separados, não.`,
     sugestoes: [travelLink],
   });
 }
@@ -907,7 +912,7 @@ async function travelChanged(u) {
   return reply(u, 'viagem-mudou', {
     texto: changes.length
       ? `Vi que a data da viagem mudou para **${fmtDate(t.dataViagem)}**. ${changes.length} compromisso(s) da agenda podem ser atualizados:\n${changes.map((c) => `- ${c.titulo}: ${fmtDate(c.dataAtual)} → ${fmtDate(c.novaData)}`).join('\n')}\n\nConfirme em "Minha viagem" → Compromissos da viagem. Nada muda sem você.`
-      : 'Atualize a nova data ou horário na sua cotação (botão "Editar viagem"). Assim que você salvar, eu mostro quais compromissos da agenda precisam mudar — e só altero com a sua confirmação.',
+      : 'Atualize a nova data ou horário na sua cotação (botão "Editar viagem"). Assim que você salvar, eu mostro quais compromissos da agenda precisam mudar, e só altero com a sua confirmação.',
     sugestoes: [travelLink],
   });
 }
@@ -970,7 +975,7 @@ async function email(u) {
   const r = await u.use('draft_email', { destinatario, ...(dm ? { duvida: dm[1].replace(/[.!?]+$/, '') } : {}) });
   if (!r.ok) return errorReply(u, 'email', r.erro);
   return reply(u, 'email', {
-    texto: `Preparei um rascunho em espanhol${dm ? '' : ' (complete a sua dúvida no trecho entre colchetes)'}. Revise, copie e envie pelo seu e-mail — eu não envio mensagens.`,
+    texto: `Preparei um rascunho em espanhol${dm ? '' : ' (complete a sua dúvida no trecho entre colchetes)'}. Revise, copie e envie pelo seu e-mail, eu não envio mensagens.`,
     cartoes: [{ tipo: 'email', ...r.dados }],
     sugestoes: destinatario !== 'consulado' && u.jr ? [rota(`/j/${u.jr.id}/m/3.8`, 'Encontrar o contato oficial')] : [],
   });
@@ -986,7 +991,7 @@ async function deadlines(u) {
   const futuros = d.daJornada.filter((p) => p.diasRestantes >= 0);
   const ORIG = { oficial: 'oficial', previsto: 'previsão', declarado: 'informado por você' };
   return reply(u, 'prazos', {
-    texto: futuros.length ? `Seu próximo prazo: **${futuros[0].titulo}** em ${fmtDate(futuros[0].data)} (faltam ${futuros[0].diasRestantes} dia(s); ${ORIG[futuros[0].origem] || futuros[0].origem}).${d.oportunidade && !d.oportunidade.abertura ? `\n\nO calendário oficial de candidatura ${d.oportunidade.anoAcademico} ainda não foi publicado.` : ''}` : `Você não tem prazos futuros cadastrados.${d.oportunidade && !d.oportunidade.abertura ? ` O calendário oficial ${d.oportunidade.anoAcademico} ainda não foi publicado — posso te avisar.` : ''}`,
+    texto: futuros.length ? `Seu próximo prazo: **${futuros[0].titulo}** em ${fmtDate(futuros[0].data)} (faltam ${futuros[0].diasRestantes} dia(s); ${ORIG[futuros[0].origem] || futuros[0].origem}).${d.oportunidade && !d.oportunidade.abertura ? `\n\nO calendário oficial de candidatura ${d.oportunidade.anoAcademico} ainda não foi publicado.` : ''}` : `Você não tem prazos futuros cadastrados.${d.oportunidade && !d.oportunidade.abertura ? ` O calendário oficial ${d.oportunidade.anoAcademico} ainda não foi publicado, posso te avisar.` : ''}`,
     cartoes: [{ tipo: 'eventos', titulo: 'Prazos', eventos: [], prazos: futuros.map((p) => ({ titulo: p.titulo, data: p.data, origem: p.origem, missao: p.missao })) }],
     sugestoes: [d.oportunidade && !d.oportunidade.acompanhando && msg('Avise-me quando abrirem as candidaturas do meu mestrado', 'Avise-me quando abrir'), msg('Organize minha semana.')],
   });
@@ -1010,6 +1015,78 @@ async function glossary(u) {
   return fallback(u);
 }
 
+// ---------- Pesquisa na web e vídeos ----------
+
+// Tira da frase as palavras do pedido ("pesquise notícias sobre…") e fica com o assunto.
+const TRIGGERS = /\b(me |por favor |pfv |pode |poderia |quero |queria |gostaria de )?(pesquis\w*|busc\w*|procur\w*|encontr\w*|ach\w*|mostr\w*|ver|veja|traga|tem|ha|quais|qual)\b|\b(as |os |umas? |uns |alguns? |algumas )?(ultimas |ultimos |novas |novos )?(noticias?|novidades?|manchetes?|videos?|videoaulas?|aulas?|tutoria(l|is)|youtube)\b|\b(na|da) (web|internet)\b|\b(sobre|a respeito( de| do| da)?|que expliq\w*|explicando|ensinando|de como)\b|\b(recentes?|hoje|agora)\b|[?!.]/g;
+function topicOf(u, fallbackTopic) {
+  const rest = u.raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(TRIGGERS, ' ').replace(/\b(o|a|os|as|de|do|da|dos|das|um|uma|e|que|me|meu|minha|para|pra)\b/g, ' ').replace(/\s+/g, ' ').trim();
+  // "meu mestrado" / "minha missão" → o assunto vem da jornada.
+  if (/\b(mestrado|master)\b/.test(u.t) && /\b(meu|minha|do meu)\b/.test(u.t) || !rest || rest.length < 3) return fallbackTopic();
+  return rest;
+}
+function journeyTopic(u, { video = false } = {}) {
+  const j = u.journey();
+  if (video && u.ctx.contexto.missaoId) {
+    const m = missionById(u.ctx.contexto.missaoId);
+    if (m) return `${m.titulo} Espanha estudante`;
+  }
+  if (video) return 'como estudar mestrado na Espanha';
+  return j?.destino?.universidade?.nome ? `${j.destino.universidade.nome} máster` : 'máster universidad Andalucía';
+}
+
+async function webSearch(u) {
+  const busca = topicOf(u, () => journeyTopic(u));
+  // Wikipédia só quando o estudante quer entender um conceito; para novidades, fonte oficial e imprensa.
+  const tipos = /\bo que (e|sao|significa)\b|\bexplic\w*|\bconceito\b/.test(u.t) ? ['oficial', 'noticias', 'conceito'] : ['oficial', 'noticias'];
+  const r = await u.use('search_web', { busca, tipos, limite: 4 });
+  if (!r.ok) return errorReply(u, 'web', r.erro);
+  const d = r.dados;
+  const n = d.itens.length;
+  const oficiais = d.itens.filter((i) => i.natureza === 'oficial').length;
+  const falhou = d.falhas.length ? `
+
+_Não consegui consultar agora: ${d.falhas.map((f) => `${f.fonte} (${f.motivo})`).join('; ')}._` : '';
+  const texto = n
+    ? `Pesquisei **"${d.consulta}"** em fontes gratuitas e encontrei **${n} resultado${n > 1 ? 's' : ''}**${oficiais ? `, ${oficiais} de fonte oficial` : ''}. Cada item mostra quem publicou e quando.
+
+Notícia de imprensa não é regra oficial: prazos, documentos e valores só valem quando confirmados na fonte oficial.${falhou}`
+    : `Pesquisei **"${d.consulta}"** e não encontrei resultados recentes nas fontes gratuitas que consulto (últimas notícias do Canal UGR e imprensa via GDELT).${falhou}
+
+Tente com outras palavras, em espanhol (ex.: "máster", "matrícula", "visado de estudios").`;
+  return reply(u, 'web', {
+    texto,
+    cartoes: n ? [{ tipo: 'web', consulta: d.consulta, consultadoEm: d.consultadoEm, itens: d.itens, aviso: d.aviso }] : [],
+    sugestoes: [msg(`Vídeos sobre ${d.consulta}`, 'Ver vídeos sobre isso'), msg('Quais são os meus prazos?', 'Prazos oficiais (Radar)'), msg('O que faço agora?')],
+  });
+}
+
+async function videosSearch(u) {
+  const busca = topicOf(u, () => journeyTopic(u, { video: true }));
+  const r = await u.use('search_videos', { busca, limite: 4 });
+  if (!r.ok) return errorReply(u, 'videos', r.erro);
+  const d = r.dados;
+  const card = { tipo: 'videos', ...d };
+  if (!d.configurado) {
+    return reply(u, 'videos', {
+      texto: `A lista de vídeos ainda não está ligada nesta Estuvia (ela usa a cota gratuita do YouTube e precisa de uma chave configurada pela equipe). Para não te mostrar nada inventado, deixei o link da busca **"${d.consulta}"** direto no YouTube.
+
+Vídeos são de terceiros: regras e prazos, confira sempre na fonte oficial.`,
+      cartoes: [card], sugestoes: [msg(`Notícias sobre ${d.consulta}`, 'Pesquisar na web'), msg('O que faço agora?')],
+    });
+  }
+  const n = d.itens.length;
+  return reply(u, 'videos', {
+    texto: n
+      ? `Separei **${n} vídeo${n > 1 ? 's' : ''}** sobre **"${d.consulta}"** (busca segura, de preferência em português, dos últimos 3 anos). Toque para assistir aqui mesmo.
+
+São vídeos de terceiros: use para entender, e confirme regras e prazos na fonte oficial.`
+      : `Não encontrei vídeos recentes sobre **"${d.consulta}"**${d.falha ? ` (${d.falha})` : ''}. Você pode abrir a busca direto no YouTube.`,
+    cartoes: [card],
+    sugestoes: [msg(`Notícias sobre ${d.consulta}`, 'Pesquisar na web'), msg('O que faço agora?')],
+  });
+}
+
 async function fallback(u) {
   const k = retrieve(u.raw, { k: 2, min: 2.5 }).filter((x) => x.cobertura >= 0.5);
   u.usadas.push({ nome: 'get_official_sources', ok: k.length > 0, efeito: 'leitura' });
@@ -1024,7 +1101,7 @@ async function fallback(u) {
   }
   return reply(u, 'nao-entendi', {
     compreendido: false,
-    texto: 'No Modo Guiado eu ainda não sei responder isso com segurança — e prefiro não inventar. Posso ajudar com missões, agenda, documentos, finanças, bolsas, prazos do Radar, moradia e e-mails.\n\nPara dúvidas específicas, confira a fonte oficial (ficha do mestrado, DUA ou consulado).',
+    texto: 'No Modo Guiado eu ainda não sei responder isso com segurança, e prefiro não inventar. Posso ajudar com missões, agenda, documentos, finanças, bolsas, prazos do Radar, moradia e e-mails.\n\nPara dúvidas específicas, confira a fonte oficial (ficha do mestrado, DUA ou consulado).',
     sugestoes: [msg('O que faço agora?'), msg('Quais são os meus prazos?'), msg('Quais documentos ainda faltam?')],
   });
 }

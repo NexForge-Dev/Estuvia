@@ -23,7 +23,7 @@ export const PROGRAMS = [
   {
     id: 'ugr-demo-eng',
     universidadeId: 'ugr',
-    nome: 'Mestrado em Engenharia — exemplo A (exige B2)',
+    nome: 'Mestrado em Engenharia, exemplo A (exige B2)',
     area: 'Engenharia e Arquitetura',
     ciclo: '2026/27',
     duracaoMeses: 12,
@@ -36,7 +36,7 @@ export const PROGRAMS = [
   {
     id: 'ugr-demo-arq',
     universidadeId: 'ugr',
-    nome: 'Mestrado em Arquitetura — exemplo B (sem certificado)',
+    nome: 'Mestrado em Arquitetura, exemplo B (sem certificado)',
     area: 'Engenharia e Arquitetura',
     ciclo: '2026/27',
     duracaoMeses: 18,
@@ -49,7 +49,7 @@ export const PROGRAMS = [
   {
     id: 'ugr-demo-ciencias',
     universidadeId: 'ugr',
-    nome: 'Mestrado em Ciências — exemplo C (idioma a confirmar)',
+    nome: 'Mestrado em Ciências, exemplo C (idioma a confirmar)',
     area: 'Ciências',
     ciclo: '2026/27',
     duracaoMeses: 12,
@@ -62,7 +62,7 @@ export const PROGRAMS = [
   {
     id: 'us-demo-adm',
     universidadeId: 'us',
-    nome: 'Mestrado em Administração — exemplo D (B1, sem certificado formal)',
+    nome: 'Mestrado em Administração, exemplo D (B1, sem certificado formal)',
     area: 'Ciências Sociais e Jurídicas',
     ciclo: '2026/27',
     duracaoMeses: 12,
@@ -75,7 +75,7 @@ export const PROGRAMS = [
   {
     id: 'uma-demo-tur',
     universidadeId: 'uma',
-    nome: 'Mestrado em Turismo — exemplo E (idioma a confirmar)',
+    nome: 'Mestrado em Turismo, exemplo E (idioma a confirmar)',
     area: 'Ciências Sociais e Jurídicas',
     ciclo: '2026/27',
     duracaoMeses: 10,

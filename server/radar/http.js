@@ -5,6 +5,8 @@ const USER_AGENT = 'EstuviaRadar/0.1 (monitoramento de calendarios academicos of
 const TIMEOUT_MS = 20000;
 const MIN_INTERVAL_MS = 4000; // entre requisições ao mesmo domínio
 const ROBOTS_TTL_MS = 12 * 3600 * 1000;
+const MAX_BYTES = 5 * 1024 * 1024; // página oficial maior que isso não é um calendário: recusamos
+const MAX_REDIRECTS = 5;
 
 const lastHit = new Map();
 const robotsCache = new Map();
@@ -56,42 +58,106 @@ export function robotsAllows(robotsTxt, url) {
   return !best || best.allow;
 }
 
+// RFC 9309 §2.3.1: robots.txt inexistente (4xx) = sem restrições; robots.txt INACESSÍVEL
+// (5xx, rede, tempo esgotado) = tudo proibido até conseguirmos lê-lo. Inacessível não vai para o cache.
 async function robotsFor(origin, fetchImpl) {
   const cached = robotsCache.get(origin);
   if (cached && Date.now() - cached.at < ROBOTS_TTL_MS) return cached.text;
   let text = '';
   try {
     const res = await fetchImpl(`${origin}/robots.txt`, { headers: { 'User-Agent': USER_AGENT }, signal: AbortSignal.timeout(TIMEOUT_MS) });
-    if (res.ok) text = await res.text();
-  } catch { /* sem robots.txt acessível: seguimos com cautela (sem regras) */ }
+    if (res.status >= 500) return null;
+    if (res.ok) text = new TextDecoder().decode(await readLimited(res, MAX_BYTES));
+  } catch {
+    return null;
+  }
   robotsCache.set(origin, { text, at: Date.now() });
   return text;
 }
 
-/** Baixa uma página pública. Retorna { url, status, text, contentType, fetchedAt }. */
-export async function politeFetch(url, { fetchImpl = fetch } = {}) {
-  const u = new URL(url);
-  if (u.protocol !== 'https:' && u.protocol !== 'http:') throw new FetchError('Protocolo não suportado.');
-  const robots = await robotsFor(u.origin, fetchImpl);
-  if (!robotsAllows(robots, url)) throw new FetchError('robots.txt não permite a coleta desta página.', { blocked: true });
-  await throttle(u.host);
+/** Lê o corpo com teto de tamanho (Content-Length e contagem real). Retorna Uint8Array. */
+async function readLimited(res, maxBytes) {
+  const declared = Number(res.headers.get('content-length'));
+  if (Number.isFinite(declared) && declared > maxBytes) throw new FetchError(`Resposta grande demais (${declared} bytes).`);
+  if (!res.body?.getReader) {
+    const buf = new Uint8Array(await res.arrayBuffer());
+    if (buf.byteLength > maxBytes) throw new FetchError(`Resposta grande demais (${buf.byteLength} bytes).`);
+    return buf;
+  }
+  const reader = res.body.getReader();
+  const chunks = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel().catch(() => {});
+      throw new FetchError(`Resposta grande demais (mais de ${maxBytes} bytes).`);
+    }
+    chunks.push(value);
+  }
+  const out = new Uint8Array(total);
+  let off = 0;
+  for (const c of chunks) { out.set(c, off); off += c.byteLength; }
+  return out;
+}
+
+function checkTarget(u, allowedHosts) {
+  if (u.protocol !== 'https:' && u.protocol !== 'http:') throw new FetchError('Protocolo não suportado.', { blocked: true });
+  if (u.username || u.password) throw new FetchError('URL com credenciais não é aceita.', { blocked: true });
+  if (allowedHosts && !allowedHosts.includes(u.hostname.toLowerCase())) {
+    throw new FetchError(`Domínio fora da lista de fontes oficiais: ${u.hostname}.`, { blocked: true });
+  }
+}
+
+/**
+ * Baixa uma página pública. Retorna { url, status, text, contentType, fetchedAt, etag, lastModified }.
+ * Com "validadores" (ETag / Last-Modified da coleta anterior) faz uma requisição condicional:
+ * se a página não mudou, o servidor responde 304 e devolvemos { naoModificada: true } sem baixar o conteúdo.
+ */
+export async function politeFetch(url, { fetchImpl = fetch, validadores = null, allowedHosts = null, maxBytes = MAX_BYTES } = {}) {
+  let u = new URL(url);
+  checkTarget(u, allowedHosts);
+  const conditional = {};
+  if (validadores?.etag) conditional['If-None-Match'] = validadores.etag;
+  if (validadores?.lastModified) conditional['If-Modified-Since'] = validadores.lastModified;
   let res;
-  try {
-    res = await fetchImpl(url, {
-      headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,application/xhtml+xml' },
-      redirect: 'follow',
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-    });
-  } catch (err) {
-    throw new FetchError(`Fonte indisponível: ${err.name === 'TimeoutError' ? 'tempo esgotado' : err.message}`);
+  // Redirecionamentos seguidos manualmente: cada salto é validado (protocolo, domínio permitido,
+  // robots.txt do destino). Um redirecionamento para fora das fontes oficiais é recusado.
+  for (let hop = 0; ; hop += 1) {
+    const robots = await robotsFor(u.origin, fetchImpl);
+    if (robots === null) throw new FetchError(`robots.txt de ${u.host} inacessível: coleta adiada (RFC 9309).`);
+    if (!robotsAllows(robots, u.href)) throw new FetchError('robots.txt não permite a coleta desta página.', { blocked: true });
+    await throttle(u.host);
+    try {
+      res = await fetchImpl(u.href, {
+        headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,application/xhtml+xml,application/rss+xml;q=0.9,*/*;q=0.8', ...conditional },
+        redirect: 'manual',
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
+    } catch (err) {
+      throw new FetchError(`Fonte indisponível: ${err.name === 'TimeoutError' ? 'tempo esgotado' : err.message}`);
+    }
+    if (![301, 302, 303, 307, 308].includes(res.status)) break;
+    const location = res.headers.get('location');
+    if (!location) throw new FetchError(`HTTP ${res.status} sem destino.`, { status: res.status });
+    if (hop + 1 >= MAX_REDIRECTS) throw new FetchError('Redirecionamentos demais.', { status: res.status });
+    const next = new URL(location, u);
+    checkTarget(next, allowedHosts);
+    if (u.protocol === 'https:' && next.protocol !== 'https:') throw new FetchError('Redirecionamento para HTTP sem criptografia recusado.', { blocked: true });
+    u = next;
   }
   if ([401, 403, 429].includes(res.status)) {
     throw new FetchError(`A fonte recusou a coleta (HTTP ${res.status}). Não tentamos contornar.`, { status: res.status, blocked: true });
   }
+  const etag = res.headers.get('etag') || validadores?.etag || null;
+  const lastModified = res.headers.get('last-modified') || validadores?.lastModified || null;
+  if (res.status === 304 && validadores) return { url: u.href, status: 304, naoModificada: true, text: null, fetchedAt: new Date().toISOString(), etag, lastModified };
   if (!res.ok) throw new FetchError(`HTTP ${res.status}`, { status: res.status });
   const contentType = res.headers.get('content-type') || '';
-  const text = decode(new Uint8Array(await res.arrayBuffer()), contentType);
-  return { url: res.url || url, status: res.status, text, contentType, fetchedAt: new Date().toISOString() };
+  const text = decode(await readLimited(res, maxBytes), contentType);
+  return { url: u.href, status: res.status, text, contentType, fetchedAt: new Date().toISOString(), etag, lastModified };
 }
 
 // ---------- HTML → texto (sem dependências) ----------

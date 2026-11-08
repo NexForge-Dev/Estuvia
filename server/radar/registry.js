@@ -12,7 +12,7 @@ export const SOURCE_SEED = [
   {
     id: 'dua-calendario',
     titulo: 'Calendário de pré-inscrição em másteres',
-    instituicao: 'Junta de Andalucía — Distrito Único Andaluz',
+    instituicao: 'Junta de Andalucía: Distrito Único Andaluz',
     rotuloPublico: 'Distrito Único Andaluz',
     url: 'https://www.juntadeandalucia.es/economiaconocimientoempresasyuniversidad/sguit/?q=masteres&d=mo_calendario.php',
     tipo: 'calendario',
@@ -26,7 +26,7 @@ export const SOURCE_SEED = [
     id: 'ugr-catalogo',
     titulo: 'Listado de másteres oficiais',
     instituicao: 'Universidad de Granada',
-    rotuloPublico: 'Universidad de Granada — masteres.ugr.es',
+    rotuloPublico: 'Universidad de Granada, masteres.ugr.es',
     url: 'https://masteres.ugr.es/informacion/titulaciones',
     tipo: 'catalogo',
     prioridade: 1,
@@ -39,7 +39,7 @@ export const SOURCE_SEED = [
     id: 'ugr-fichas',
     titulo: 'Fichas dos másteres (uma página por programa)',
     instituicao: 'Universidad de Granada',
-    rotuloPublico: 'Ficha oficial do máster — UGR',
+    rotuloPublico: 'Ficha oficial do máster: UGR',
     url: 'https://masteres.ugr.es/informacion/titulaciones/',
     tipo: 'programa',
     prioridade: 1,
@@ -66,7 +66,7 @@ export const SOURCE_SEED = [
   {
     id: 'dua-catalogo',
     titulo: 'Catálogo de másteres do DUA',
-    instituicao: 'Junta de Andalucía — Distrito Único Andaluz',
+    instituicao: 'Junta de Andalucía: Distrito Único Andaluz',
     rotuloPublico: 'Distrito Único Andaluz',
     url: 'https://www.juntadeandalucia.es/economiaconocimientoempresasyuniversidad/sguit/?q=masteres&d=mo_catalogo_top.php',
     tipo: 'catalogo',
@@ -81,7 +81,8 @@ export const SOURCE_SEED = [
     titulo: 'Portal do Distrito Único Andaluz',
     instituicao: 'Junta de Andalucía',
     rotuloPublico: 'Distrito Único Andaluz',
-    url: 'https://lajunta.es/portaldua',
+    // Destino oficial do link curto lajunta.es/portaldua (307 temporário, conferido em 28/10/2026).
+    url: 'https://www.juntadeandalucia.es/economiaconocimientoempresasyuniversidad/sguit',
     tipo: 'portal-candidatura',
     prioridade: 1,
     autoridade: ['canal-candidatura'],
@@ -92,7 +93,7 @@ export const SOURCE_SEED = [
     id: 'ugr-saap',
     titulo: 'Servicio de Acceso, Admisión y Permanencia',
     instituicao: 'Universidad de Granada',
-    rotuloPublico: 'UGR — SAAP',
+    rotuloPublico: 'UGR: SAAP',
     url: 'https://saap.ugr.es/',
     tipo: 'orientacao',
     prioridade: 2,
@@ -101,6 +102,11 @@ export const SOURCE_SEED = [
     frequenciaHoras: 72,
   },
 ];
+
+// Únicos domínios que o atualizador pode baixar (inclusive como destino de redirecionamento):
+// os das fontes com coleta automática. URLs de fichas vêm do catálogo da UGR, mas são sempre
+// montadas sobre masteres.ugr.es; nenhuma URL informada por usuário é coletada.
+export const COLLECTION_HOSTS = [...new Set(SOURCE_SEED.filter((s) => s.metodo === 'html-publico').map((s) => new URL(s.url).hostname))];
 
 // Canal oficial onde a candidatura é feita (Estado "abertas" exige canal confirmado).
 export const APPLICATION_CHANNEL = {

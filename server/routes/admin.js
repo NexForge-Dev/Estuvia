@@ -1,14 +1,17 @@
 // Painel do administrador: quem está acessando, cadastros, eventos de segurança e ações na conta.
-// Acesso: conta ADMIN_EMAIL do .env (ou usuário com role "admin").
+// Acesso: usuário com role "admin" (a conta ADMIN_EMAIL do .env recebe esse papel na inicialização).
 import { Router } from 'express';
 import { z } from 'zod';
 import { users, audit, newId } from '../store.js';
-import { requireAuth, requireAdmin, isAdmin } from '../security.js';
+import { requireAuth, requireAdmin, isAdmin, ROLES } from '../security.js';
 import { usageReport, userUsage, moduleLabel } from '../usage.js';
 import { studentRow, studentReport, enrollmentOverview } from '../admin-student.js';
 import { aiStatus, checkAI } from '../ai-health.js';
 import { systemStatus } from '../system-status.js';
 import { requestStats, recentLogs } from '../ops.js';
+import { DOCUMENTS } from '../content/documents.js';
+import { SOURCES } from '../content/sources.js';
+import { allDocRules, setDocRule } from '../document-rules.js';
 
 const router = Router();
 router.use(requireAuth, requireAdmin);
@@ -25,7 +28,7 @@ export function describeUA(ua = '') {
   const browser = /Edg\//.test(ua) ? 'Edge' : /OPR\/|Opera/.test(ua) ? 'Opera' : /SamsungBrowser/.test(ua) ? 'Samsung Internet'
     : /Firefox\//.test(ua) ? 'Firefox' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : /node|curl|undici/i.test(ua) ? 'Script' : 'Outro';
   const os = /Android/.test(ua) ? 'Android' : /iPhone|iPad|iPod/.test(ua) ? 'iOS' : /Windows/.test(ua) ? 'Windows'
-    : /Mac OS X|Macintosh/.test(ua) ? 'macOS' : /Linux/.test(ua) ? 'Linux' : '—';
+    : /Mac OS X|Macintosh/.test(ua) ? 'macOS' : /Linux/.test(ua) ? 'Linux' : '-';
   const device = /Mobi|iPhone|Android(?!.*Tablet)/.test(ua) ? 'celular' : /iPad|Tablet/.test(ua) ? 'tablet' : 'computador';
   return { browser, os, device };
 }
@@ -35,7 +38,7 @@ function summary(u) {
   return {
     id: u.id,
     email: u.email,
-    nome: p.nome || '—',
+    nome: p.nome || '-',
     avatar: p.avatar || '🎓',
     createdAt: u.createdAt,
     lastSeenAt: u.lastSeenAt || null,
@@ -49,6 +52,7 @@ function summary(u) {
     documentos: Object.keys(u.documents || {}).length,
     onboarding: !!p.onboardingConcluido,
     admin: isAdmin(u),
+    papel: u.role || 'estudante',
     bloqueado: !!u.blocked,
   };
 }
@@ -182,6 +186,23 @@ router.post('/users/:id/block', async (req, res) => {
   res.json({ user: summary(user) });
 });
 
+// Papéis da equipe (moderação da comunidade, equipe do Radar). O papel "admin" não é concedido
+// por aqui: só a conta ADMIN_EMAIL do .env é administradora.
+router.post('/users/:id/role', async (req, res) => {
+  const parsed = z.object({ papel: z.enum(ROLES.filter((r) => r !== 'admin')) }).strict().safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'Papel inválido.' });
+  const target = users.findById(req.params.id);
+  if (!target) return res.status(404).json({ error: 'Usuário não encontrado.' });
+  if (isAdmin(target)) return res.status(400).json({ error: 'O papel do administrador não pode ser alterado por aqui.' });
+  const anterior = target.role || 'estudante';
+  const user = await users.update(target.id, (u) => {
+    if (parsed.data.papel === 'estudante') delete u.role; else u.role = parsed.data.papel;
+    if (anterior !== parsed.data.papel) u.tokenVersion += 1; // a sessão aberta passa a refletir o novo papel
+  });
+  await audit.log({ action: 'admin-role', userId: req.user.id, targetId: user.id, de: anterior, para: parsed.data.papel });
+  res.json({ user: summary(user) });
+});
+
 // Anotações internas do admin sobre o estudante (o estudante não vê).
 router.post('/users/:id/notes', async (req, res) => {
   const parsed = z.object({ texto: z.string().trim().min(1, 'Escreva a anotação.').max(1000) }).strict().safeParse(req.body);
@@ -204,6 +225,30 @@ router.post('/users/:id/logout', async (req, res) => {
   const user = await users.update(target.id, (u) => { u.tokenVersion += 1; });
   await audit.log({ action: 'admin-logout-user', userId: req.user.id, targetId: user.id });
   res.json({ user: summary(user) });
+});
+
+
+// ---------- Carteira de documentos: revisão editorial das exigências (sem mexer nas telas) ----------
+router.get('/document-rules', (req, res) => {
+  const rules = allDocRules();
+  res.json({
+    documentos: DOCUMENTS.map((d) => ({ id: d.id, nome: d.nome, categoria: d.categoria, fontes: d.fontes || [d.fonte], revisao: rules[d.id] || null })),
+    fontes: SOURCES.filter((s) => s.tipo !== 'demo').map((s) => ({ id: s.id, orgao: s.orgao, titulo: s.titulo, url: s.url, revisadoEm: s.revisadoEm })),
+  });
+});
+
+router.put('/document-rules/:docId', async (req, res) => {
+  if (!DOCUMENTS.some((d) => d.id === req.params.docId)) return res.status(404).json({ error: 'Documento desconhecido.' });
+  const parsed = z.object({
+    aviso: z.string().trim().max(400).optional(),
+    revisadoEm: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    fontes: z.array(z.string().max(10)).max(6).optional(),
+    remover: z.literal(true).optional(),
+  }).strict().safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'Revisão inválida.' });
+  const revisao = await setDocRule(req.params.docId, parsed.data.remover ? null : parsed.data, req.user.email);
+  await audit.log({ action: 'admin-document-rule', userId: req.user.id, docId: req.params.docId });
+  res.json({ revisao });
 });
 
 export default router;

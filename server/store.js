@@ -25,16 +25,27 @@ function load() {
   }
 }
 
+// Última falha de gravação (null quando a última escrita deu certo): exposta em /api/health.
+let lastWriteError = null;
+export const storeHealth = () => ({ ok: !lastWriteError, erro: lastWriteError });
+
 function persist() {
   // Serializa as escritas e grava em arquivo temporário + rename (evita JSON corrompido).
+  // A promessa devolvida REJEITA se a gravação falhar: quem chamou não pode responder "salvo".
   const snapshot = JSON.stringify(db, null, 2);
-  writing = writing.then(async () => {
+  const run = writing.then(async () => {
     await fs.promises.mkdir(path.dirname(config.dataFile), { recursive: true });
     const tmp = `${config.dataFile}.${process.pid}.tmp`;
     await fs.promises.writeFile(tmp, snapshot, { mode: 0o600 });
     await fs.promises.rename(tmp, config.dataFile);
-  }).catch((err) => console.error('[store] falha ao gravar:', err.message));
-  return writing;
+    lastWriteError = null;
+  });
+  // A fila continua andando mesmo após uma falha (a próxima escrita grava o estado completo).
+  writing = run.catch((err) => {
+    lastWriteError = { mensagem: err.message, em: new Date().toISOString() };
+    console.error('[store] falha ao gravar:', err.message);
+  });
+  return run;
 }
 
 export const newId = () => crypto.randomUUID();
@@ -120,7 +131,7 @@ export const analytics = {
   mutate(fn) {
     const result = fn(db.analytics);
     if (!analyticsTimer) {
-      analyticsTimer = setTimeout(() => { analyticsTimer = null; persist(); }, 5000);
+      analyticsTimer = setTimeout(() => { analyticsTimer = null; persist().catch(() => {}); }, 5000);
       analyticsTimer.unref?.();
     }
     return result;
@@ -128,6 +139,6 @@ export const analytics = {
 };
 
 export const flush = () => {
-  if (analyticsTimer) { clearTimeout(analyticsTimer); analyticsTimer = null; persist(); }
+  if (analyticsTimer) { clearTimeout(analyticsTimer); analyticsTimer = null; persist().catch(() => {}); }
   return writing;
 };

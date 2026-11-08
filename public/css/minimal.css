@@ -153,3 +153,39 @@ html .tabbar { display: none; }
   /* Tabela do Mentor rola na horizontal em vez de estourar a gaveta. */
   html .mt-table { display: block; max-width: 100%; overflow-x: auto; }
 }
+
+/* =========================================================================
+   Menos "cara de IA": sem degradês roxo/turquesa, brilhos, texto em degradê,
+   rótulos em CAIXA ALTA e efeitos 3D. Cores chapadas e tipografia comum.
+   ========================================================================= */
+
+/* Rótulos acima dos títulos: frase normal, não CAIXA ALTA espaçada. */
+html .eyebrow, html .small-title { text-transform: none; letter-spacing: 0; font-size: .85rem; font-weight: 600; }
+html .lp-mock-head small, html .lp-mock-label { text-transform: none; letter-spacing: 0; font-weight: 600; }
+html h1 { font-weight: 650; }
+html .lp-hero h1 { font-weight: 650; letter-spacing: -.02em; }
+
+/* Mentor: sem o "logo de IA" em degradê roxo. */
+html .mt-fab, html .ai-fab { background: var(--text); color: var(--bg); font-weight: 600; }
+html .mt-fab:hover, html .ai-fab:hover { transform: none; filter: none; opacity: .9; }
+html .mt-logo, html .mt-avatar, html .ai-logo, html .ai-avatar, html .mh-mentor-ic, html .tv-mentor-ic { background: var(--surface-3); color: var(--text); }
+html .mt-head { background: var(--surface); }
+
+/* Barras de progresso e destaques: cor única. */
+html .mt-progress span, html .mh-bar span, html .tv-bar span, html .lp-map-fill { background: var(--accent); }
+html .mh-head, html .mh-tool.is-primary, html .fp-main, html .dc-next, html .dc-next.is-warn, html .dc-next.is-done,
+html .tv-hero, html .tv-status, html .rd-hero, html .lp-cmp-after, html .lp-final { background: var(--surface); }
+html .hs-photo, html .hs-photo.ph-apartamento, html .hs-photo.ph-residencia, html .hs-photo.ph-temporario { background: var(--surface-2); }
+html .celebrate-badge, html .celebrate-card.is-mission .celebrate-badge { background: var(--accent); color: var(--accent-ink); }
+
+/* Landing */
+html .lp-glow { display: none; }
+html .lp-grad { background: none; color: inherit; -webkit-background-clip: border-box; background-clip: border-box; }
+html .lp-pill { background: none; border: 0; padding: 0; border-radius: 0; color: var(--muted); font-weight: 500; font-size: .9rem; }
+html .lp-mock-win { transform: none; border-radius: 12px; }
+html .lp .btn-lg { border-radius: 8px; }
+html .lp .btn-cta:hover { transform: none; }
+html .lp-bubble-me, html .lp-switch button:last-child.is-on, html .lp-video-btn { background: var(--accent); }
+html .lp-final { border-color: var(--border); border-radius: 12px; }
+html .lp-feature-icon { background: var(--surface-2); color: var(--text); border-radius: 10px; }
+html .lp-burst i:nth-child(3n) { background: var(--accent); }

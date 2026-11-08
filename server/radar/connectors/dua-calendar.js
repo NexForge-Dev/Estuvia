@@ -49,7 +49,7 @@ export function parse(html) {
       ordem += 1;
       itens.push({ ordem, rotulo, tipo, texto, inicio: d.inicio, fim: d.fim, incerto: d.incerto });
       if (d.incerto) avisos.push({ tipo: 'extracao-incerta', fase, rotulo, texto, motivo: d.motivo });
-      if (tipo === 'outro') avisos.push({ tipo: 'rotulo-desconhecido', fase, rotulo, texto, motivo: 'Rótulo não classificado — conferir manualmente.' });
+      if (tipo === 'outro') avisos.push({ tipo: 'rotulo-desconhecido', fase, rotulo, texto, motivo: 'Rótulo não classificado, conferir manualmente.' });
     }
     if (!itens.some((i) => i.tipo === 'candidatura')) {
       avisos.push({ tipo: 'extracao-incerta', fase, motivo: `Fase ${fase} sem período de entrega de solicitações identificado.` });

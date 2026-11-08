@@ -1,6 +1,6 @@
 # Estuvia — Documentação completa
 
-> Documento único gerado por `node scripts/build-docs.mjs` a partir do `README.md` e de `docs/*.md` em 2026-10-26. Para alterar, edite os arquivos de origem e gere de novo.
+> Documento único gerado por `node scripts/build-docs.mjs` a partir do `README.md` e de `docs/*.md` em 2026-10-29. Para alterar, edite os arquivos de origem e gere de novo.
 
 ## Índice
 
@@ -20,16 +20,18 @@
   - [16 — Planejador Financeiro Inteligente](#doc-16)
   - [19 — Meu Novo Lar (missões 6.1 e 6.2)](#doc-19)
   - [20 — Minha Viagem (missões 6.3 a 6.5)](#doc-20)
-  - [21 — Meus Documentos (carteira digital)](#doc-21)
+  - [21 — Minha Carteira de Documentos](#doc-21)
   - [17 — Resultados estruturados](#doc-17)
   - [18 — Central da missão (MissionHub)](#doc-18)
   - [11 — Radar de Oportunidades](#doc-11)
+  - [24 — Tempo real, pesquisa na web, preços de passagens e anotações](#doc-24)
   - [12 — Comunidade colaborativa](#doc-12)
 - [Parte 4 — Técnico](#parte-4)
   - [22 — Interface: visual minimalista, navegação e celular](#doc-22)
   - [03 — Arquitetura](#doc-03)
   - [05 — Referência da API](#doc-05)
   - [04 — Segurança e privacidade](#doc-04)
+  - [25 — Production readiness (audit of 2026-10-28)](#doc-25)
 - [Parte 5 — Apresentação e próximos passos](#parte-5)
   - [09 — Roteiro de apresentação (≈10 min)](#doc-09)
   - [10 — Próximos passos](#doc-10)
@@ -40,69 +42,72 @@
 
 # Visão geral
 
-Plataforma que **não diz apenas como chegar à Espanha: ajuda a planejar, organizar e executar cada passo**. O processo real de um brasileiro que quer cursar um Máster Universitario oficial (começando pela Universidad de Granada, via Distrito Único Andaluz) vira **Jornada → Rodadas → Missões → Objetivos**, integrado a Agenda AI, Mentor IA, financiamento, documentos, moradia e viagem.
+A platform that **doesn't just tell you how to get to Spain: it helps you plan, organize and carry out every step**. The real process for a Brazilian who wants to take an official Máster Universitario (starting with the Universidad de Granada, via the Distrito Único Andaluz) becomes **Journey → Rounds → Missions → Goals**, integrated with the AI Planner, AI Mentor, funding, documents, housing and travel.
 
-**Princípio:** a Estuvia orienta e organiza. Candidatura, matrícula, visto e pedidos oficiais são feitos nos sistemas competentes. Nada é concluído sem a confirmação do estudante.
+**Principle:** Estuvia guides and organizes. Applications, enrollment, visas and official requests are made in the competent systems. Nothing is marked as done without the student's confirmation.
 
 ---
 
-## Como rodar
+## How to run
 
-Requisitos: **Node.js 20+** (testado com 22).
+Requirements: **Node.js 20+** (tested with 22).
 
 ```bash
 npm install
 npm start          # http://localhost:3000
-npm test           # 128 testes (jornada, agenda, finanças, documentos, segurança, Radar, Comunidade, Conquistas, Mentor…)
+npm test           # 237 tests (journey, planner, finances, documents, security, Radar, Community, Achievements, Mentor…)
 ```
 
-Crie uma conta → onboarding (5 passos) → sua primeira jornada é gerada. Para usar: [23 — Guia de uso](#doc-23).
+Create an account → onboarding (5 steps) → your first journey is generated. How to use it: [23 — User guide](#doc-23).
 
-**IA (opcional):** sem chave, o Mentor responde em modo "base verificada" (ações rápidas calculadas com os dados reais da jornada). Para ativar o Claude: `cp .env.example .env`, preencha `ANTHROPIC_API_KEY` e reinicie.
+**Free integrations (optional):** `YOUTUBE_API_KEY` lists videos/lessons in the Mentor chat and `TRAVELPAYOUTS_TOKEN` turns on flight prices and price alerts; both are free (see `.env.example` and doc 24). Web search (Canal UGR, GDELT, Wikipedia) needs no key.
 
-**Ilustrações:** as capas e banners são arte própria em SVG (`npm`-free): `node scripts/generate-art.mjs`. Para usar fotos reais, salve arquivos com o mesmo nome em `public/img/`.
+**AI (optional):** without a key, the Mentor answers in "verified base" mode (quick actions computed from the journey's real data). To enable Claude: `cp .env.example .env`, fill in `ANTHROPIC_API_KEY` and restart.
+
+**Illustrations:** covers and banners are original SVG art (`npm`-free): `node scripts/generate-art.mjs`. To use real photos, save files with the same name in `public/img/`.
 
 ---
 
-## Telas
+## Screens
 
-| Tela | Rota | O que faz |
+| Screen | Route | What it does |
 |---|---|---|
-| Início (dashboard) | `#/` | Minha jornada, progresso geral, continuar missão, até 3 **alertas inteligentes**, rodada atual, Agenda AI, prazos e finanças |
-| Minhas Jornadas | `#/jornadas` | Cards com capa, destino, curso, ano, status, progresso e **Acessar Rodadas**; criar/excluir jornadas |
-| Rodadas | `#/j/:id` | Cards de rodada com banner, estado (Atual/Concluída/Disponível/Bloqueada), missões e %; situação externa; prazos; marcos |
-| Trilha de missões | `#/j/:id/r/:n` | **Zigue-zague** com nós por estado, linha que acompanha o progresso, "Você está aqui" e botão fixo **Continuar minha jornada** |
-| Conteúdo da missão | `#/j/:id/m/:missão` | Cabeçalho Jornada/Rodada/Missão, **Seu progresso nesta missão** e **cards funcionais por tipo de missão** (antes de começar, guia, fluxo, documentos, Agenda AI, executar, Mentor, simulador, bolsas, moradia…) + experiências da comunidade |
-| Agenda AI | `#/agenda` | Calendário semanal, filtros, **clicar e arrastar para criar**, arrastar para reagendar, puxar a borda para mudar a duração, disponibilidade, **Organizar minha semana com IA**, **Replanejar**, prazos oficiais × declarados |
-| Financiamento | `#/financiamento` | (A) comprovação do visto (IPREM parametrizado por ano) × (B) orçamento real; recursos, apoio familiar, bolsas, caminhos quando falta dinheiro |
-| Meu novo lar | `#/novo-lar` | Cadastro e comparação de moradias, verificação antifraude, escolha integrada ao orçamento |
-| Viagem | `#/viagem` | Rotas cotadas (custo total), escolha integrada ao orçamento, chegada |
-| Documentos | `#/documentos` | **Minha pasta** (todos os arquivos, de qualquer etapa, e "Outro documento"), carteira por etapa da jornada, status, validade, envios por procedimento |
-| Mestrados | `#/mestrados` | Catálogo com filtros, requisitos, "Minhas opções" (até 6) |
-| Mentor IA | painel flutuante + `#/assistente` | Contexto da jornada/missão, ações rápidas, ações propostas com confirmação |
-| Oportunidades, Comunidade, Conquistas | `#/oportunidades`, `#/comunidade`, `#/conquistas` | Módulos integrados (docs 11, 12 e 06) |
+| Home (dashboard) | `#/` | My journey, overall progress, continue mission, up to 3 **smart alerts**, current round, AI Planner, deadlines and finances |
+| My Journeys | `#/jornadas` | Cards with cover, destination, program, year, status, progress and **Open Rounds**; create/delete journeys |
+| Rounds | `#/j/:id` | Round cards with banner, state (Current/Completed/Available/Locked), missions and %; external status; deadlines; milestones |
+| Mission trail | `#/j/:id/r/:n` | **Zigzag** with nodes by state, a line that follows progress, "You are here" and a fixed **Continue my journey** button |
+| Mission content | `#/j/:id/m/:mission` | Journey/Round/Mission header, **Your progress in this mission** and **functional cards by mission type** (before you start, guide, flow, documents, AI Planner, execute, Mentor, simulator, scholarships, housing…) + community experiences |
+| AI Planner | `#/agenda` | Weekly calendar, filters, **click and drag to create**, drag to reschedule, pull the edge to change duration, availability, **Organize my week with AI**, **Replan**, official × self-declared deadlines |
+| Funding | `#/financiamento` | (A) visa proof of funds (IPREM parameterized by year) × (B) real budget; resources, family support, scholarships, paths when money is short |
+| My new home | `#/novo-lar` | Register and compare housing options, anti-fraud check, choice integrated with the budget |
+| Travel | `#/viagem` | Quoted routes (total cost), choice integrated with the budget, arrival |
+| Documents | `#/documentos` | **My folder** (all files, from any step, and "Other document"), wallet by journey step, status, expiry, submissions by procedure |
+| Master's programs | `#/mestrados` | Catalog with filters, requirements, "My options" (up to 6) |
+| AI Mentor | floating panel + `#/assistente` | Journey/mission context, quick actions, proposed actions with confirmation |
+| Opportunities, Community, Achievements | `#/oportunidades`, `#/comunidade`, `#/conquistas` | Integrated modules (docs 11, 12 and 06) |
+| Admin panel | `#/admin` | Only for the `ADMIN_EMAIL`/`ADMIN_PASSWORD` account in `.env` (created when the server starts). The admin account sees **only** the panel: **AI status** (Mentor/Assistant keys, usage, failures and a "Test now" button), everyone's **applications** (application, enrollment, visa), student list with filters (with alerts, inactive for 7+ days, admitted…) and a **follow-up sheet for each student** at `#/admin/aluno/:id` (days since last login, journeys and application, deadlines, documents, finances and scholarships, housing, travel, planner, points of attention and internal notes), who is online and on which screen, **most accessed modules** (visits, people, average time; 7/30/90 days), daily actives (30 days), user list with last access, IP and device, events (sign-ups, logins, failed logins), end sessions and suspend accounts |
 
-**Navegação:** menu com Início, Minha jornada, Agenda, Documentos e Financiamento; o resto fica em **Mais**. No celular, barra inferior com os 4 primeiros + Menu (doc 22).
+**Navigation:** menu with Home, My journey, Planner, Documents and Funding; everything else is under **More**. On mobile, a bottom bar with the first 4 + Menu (doc 22).
 
 ---
 
-## Estrutura
+## Structure
 
 ```
 server/
   app.js, index.js, config.js, security.js, store.js
-  journey-engine.js     status, dependências, decisões externas, prazos, progresso, recomendação
-  finance-engine.js     exigência do visto × orçamento × recursos, caminhos
-  agenda-engine.js      proposta semanal, foco por missão, replanejamento
-  assistant-context.js  contexto do Mentor + respostas determinísticas das ações rápidas
-  content/              rounds.js (8 rodadas + trilha F), catalog, documents, finance (IPREM), scholarships, places, sources
+  journey-engine.js     status, dependencies, external decisions, deadlines, progress, recommendation
+  finance-engine.js     visa requirement × budget × resources, paths
+  agenda-engine.js      weekly proposal, focus per mission, replanning
+  assistant-context.js  Mentor context + deterministic answers for quick actions
+  content/              rounds.js (8 rounds + track F), catalog, documents, finance (IPREM), scholarships, places, sources
   routes/               auth, me, journey, planner, finance, living, assistant, content (+ radar, community, achievements)
-  radar/, community-engine.js, achievements-engine.js   (módulos das outras frentes)
+  radar/, community-engine.js, achievements-engine.js   (modules from the other workstreams)
 public/
-  index.html, css/styles.css (design system dark-first), css/minimal.css (camada minimalista + celular, carregada por último)
-  js/app.js (roteador), api.js, ui.js, icons.js, data.js, localfiles.js (anexos só no navegador)
+  index.html, css/styles.css (dark-first design system), css/minimal.css (minimalist + mobile layer, loaded last)
+  js/app.js (router), api.js, ui.js, icons.js, data.js, localfiles.js (attachments kept in the browser only)
   js/components/  JourneyCard, RoundCard, JourneyProgress, MissionPath (MissionNode), MissionContent,
-                  MissionDetail (MissionChecklist, documentos), MissionTools, AIJourneyAssistant, WeeklyPlanner, common,
+                  MissionDetail (MissionChecklist, documents), MissionTools, AIJourneyAssistant, WeeklyPlanner, common,
                   MentorPanel, QuickPlan, MissionGuide, ResultCard,
                   documents/ (MyFolder, DocumentCard, DocumentDetailPanel, DocumentUpload, MissionDocuments),
                   mission-hub/ (MissionHub), travel/ (TravelDashboard)
@@ -111,7 +116,40 @@ scripts/generate-art.mjs
 tests/
 ```
 
-**Dados e honestidade:** fontes oficiais consultadas em 24/10/2026. Programas do catálogo local são **demonstrativos** (rótulo "Dados demo"); o Radar traz programas reais da UGR. O IPREM 2026 (€600), o link curto do DUA e o e-mail do consulado de Salvador foram informados pelo idealizador e aparecem como **pendentes de confirmação**. Bolsas aparecem como "sem edital confirmado" até a conferência do edital vigente. Não há tutoriais em vídeo verificados — o card de tutorial fica oculto até existir um.
+## Documentation
+
+**Everything in a single file:** [DOCUMENTACAO.md](DOCUMENTACAO.md), with a table of contents. It is generated from the files below with `npm run docs`: edit the files in `docs/` and regenerate. (The documentation itself is in Portuguese.)
+
+| Document | Contents |
+|---|---|
+| [13 — Estuvia Journey](#doc-13) | **Main:** data model, rounds and missions, rules, mission screen, AI Planner, funding, acceptance criteria |
+| [14 — Progression and simplicity](#doc-14) | Unlocking rounds and missions, parallel tracks, requirements already met, simple/guided/complex missions, account-only access |
+| [05 — API](#doc-05) | Endpoints |
+| [04 — Security and privacy](#doc-04) | Controls and production checklist |
+| [06 — Gamification and achievements](#doc-06) | Progress, milestones and achievements |
+| [07 — AI Assistant](#doc-07) | Mentor rules and offline mode |
+| [09 — Presentation script](#doc-09) | Demo |
+| [10 — Next steps](#doc-10) | Roadmap |
+| [15 — Estuvia Mentor](#doc-15) | Tool-using agent: Guided Mode without a paid API, action confirmation, memory, proactive notices, AI providers |
+| [16 — Financial planner](#doc-16) | Estimated costs with sources, three separate accounts (prepare, sustain, visa), guaranteed × promised resources, ECB exchange rates, scenarios and alternatives |
+| [19 — My New Home](#doc-19) | Guided search with verified links, add by link, cards, comparison, "Check before paying", integration with finances, missions, Planner and Mentor |
+| [17 — Structured results](#doc-17) | Standard results format (consulate and others) |
+| [18 — Mission hub](#doc-18) | MissionHub: cards according to the mission's real complexity |
+| [20 — My Trip](#doc-20) | Routes, quote by link, comparison, itinerary and arrival |
+| [21 — Documents](#doc-21) | Digital wallet by step, **My folder**, encrypted files, integration with missions |
+| [22 — Interface and mobile](#doc-22) | Minimalist layer, navigation ("More", bottom bar), mobile rules, how to test |
+| [23 — User guide](#doc-23) | How to use the platform today, step by step (for students) |
+| [24 — Real time, web search, flight prices and notes](#doc-24) | Live updates (SSE), adaptive Radar checks, free web/video search in the Mentor, flight prices and price alerts, mission notes |
+| [25 — Production readiness](#doc-25) | What the code actually does in production, required env vars, roles, backup/restore, verified vs. unverified items, launch blockers and legal questions |
+| [11 — Opportunity Radar](#doc-11) | Monitoring of official sources |
+| [12 — Community](#doc-12) | Moderated community |
+| [01](#doc-01), [02](#doc-02), [03](#doc-03), [08](#doc-08) | Vision, requirements, architecture and manual for version 0.1 (historical context) |
+
+---
+
+**Data and honesty:** official sources consulted on 10/24/2026. Programs in the local catalog are **demonstrative** ("Demo data" label); the Radar brings real UGR programs. The 2026 IPREM (€600) stays **pending confirmation**: it matches Ley 31/2022 (2023 budget, automatically extended into 2026), but no 2026-specific norm was found in the BOE on 10/28/2026. The DUA short link (`lajunta.es/portaldua` → Junta de Andalucía DUA page) and the Salvador consulate contacts were checked against the official pages on 10/28/2026. Scholarships appear as "no confirmed call" until the current call is checked. There are no verified video tutorials — the tutorial card stays hidden until one exists.
+
+
 
 ---
 
@@ -880,6 +918,14 @@ Outro fornecedor (ex.: Gemini) entra como um arquivo novo em `providers/` com `c
 
 Modelos locais não cobram por mensagem, mas exigem GPU ou hospedagem: avalie o custo antes. Com IA ligada, o limite é de 40 mensagens por hora por estudante; no Modo Guiado, 200.
 
+### Limites de custo e de tempo
+
+- **Teto diário por estudante:** `AI_DAILY_TOKENS_PER_USER` (padrão 300 000; `0` desliga), somando Mentor e Assistente. Conferido antes do laço e entre as etapas. Esgotado, a resposta vem do Modo Guiado / base local, com aviso explícito de que está sem IA generativa.
+- **Tempo:** `MENTOR_TIMEOUT_MS` por chamada ao modelo (padrão 60 s, SDK com 1 nova tentativa) e `MENTOR_DEADLINE_MS` por mensagem (padrão 120 s). Estourou: Modo Guiado com aviso.
+- **Ferramentas:** no máximo 6 chamadas por etapa e 12 por mensagem; as excedentes recebem `tool_result` de erro e não executam.
+- **Limite de perguntas:** 40/hora **por conta** (não por IP).
+- Tokens usados ficam em `user.aiUso` e no painel admin (status da IA).
+
 ### API
 
 - `GET /api/mentor`: modo, nome, ações rápidas, avisos, permissões e preferências
@@ -1190,89 +1236,221 @@ As rotas antigas `/api/living/travel/*` continuam válidas e usam os mesmos dado
 
 <a id="doc-21"></a>
 
-## 21 — Meus Documentos (carteira digital)
+## 21 — Minha Carteira de Documentos
 
-A carteira responde cinco perguntas: o que eu já tenho, o que falta, o que preparo agora, como consigo e quando vou precisar. Ela acompanha a jornada: mostra a etapa atual inteira e as etapas futuras só como prévia.
+A carteira responde, ao abrir: **"Estes são os documentos que preciso agora, estes já tenho, estes estão pendentes, e aqui descubro como conseguir cada um."**
+
+Ela é um cofre digital personalizado. Cada documento existe uma vez só e serve a todas as etapas e missões que o usam. A tela principal mostra só o que importa no momento: o resto fica em categorias que se abrem uma de cada vez.
 
 ### Arquivos
 
 | Arquivo | Papel |
 |---|---|
-| `server/content/documents.js` | Catálogo: ids, `DOC_STATUS` e `DOC_STATUS_LABEL` preservados. Também traz etapa, ícone, "o que é", passos de "como conseguir", antecedência e missão de preparo, além de `DOC_STAGES`, `DOC_STATUS_SIMPLE` e `PROCEDURES` |
-| `server/document-engine.js` | Regras puras: personalização, visão por etapa, dashboard, próximo documento, `docsForMission`, sincronização com missões |
-| `server/routes/documents.js` | API `/api/documents/*` e arquivos cifrados |
-| `public/js/views/documents.js` | Tela `#/documentos[/<id>]`, onde `<id>` abre o painel do documento |
-| `public/js/components/documents/*` | Componentes `MyFolder` (Minha pasta), `DocumentCard`, `DocumentDetailPanel`, `DocumentUpload` (com migração dos anexos locais), `MissionDocuments` (central da missão) e `shared` (status e evidências) |
-| `public/css/documents.css` | Estilos, carregados pela própria tela |
-| `tests/documents.test.js` | Testes de API: etapas, personalização, declaração, validade, agenda, envios, missões, arquivos e LGPD |
+| `server/content/document-catalog.js` | **Catálogo**: 17 categorias, ~185 tipos de documento, o uso de cada um por categoria (244 itens), condições do estudante, estados, papéis de arquivo e guias de apostila e tradução |
+| `server/content/documents.js` | Mescla o catálogo com os campos da primeira versão (os 25 ids antigos continuam iguais) e exporta `DOCUMENTS` no formato que missões, Mentor e admin já usam |
+| `server/document-engine.js` | Regras puras: condições, aplicabilidade por uso, estado detalhado, validade, itens-checklist, painel, categorias, busca e integração com missões |
+| `server/document-rules.js` | Revisões editoriais (aviso, data, fontes) gravadas em `data/document-rules.json` |
+| `server/routes/documents.js` | API `/api/documents/*`, arquivos cifrados, consentimento e links assinados |
+| `server/routes/admin.js` | `GET/PUT /api/admin/document-rules[/:docId]` (só admin) |
+| `public/js/views/documents.js` | Tela `#/documentos[/<id>]` |
+| `public/js/components/documents/*` | `DocumentDetailPanel`, `DocumentUpload` (prévia, papel, consentimento), `MissionDocuments` (central da missão), `MyFolder`, `shared` |
+| `tests/documents.test.js`, `tests/wallet.test.js` | Testes de API |
 
-### Dados (compatível com o que já existia)
+### Catálogo
 
-- `user.documents[docId]` continua sendo a fonte do status. As regras automáticas das missões (`docsCandidaturaProntos`) leem esse campo.
-- `user.docRecords[docId]` guarda o que não é status:
-  - origem: `declarado`, `missao` ou `manual`;
-  - `aguardando` e `aguardandoDesde`;
-  - `conferidoEm`;
-  - `validade`;
-  - `envios[]`, com procedimento, data e resultado;
-  - `missaoSync` e `lembretes`.
-- `user.docFiles[]` guarda os metadados dos arquivos: série e versão, nome, tipo, tamanho, iv e tag. O conteúdo fica cifrado em disco.
+**Categorias:**
 
-### Regras
+1. Pessoais
+2. Acadêmicos brasileiros
+3. Candidatura
+4. Admissão e matrícula
+5. Financeira
+6. Visto
+7. Saúde
+8. Moradia
+9. Viagem
+10. Empadronamiento
+11. NIE e TIE
+12. Universidade na Espanha
+13. Banco
+14. Trabalho e estágios
+15. Familiares
+16. Complementar
+17. Renovação
 
-- **Status na tela:** Pendente, Preparando, Pronto, Enviado, Precisa de atenção e Não necessário. Internamente seguem os 6 `DOC_STATUS`.
-- **Estados de confiança separados:** declarado, anexado, conferido por você e aceito no procedimento (registrado por você). "Pronto" nunca significa validação oficial.
-- **Etapas:** candidatura (rodadas 1 a 3), matrícula (4), visto (5 e 9), viagem (6) e vida na Espanha (7 e 8).
-  - A etapa atual é a que contém a rodada atual da jornada.
-  - Etapas futuras mostram só a prévia (quantidade e ícones), nunca a lista como pendência.
-  - **Exceção:** documentos com `antecedencia` (comprovação financeira, apoio familiar, antecedentes) aparecem em "Comece cedo".
-- **Reaproveitamento:** passaporte, carta de admissão, seguro e outros aparecem nas etapas seguintes como "reaproveitados", sem novo cadastro.
-  - Envios são por procedimento: enviado ao DUA não vale como apresentado ao consulado.
-  - Na etapa do visto, um passaporte enviado só ao DUA aparece como "Pronto".
-- **Personalização:** sempre com dados do catálogo, que têm fonte, ou do próprio estudante. A IA nunca decide.
+Cada categoria tem nome, ícone, descrição e etapa da jornada.
 
-  | Documento | Regra |
-  |---|---|
-  | Certificado de idioma | Segue `program.idioma`. Se o mestrado não exige, vira "Não necessário" |
-  | Antecedentes criminais e TIE | Só para estadas acima de 6 meses (fonte O6, inclusion.gob.es) |
-  | Documentação do apoiador | Só com apoio familiar registrado no planejador |
-  | Carta de bolsa | Só com bolsa concedida |
+**Documento canônico (`DOC_TYPES`):**
 
-  Documento não necessário não conta como pendência.
-- **Missões:** concluir a missão de preparo (`prepara`) promove o documento de pendente ou preparando para pronto.
-  - Acontece uma vez por conclusão e nunca rebaixa um status. É feito ao abrir a carteira, sem hook em `completeMission`.
-  - `GET /documents/missions/:jid/:mid` devolve `{ prontos, faltam, naoNecessarios }` para a central da missão.
-- **Validade do passaporte:** se vence antes do fim previsto da estadia (início das aulas + duração), o documento fica "Precisa de atenção" e vira o próximo.
-- **Agenda AI:** o lembrete (verificar, solicitar, validade, revisar) tem prévia; o evento só é criado com `confirmar: true`. Ele leva `origem: 'documentos'` e `documentoId`.
-- **Mentor:**
-  - `get_required_documents`, agora com `proximo` e rota de cada documento;
-  - `get_document_guide`;
-  - intents "como consigo…", "preciso apostilar…?" e "organizar meus arquivos".
-  - O Mentor nunca afirma ter analisado um arquivo. Apostila e tradução só quando a fonte oficial pedir.
+- **Textos:** o que é, para que serve, onde conseguir e quando solicitar. Quando o documento não traz algum deles, vale o padrão da categoria (`CATEGORY_DEFAULTS`).
+- **Apostila e tradução:** `'talvez'` ou `'nao'`. Nunca são "sempre".
+- **Validade:** `'data'` (tem vencimento impresso) ou `'recencia'` (o órgão pode exigir emissão recente; não inventamos prazo).
+- **Arquivos:** `partes` (frente/verso) e `multiplos`.
+- **Referências:** `fontes`, missões extras, `agregado` (item-checklist que reúne outros documentos) e `atendidoPor` (ex.: a média final pode estar no histórico).
 
-### Minha pasta
+**Uso por categoria (`CATEGORY_USES`):** `[docId, classe O/C/R, { cond, condicao, rotulo, nota, etapa }]`.
 
-Bloco no topo da carteira (`public/js/components/documents/MyFolder.js`) com todos os arquivos num lugar só, para levar na viagem.
+- **Referências, não cópias:** o passaporte é um documento só. Aparece em pessoais, visto, viagem, NIE/TIE, banco, trabalho e renovação, cada vez com o rótulo daquele uso (ex.: "Cópia do passaporte").
+- **`etapa`:** usada quando o momento do uso difere da categoria. A foto e o comprovante de residência são pessoais, mas são usados no visto.
 
-- `GET /documents/files` devolve a versão mais recente de cada arquivo, de qualquer etapa, e a lista de `tipos` para o seletor.
-- Aceita qualquer documento do catálogo, inclusive de etapas futuras (ex.: carta de admissão durante a candidatura).
-- **Outro documento** (`docId: pessoal`): RG, CNH, vacina etc. Exige `?rotulo=` (até 60 caracteres). Guarda só o arquivo: não cria status, etapa nem pendência. Nova versão herda o nome.
+### Classificação contextual
 
-### Segurança dos arquivos
+| Uso | Condição do estudante | Exigência mostrada |
+|---|---|---|
+| O | sem condição, ou condição confirmada | **Exigido para você** |
+| O ou C | condição ainda desconhecida | **A confirmar** |
+| C | condição confirmada (ex.: curso > 6 meses → EX-17) | **Exigido para você** |
+| C | sem condição verificável (ex.: "se o programa pedir") | **Conforme o caso** |
+| R | — | **Recomendado** |
+| qualquer | condição falsa | **Não se aplica** (fora das pendências) |
 
-- PDF, PNG, JPG e WEBP até 10 MB. O tipo é conferido pelos bytes iniciais, não pelo cabeçalho.
-- Limites: 60 arquivos e 150 MB por estudante, com limitador de taxa.
-- Cifrados em disco com AES-256-GCM, em `DOCS_DIR` (padrão `data/docfiles/<userId>/`), fora de `public/`.
-  - Defina a chave `DOCUMENTS_KEY` em produção e guarde um backup: sem ela os arquivos ficam ilegíveis. Sem essa variável, a chave é derivada do `JWT_SECRET`.
-- Servidos só ao dono, autenticado, com `Cache-Control: private, no-store` e `nosniff`. Não existe URL pública permanente.
-- LGPD: a exportação inclui os metadados (sem iv e tag). Excluir a conta apaga a pasta de arquivos.
-- Anexos antigos, guardados só no navegador (IndexedDB `travessia-anexos`): a carteira oferece "Enviar para minha conta". As fotos de moradia (`:moradia:`) ficam no dispositivo.
+Um documento usado em várias categorias recebe a exigência mais forte entre os usos que valem.
+
+A contagem de pendências só inclui o que é **exigido para você**. "Conforme o caso" e "Recomendado" aparecem nas categorias, mas não assustam como pendência.
+
+#### Minha situação (condições)
+
+- **Detectadas pela jornada:**
+  - moro no Brasil (perfil);
+  - curso > 6 meses (duração);
+  - certificado de espanhol (ficha do mestrado);
+  - bolsa concedida e patrocinador (finanças);
+  - visto aprovado e chegada (jornada).
+- **Informadas pelo estudante (padrão "não"):**
+  - acompanhantes, cônjuge, filhos, menor de idade;
+  - representante, mudança de nome, diploma pendente, outras graduações;
+  - residência em outros países, necessidades especiais;
+  - medicamentos, animal, veículo, NIE anterior;
+  - trabalho, renovação.
+
+Tudo pode ser corrigido em **Minha situação** (`PUT /documents/conditions`). `null` volta ao valor detectado.
+
+Exemplos:
+
+- Curso de até 6 meses: EX-17, TIE e antecedentes viram "Não se aplica".
+- Sem acompanhantes: a categoria 15 fica oculta.
+- Sem intenção de renovar: a categoria 17 fica fora da jornada principal.
+- Bolsa concedida: a documentação da bolsa passa a ser exigida.
+- Visto aprovado: o foco ("Seus próximos documentos") passa para viagem e moradia.
+- Chegada registrada: o foco passa para empadronamiento, TIE e matrícula.
+
+### Estados (12)
+
+| Estado | Status interno (lido pelas missões) |
+|---|---|
+| Não iniciado · Preciso solicitar | `pendente` |
+| Aguardando emissão · Documento recebido · Arquivo enviado · Precisa de tradução · Precisa de apostilamento | `em-preparacao` |
+| Pronto para utilização | `pronto` (ou `enviado`, com registro de envio) |
+| Precisa de correção · Vencido | `correcao` |
+| Dispensado · Não aplicável | `nao-se-aplica` |
+
+- **Onde fica:** `user.documents[docId]` continua sendo a fonte do status. O estado detalhado fica em `docRecords[docId].estado`, junto com o `estadoBase` em que foi registrado. Se o status mudar por outro caminho (missão, Mentor, envio), o estado volta a ser derivado.
+- **Calculados, nunca escolhidos à mão:** "Vencido" (validade passada) e "Não aplicável" (pelas condições).
+- **Apostila/tradução:**
+  - Marcar "o órgão pediu" num documento pronto o leva para "Precisa de apostilamento" (ou tradução).
+  - Anexar um arquivo com papel `apostila`/`traducao` marca a apostila (ou tradução) como pronta.
+  - A Estuvia nunca marca apostila ou tradução como necessárias sozinha.
+- **Confiança, sempre separada:** declarado · anexado · conferido por você · aceito no procedimento (registrado por você). A Estuvia verifica só se o arquivo existe; nunca afirma aprovação oficial.
+
+### Arquivos
+
+- **Formatos:** PDF, JPG/JPEG, PNG e WEBP, até 10 MB. O tipo é conferido pelos bytes.
+  - PDFs com conteúdo ativo (`/JavaScript`, `/OpenAction`, `/Launch`, arquivos embutidos, XFA) são recusados.
+- **Limites:** 80 arquivos e 200 MB por estudante.
+- **Papel do arquivo:**
+  - Valores: original, frente, verso, documento apostilado, apostila, tradução, comprovante da tradução, cópia, outro.
+  - Agrupamento: arquivos com papéis diferentes ficam no mesmo documento. Diploma original, apostilado e traduzido são três arquivos de um só documento.
+- **Antes de salvar:** prévia, nome sugerido (editável) e papel. Depois, dá para corrigir papel e nome (`PATCH /documents/files/:fid`).
+- **Versões:**
+  - Substituir cria uma nova versão na mesma série.
+  - Com "Guardar versões antigas" desligado (`PUT /documents/prefs`), a versão anterior é apagada do disco.
+- **Upload opcional:** marcar "Já tenho" conclui sem enviar arquivo sensível.
+
+### Segurança e privacidade
+
+- **Acesso:**
+  - Sessão obrigatória em todas as rotas e autorização por estudante (um não acessa o arquivo do outro).
+  - Sem URL pública: cada link de arquivo é **assinado (HMAC) e expira em 15 min**, válido só para o dono.
+- **Armazenamento:**
+  - Arquivos cifrados em disco (AES-256-GCM) em `DOCS_DIR`, fora de `public/`.
+  - Em produção, defina `DOCUMENTS_KEY` e faça backup da chave.
+- **Na entrega:** `Cache-Control: private, no-store`, `nosniff`, e imagens servidas em `sandbox`.
+- **Consentimento:**
+  - Exigido antes do primeiro arquivo (`POST /documents/consent`, versão `2026-10-27`).
+  - O texto diz que os arquivos não vão para IA nem para treino de modelos e que podem ser excluídos.
+  - Arquivos guardados antes desta versão continuam acessíveis; o consentimento só é pedido para novos envios.
+- **Credenciais:** observações, emissor, notas de envio e nomes de "Outro documento" recusam texto que pareça senha, PIN, CVV, token ou código de acesso.
+- **Exclusão e portabilidade:**
+  - Exclusão definitiva de todos os arquivos (`DELETE /documents/files` com `{ confirmar: 'EXCLUIR' }`).
+  - Exclusão da conta apaga a pasta.
+  - A exportação (LGPD/RGPD) inclui metadados, condições, consentimento e preferências, sem iv e tag.
+- **Mentor:** não lê arquivos.
+
+### Integração com missões
+
+- **Quais documentos cada missão usa:** `documentos` das missões em `rounds.js`, mais `prepara`, mais `missoes` do catálogo (ex.: foto e cita da TIE → missões 8.x).
+- **Contrato (`GET /documents/missions/:jid/:mid`):** devolve `{ prontos, faltam, conformeCaso, naoNecessarios }`. Cada item traz uma mensagem como "Você ainda não adicionou seu histórico à Carteira." e, quando é o caso, `atendivelPor`.
+- **Na central da missão:** cada documento oferece *Enviar arquivo*, *Já tenho*, *Meu histórico já mostra isso* e *Ver como conseguir*.
+- **Nos dois sentidos:**
+  - Atualizar na carteira atualiza todas as missões.
+  - Concluir a missão de preparo promove o documento (uma vez, sem rebaixar).
+  - As regras automáticas das missões continuam lendo `user.documents`.
+
+### Validade e alertas
+
+- **Documentos com `validade: 'data'`** (passaporte, visto, seguro, TIE, CNH…): registram a data de vencimento.
+  - Alerta quando falta menos que a janela escolhida (padrão 60 dias; 30, 90 ou 180).
+  - Passaporte, visto e seguro também alertam se vencem antes do fim previsto da estadia.
+  - Data passada → "Vencido".
+- **Documentos com `validade: 'recencia'`** (antecedentes, atestado, extratos, certidões, empadronamiento): registram a data de emissão. Depois de 90 dias aparece um aviso para conferir o prazo aceito na fonte, nunca um vencimento inventado.
+- **Diploma e documentos sem validade** não aceitam data de vencimento.
+
+### Fontes e revisão das regras
+
+- Cada documento aponta fontes de `content/sources.js`. As fontes O18 a O27 foram acrescentadas e conferidas em 27/10/2026: CNJ (apostila), Policía Nacional, cita previa, MAEC, PF (antecedentes e passaporte), tradutores juramentados, Seguridad Social, Receita e Ministério da Saúde.
+- **Para mudar uma regra:** edite o catálogo (todas as telas leem dele) ou registre uma revisão editorial pelo admin:
+  - `aviso`: texto curto mostrado no detalhe;
+  - `revisadoEm`: data da revisão;
+  - `fontes`: substituem as do catálogo.
+- O detalhe mostra "Informação revisada em…" e lembra que regras mudam.
+
+### Ordem fixa: necessários → opcionais → contingência
+
+Em toda a plataforma (carteira, categoria, missão, rodada e busca), os documentos aparecem nesta ordem:
+
+| Grupo | O que é | Exigência interna |
+|---|---|---|
+| **Documentos necessários** | Exigidos para o seu caso | `requerido` |
+| **Documentos opcionais** | Não são exigência, mas ajudam | `recomendado` |
+| **Documentos de contingência** | Só se o procedimento pedir ou a sua situação mudar | `condicional` / `verificar` |
+
+Na missão e na categoria, "Necessários" fica aberto e os outros grupos ficam recolhidos.
+
+### Missões e rodadas → Documentos
+
+- **Missão de preparo:** concluir a missão que prepara o documento (`prepara`) grava o documento como pronto na Carteira **na mesma gravação**, inclusive quando a conclusão vem pelo Mentor. Exemplo: 2.1 Preparar meu passaporte → Passaporte.
+  - A resposta traz o evento `carteira`, e a tela avisa "Guardado na sua Carteira".
+  - Missões de preparo: 2.1 a 2.6, 3.6, 3.7, 4.5, 4.6, 5.4, 5.5, 5.7, 5.9, 6.3, 7.9, 8.3 a 8.6 e 8.8.
+- **Central da missão:** toda missão que usa documento mostra o card **Documentos desta missão**. O arquivo enviado ali vai para a Carteira, na categoria certa, com a missão de origem registrada (`missaoId`).
+  - O bloco antigo, que guardava o anexo só no navegador, foi substituído.
+- **Rodada:** a tela da rodada mostra "Documentos · X/Y prontos" e o que falta (`GET /documents/rounds/:jid/:n`).
+- **Na Carteira:** o documento mostra a rodada e a missão de onde vem ("é aqui que você consegue este documento").
+
+### Tela (simples)
+
+1. **Topo:** título e três números (prontos, para fazer, atenção).
+2. **Para agora:** até 5 documentos da etapa atual, mais "Comece cedo" (recolhido).
+3. **Busca:** os filtros ficam escondidos no botão "Filtros".
+4. **Categorias:** quadradinhos com ícone, nome e "3/6". Abrem uma de cada vez.
+5. **Linhas recolhidas:** categorias que não se aplicam, Minha situação, Minha pasta e Privacidade.
+6. **Detalhe do documento:** "Você já tem?" (Já tenho · Preciso pedir · Já pedi · Ajuda) e os arquivos. O resto fica recolhido.
 
 ### Próximos passos
 
-- Perguntas de "o que você já tem?" para idioma e seguro no onboarding (hoje feitas na própria carteira).
-- Pré-visualização de PDF dentro da página. Hoje o PDF abre em nova aba, porque a CSP bloqueia `blob:` e `frame`.
-- Lista consular por consulado: o catálogo segue a lista geral. A lista oficial do consulado do estudante aparece na etapa do visto.
+- Conferência visual no navegador (desktop e celular). As telas foram feitas sem teste em navegador.
+- Pré-visualização de PDF dentro da página. Hoje o PDF abre em nova aba, porque a CSP bloqueia `blob:`.
+- Listas por consulado: hoje a lista é a geral, com o link do consulado do estudante.
+- Migrar o armazenamento para um serviço de objetos com cifra no servidor, mantendo a mesma interface.
 
 <a id="doc-17"></a>
 
@@ -1504,7 +1682,7 @@ Estudante (login):
 - `POST /api/radar/opportunities/:id/agenda` — `{ itens: [{ id, data?, inicio?, fim? }] }` (prazo oficial mantém a data)
 - `POST /api/radar/agenda-changes/:linkId` — `{ aceitar }`
 
-Admin (`role: admin` ou e-mail em `RADAR_ADMIN_EMAILS`): `GET /api/radar/admin`, `POST /sources`, `POST /sources/:id/run`, `PUT /sources/:id/availability`, `POST /reviews/:id`, `POST /calendars`, `POST /corrections`, `POST /republish`, `POST /community/import`, e em desenvolvimento `POST|DELETE /dev/simulate`.
+Admin (`role: admin` ou `role: radar`, concedido pelo administrador em `#/admin/aluno/:id`; `RADAR_ADMIN_EMAILS` só vale fora de produção): `GET /api/radar/admin`, `POST /sources`, `POST /sources/:id/run`, `PUT /sources/:id/availability`, `POST /reviews/:id`, `POST /calendars`, `POST /corrections`, `POST /republish`, `POST /community/import`, e em desenvolvimento `POST|DELETE /dev/simulate`.
 
 ### Integrações (contratos em `server/radar/service.js`)
 
@@ -1526,7 +1704,7 @@ Ligados (verificados ponta a ponta em 24/10/2026):
 ### Desenvolvimento
 
 - `RADAR_SCHEDULER=off` desliga o atualizador (os testes fazem isso).
-- `RADAR_ADMIN_EMAILS=email1,email2` libera o painel em `#/radar/admin`.
+- `RADAR_ADMIN_EMAILS=email1,email2` libera o painel em `#/radar/admin` **apenas em desenvolvimento/testes**. Em produção o cadastro não verifica e-mail, então o papel é concedido no painel admin (Papel → Equipe do Radar).
 - `RADAR_DATA_FILE` muda o arquivo da base (padrão: `data/radar.json`).
 - **Simulação**: no painel (somente fora de produção), "Simular publicação" cria um calendário marcado como **DADO DEMONSTRATIVO** em toda a interface para testar alertas e Agenda; nunca sobrescreve calendário oficial e pode ser removido por completo.
 
@@ -1536,6 +1714,80 @@ Ligados (verificados ponta a ponta em 24/10/2026):
 - O catálogo do DUA e o BOJA ainda não têm coleta automática (formulário dinâmico / buscador bloqueado por robots.txt); entram por revisão manual.
 - Notificações apenas na plataforma (sem e-mail).
 - Bolsas: o indicador lê `server/content/scholarships.js`; hoje nenhuma tem edital aberto confirmado, então o número é 0.
+
+<a id="doc-24"></a>
+
+## 24 — Tempo real, pesquisa na web, preços de passagens e anotações
+
+Tudo aqui usa **serviços gratuitos**. Nada é inventado: cada dado mostra a fonte e a hora da consulta. Quando um serviço não está configurado ou falha, a tela diz isso.
+
+### 1. Atualizações ao vivo (Server-Sent Events)
+
+O navegador mantém uma conexão aberta em `GET /api/events` (só para quem está logado). Quando algo muda, o servidor envia um aviso curto e a tela se atualiza, sem recarregar a página.
+
+| Evento | Quando | Quem recebe | O que a tela faz |
+|---|---|---|---|
+| `radar-alerta` | O Radar criou um alerta para uma oportunidade que o estudante acompanha (calendário publicado, abertura, prazo acabando, resultado) | Só o estudante dono do alerta | Mostra um aviso e recarrega o Radar |
+| `radar-atualizado` | O atualizador publicou mudança vinda de fonte oficial, ou a equipe aprovou uma revisão | Todos os conectados | Mostra um aviso e recarrega o Radar |
+| `preco-passagem` | O menor preço visto ficou abaixo do teto do alerta de preço | Só o estudante dono do alerta | Mostra um aviso e recarrega "Minha viagem" |
+
+- Arquivos: `server/events.js` (barramento), `server/routes/events.js` (rota), `public/js/live.js` (cliente: `startLive`, `stopLive`, `onLive`).
+- Se a conexão cair, o navegador reconecta sozinho em 15 s. Há um sinal de vida a cada 25 s e no máximo 5 conexões por estudante.
+- Só avisos curtos passam por esse canal. Os dados completos continuam vindo da API, com as mesmas permissões.
+- **Escala:** o barramento fica na memória do processo. Com mais de uma instância do servidor, troque-o por Redis pub/sub ou PostgreSQL `LISTEN/NOTIFY`, mantendo `emitTo` e `broadcast`.
+
+### 2. Radar mais rápido perto das datas
+
+- **Frequência adaptativa** (`effectiveFrequencyHours` em `server/radar/pipeline.js`): a fonte de datas de candidatura (calendário do DUA) é conferida a cada **1 h** quando falta até 2 dias para uma abertura, encerramento ou resultado oficial, e a cada **3 h** quando falta até 14 dias. Fora disso vale a frequência cadastrada (6 h). O valor usado fica em `source.frequenciaEfetivaHoras`.
+- **Requisição condicional:** cada coleta guarda o `ETag` e o `Last-Modified` da página (`source.validadores`). Na coleta seguinte, se a página oficial não mudou, ela responde `304`: nada é baixado e a verificação conta como bem-sucedida.
+- As regras de publicação não mudaram (doc 11): mudança de prazo continua passando por revisão.
+
+### 3. Pesquisa na web e vídeos no Mentor
+
+O estudante pede no chat, por exemplo "Pesquise notícias sobre visto de estudante" ou "Me mostra vídeos sobre apostila". Também há os botões rápidos **Novidades na web** e **Vídeos e aulas**. Funciona no Modo Guiado (sem IA) e com IA (ferramentas `search_web` e `search_videos`).
+
+| Fonte | Natureza mostrada | Chave | Limite gratuito |
+|---|---|---|---|
+| Canal UGR: feeds das últimas notícias e convocatórias (≈ 40 itens cada), em cache aquecido a cada 30 min e filtrados pelas palavras da pergunta | Fonte oficial | não | respeita `robots.txt` e intervalo por domínio |
+| GDELT DOC 2.0 (imprensa, últimos 3 meses, PT/ES) | Imprensa (não oficial) | não | 1 consulta a cada 5 s, controlada pelo servidor |
+| Wikipédia em português (só quando a pergunta é sobre um conceito; só páginas com uma palavra da pergunta no título) | Enciclopédia (explica o conceito, não é fonte oficial) | não | uso moderado, com User-Agent |
+| YouTube Data API v3 | Vídeo de terceiros | `YOUTUBE_API_KEY` (gratuita) | ≈ 100 buscas por dia |
+
+- Cada resultado mostra título, quem publicou, a natureza e a data. O chat lembra que imprensa, Wikipédia e vídeo não são regra oficial.
+- Vídeos: busca segura, de preferência em português, dos últimos 3 anos, só vídeos que podem ser incorporados. O player (`youtube-nocookie.com`) só carrega quando o estudante toca no vídeo. A CSP libera apenas `i.ytimg.com` (miniaturas) e `www.youtube-nocookie.com` (player).
+- Sem `YOUTUBE_API_KEY`, o Mentor mostra só o link da busca no YouTube.
+- A busca interna do Canal UGR (`?s=`) não é usada porque leva 10–20 s.
+- Cache: feeds oficiais 30 min, imprensa 30 min, Wikipédia 24 h, vídeos 12 h. Se uma fonte falhar, as outras continuam e a falha aparece explicada.
+- Fontes que **não** usamos porque os termos proíbem uso fora de leitor pessoal: os feeds RSS do Google Notícias e do Bing.
+
+### 4. Preços de passagens e alerta de preço
+
+Na tela **Minha viagem**, a seção recolhida **Preços vistos agora** traz os menores preços que usuários do Aviasales encontraram nas últimas ~48 h. Os dados vêm da Aviasales Data API, pelo programa de afiliados gratuito Travelpayouts (`TRAVELPAYOUTS_TOKEN`).
+
+- Consulta: aeroporto de saída do perfil × aeroportos do destino (Granada: GRX, MAD, AGP), no mês da viagem. Sem data informada, usa o mês anterior ao início das aulas. Só ida, em R$, cache de 3 h.
+- É referência, não oferta: o preço final, a bagagem e as regras aparecem no site. **Salvar como cotação** cria uma cotação marcada "preço visto, a confirmar".
+- **Alerta de preço:** o estudante define um teto em R$. A cada 6 h o servidor confere as rotas de quem ativou. Quando o menor preço visto fica abaixo do teto, avisa ao vivo e guarda o aviso (últimos 10). O aviso só se repete se o preço cair mais ou se já tiverem passado 3 dias.
+- Rotas: `GET /api/travel/prices`, `PUT /api/travel/price-alert` `{ ativo, teto }`. Código: `server/flight-prices.js`.
+
+### 5. Anotações da missão
+
+Cada missão tem o card **Minhas anotações**, com três tipos:
+
+- **Anotação:** lembrete livre.
+- **Tarefa:** tem caixinha para marcar como feita.
+- **Preciso de ajuda:** tem o botão **Perguntar ao Mentor**, que abre o chat já com a dúvida e a missão no contexto, e pode ser marcada como resolvida.
+
+- Só o estudante vê. Anotações **não** concluem objetivos nem a missão.
+- O Mentor recebe as anotações abertas da missão em foco, como dado do estudante (nunca como instrução).
+- Limite de 40 anotações por missão, 500 caracteres cada.
+- Rotas: `POST /api/journeys/:jid/missions/:id/notes` `{ texto, tipo }`, `PUT …/notes/:noteId` `{ texto?, tipo?, feito? }`, `DELETE …/notes/:noteId`.
+
+### 6. Tela mais limpa
+
+- **Missão:** só cabeçalho, progresso e cards. Anotações, **Pergunte ao Mentor** (ou "Preciso de ajuda", sem duplicar) e **Experiências e fontes** viraram cards que abrem em painel.
+- **Minha jornada:** Prazos importantes, Situação financeira, O que já aconteceu? e Marcos da jornada são painéis recolhíveis (`FoldPanel`). Fechados, mostram um resumo curto ("próximo em 12 dias", "faltam € 5.000", "2 de 6"). O navegador lembra quais o estudante deixou abertos.
+
+Testes: `tests/live.test.js`.
 
 <a id="doc-12"></a>
 
@@ -1576,7 +1828,7 @@ Dados: coleção `community` em `data/db.json` (`posts`, `comments`, `groups`, `
 
 ### Moderação e segurança
 
-- Moderadores: `MODERATOR_EMAILS` no `.env` (ou `role: 'moderador'` no usuário). Painel em `#/comunidade/moderacao`; toda decisão vai para o histórico da publicação e para o log de auditoria.
+- Moderadores: `role: 'moderador'`, concedido pelo administrador em `#/admin/aluno/:id` (Papel). `MODERATOR_EMAILS` no `.env` só vale fora de produção (o cadastro não verifica e-mail). Painel em `#/comunidade/moderacao`; toda decisão vai para o histórico da publicação e para o log de auditoria.
 - **Spam**: limite por hora (8 posts, 30 comentários) + limitador de taxa; texto repetido em 24 h bloqueado; pontuação por termos de golpe ("visto garantido", "pix"…), excesso de links, caixa alta, conta recente com links. Pontuação alta → "em revisão" (só autor e equipe veem).
 - **Links suspeitos**: encurtadores, IP, punycode, TLDs de risco, credenciais na URL, domínio que imita órgão/universidade. Ficam não clicáveis e mandam a publicação para revisão.
 - **Dados pessoais**: CPF, NIE/DNI, passaporte, telefone e e-mail pessoal são mascarados antes de gravar; o autor é avisado. Na comunidade só aparecem apelido/primeiro nome e avatar.
@@ -1784,7 +2036,7 @@ Express (server/app.js)
 Base `/api`, JSON. Erros: `{ "error": "mensagem" }`. Escritas exigem o cabeçalho `X-Requested-With: travessia` (CSRF). Sessão em cookie httpOnly.
 
 ### Público
-`GET /health` · `GET /content/app` · `GET /content/journey` (rodadas, marcos, etiquetas, situações) · `GET /content/sources` · `GET /content/catalog` · `GET /content/documents` · `GET /content/scholarships` · `GET /content/places` · `GET /content/finance-rules` · `GET /content/faq`
+`GET /health` · `GET /content/app` · `GET /content/journey` (rodadas, marcos, etiquetas, situações) · `GET /content/landing` (dados da landing: regra de comprovação do visto/IPREM com fonte e etapas do diagnóstico) · `GET /content/sources` · `GET /content/catalog` · `GET /content/documents` · `GET /content/scholarships` · `GET /content/places` · `GET /content/finance-rules` · `GET /content/faq`
 
 ### Autenticação
 `POST /auth/register {nome,email,senha,aceite}` · `POST /auth/login` · `POST /auth/logout` · `POST /auth/logout-all` · `POST /auth/change-password {atual,nova}`
@@ -1888,6 +2140,92 @@ Módulos de outras frentes: `/radar`, `/radar/admin` (doc 11), `/community` (doc
 - [ ] Monitoramento de erros e alertas
 - [ ] Revisão de segurança independente (pentest leve)
 - [ ] Política de retenção do log de auditoria
+
+<a id="doc-25"></a>
+
+## 25 — Production readiness (audit of 2026-10-28)
+
+This document describes what the code **actually** does today and what must happen before a commercial launch. It replaces assumptions in older docs where they conflict.
+
+### Runtime reality
+
+| Area | Current implementation | Consequence |
+|---|---|---|
+| Persistence | One JSON file (`data/db.json`) held in memory and rewritten atomically (temp file + rename) on every write. Radar uses `data/radar.json`. | **Single process, single instance only.** No horizontal scaling, no concurrent writers, whole-file rewrite cost grows with users. Migration path: reimplement `server/store.js` (interface is isolated). |
+| Write failures | Since this audit, a failed write rejects the request (HTTP 500) and `/api/health` returns **503** until a write succeeds. | Point external monitoring at `/api/health`. |
+| Files | Document wallet: AES-256-GCM at rest in `data/docfiles` (server-held key, **not end-to-end**). Community images in `data/media`. | Back up together with the JSON files and `DOCUMENTS_KEY`. |
+| In-memory state | Mentor action proposals (30 min), rate-limit counters, request metrics, recent logs. | Lost on restart; rate limits are per process. |
+| Async errors | Express 4 does not catch rejected async handlers; `server/app.js` now forwards them to the error handler, and `server/index.js` logs (instead of crashing on) unhandled rejections. | One bad request no longer takes the server down for everyone. |
+| Deployment config | None in the repository (no Dockerfile/Procfile/IaC). | Hosting must be chosen; requirements below. |
+
+### Hosting requirements
+
+- Node ≥ 20 (CI uses 22), one long-running process, persistent writable disk for `data/` (or `DATA_FILE`, `MEDIA_DIR`, `DOCS_DIR`, `RADAR_DATA_FILE`).
+- TLS-terminating reverse proxy in front; `NODE_ENV=production` enables `trust proxy`, `Secure` cookies and HSTS. Set `ALLOWED_ORIGIN` to the public origin.
+- Outbound HTTPS to: `www.juntadeandalucia.es`, `masteres.ugr.es` (Radar), and optionally the AI provider, Travelpayouts, GDELT, Wikipedia, YouTube Data API, ECB FX.
+
+### Environment variables (production)
+
+| Variable | Required | Notes |
+|---|---|---|
+| `NODE_ENV=production` | yes | |
+| `JWT_SECRET` | yes (≥ 32 chars) | Server refuses to start otherwise. Rotating it logs everyone out. |
+| `DOCUMENTS_KEY` | yes (≥ 32 chars) | Server refuses to start otherwise. **Losing it makes every stored document unreadable.** Keep it in a secrets manager with backup. |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | recommended | Password ≥ 12 chars with letters and digits in production. The email is reserved (cannot be registered). On each boot the password is re-synced from env and existing sessions of that account are revoked if it changed. Never logged. |
+| `ALLOWED_ORIGIN` | yes behind a proxy | CSRF origin check. |
+| `MENTOR_PROVIDER`, `MENTOR_MODEL`, `ANTHROPIC_API_KEY` | optional | Without them the Mentor runs in Guided Mode (no generative AI, clearly labeled). |
+| `AI_DAILY_TOKENS_PER_USER`, `MENTOR_TIMEOUT_MS`, `MENTOR_DEADLINE_MS` | optional | Cost and latency caps (see docs/15). |
+| `TRAVELPAYOUTS_TOKEN`, `YOUTUBE_API_KEY` | optional | Indicative prices / videos. |
+| `MODERATOR_EMAILS`, `RADAR_ADMIN_EMAILS` | **ignored in production** | Registration does not verify email, so granting roles by email was a privilege-escalation hole. Grant roles in `#/admin/aluno/:id` → *Papel*. |
+
+### Roles
+
+Roles come only from the server-side `role` field: `admin` (only the `ADMIN_EMAIL` account, set at boot), `moderador`, `radar`. The admin grants/revokes `moderador` and `radar` via `POST /api/admin/users/:id/role`; the change revokes the target's sessions and is audited (`admin-role`).
+
+### Backup and restore
+
+1. Stop the process (or accept a crash-consistent copy: writes are atomic renames).
+2. Copy `db.json`, `radar.json`, `docfiles/`, `media/`, `document-rules.json` together. Store `DOCUMENTS_KEY` separately.
+3. Restore by putting the files back and starting with the **same** `DOCUMENTS_KEY`.
+4. Test a restore before launch. No automated backup exists yet.
+
+### Verified in this audit
+
+- `npm run check` (syntax of all JS) and `npm test`: **235/235** pass (baseline was 171/173; two Radar tests were date-dependent).
+- Manual smoke run: production boot refuses missing `DOCUMENTS_KEY`; dev server serves the SPA, registration, journeys, Radar.
+- CI: `.github/workflows/ci.yml` runs `npm ci`, `npm run check`, `npm test`, `npm audit --omit=dev --audit-level=high` on PRs. `npm audit` reported 0 vulnerabilities on 2026-10-28.
+
+### Not verified (needs credentials, infrastructure or a human)
+
+- Real AI provider calls (tests use a local fake Anthropic server driving the real SDK).
+- Real Travelpayouts, YouTube, GDELT, Wikipedia, ECB calls; live Radar scraping (tests use saved official HTML).
+- Browser end-to-end and accessibility testing at mobile/tablet/desktop sizes (no browser test tooling in the repo).
+- Any staging or production deployment.
+
+### Blockers before a paid launch
+
+1. **No email verification.** Password reset by email now exists (`POST /api/auth/forgot-password` / `reset-password`, Resend via `RESEND_API_KEY` + `EMAIL_FROM`, 1-hour single-use token stored hashed, resets revoke sessions). Without those variables in production, recovery responds 503. Registration still does not verify the email address.
+2. **Single-instance JSON persistence** with no automated backups. Acceptable for a small pilot on one server with disk backups; not for scale.
+3. **Legal review (LGPD/GDPR)** — see below.
+4. **Official-data status:** IPREM 2026 (€600) still *pending* (matches Ley 31/2022, extended budgets; no 2026-specific norm found in the BOE on 2026-10-28). DUA short link and Salvador consulate contacts verified on 2026-10-28. The local catalog is demonstrative; scholarships show "no confirmed call".
+5. **Self-declared official outcomes:** admission/enrollment/visa are student-declared (now recorded with `origem: 'declarado'`, audited, and enrollment/visa require a declared admission first). There is no officially-confirmed state; product decision needed.
+
+### Legal questions for qualified review
+
+- Retention of audit logs (IP, user agent, failed-login emails) after account deletion; Marco Civil art. 15 may require 6 months — define period and legal basis.
+- Whether internal admin notes must be included in the data export (currently **excluded**, matching the admin panel's promise).
+- Consent text says only the student accesses documents, while the server holds the key (encryption at rest, not end-to-end). Changing it may require bumping `CONSENT_VERSION`.
+- Free-text detail of reports by deleted users is kept (author id removed).
+- Visa proof-of-funds is shown as an estimate (100% IPREM × months, single applicant); dependents and deductions are not modelled. Never presented as a guarantee.
+
+### Known limitations (accepted for now)
+
+- Logout clears the cookie but does not revoke the JWT server-side (use "Sair de todos os dispositivos" for revocation). Sessions last 8 h.
+- Login throttling is per IP (20 / 15 min); there is no per-account lockout.
+- Encrypted PDFs cannot be scanned for active content; PDFs are served inline.
+- Radar "Candidaturas abertas" alerts can fire while the source is stale (the card itself shows *desatualizado*).
+- Mentor proposals are lost on restart; partial execution of a multi-step proposal is reported as "not executed" in the UI.
+- A monthly budget item marked "pago" counts as paid for the whole stay; a granted scholarship also added as a resource is counted twice.
 
 ---
 

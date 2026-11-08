@@ -47,7 +47,7 @@ export async function travelView() {
       h('thead', {}, h('tr', {}, ['Rota', 'Voo', 'Bagagem', 'Terrestre', 'Total', 'Cotado em', ''].map((t) => h('th', {}, t)))),
       h('tbody', {}, [...d.travel.opcoes].sort((a, b) => total(a) - total(b)).map((o) => h('tr', { class: o.escolhida ? 'chosen' : '' },
         h('td', {}, o.rota, total(o) === min ? h('span', { class: 'tag tag-ok' }, 'Menor custo') : null, o.fonte ? h('small', { class: 'muted' }, ` · ${o.fonte}`) : null),
-        h('td', {}, money(o.voo)), h('td', {}, money(o.bagagem)), h('td', {}, money(o.terrestre)), h('td', {}, h('strong', {}, money(total(o)))), h('td', {}, o.cotadoEm || '—'),
+        h('td', {}, money(o.voo)), h('td', {}, money(o.bagagem)), h('td', {}, money(o.terrestre)), h('td', {}, h('strong', {}, money(total(o)))), h('td', {}, o.cotadoEm || '-'),
         h('td', {}, h('div', { class: 'row' },
           o.escolhida ? h('span', { class: 'chip-status st-concluida' }, 'Escolhida') : h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onClick: () => call('put', `/living/travel/routes/${o.id}`, { escolhida: true }) }, 'Escolher'),
           h('button', { class: 'icon-btn sm', type: 'button', 'aria-label': 'Excluir', onClick: () => call('del', `/living/travel/routes/${o.id}`) }, icon('trash', { size: 13 })))))))));

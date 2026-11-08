@@ -70,7 +70,7 @@ async function runAction(a) {
     try {
       await api.post('/finance/scholarships', { catalogId: a.catalogId });
       invalidate();
-      toast('Bolsa salva. As tarefas de candidatura foram criadas e aparecem na Agenda AI.', 'ok');
+      toast('Bolsa salva. As tarefas de candidatura foram criadas e aparecem na Agenda.', 'ok');
     } catch (e) { toast(e.message, 'err'); }
   }
 }
@@ -97,7 +97,7 @@ export function AIJourneyAssistant({ compact = false } = {}) {
   const form = h('form', { class: 'ai-form' }, input, send);
 
   const bubble = (role, content) => {
-    const el = h('div', { class: `ai-msg ${role}` }, role === 'assistant' ? h('span', { class: 'ai-avatar' }, icon('sparkles', { size: 14 })) : null, h('div', { class: 'ai-bubble' }));
+    const el = h('div', { class: `ai-msg ${role}` }, role === 'assistant' ? h('span', { class: 'ai-avatar' }, icon('chat', { size: 14 })) : null, h('div', { class: 'ai-bubble' }));
     if (content) el.lastChild.append(richText(content));
     log.append(el);
     log.scrollTop = log.scrollHeight;
@@ -157,7 +157,7 @@ export function AIJourneyAssistant({ compact = false } = {}) {
 
   const root = h('section', { class: `ai ${compact ? 'ai-compact' : 'ai-page'}` },
     h('header', { class: 'ai-head' },
-      h('span', { class: 'ai-logo' }, icon('sparkles', { size: 20 })),
+      h('span', { class: 'ai-logo' }, icon('chat', { size: 20 })),
       h('div', {}, h('h2', {}, 'Mentor Estuvia'), h('p', { class: 'muted small' }, 'Orienta com base nos seus dados e em fontes oficiais. Não inventa prazos, requisitos ou regras.')),
       compact ? h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Fechar assistente', onClick: closePanel }, icon('x', { size: 18 })) : null),
     ctxBar, log, quick, form,
@@ -177,7 +177,7 @@ export function mountAssistantLauncher() {
   const show = Boolean(state.me) && currentPath() !== '/assistente';
   if (!show) { closePanel(); return mount(host); }
   if (host.querySelector('.ai-fab')) return;
-  mount(host, h('button', { class: 'ai-fab', type: 'button', 'aria-label': 'Abrir Mentor Estuvia', onClick: () => openPanel() }, icon('sparkles', { size: 22 }), h('span', {}, 'Mentor')));
+  mount(host, h('button', { class: 'ai-fab', type: 'button', 'aria-label': 'Abrir Mentor Estuvia', onClick: () => openPanel() }, icon('chat', { size: 22 }), h('span', {}, 'Mentor')));
 }
 
 function openPanel() {

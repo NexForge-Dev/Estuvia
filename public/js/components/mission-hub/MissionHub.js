@@ -5,7 +5,8 @@
 //   MissionProgressCard   → objetivos reais (e qual ferramenta ajuda em cada um)
 //   MissionToolsGrid      → cards por configuração (tools-config.js), quantidade conforme a complexidade
 //   MissionCompletionFeedback → concluir quando os objetivos estiverem feitos / missão concluída
-//   MissionMentorAccess   → acesso discreto ao Mentor, já com a missão no contexto
+//   Cards fixos           → Minhas anotações (lembretes, tarefas, "preciso de ajuda"), Mentor e Experiências/fontes:
+//                           a página fica só com cabeçalho, progresso e cards; o resto abre no painel.
 // O passo a passo (MissionGuide) continua existindo, DENTRO da ferramenta "Passo a passo"/"Fazer agora".
 // Abrir um card nunca conclui nada: só objetivos e a confirmação explícita contam.
 import { h, mount, toast } from '../../ui.js';
@@ -19,6 +20,7 @@ import { QuickPlan } from '../QuickPlan.js';
 import { openMentor } from '../MentorPanel.js';
 import { hubIcon } from './hub-icons.js';
 import { toolsFor } from './tools-config.js';
+import { MissionNotes } from './MissionNotes.js';
 import { SimulatorPanel, ProofPanel, MissionResourcePanel, AlternativesPanel, ScholarshipsPanel, financeHints } from './finance-panels.js';
 
 function ensureStyles() {
@@ -47,12 +49,12 @@ export const mentorAsk = ({ journeyId, missaoId, acao, pergunta } = {}) => {
 export function MissionOverviewHeader(m, journey) {
   const def = m.definicao;
   const destino = `${journey.destino.origem || 'Brasil'} → ${journey.destino.universidade?.nome || 'Espanha'}`;
-  const rodada = def.rodadaSigla ? `Trilha ${def.rodadaSigla} — ${def.rodadaTitulo}` : `Rodada ${def.rodada} — ${def.rodadaTitulo}`;
+  const rodada = def.rodadaSigla ? `Trilha ${def.rodadaSigla} - ${def.rodadaTitulo}` : `Rodada ${def.rodada} - ${def.rodadaTitulo}`;
   const item = (label, value, href) => h('div', { class: 'mh-head-item' }, h('small', {}, label), href ? h('a', { href }, value) : h('strong', {}, value));
   return h('header', { class: 'mh-card mh-head' },
     item('Jornada', destino, `#/j/${journey.id}`),
     item(def.rodadaSigla ? 'Trilha' : 'Rodada', rodada, `#/j/${journey.id}/r/${def.rodada}`),
-    h('div', { class: 'mh-head-item is-main' }, h('small', {}, 'Missão'), h('strong', {}, `${m.label} — ${def.titulo}`)));
+    h('div', { class: 'mh-head-item is-main' }, h('small', {}, 'Missão'), h('strong', {}, `${m.label} - ${def.titulo}`)));
 }
 
 export function MissionProgressCard(m, { descricao, tools, onOpen }) {
@@ -92,13 +94,6 @@ export function MissionToolsGrid(tools, { hints = {}, onOpen, m }) {
   const pending = new Set(m.objetivos.filter((o) => !o.feito).map((o) => o.id));
   return h('section', { class: `mh-grid n-${tools.length}`, 'aria-label': 'Ferramentas da missão' },
     tools.map((t) => MissionToolCard(t, { hint: hints[t.id], onOpen, contributes: Array.isArray(t.objetivos) && t.objetivos.some((id) => pending.has(id)) })));
-}
-
-export function MissionMentorAccess(m, journey) {
-  return h('button', { type: 'button', class: 'mh-mentor', onClick: () => mentorAsk({ journeyId: journey.id, missaoId: m.id }) },
-    h('span', { class: 'mh-mentor-ic' }, icon('sparkles', { size: 16 })),
-    h('span', {}, h('strong', {}, 'Dúvidas? Pergunte ao Mentor'), h('small', {}, `Ele já sabe que você está na Missão ${m.label}.`)),
-    icon('chat', { size: 16 }));
 }
 
 export function MissionCompletionFeedback(m, ctx, base) {
@@ -174,7 +169,17 @@ export function MissionHub(m, ctx) {
   const active = !RESOLVED.has(m.status);
   // Missão que não se aplica ou foi pulada: só o essencial (e o caminho para voltar atrás, dentro do guia).
   // Concluída: as ferramentas continuam abertas (rever o plano, ajustar valores).
-  const tools = active || m.status === 'concluida' ? ferramentas : ferramentas.filter((t) => t.painel === 'guia').map((t) => ({ ...t, titulo: 'Detalhes da missão', desc: 'Ver ou mudar sua decisão.' }));
+  const base_ = active || m.status === 'concluida' ? ferramentas : ferramentas.filter((t) => t.painel === 'guia').map((t) => ({ ...t, titulo: 'Detalhes da missão', desc: 'Ver ou mudar sua decisão.' }));
+  // Tela limpa: tudo é card. Anotações, Mentor e Experiências/fontes sempre existem (o Mentor só uma vez).
+  // Missão que usa documentos (ex.: 2.1 Passaporte): o que você consegue aqui vai para a Carteira (Documentos).
+  const docsCard = (m.docsCarteira || m.documentos.length) && !base_.some((t) => t.painel === 'documentos') && m.status !== 'nao-aplicavel'
+    ? { id: 'documentos-missao', painel: 'documentos', titulo: 'Documentos desta missão', desc: 'Guarde na sua Carteira: vale para todas as etapas.', ic: 'file', cor: 'verde' } : null;
+  const tools = [
+    ...base_.slice(0, 1), docsCard, ...base_.slice(1),
+    { id: 'anotacoes', painel: 'anotacoes', titulo: 'Minhas anotações', desc: 'Lembretes, tarefas e dúvidas desta missão.', ic: 'edit', cor: 'amarelo' },
+    base_.some((t) => t.painel === 'ajuda') ? null : { id: 'ajuda', painel: 'ajuda', titulo: 'Pergunte ao Mentor', desc: `Ele já sabe que você está na Missão ${m.label}.`, ic: 'chat', cor: 'roxo' },
+    { id: 'comunidade', painel: 'comunidade', titulo: 'Experiências e fontes', desc: 'Relatos de outros estudantes e as fontes oficiais.', ic: 'users', cor: 'ciano' },
+  ].filter(Boolean);
   const hints = {};
   const grid = h('div');
   const drawGrid = () => mount(grid, MissionToolsGrid(tools, { hints, onOpen: open, m }));
@@ -186,6 +191,9 @@ export function MissionHub(m, ctx) {
     if (t.painel === 'documentos') hints[t.id] = `${docsReady}/${m.documentos.length} prontos`; // provisório até a contagem da carteira chegar
     if (t.painel === 'agenda') hints[t.id] = m.prazo ? `Prazo ${fmtDate(m.prazo.data)}` : null;
   }
+  const notesOpen = (m.anotacoes || []).filter((n) => !n.feito && n.tipo !== 'nota').length;
+  hints.anotacoes = (m.anotacoes || []).length ? `${m.anotacoes.length} anotaç${m.anotacoes.length === 1 ? 'ão' : 'ões'}${notesOpen ? ` · ${notesOpen} em aberto` : ''}` : null;
+  hints.comunidade = m.fontes.length ? `${m.fontes.length} fonte${m.fontes.length === 1 ? '' : 's'}` : null;
   // Contagem da carteira: documentos "não necessários" pelo perfil não contam como pendência.
   if (tools.some((t) => t.painel === 'documentos')) {
     api.get(`/documents/missions/${journey.id}/${m.id}`).then((r) => {
@@ -235,6 +243,8 @@ export function MissionHub(m, ctx) {
       case 'agenda': return AgendaPanel(m, ctx, hub);
       case 'ferramenta': return MissionTool(m, { journey, onChange: () => hub.dirty() }) || h('p', {}, 'Ferramenta indisponível.');
       case 'entender': return UnderstandPanel(m);
+      case 'anotacoes': return MissionNotes(m, { journey, inSheet: true, onChange: () => hub.dirty(), onAskMentor: (pergunta) => { hub.close(); mentor(pergunta); } });
+      case 'comunidade': return CommunityPanel(m, journey);
       default: return h('p', {}, 'Ferramenta indisponível.');
     }
   }
@@ -249,26 +259,14 @@ export function MissionHub(m, ctx) {
   const alerts = [];
   if (m.prazo && m.status !== 'concluida') {
     const late = m.prazo.diasRestantes < 0;
-    alerts.push(h('p', { class: `mh-alert ${late || m.prazo.diasRestantes <= 14 ? 'is-hot' : ''}` }, icon('calendar', { size: 14 }), ' ', late ? `O prazo era ${fmtDate(m.prazo.data)}. Confira no site oficial.` : `Prazo: ${fmtDate(m.prazo.data)} — faltam ${m.prazo.diasRestantes} dia(s) (${{ oficial: 'regra oficial', declarado: 'informado por você', previsto: 'previsão' }[m.prazo.origem] || ''}).`));
+    alerts.push(h('p', { class: `mh-alert ${late || m.prazo.diasRestantes <= 14 ? 'is-hot' : ''}` }, icon('calendar', { size: 14 }), ' ', late ? `O prazo era ${fmtDate(m.prazo.data)}. Confira no site oficial.` : `Prazo: ${fmtDate(m.prazo.data)}, faltam ${m.prazo.diasRestantes} dia(s) (${{ oficial: 'regra oficial', declarado: 'informado por você', previsto: 'previsão' }[m.prazo.origem] || ''}).`));
   }
   if (m.riscoInfo?.texto && m.riscoInfo.nivel !== 'baixo' && active) alerts.push(h('p', { class: 'mh-alert' }, icon('shield', { size: 14 }), ' ', h('strong', {}, 'Atenção: '), m.riscoInfo.texto));
   const other = m.alertas.filter((a) => a.tipo !== 'prazo');
   if (other.length && active) alerts.push(h('p', { class: 'mh-alert' }, icon('alert', { size: 14 }), ' ', other[0].texto));
   if (m.status === 'nao-aplicavel') alerts.push(h('p', { class: 'mh-alert' }, icon('minus', { size: 14 }), ' ', m.motivoNaoAplicavel || 'Esta missão não se aplica ao seu caso e não conta como pendência.'));
   if (m.status === 'ignorada') alerts.push(h('p', { class: 'mh-alert' }, icon('minus', { size: 14 }), ' Você decidiu pular esta missão (é opcional).'));
-  if (m.status === 'aguardando') alerts.push(h('p', { class: 'mh-alert' }, icon('hourglass', { size: 14 }), ' Aguardando resposta de terceiros. Quando ela chegar, registre em "', tools.find((t) => t.painel === 'guia')?.titulo || 'Passo a passo', '".'));
-
-  // ---------- Rodapé: comunidade e fontes (secundários) ----------
-  const community = h('section', { class: 'mh-community' },
-    h('div', { class: 'mh-section-head' }, h('h2', {}, icon('users', { size: 16 }), ' Experiências de outros estudantes'), h('a', { class: 'mh-link', href: `#/comunidade/missao/${m.id}` }, 'Compartilhar a minha')));
-  api.get(`/community/missions/${m.id}?limit=3${journey.destino.universidade ? `&universidadeId=${journey.destino.universidade.id}` : ''}`)
-    .then((r) => community.append(r.relatos?.length
-      ? h('div', { class: 'mh-stories' }, r.relatos.map((p) => h('a', { class: 'mh-story', href: p.url }, h('strong', {}, p.titulo), h('small', { class: 'muted' }, `${p.autorApelido} · ${fmtDate(p.criadoEm)}`))))
-      : h('p', { class: 'small muted' }, 'Ainda não há relatos para esta missão. Relatos são experiências pessoais, não regra oficial.')))
-    .catch(() => community.remove());
-  const sources = m.fontes.length ? h('details', { class: 'mh-sources' }, h('summary', {}, icon('shield', { size: 13 }), ` Fontes e detalhes (${m.fontes.length})`),
-    h('ul', {}, m.fontes.map((s) => h('li', {}, s.url ? h('a', { href: s.url, target: '_blank', rel: 'noopener noreferrer' }, s.titulo, ' ', icon('external', { size: 11 })) : h('span', {}, s.titulo),
-      h('small', { class: 'muted' }, ` ${s.orgao || ''}${s.revisadoEm ? ` · conferida em ${fmtDate(s.revisadoEm)}` : ''}`))))) : null;
+  if (m.status === 'aguardando') alerts.push(h('p', { class: 'mh-alert' }, icon('hourglass', { size: 14 }), ` Aguardando resposta de terceiros. Quando ela chegar, registre em "${tools.find((t) => t.painel === 'guia')?.titulo || 'Passo a passo'}".`));
 
   drawGrid();
   return h('article', { class: `mh g-${m.status}` },
@@ -280,15 +278,27 @@ export function MissionHub(m, ctx) {
     MissionProgressCard(m, { descricao, tools, onOpen: open }),
     alerts.length ? h('div', { class: 'mh-alerts' }, alerts) : null,
     MissionCompletionFeedback(m, ctx, base),
-    grid,
-    MissionMentorAccess(m, journey),
-    community,
-    sources);
+    grid);
 }
 
 // ---------------------------------------------------------------------------
 // Painéis genéricos
 // ---------------------------------------------------------------------------
+
+/** Experiências de outros estudantes + fontes da missão (antes no rodapé da página). */
+async function CommunityPanel(m, journey) {
+  const stories = await api.get(`/community/missions/${m.id}?limit=5${journey.destino.universidade ? `&universidadeId=${journey.destino.universidade.id}` : ''}`).then((r) => r.relatos || []).catch(() => null);
+  return h('div', { class: 'mh-panel' },
+    h('div', { class: 'mh-section-head' }, h('h3', {}, icon('users', { size: 16 }), ' Experiências de outros estudantes'), h('a', { class: 'mh-link', href: `#/comunidade/missao/${m.id}` }, 'Compartilhar a minha')),
+    stories === null ? h('p', { class: 'small muted' }, 'Relatos indisponíveis no momento.')
+      : stories.length ? h('div', { class: 'mh-stories' }, stories.map((p) => h('a', { class: 'mh-story', href: p.url }, h('strong', {}, p.titulo), h('small', { class: 'muted' }, `${p.autorApelido} · ${fmtDate(p.criadoEm)}`))))
+        : h('p', { class: 'small muted' }, 'Ainda não há relatos para esta missão.'),
+    h('p', { class: 'mh-notice small' }, 'Relatos são experiências pessoais, não regra oficial.'),
+    h('h3', { class: 'mh-sub' }, icon('shield', { size: 15 }), ` Fontes e detalhes (${m.fontes.length})`),
+    m.fontes.length ? h('ul', { class: 'mh-source-list' }, m.fontes.map((s) => h('li', {}, s.url ? h('a', { href: s.url, target: '_blank', rel: 'noopener noreferrer' }, s.titulo, ' ', icon('external', { size: 11 })) : h('span', {}, s.titulo),
+      h('small', { class: 'muted' }, ` ${s.orgao || ''}${s.revisadoEm ? ` · conferida em ${fmtDate(s.revisadoEm)}` : ''}`))))
+      : h('p', { class: 'small muted' }, 'Esta missão não tem fontes cadastradas.'));
+}
 
 /** O guia passo a passo existente, dentro da ferramenta. Tem contexto próprio para redesenhar só o painel. */
 function GuidePanel(m, ctx, hub) {
@@ -345,7 +355,7 @@ function UnderstandPanel(m) {
     m.errosComuns?.length ? [h('p', {}, h('strong', {}, 'Erros comuns')), h('ul', { class: 'mh-list' }, m.errosComuns.map((e) => h('li', {}, icon('alert', { size: 13 }), ' ', e)))] : null);
 }
 
-// Agenda AI no contexto da missão: compromissos já marcados, organizar com IA e atividades sugeridas.
+// Agenda no contexto da missão: compromissos já marcados, organizar com IA e atividades sugeridas.
 const FINANCE_TASKS = ['pesquisar bolsas de estudo', 'conferir a exigência financeira do visto', 'preparar os comprovantes financeiros', 'revisar meu orçamento'];
 async function AgendaPanel(m, ctx, hub) {
   const host = h('div', { class: 'stack' });
@@ -361,7 +371,7 @@ async function AgendaPanel(m, ctx, hub) {
     finance && !RESOLVED.has(m.status) ? h('div', {}, h('small', { class: 'mh-eyebrow' }, 'Atividades financeiras sugeridas'),
       h('ul', { class: 'mh-tasks' }, FINANCE_TASKS.map((t) => h('li', {}, h('span', {}, t.charAt(0).toUpperCase() + t.slice(1)),
         h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onClick: () => { hub.close(); mentorAsk({ journeyId: ctx.journey.id, missaoId: m.id, pergunta: `Agende para amanhã a tarefa de ${t}` }); } }, 'Agendar'))))) : null,
-    h('a', { class: 'btn btn-ghost', href: '#/agenda' }, 'Abrir Agenda AI ', icon('arrow', { size: 14 })));
+    h('a', { class: 'btn btn-ghost', href: '#/agenda' }, 'Abrir Agenda ', icon('arrow', { size: 14 })));
   if (!RESOLVED.has(m.status)) mount(plan, QuickPlan({ journeyId: ctx.journey.id, missaoId: m.id, onDone: () => hub.dirty() }));
   return host;
 }

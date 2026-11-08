@@ -1,5 +1,6 @@
 // Utilitários de interface. Todo texto vindo do usuário/servidor entra no DOM via
 // textContent (nunca innerHTML), o que elimina XSS por construção.
+import { translateTree } from './i18n.js';
 
 export function h(tag, attrs = {}, ...children) {
   const el = document.createElement(tag);
@@ -26,6 +27,7 @@ function append(el, children) {
 export function mount(root, ...children) {
   root.replaceChildren();
   append(root, children);
+  translateTree(root);
 }
 
 // Markdown mínimo e seguro: **negrito**, _itálico_, [O1] → selo de fonte, listas e parágrafos.

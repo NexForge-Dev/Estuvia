@@ -15,9 +15,10 @@ import { QuickPlan } from './QuickPlan.js';
 import { QUICK } from './AIJourneyAssistant.js';
 import { termsIn } from '../glossary.js';
 import { ConsulateResult } from './ResultCard.js';
+import { locale } from '../i18n.js';
 
 const ESTADOS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
-const eur = (v) => `€ ${Math.round(v || 0).toLocaleString('pt-BR')}`;
+const eur = (v) => `€ ${Math.round(v || 0).toLocaleString(locale())}`;
 
 const primary = (label, onClick, ic = 'check') => h('button', { type: 'button', class: 'btn btn-cta btn-lg guide-primary', onClick }, icon(ic, { size: 18 }), label);
 const secondary = (label, onClick, ic) => h('button', { type: 'button', class: 'guide-secondary', onClick }, ic ? icon(ic, { size: 14 }) : null, label);
@@ -70,7 +71,7 @@ export function MissionGuide(m, ctx) {
   if (m.prazo && m.status !== 'concluida') {
     const late = m.prazo.diasRestantes < 0;
     critical.push(h('div', { class: `guide-alert ${late || m.prazo.diasRestantes <= 14 ? 'is-hot' : ''}` }, icon('calendar', { size: 16 }),
-      h('span', {}, late ? `O prazo era ${fmtDate(m.prazo.data)}. Confira a situação no site oficial.` : `Prazo: ${fmtDate(m.prazo.data)} — faltam ${m.prazo.diasRestantes} dia(s).`),
+      h('span', {}, late ? `O prazo era ${fmtDate(m.prazo.data)}. Confira a situação no site oficial.` : `Prazo: ${fmtDate(m.prazo.data)}, faltam ${m.prazo.diasRestantes} dia(s).`),
       h('small', {}, { oficial: 'regra oficial', declarado: 'informado por você', previsto: 'previsão' }[m.prazo.origem] || '')));
   }
   if (m.riscoInfo?.texto && m.riscoInfo.nivel !== 'baixo' && active) {
@@ -96,7 +97,7 @@ export function MissionGuide(m, ctx) {
       m.conclusao === 'requisito-atendido' ? 'Você informou que já tem isso. Se mudar, corrija em "Meu perfil".' : m.declarada ? 'Você informou que já tinha feito isso antes de usar a Estuvia.' : m.resultado,
       nextMission ? primaryLink(`Continuar: ${nextMission.titulo}`, `#/j/${journey.id}/m/${nextMission.id}`, 'arrow') : primaryLink('Ver minha jornada', `#/j/${journey.id}`, 'map'),
       m.evidencia?.valor ? h('p', { class: 'small muted' }, `Registro: ${m.evidencia.valor}`) : null,
-      secondary('Reabrir missão', () => ctx.mutate(api.post(`${base}/reopen`)), 'refresh'));
+      m.conclusao === 'requisito-atendido' ? null : secondary('Reabrir missão', () => ctx.mutate(api.post(`${base}/reopen`)), 'refresh'));
     body.classList.add('is-done');
   } else if (m.status === 'aguardando') {
     const sit = steps.find((o) => o.tipo === 'situacao' && !o.feito);
@@ -253,7 +254,7 @@ export function MissionGuide(m, ctx) {
     };
     // "Já fiz": confirma no mesmo card o que conta como feito (sem telas extras).
     const askConfirm = () => mount(confirmHost, h('div', { class: 'simple-confirm' },
-      h('p', {}, h('strong', {}, 'Conseguiu? '), 'Confirme só se fez de verdade — ler aqui não conta.'),
+      h('p', {}, h('strong', {}, 'Conseguiu? '), 'Confirme só se fez de verdade, ler aqui não conta.'),
       steps.filter((o) => o.tipo === 'check' && !o.feito).length > 1 ? h('ul', { class: 'simple-list' }, steps.filter((o) => o.tipo === 'check' && !o.feito).map((o) => h('li', {}, icon('check', { size: 12 }), o.texto))) : null,
       fields.map(({ o, el }) => h('label', { class: 'field' }, h('span', { class: 'field-label' }, o.texto), el)),
       ev ? h('label', { class: 'field' }, h('span', { class: 'field-label' }, `${ev.rotulo}${ev.obrigatoria ? '' : ' (opcional)'}`), evInput) : null,
@@ -381,7 +382,7 @@ export function LockedMission(m, journey, { onArrival } = {}) {
   const missing = m.bloqueadaPor.map((b) => {
     if (b.rodada) return h('li', {}, icon('lock', { size: 14 }), h('a', { href: `#/j/${jid}/r/${b.rodada}` }, `Liberar a Rodada ${b.rodada}`));
     if (b.externo) return h('li', {}, icon('hourglass', { size: 14 }), h('span', {}, `Aguardando: ${b.titulo}`));
-    return h('li', {}, icon('target', { size: 14 }), h('a', { href: `#/j/${jid}/m/${b.id}` }, `Missão ${b.label} — ${b.titulo}`));
+    return h('li', {}, icon('target', { size: 14 }), h('a', { href: `#/j/${jid}/m/${b.id}` }, `Missão ${b.label} - ${b.titulo}`));
   });
   const firstMission = m.bloqueadaPor.find((b) => b.id);
   const lockInfo = m.rodadaDesbloqueio;
@@ -408,7 +409,8 @@ export function LockedMission(m, journey, { onArrival } = {}) {
 
 // Registrar a chegada à Espanha (fato declarado, com confirmação): libera as Rodadas 7 e 8.
 export function ArrivalForm(journey, onDone) {
-  const date = h('input', { type: 'date', class: 'guide-input', max: new Date().toISOString().slice(0, 10), 'aria-label': 'Data de entrada na Espanha' });
+  // "Hoje" na Espanha (o servidor valida a data de entrada pelo horário de Madri).
+  const date = h('input', { type: 'date', class: 'guide-input', max: new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Madrid' }).format(new Date()), 'aria-label': 'Data de entrada na Espanha' });
   const chk = h('input', { type: 'checkbox' });
   const btn = h('button', { type: 'button', class: 'btn btn-cta btn-lg guide-primary', onClick: async () => {
     if (!date.value) return toast('Informe a data em que você entrou na Espanha.', 'err');

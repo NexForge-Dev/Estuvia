@@ -22,7 +22,7 @@ function summary(user, jr) {
   const linhas = f.linhas.filter((l) => l.origem && !l.desconhecido).map((l) => ({ id: l.id, rotulo: l.label, tipo: l.tipo, valorEur: Math.round(l.valor), totalEur: Math.round(l.total), origem: l.origem, situacao: l.status === 'pago' ? 'paga' : l.status === 'confirmado' ? 'confirmada' : 'estimada' }));
   return {
     moeda: 'EUR', meses: f.meses, cambio: f.cambio,
-    exigenciaVisto: { valor: Math.round(f.exigenciaVisto), regra: f.iprem.regra, ipremAno: f.iprem.ano, ipremMensal: f.iprem.mensal, ipremStatus: f.iprem.status, fonte: f.iprem.fonteRegra, tipo: 'regra parametrizada — confirmar no consulado' },
+    exigenciaVisto: { valor: Math.round(f.exigenciaVisto), regra: f.iprem.regra, ipremAno: f.iprem.ano, ipremMensal: f.iprem.mensal, ipremStatus: f.iprem.status, fonte: f.iprem.fonteRegra, tipo: 'regra parametrizada, confirmar no consulado' },
     orcamento: { valor: Math.round(f.orcamento), custosInformados: f.custosInformados, tipo: 'estimativa do estudante' },
     recursos: f.recursos.map((r) => ({ id: r.id, tipo: r.tipo, tipoLabel: RESOURCE_TYPES[r.tipo] || r.tipo, descricao: r.descricao, valorEur: Math.round(r.valorEur), status: r.status, statusLabel: RESOURCE_STATUS[r.status] || r.status, contaComoGarantido: CONTA.has(r.status), automatico: Boolean(r.automatico) })),
     garantidos: Math.round(f.confirmados), naoGarantidos: Math.round(f.previstos),
@@ -96,7 +96,7 @@ export const updateFinancialResource = defineTool({
     const valor = `${r.moeda === 'BRL' ? 'R$' : '€'} ${Number(r.valor).toLocaleString('pt-BR')}`;
     const avisos = CONTA.has(r.status) ? [] : [`Como está "${RESOURCE_STATUS[r.status].toLowerCase()}", esse valor NÃO entra como dinheiro garantido no cálculo.`];
     if (r.tipo === 'familiar') avisos.push('O consulado decide se aceita apoio de terceiros e quais documentos pede.');
-    return { resumo: `${input.operacao === 'adicionar' ? 'Registrar' : 'Atualizar'} recurso: ${r.descricao} — ${valor} (${RESOURCE_STATUS[r.status]}).`, detalhes: [], avisos };
+    return { resumo: `${input.operacao === 'adicionar' ? 'Registrar' : 'Atualizar'} recurso: ${r.descricao} - ${valor} (${RESOURCE_STATUS[r.status]}).`, detalhes: [], avisos };
   },
   execute: async (ctx, input) => {
     const jr = pickJourney(ctx.user, ctx.contexto.journeyId);
@@ -143,7 +143,7 @@ const DEFAULT_TASKS = ['Ler o edital oficial', 'Verificar elegibilidade', 'Reuni
 
 export const saveScholarship = defineTool({
   name: 'save_scholarship', efeito: 'escrita', permissao: 'financas',
-  descricao: 'Salva uma bolsa do catálogo para acompanhar e cria as tarefas de candidatura (aparecem na Agenda AI). Status inicial: interesse — não é candidatura nem concessão.',
+  descricao: 'Salva uma bolsa do catálogo para acompanhar e cria as tarefas de candidatura (aparecem na Agenda). Status inicial: interesse, não é candidatura nem concessão.',
   entrada: z.object({ catalogId: z.enum(SCHOLARSHIPS.map((s) => s.id)) }).strict(),
   saida: '{ resumo, tarefas }',
   preview: (ctx, { catalogId }) => {
@@ -157,7 +157,7 @@ export const saveScholarship = defineTool({
       ensureFinance(u);
       u.scholarshipApps.push({ id: newId(), status: 'interesse', moeda: 'EUR', catalogId, nome: s.nome, entidade: s.entidade, url: s.url, cobertura: s.cobertura, tarefas: DEFAULT_TASKS.map((texto) => ({ id: newId(), texto, feito: false })), salvaEm: new Date().toISOString() });
     });
-    return { resumo: `Pronto: "${s.nome}" está salva e as tarefas aparecem na Agenda AI.`, dados: { tarefas: DEFAULT_TASKS.length } };
+    return { resumo: `Pronto: "${s.nome}" está salva e as tarefas aparecem na Agenda.`, dados: { tarefas: DEFAULT_TASKS.length } };
   },
 });
 

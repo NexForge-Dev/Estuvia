@@ -97,10 +97,12 @@ export const PRIOR_STAGES = [
 ];
 
 // Ordem de "avanço" das situações: o progresso anterior nunca rebaixa uma situação já registrada.
+// Resultados ainda não favoráveis (lista de espera, não admitido, exige ação, visto indeferido) ficam
+// abaixo do resultado positivo: quem saiu da lista de espera ou teve um novo pedido aprovado consegue declarar.
 export const SITUACAO_RANK = {
-  adjudicacao: { 'nao-enviada': 0, aguardando: 1 },
+  adjudicacao: { 'nao-enviada': 0, aguardando: 1, 'lista-espera': 1, 'exige-acao': 1, 'nao-admitido': 1 },
   matricula: { 'nao-iniciada': 0, 'vaga-confirmada': 1, reservada: 1 },
-  visto: { preparacao: 0, apresentada: 1, 'em-analise': 1, 'doc-adicional': 1 },
+  visto: { preparacao: 0, apresentada: 1, 'em-analise': 1, 'doc-adicional': 1, indeferido: 1 },
 };
 export const situacaoRank = (campo, valor) => SITUACAO_RANK[campo]?.[valor] ?? 2;
 

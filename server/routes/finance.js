@@ -178,6 +178,7 @@ router.post('/scholarships', async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
   const cat = SCHOLARSHIPS.find((s) => s.id === parsed.data.catalogId);
   if (!cat && !parsed.data.nome) return res.status(400).json({ error: 'Informe o nome da bolsa.' });
+  if ((req.user.scholarshipApps || []).length >= 50) return res.status(409).json({ error: 'Limite de bolsas salvas atingido.' });
   if ((req.user.scholarshipApps || []).some((a) => cat && a.catalogId === cat.id)) return res.status(409).json({ error: 'Esta bolsa já está salva.' });
   const app = {
     id: newId(), status: 'interesse', moeda: 'EUR',
@@ -196,7 +197,7 @@ router.put('/scholarships/:id', async (req, res) => {
   const { tarefa, ...fields } = parsed.data;
   res.json(await save(req, (u) => {
     const app = u.scholarshipApps.find((a) => a.id === req.params.id);
-    // Bolsa concedida: cria as tarefas de aceite e comprovação (Situação C da Agenda AI).
+    // Bolsa concedida: cria as tarefas de aceite e comprovação (Situação C da Agenda).
     if (fields.status === 'concedida' && app.status !== 'concedida') {
       GRANTED_TASKS.forEach((texto) => { if (!app.tarefas.some((t) => t.texto === texto)) app.tarefas.push({ id: newId(), texto, feito: false }); });
     }

@@ -4,7 +4,7 @@
 import { computeJourney } from './journey-engine.js';
 import { chosenHousing, chosenRoute } from './finance-engine.js';
 import { SITUACAO } from './content/rounds.js';
-import { DOCUMENTS, DOC_STATUS_LABEL } from './content/documents.js';
+import { DOCUMENTS, DOC_STATUS_LABEL, LEGACY_IDS } from './content/documents.js';
 import { programById } from './content/catalog.js';
 import { communityExport } from './routes/community.js';
 import { myRadar } from './radar/service.js';
@@ -12,7 +12,7 @@ import { audit } from './store.js';
 import { userUsage } from './usage.js';
 
 const DAY = 864e5;
-const label = (campo, v) => SITUACAO[campo]?.find(([k]) => k === v)?.[1] || v || '—';
+const label = (campo, v) => SITUACAO[campo]?.find(([k]) => k === v)?.[1] || v || '-';
 export const daysSince = (iso) => (iso ? Math.floor((Date.now() - Date.parse(iso)) / DAY) : null);
 
 // Ordem de avanço da candidatura (para resumir várias jornadas na melhor situação).
@@ -25,15 +25,15 @@ function journeyInfo(user, jr) {
   return {
     id: j.id,
     criadaEm: j.criadaEm,
-    universidade: j.destino.universidade?.nome || '—',
+    universidade: j.destino.universidade?.nome || '-',
     sigla: j.destino.universidade?.sigla || null,
-    programa: j.destino.programa?.nome || '—',
+    programa: j.destino.programa?.nome || '-',
     demo: Boolean(j.destino.programa?.demo),
     cidade: j.destino.cidade,
     anoAcademico: j.destino.anoAcademico,
     status: j.status,
     progresso: Math.round(j.progresso * 100),
-    rodadaAtual: atual ? `${atual.numero}. ${atual.titulo}` : '—',
+    rodadaAtual: atual ? `${atual.numero}. ${atual.titulo}` : '-',
     missoes: { concluidas: j.contagem.concluida || 0, aplicaveis: j.contagem.aplicaveis, atencao: j.contagem.atencao || 0, aguardando: j.contagem.aguardando || 0 },
     proximaMissao: j.proximaMissao ? `${j.proximaMissao.label} ${j.proximaMissao.titulo}` : null,
     prazos: j.prazos.map((p) => ({ titulo: p.titulo || p.rotulo, data: p.data, diasRestantes: p.diasRestantes, origem: p.origem })),
@@ -59,10 +59,10 @@ function alerts(user, journeys) {
   for (const j of journeys) {
     if (j.erro) continue;
     const nome = j.sigla || j.universidade;
-    j.prazos.filter((p) => p.diasRestantes < 0 && p.origem !== 'declarado').forEach((p) => out.push({ nivel: 'alto', texto: `${nome}: prazo vencido há ${-p.diasRestantes} dia(s) — ${p.titulo}.` }));
-    j.prazos.filter((p) => p.diasRestantes >= 0 && p.diasRestantes <= 7).forEach((p) => out.push({ nivel: 'medio', texto: `${nome}: prazo em ${p.diasRestantes} dia(s) — ${p.titulo}.` }));
+    j.prazos.filter((p) => p.diasRestantes < 0 && p.origem !== 'declarado').forEach((p) => out.push({ nivel: 'alto', texto: `${nome}: prazo vencido há ${-p.diasRestantes} dia(s): ${p.titulo}.` }));
+    j.prazos.filter((p) => p.diasRestantes >= 0 && p.diasRestantes <= 7).forEach((p) => out.push({ nivel: 'medio', texto: `${nome}: prazo em ${p.diasRestantes} dia(s): ${p.titulo}.` }));
     if (j.inscricao.candidatura === 'exige-acao') out.push({ nivel: 'alto', texto: `${nome}: candidatura exige ação ou revisão.` });
-    if (['doc-adicional', 'indeferido'].includes(j.inscricao.visto)) out.push({ nivel: 'alto', texto: `${nome}: visto — ${j.inscricao.vistoLabel}.` });
+    if (['doc-adicional', 'indeferido'].includes(j.inscricao.visto)) out.push({ nivel: 'alto', texto: `${nome}: visto: ${j.inscricao.vistoLabel}.` });
     if (j.financas?.informouRecursos && j.financas.deficit > 0) out.push({ nivel: 'medio', texto: `${nome}: faltam € ${Math.round(j.financas.deficit).toLocaleString('pt-BR')} para o orçamento/visto.` });
     if (j.missoes.atencao) out.push({ nivel: 'medio', texto: `${nome}: ${j.missoes.atencao} missão(ões) pedindo atenção.` });
   }
@@ -119,7 +119,9 @@ export function studentReport(user) {
   const logins = audit.recent(5000, (e) => e.userId === user.id && e.action === 'login');
   const today = new Date().toISOString().slice(0, 10);
   const in7 = new Date(Date.now() + 7 * DAY).toISOString().slice(0, 10);
-  const docs = DOCUMENTS.map((d) => ({ id: d.id, nome: d.nome, etapa: d.etapa, status: user.documents?.[d.id] || 'pendente', statusLabel: DOC_STATUS_LABEL[user.documents?.[d.id] || 'pendente'] || user.documents?.[d.id], atualizadoEm: user.docRecords?.[d.id]?.atualizadoEm || null }));
+  // Núcleo do checklist + qualquer documento que o estudante já movimentou (o catálogo completo tem ~185 tipos).
+  const touched = (d) => LEGACY_IDS.includes(d.id) || user.documents?.[d.id] || user.docRecords?.[d.id] || (user.docFiles || []).some((f) => f.docId === d.id);
+  const docs = DOCUMENTS.filter((d) => !d.agregado && touched(d)).map((d) => ({ id: d.id, nome: d.nome, etapa: d.etapa, status: user.documents?.[d.id] || 'pendente', statusLabel: DOC_STATUS_LABEL[user.documents?.[d.id] || 'pendente'] || user.documents?.[d.id], atualizadoEm: user.docRecords?.[d.id]?.atualizadoEm || null }));
   const fin = user.finance || {};
   const house = chosenHousing(user);
   const route = chosenRoute(user);

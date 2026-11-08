@@ -46,7 +46,7 @@ export const PREFERENCES = {
 // Onde procurar, por cidade (links conferidos em 24/10/2026; cada site aplica os próprios filtros).
 export const SEARCH_SOURCES = {
   Granada: {
-    oficial: { nome: 'Universidad de Granada — onde morar', url: 'https://internacional.ugr.es/en/students/ugr-services/acommodation', fonte: 'O16', desc: 'Página oficial da UGR com tipos de moradia, preços de referência e dicas.' },
+    oficial: { nome: 'Universidad de Granada, onde morar', url: 'https://internacional.ugr.es/en/students/ugr-services/acommodation', fonte: 'O16', desc: 'Página oficial da UGR com tipos de moradia, preços de referência e dicas.' },
     sites: [
       { nome: 'Spotahome', url: 'https://www.spotahome.com/es/s/granada', tipos: ['quarto', 'apartamento', 'temporario'], desc: 'Quartos e apartamentos, muitos com vídeo do imóvel.' },
       { nome: 'Uniplaces', url: 'https://www.uniplaces.com/es/accommodation/granada', tipos: ['quarto', 'apartamento', 'residencia'], desc: 'Focado em estudantes: quartos, estúdios e apartamentos.' },

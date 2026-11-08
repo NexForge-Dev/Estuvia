@@ -4,7 +4,7 @@ import { h, mount, toast } from '../ui.js';
 import { icon } from '../icons.js';
 import { api } from '../api.js';
 
-const fmtDT = (iso) => (iso ? new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—');
+const fmtDT = (iso) => (iso ? new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-');
 const REVIEW = { conflito: 'Conflito entre fontes', 'alteracao-critica': 'Alteração crítica', 'extracao-incerta': 'Extração incerta', 'ciclo-inconsistente': 'Ano acadêmico inconsistente', 'programa-ausente': 'Programa ausente', 'rotulo-desconhecido': 'Rótulo desconhecido', comunidade: 'Comunidade (verificar)' };
 
 function formOf(fields, submitLabel, onSubmit) {
@@ -32,13 +32,13 @@ export async function radarAdminView() {
     let o;
     try { o = await api.get('/radar/admin'); } catch (e) {
       return mount(root, h('section', { class: 'rd-empty' }, icon('lock', { size: 26 }), h('h2', {}, 'Acesso restrito'), h('p', { class: 'muted' }, e.message),
-        h('p', { class: 'small muted' }, 'Inclua seu e-mail em RADAR_ADMIN_EMAILS no .env do servidor e reinicie.')));
+        h('p', { class: 'small muted' }, 'Peça ao administrador para conceder o papel "Equipe do Radar" à sua conta (painel admin → aluno → Papel).')));
     }
     const t = o.totais;
     const open = o.revisoes.filter((r) => r.status === 'aberta');
     mount(root,
       h('section', { class: 'rd-hero rd-hero-admin' },
-        h('p', { class: 'rd-eyebrow' }, icon('shield', { size: 16 }), 'Radar — painel administrativo'),
+        h('p', { class: 'rd-eyebrow' }, icon('shield', { size: 16 }), 'Radar, painel administrativo'),
         h('h1', {}, 'Auditoria das oportunidades'),
         h('div', { class: 'rd-stats' },
           h('div', { class: 'rd-stat' }, h('strong', {}, String(o.pendentes)), h('span', {}, 'Revisões pendentes')),
@@ -73,7 +73,7 @@ export async function radarAdminView() {
             h('td', {}, fmtDT(s.ultimaVerificacaoOk)),
             h('td', {}, fmtDT(s.proximaVerificacao)),
             h('td', { class: 'rd-td-actions' },
-              s.metodo === 'html-publico' ? h('button', { class: 'btn btn-sm', type: 'button', onClick: (e) => { e.target.disabled = true; act(() => api.post(`/radar/admin/sources/${s.id}/run`), (r) => `Verificação: ${r.run.resultado}${r.run.erro ? ` — ${r.run.erro}` : ''}`); } }, icon('refresh', { size: 14 }), 'Verificar agora') : null,
+              s.metodo === 'html-publico' ? h('button', { class: 'btn btn-sm', type: 'button', onClick: (e) => { e.target.disabled = true; act(() => api.post(`/radar/admin/sources/${s.id}/run`), (r) => `Verificação: ${r.run.resultado}${r.run.erro ? ` - ${r.run.erro}` : ''}`); } }, icon('refresh', { size: 14 }), 'Verificar agora') : null,
               h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onClick: () => act(() => api.put(`/radar/admin/sources/${s.id}/availability`, { indisponivel: !s.indisponivelManual }), 'Fonte atualizada.') }, s.indisponivelManual ? 'Reativar' : 'Marcar indisponível')),
           ))))),
         h('details', {}, h('summary', {}, 'Cadastrar nova fonte (revisão manual)'),
@@ -131,7 +131,7 @@ export async function radarAdminView() {
         h('div', { class: 'rd-table-wrap' }, h('table', { class: 'rd-table' },
           h('thead', {}, h('tr', {}, ['Quando', 'Registro', 'Campo', 'Antes', 'Depois', 'Validação', 'Por'].map((x) => h('th', {}, x)))),
           h('tbody', {}, o.historico.slice(0, 50).map((r) => h('tr', {},
-            h('td', {}, fmtDT(r.em)), h('td', { class: 'small' }, r.entidadeId), h('td', {}, r.campo), h('td', {}, String(r.anterior ?? '—')), h('td', {}, String(r.novo ?? '—')), h('td', {}, r.validacao), h('td', { class: 'small' }, r.por)))))),
+            h('td', {}, fmtDT(r.em)), h('td', { class: 'small' }, r.entidadeId), h('td', {}, r.campo), h('td', {}, String(r.anterior ?? '-')), h('td', {}, String(r.novo ?? '-')), h('td', {}, r.validacao), h('td', { class: 'small' }, r.por)))))),
       ),
     );
   }

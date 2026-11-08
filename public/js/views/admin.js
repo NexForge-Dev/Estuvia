@@ -7,11 +7,11 @@ import { icon } from '../icons.js';
 import { api } from '../api.js';
 import { currentPath } from '../app.js';
 
-const fmtDT = (iso) => (iso ? new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—');
-const fmtDate = (d) => (d ? new Date(d.length === 10 ? `${d}T12:00:00Z` : d).toLocaleDateString('pt-BR') : '—');
+const fmtDT = (iso) => (iso ? new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-');
+const fmtDate = (d) => (d ? new Date(d.length === 10 ? `${d}T12:00:00Z` : d).toLocaleDateString('pt-BR') : '-');
 const fmtDay = (d) => new Date(`${d}T12:00:00Z`).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-const fmtEUR = (n) => (n == null ? '—' : `€ ${Math.round(n).toLocaleString('pt-BR')}`);
-const fmtMoney = (n, moeda = 'EUR') => (n == null ? '—' : `${moeda === 'EUR' ? '€' : moeda === 'BRL' ? 'R$' : moeda} ${Number(n).toLocaleString('pt-BR')}`);
+const fmtEUR = (n) => (n == null ? '-' : `€ ${Math.round(n).toLocaleString('pt-BR')}`);
+const fmtMoney = (n, moeda = 'EUR') => (n == null ? '-' : `${moeda === 'EUR' ? '€' : moeda === 'BRL' ? 'R$' : moeda} ${Number(n).toLocaleString('pt-BR')}`);
 
 export function relTime(iso) {
   if (!iso) return 'nunca';
@@ -22,18 +22,18 @@ export function relTime(iso) {
   if (s < 30 * 86400) return `há ${Math.floor(s / 86400)} d`;
   return fmtDT(iso);
 }
-const daysLabel = (n) => (n == null ? '—' : n === 0 ? 'hoje' : n === 1 ? '1 dia' : `${n} dias`);
+const daysLabel = (n) => (n == null ? '-' : n === 0 ? 'hoje' : n === 1 ? '1 dia' : `${n} dias`);
 
 const EVENT = {
   register: ['Cadastro', 'ok'], login: ['Entrou', 'ok'], 'login-failed': ['Login falhou', 'bad'], 'login-blocked': ['Login de conta suspensa', 'bad'],
   'password-changed': ['Trocou a senha', 'info'], 'account-deleted': ['Excluiu a conta', 'bad'], 'admin-created': ['Conta admin criada', 'info'],
-  'admin-password-synced': ['Senha admin atualizada pelo .env', 'info'], 'admin-block': ['Admin suspendeu conta', 'bad'], 'admin-unblock': ['Admin reativou conta', 'info'],
+  'admin-password-synced': ['Senha admin atualizada pelo .env', 'info'], 'admin-block': ['Admin suspendeu conta', 'bad'], 'admin-unblock': ['Admin reativou conta', 'info'], 'admin-role': ['Admin alterou papel', 'info'],
   'admin-logout-user': ['Admin encerrou sessões', 'info'], 'admin-ai-check': ['Admin testou a IA', 'info'], 'admin-status-check': ['Admin verificou o status', 'info'], 'community-moderation': ['Moderação da comunidade', 'info'],
   'community-verification': ['Verificação na comunidade', 'info'], 'community-opportunity-change': ['Oportunidade alterada', 'info'],
   'journey.round-unlocked': ['Rodada desbloqueada', 'ok'], 'requirements.updated': ['Atualizou requisitos', 'info'],
 };
 const eventLabel = (a) => EVENT[a] || [a, 'info'];
-const device = (d) => (d ? `${d.browser} · ${d.os} · ${d.device}` : '—');
+const device = (d) => (d ? `${d.browser} · ${d.os} · ${d.device}` : '-');
 
 // Tons das situações (candidatura, matrícula, visto, documentos).
 const TONE = {
@@ -50,7 +50,7 @@ const panel = (title, iconName, ...children) => h('section', { class: 'rd-panel'
 const empty = (text) => h('p', { class: 'muted small' }, text);
 const table = (heads, rows) => h('div', { class: 'rd-table-wrap' }, h('table', { class: 'rd-table' },
   h('thead', {}, h('tr', {}, heads.map((x) => h('th', {}, x)))), h('tbody', {}, rows)));
-const dl = (pairs) => h('dl', { class: 'adm-info' }, pairs.filter(Boolean).map(([k, v]) => h('div', {}, h('dt', {}, k), h('dd', {}, v instanceof Node ? v : String(v ?? '—')))));
+const dl = (pairs) => h('dl', { class: 'adm-info' }, pairs.filter(Boolean).map(([k, v]) => h('div', {}, h('dt', {}, k), h('dd', {}, v instanceof Node ? v : String(v ?? '-')))));
 
 // Barra de progresso (largura via CSSOM: a CSP não permite atributo style inline).
 function meter(pct, cls = '') {
@@ -72,7 +72,7 @@ function activityChart(dias) {
     h('figcaption', { class: 'adm-axis small muted' }, h('span', {}, fmtDay(dias[0].dia)), h('span', {}, `máx. ${max}/dia`), h('span', {}, 'hoje')));
 }
 
-const fmtDur = (seg) => (seg == null ? '—' : seg < 60 ? `${seg} s` : seg < 3600 ? `${Math.floor(seg / 60)} min ${String(seg % 60).padStart(2, '0')} s` : `${Math.floor(seg / 3600)} h ${Math.floor((seg % 3600) / 60)} min`);
+const fmtDur = (seg) => (seg == null ? '-' : seg < 60 ? `${seg} s` : seg < 3600 ? `${Math.floor(seg / 60)} min ${String(seg % 60).padStart(2, '0')} s` : `${Math.floor(seg / 3600)} h ${Math.floor((seg % 3600) / 60)} min`);
 
 // Ranking de módulos: barra horizontal = parcela dos acessos; números em texto ao lado.
 function usageTable(uso) {
@@ -92,8 +92,8 @@ function eventsTable(eventos) {
     return h('tr', {},
       h('td', { title: fmtDT(e.at) }, relTime(e.at)),
       h('td', {}, tag(label, tone)),
-      h('td', { class: 'small' }, e.email || '—'),
-      h('td', { class: 'small' }, e.ip || '—'),
+      h('td', { class: 'small' }, e.email || '-'),
+      h('td', { class: 'small' }, e.ip || '-'),
       h('td', { class: 'small muted' }, device(e.dispositivo)));
   }));
 }
@@ -114,20 +114,20 @@ function aiServiceCard(titulo, s, teste) {
     h('div', { class: 'row wrap adm-detail-head' }, h('h3', {}, titulo), modo),
     s.problemaConfig ? h('div', { class: 'adm-alert' }, icon('alert', { size: 16 }), h('span', {}, s.problemaConfig)) : null,
     dl([
-      ['Modelo', s.modelo || '—'],
+      ['Modelo', s.modelo || '-'],
       ['Chave', s.chave || 'não definida'],
       s.baseUrl ? ['Servidor', s.baseUrl] : null,
       ['Respostas com IA', u.ok || 0],
       ['Falhas da IA', `${u.erro || 0}${taxa != null ? ` (${taxa}%)` : ''}`],
       titulo === 'Mentor' ? ['Respostas no Modo Guiado', u.guiado || 0] : ['Respostas offline', u.offline || 0],
       ['Última resposta ok', relTime(u.ultimoOk)],
-      ['Última falha', u.ultimoErro ? `${relTime(u.ultimoErro.em)} — ${u.ultimoErro.mensagem}` : 'nenhuma'],
+      ['Última falha', u.ultimoErro ? `${relTime(u.ultimoErro.em)} - ${u.ultimoErro.mensagem}` : 'nenhuma'],
     ]),
     teste ? h('div', { class: `adm-test adm-test-${teste.ok === true ? 'ok' : teste.ok === false ? 'bad' : 'muted'}` },
       icon(teste.ok === true ? 'check' : teste.ok === false ? 'alert' : 'help', { size: 16 }),
       h('span', {}, h('strong', {}, teste.ok === true ? 'Funcionando. ' : teste.ok === false ? 'Falhou. ' : 'Sem IA configurada. '), teste.detalhe, teste.latenciaMs != null ? ` (${teste.latenciaMs} ms)` : '')) : null,
     u.erros?.length ? h('details', {}, h('summary', { class: 'small' }, `Últimas ${u.erros.length} falha(s)`),
-      h('ul', { class: 'small adm-list' }, u.erros.map((e) => h('li', {}, `${fmtDT(e.em)} — ${e.mensagem}`)))) : null);
+      h('ul', { class: 'small adm-list' }, u.erros.map((e) => h('li', {}, `${fmtDT(e.em)} - ${e.mensagem}`)))) : null);
 }
 
 function aiPanel(ia) {
@@ -443,7 +443,7 @@ function journeyCard(j) {
       ['Orçamento planejado', fmtEUR(f.planejado)],
       ['Exigência do visto', fmtEUR(f.exigenciaVisto)],
       ['Recursos confirmados', f.informouRecursos ? fmtEUR(f.disponivel) : 'não informou'],
-      ['Situação financeira', !f.informouRecursos ? '—' : f.deficit > 0 ? h('span', { class: 'adm-bad-text' }, `faltam ${fmtEUR(f.deficit)}`) : h('span', { class: 'adm-ok-text' }, 'coberto')],
+      ['Situação financeira', !f.informouRecursos ? '-' : f.deficit > 0 ? h('span', { class: 'adm-bad-text' }, `faltam ${fmtEUR(f.deficit)}`) : h('span', { class: 'adm-ok-text' }, 'coberto')],
     ]),
     vencidos.length || proximos.length ? table(['Prazo', 'Data', 'Situação'], [...vencidos, ...proximos].map((p) => h('tr', {},
       h('td', {}, p.titulo), h('td', {}, fmtDate(p.data)),
@@ -496,9 +496,12 @@ export async function adminStudentView(id) {
         h('div', { class: 'row wrap adm-detail-head' },
           h('div', {},
             h('p', { class: 'rd-eyebrow' }, icon('user', { size: 16 }), 'Acompanhamento do aluno'),
-            h('h1', {}, `${p.avatar || '🎓'} ${p.nome || '—'}`),
+            h('h1', {}, `${p.avatar || '🎓'} ${p.nome || '-'}`),
             h('p', { class: 'muted' }, p.email, ' · ', u.online ? h('span', { class: 'adm-ok-text' }, 'online agora') : `visto ${relTime(u.lastSeenAt)}`, u.modulo && u.online ? ` (em ${u.modulo})` : '', u.bloqueado ? ' · ' : '', u.bloqueado ? tag('suspenso', 'bad') : null)),
           h('div', { class: 'row wrap' },
+            u.admin ? null : h('label', { class: 'small row' }, 'Papel ',
+              h('select', { 'aria-label': 'Papel da conta', onChange: (ev) => act(() => api.post(`/admin/users/${u.id}/role`, { papel: ev.target.value }), 'Papel atualizado.') },
+                [['estudante', 'Estudante'], ['moderador', 'Moderação da comunidade'], ['radar', 'Equipe do Radar']].map(([v, l]) => h('option', { value: v, selected: (u.papel || 'estudante') === v }, l)))),
             h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onClick: () => act(() => api.post(`/admin/users/${u.id}/logout`), 'Sessões encerradas.') }, icon('lock', { size: 14 }), 'Encerrar sessões'),
             h('button', { class: `btn btn-sm ${u.bloqueado ? '' : 'adm-btn-danger'}`, type: 'button', onClick: () => act(() => api.post(`/admin/users/${u.id}/block`, { bloqueado: !u.bloqueado }), u.bloqueado ? 'Conta reativada.' : 'Conta suspensa.') },
               icon(u.bloqueado ? 'unlock' : 'shield', { size: 14 }), u.bloqueado ? 'Reativar conta' : 'Suspender conta'))),
@@ -506,7 +509,7 @@ export async function adminStudentView(id) {
           stat(daysLabel(e.diasSemEntrar), 'Sem entrar', e.diasSemEntrar >= 30 ? 'bad' : e.diasSemEntrar >= 7 ? 'warn' : 'ok'),
           stat(e.visitas, 'Visitas'),
           stat(e.diasAtivos, 'Dias com acesso'),
-          stat(rel.jornadas.length ? `${Math.max(...rel.jornadas.map((j) => j.progresso || 0))}%` : '—', 'Progresso da jornada'),
+          stat(rel.jornadas.length ? `${Math.max(...rel.jornadas.map((j) => j.progresso || 0))}%` : '-', 'Progresso da jornada'),
         ),
         h('p', { class: 'rd-footnote' }, `Cadastro em ${fmtDate(e.cadastro)} (há ${daysLabel(e.diasDesdeCadastro)}) · ${e.logins} login(s), último ${relTime(e.ultimoLogin)} · Mentor: ${e.mentor?.mensagens || 0} mensagem(ns) · Assistente: ${e.assistente?.mensagens || 0}`)),
 
@@ -522,7 +525,7 @@ export async function adminStudentView(id) {
         panel('Documentos', 'file',
           h('p', { class: 'small muted' }, Object.entries(rel.documentos.resumo).map(([k, n]) => `${n} ${rel.documentos.lista.find((d) => d.status === k)?.statusLabel.toLowerCase() || k}`).join(' · ')),
           table(['Documento', 'Situação', 'Atualizado'], rel.documentos.lista.map((d) => h('tr', {},
-            h('td', {}, d.nome), h('td', {}, tag(d.statusLabel, TONE.doc[d.status])), h('td', { class: 'small muted' }, d.atualizadoEm ? fmtDate(d.atualizadoEm) : '—'))))),
+            h('td', {}, d.nome), h('td', {}, tag(d.statusLabel, TONE.doc[d.status])), h('td', { class: 'small muted' }, d.atualizadoEm ? fmtDate(d.atualizadoEm) : '-'))))),
         panel('Finanças e bolsas', 'euro',
           h('h3', {}, 'Recursos informados'),
           rel.financas.recursos.length ? h('ul', { class: 'adm-list small' }, rel.financas.recursos.map((x) => h('li', {}, `${x.descricao || x.tipo}: ${fmtMoney(x.valor, x.moeda)} (${x.status})`)))
@@ -537,16 +540,16 @@ export async function adminStudentView(id) {
         panel('Outros módulos', 'compass', dl([
           ['Moradia', rel.moradia.escolhida ? `escolhida: ${rel.moradia.escolhida.titulo}${rel.moradia.escolhida.bairro ? ` (${rel.moradia.escolhida.bairro})` : ''}` : `${rel.moradia.opcoes} opção(ões), nenhuma escolhida`],
           ['Viagem', rel.viagem.escolhida ? `rota escolhida: ${rel.viagem.escolhida.titulo}${rel.viagem.escolhida.comprada ? ' · passagem comprada' : ''}` : `${rel.viagem.opcoes} cotação(ões)`],
-          ['Saída / data da ida', `${rel.viagem.origem || '—'} · ${rel.viagem.dataIda ? fmtDate(rel.viagem.dataIda) : 'sem data'}`],
+          ['Saída / data da ida', `${rel.viagem.origem || '-'} · ${rel.viagem.dataIda ? fmtDate(rel.viagem.dataIda) : 'sem data'}`],
           ['Tarefas na agenda', rel.agenda.total],
           ['Conquistas', rel.conquistas],
-          ['Comunidade', rel.comunidade ? `${rel.comunidade.publicacoes} post(s) · ${rel.comunidade.comentarios} comentário(s) · ${rel.comunidade.grupos} grupo(s)` : '—'],
-          ['Radar', rel.radar ? `acompanha ${rel.radar.acompanhando} oportunidade(s) · ${rel.radar.alertasNaoLidos} alerta(s) não lido(s)` : '—'],
+          ['Comunidade', rel.comunidade ? `${rel.comunidade.publicacoes} post(s) · ${rel.comunidade.comentarios} comentário(s) · ${rel.comunidade.grupos} grupo(s)` : '-'],
+          ['Radar', rel.radar ? `acompanha ${rel.radar.acompanhando} oportunidade(s) · ${rel.radar.alertasNaoLidos} alerta(s) não lido(s)` : '-'],
         ]),
         h('h3', {}, 'Agenda dos próximos 7 dias'),
-        rel.agenda.proximos7dias.length ? h('ul', { class: 'adm-list small' }, rel.agenda.proximos7dias.map((t) => h('li', {}, `${fmtDate(t.data)}${t.inicio ? ` ${t.inicio}` : ''} — ${t.titulo}`))) : empty('Nada agendado.')),
+        rel.agenda.proximos7dias.length ? h('ul', { class: 'adm-list small' }, rel.agenda.proximos7dias.map((t) => h('li', {}, `${fmtDate(t.data)}${t.inicio ? ` ${t.inicio}` : ''} - ${t.titulo}`))) : empty('Nada agendado.')),
         panel('Perfil', 'user', dl([
-          ['Nacionalidade', p.nacionalidade], ['Mora em', [p.estado, p.paisResidencia].filter(Boolean).join(', ') || '—'],
+          ['Nacionalidade', p.nacionalidade], ['Mora em', [p.estado, p.paisResidencia].filter(Boolean).join(', ') || '-'],
           ['Formação', p.formacao], ['Instituição', p.instituicao], ['Área', p.area],
           ['Espanhol', p.espanhol], ['Inglês', p.ingles], ['Certificado de espanhol', p.certificadoEspanhol && p.certificadoEspanhol !== 'nenhum' ? `${p.certificadoEspanhol} ${p.certificadoNivel || ''}` : 'nenhum'],
           ['Candidatura (declarada)', p.situacaoCandidatura], ['Visto (declarado)', p.situacaoVisto],
@@ -566,7 +569,7 @@ export async function adminStudentView(id) {
           activityStrip(e.diasAtivosLista),
           e.modulos.length ? table(['Módulo', 'Acessos', 'Tempo total'], e.modulos.map((m) => h('tr', {}, h('td', {}, m.nome), h('td', {}, String(m.acessos)), h('td', {}, fmtDur(m.tempoTotalSeg)))))
             : empty('Nenhum acesso a módulos registrado ainda.'),
-          dl([['Dispositivo', device(u.dispositivo)], ['Último IP', u.ip || '—']]),
+          dl([['Dispositivo', device(u.dispositivo)], ['Último IP', u.ip || '-']]),
           u.userAgent ? h('p', { class: 'small muted adm-ua' }, u.userAgent) : null)),
 
       panel('Histórico da conta', 'clock', eventsTable(r.eventos)),

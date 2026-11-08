@@ -36,7 +36,7 @@ function Header(meta, secao) {
     h('div', {},
       h('span', { class: 'eyebrow' }, 'Comunidade'),
       h('h1', {}, 'Descubra, confira e transforme em ação'),
-      h('p', { class: 'muted' }, 'Oportunidades, dúvidas e experiências de quem está no mesmo caminho. Cada publicação mostra o quanto é confiável — e você leva o que importa para a sua jornada e a sua agenda.')),
+      h('p', { class: 'muted' }, 'Oportunidades, dúvidas e experiências de quem está no mesmo caminho. Cada publicação mostra o quanto é confiável, e você leva o que importa para a sua jornada e a sua agenda.')),
     h('nav', { class: 'cm-tabs', 'aria-label': 'Seções da comunidade' },
       tab('', 'Feed', 'home', !secao || secao === 'post' || secao === 'missao'),
       tab('/grupos', 'Grupos', 'users', secao === 'grupos' || secao === 'grupo'),
@@ -184,10 +184,10 @@ function GroupsSection(ctx) {
   draw();
 
   const err = h('p', { class: 'form-error', hidden: true });
-  const uniSel = h('select', { name: 'universidadeId' }, h('option', { value: '' }, '—'), ctx.meta.universidades.map((u) => h('option', { value: u.id }, `${u.sigla} — ${u.nome}`)));
+  const uniSel = h('select', { name: 'universidadeId' }, h('option', { value: '' }, '-'), ctx.meta.universidades.map((u) => h('option', { value: u.id }, `${u.sigla} - ${u.nome}`)));
   const form = h('form', { class: 'card stack cm-new-group' },
     h('h2', {}, 'Criar um grupo'),
-    h('p', { class: 'muted small' }, 'Por universidade, cidade ou país — por exemplo "Brasileiros na UCO" ou "Estudantes em Málaga".'),
+    h('p', { class: 'muted small' }, 'Por universidade, cidade ou país, por exemplo "Brasileiros na UCO" ou "Estudantes em Málaga".'),
     h('div', { class: 'grid-2' },
       h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Nome'), h('input', { name: 'nome', maxlength: 60, required: true })),
       h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Tipo'), h('select', { name: 'tipo' }, h('option', { value: 'universidade' }, 'Universidade'), h('option', { value: 'cidade' }, 'Cidade'), h('option', { value: 'pais' }, 'País')))),
@@ -233,7 +233,7 @@ async function VerifiedSection() {
   const { itens } = await api.get('/community/radar');
   return h('div', { class: 'stack' },
     h('div', { class: 'cm-notice cm-notice-info' }, icon('shield', { size: 16 }),
-      h('span', {}, 'Oportunidades da comunidade conferidas pela equipe no edital oficial (link, requisitos e datas). Elas seguem para revisão do ', h('a', { href: '#/oportunidades' }, 'Radar de Oportunidades'), ' — duplicatas viram um item só.')),
+      h('span', {}, 'Oportunidades da comunidade conferidas pela equipe no edital oficial (link, requisitos e datas). Elas seguem para revisão do ', h('a', { href: '#/oportunidades' }, 'Radar de Oportunidades'), ', duplicatas viram um item só.')),
     itens.length
       ? h('div', { class: 'cm-verified' }, itens.map((o) => h('article', { class: 'card cm-verified-item' },
         h('p', { class: 'eyebrow' }, o.instituicao),
@@ -274,7 +274,7 @@ async function MyOpportunities() {
           h('span', { class: 'cm-tag' }, DECISAO[o.decisao])),
         h('p', { class: 'small muted' },
           o.snapshot.prazo ? `Prazo: ${fmtDate(o.snapshot.prazo)}${d >= 0 ? ` (faltam ${d} dias)` : ' (encerrado)'} · ` : '',
-          o.verificacao === 'verificada' ? 'verificada pela equipe' : 'ainda não verificada — confira no edital',
+          o.verificacao === 'verificada' ? 'verificada pela equipe' : 'ainda não verificada, confira no edital',
           o.publicacaoDisponivel ? [' · ', h('a', { href: `#/comunidade/post/${o.postId}` }, 'ver publicação')] : ''),
         h('div', { class: 'cm-bar', role: 'progressbar', 'aria-valuenow': Math.round(o.progresso * 100), 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-label': 'Progresso da missão' }, bar),
         h('h4', {}, 'Missão: avaliar a oportunidade'),

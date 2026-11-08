@@ -26,7 +26,7 @@ export function loginView() {
     try {
       await api.post('/auth/login', formData(form));
       await refreshMe();
-      toast(`Que bom te ver de novo, ${state.me.user.profile.apelido}! 💛`, 'ok');
+      toast(`Oi de novo, ${state.me.user.profile.apelido}.`, 'ok');
       go('/');
     } catch (ex) {
       showError(err, ex.message);
@@ -39,6 +39,7 @@ export function loginView() {
     h('h1', {}, 'Bem-vindo(a) de volta'),
     h('p', { class: 'muted' }, 'Sua jornada está te esperando exatamente onde você parou.'),
     form,
+    h('p', {}, h('a', { href: '#/esqueci-senha' }, 'Esqueci minha senha')),
     h('p', {}, 'Ainda não tem conta? ', h('a', { href: '#/cadastro' }, 'Crie a sua grátis')),
   );
 }
@@ -52,7 +53,7 @@ export function registerView() {
       'Mínimo de 8 caracteres, com letras e números.'),
     h('label', { class: 'check' },
       h('input', { type: 'checkbox', name: 'aceite', required: true }),
-      h('span', {}, 'Li e aceito que a plataforma orienta, mas não substitui os sistemas oficiais, e concordo com o tratamento mínimo dos meus dados para personalizar a jornada (você pode exportar ou excluir tudo quando quiser).'),
+      h('span', {}, 'Li e aceito os ', h('a', { href: '#/termos', target: '_blank', rel: 'noopener' }, 'Termos de Uso'), ' e a ', h('a', { href: '#/privacidade', target: '_blank', rel: 'noopener' }, 'Política de Privacidade'), '. Entendo que a plataforma orienta, mas não substitui os sistemas oficiais (você pode exportar ou excluir seus dados quando quiser).'),
     ),
     err,
     h('button', { class: 'btn btn-lg', type: 'submit' }, 'Criar conta e começar'),
@@ -66,7 +67,7 @@ export function registerView() {
     try {
       await api.post('/auth/register', data);
       await refreshMe();
-      toast('Bem-vindo(a) à família! 🎉 Sua jornada começou.', 'ok');
+      toast('Conta criada. Sua jornada já está pronta.', 'ok');
       go('/jornadas/nova');
     } catch (ex) {
       showError(err, ex.message);
@@ -80,5 +81,67 @@ export function registerView() {
     h('p', { class: 'muted' }, 'Grátis. Leva 1 minuto. Você não precisa enviar nenhum documento.'),
     form,
     h('p', {}, 'Já tem conta? ', h('a', { href: '#/entrar' }, 'Entrar')),
+  );
+}
+
+// Recuperação de senha: pede o e-mail; o link enviado abre #/redefinir-senha/<token>.
+export function forgotPasswordView() {
+  const err = errorBox();
+  const done = h('p', { class: 'form-ok', role: 'status', hidden: true });
+  const form = h('form', { class: 'stack', novalidate: true },
+    field('E-mail da sua conta', h('input', { name: 'email', type: 'email', autocomplete: 'email', required: true })),
+    err,
+    h('button', { class: 'btn btn-lg', type: 'submit' }, 'Enviar link'),
+  );
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector('button');
+    btn.disabled = true;
+    err.hidden = true;
+    try {
+      const r = await api.post('/auth/forgot-password', formData(form));
+      done.textContent = r.message;
+      done.hidden = false;
+      form.hidden = true;
+    } catch (ex) {
+      showError(err, ex.message);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+  return h('section', { class: 'auth card' },
+    h('h1', {}, 'Esqueci minha senha'),
+    h('p', { class: 'muted' }, 'Informe o e-mail da sua conta. Enviaremos um link para você criar uma nova senha.'),
+    form, done,
+    h('p', {}, h('a', { href: '#/entrar' }, 'Voltar para o login')),
+  );
+}
+
+export function resetPasswordView(token) {
+  const err = errorBox();
+  const form = h('form', { class: 'stack', novalidate: true },
+    field('Nova senha', h('input', { name: 'senha', type: 'password', autocomplete: 'new-password', required: true, minlength: 8 }),
+      'Mínimo de 8 caracteres, com letras e números.'),
+    err,
+    h('button', { class: 'btn btn-lg', type: 'submit' }, 'Salvar nova senha'),
+  );
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector('button');
+    btn.disabled = true;
+    try {
+      await api.post('/auth/reset-password', { token, senha: form.senha.value });
+      toast('Senha alterada. Entre com a nova senha.', 'ok');
+      go('/entrar');
+    } catch (ex) {
+      showError(err, ex.message);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+  return h('section', { class: 'auth card' },
+    h('h1', {}, 'Criar nova senha'),
+    h('p', { class: 'muted' }, 'Por segurança, você sairá de todos os dispositivos depois da troca.'),
+    form,
   );
 }
