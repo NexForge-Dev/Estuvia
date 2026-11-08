@@ -22,7 +22,7 @@ export async function manualView() {
     h('header', { class: 'page-head' }, h('div', {},
       h('p', { class: 'eyebrow' }, 'Como funciona'),
       h('h1', {}, 'O caminho até o seu mestrado na Espanha'),
-      h('p', { class: 'muted' }, 'Aqui está o mapa completo, para você ter uma visão geral. Ao criar sua conta, a plataforma transforma esse mapa numa jornada guiada: um passo de cada vez, com prazos, documentos e o Mentor por perto.'))),
+      h('p', { class: 'muted' }, 'Aqui está o mapa completo, para você ter uma visão geral. Ao criar sua conta, a plataforma transforma esse mapa numa jornada guiada: um passo de cada vez, com prazos, documentos e o Mentor IA.'))),
     h('div', { class: 'lp-ctas' },
       h('a', { class: 'btn btn-cta btn-lg', href: '#/cadastro' }, icon('play', { size: 16 }), 'Criar minha conta'),
       h('a', { class: 'btn btn-ghost btn-lg', href: '#/entrar' }, 'Já tenho conta')),

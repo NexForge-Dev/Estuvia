@@ -242,7 +242,7 @@ const NAV_MORE = [
   { href: '/oportunidades', label: 'Oportunidades', icon: 'globe' },
   { href: '/comunidade', label: 'Comunidade', icon: 'users' },
   { href: '/conquistas', label: 'Conquistas', icon: 'trophy' },
-  { href: '/assistente', label: 'Mentor', icon: 'chat' },
+  { href: '/assistente', label: 'Mentor IA', icon: 'chat' },
 ];
 // Só aparece para a conta de administrador (ADMIN_EMAIL no .env).
 const NAV_ADMIN = [
