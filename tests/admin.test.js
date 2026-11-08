@@ -186,7 +186,6 @@ test('status do sistema e logs: só o admin vê; serviços com estado e métrica
   assert.ok(l.logs.some((x) => x.mensagem.includes('aviso para o painel de logs')));
   assert.ok(l.logs.every((x) => x.nivel === 'aviso'));
 });
-
 test('papéis: o admin concede moderação/Radar; a sessão cai; ninguém vira admin por aqui', async () => {
   const mod = client();
   const r = await mod('POST', '/auth/register', { nome: 'Rui Mod', email: 'rui@exemplo.com', senha: 'segura123', aceite: true });

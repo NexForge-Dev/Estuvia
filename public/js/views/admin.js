@@ -165,7 +165,7 @@ function enrollmentPanel(ins) {
       block('Matrícula', ins.matricula, TONE.matricula),
       block('Visto', ins.visto, TONE.visto)) : empty('Nenhum estudante criou jornada ainda.'),
     ins.destinos.length ? h('div', { class: 'adm-destinos' }, h('h3', {}, 'Destinos mais escolhidos'),
-      h('ol', { class: 'small adm-list' }, ins.destinos.map((d) => h('li', {}, `${d.nome} - ${d.total}`)))) : null);
+      h('ol', { class: 'small adm-list' }, ins.destinos.map((d) => h('li', {}, `${d.nome} — ${d.total}`)))) : null);
 }
 
 // ---------- Visão geral ----------
@@ -226,7 +226,7 @@ function statusPage(root) {
         h('div', {},
           h('strong', {}, GERAL[s.geral]),
           h('small', {}, `${conta('ok')} operacional(is) · ${conta('aviso')} com atenção · ${conta('erro')} com falha · ${conta('desligado')} desligado(s)`),
-          h('small', {}, `Verificado em ${fmtDT(s.verificadoEm)} · ${s.testeCompleto ? 'teste completo (conexões e chaves testadas)' : 'só configuração, clique em "Verificar agora" para testar as conexões'}`)),
+          h('small', {}, `Verificado em ${fmtDT(s.verificadoEm)} · ${s.testeCompleto ? 'teste completo (conexões e chaves testadas)' : 'só configuração — clique em "Verificar agora" para testar as conexões'}`)),
         btn),
       ...grupos.map((g) => h('section', { class: 'adm-group' }, h('h2', { class: 'adm-group-title' }, g),
         h('div', { class: 'adm-svc-grid' }, s.servicos.filter((x) => x.grupo === g).map((x) => {
@@ -244,8 +244,8 @@ function statusPage(root) {
           kpi(m.requisicoes, 'Requisições'),
           kpi(m.erros, 'Erros (5xx)', null, m.erros ? 'bad' : null),
           kpi(pct(m.taxaErro), 'Taxa de erro', null, m.taxaErro > 0.02 ? 'bad' : m.taxaErro > 0 ? 'warn' : null),
-          kpi(m.mediaMs == null ? '-' : `${m.mediaMs} ms`, 'Tempo médio'),
-          kpi(m.p95Ms == null ? '-' : `${m.p95Ms} ms`, 'Tempo p95', '95% respondem até aqui'),
+          kpi(m.mediaMs == null ? '—' : `${m.mediaMs} ms`, 'Tempo médio'),
+          kpi(m.p95Ms == null ? '—' : `${m.p95Ms} ms`, 'Tempo p95', '95% respondem até aqui'),
           kpi(m.clientes4xx, 'Recusadas (4xx)', 'login expirado, validação…')),
         h('p', { class: 'small muted adm-unused' }, `Contado em memória desde o último reinício do servidor (${fmtDT(s.iniciadoEm)}).`)));
   }
@@ -343,9 +343,9 @@ async function overviewPage(root, section) {
         h('small', { class: 'muted adm-block' }, u.email)))),
       h('td', { title: fmtDT(u.lastSeenAt) }, relTime(u.lastSeenAt), u.diasSemEntrar >= 7 ? h('small', { class: 'adm-warn-text adm-block' }, `${daysLabel(u.diasSemEntrar)} sem entrar`) : null),
       h('td', { class: 'small' }, u.destino ? h('span', { class: 'adm-dest', title: u.destino }, u.destino) : h('span', { class: 'muted' }, 'sem jornada')),
-      h('td', {}, u.inscricao ? h('div', { class: 'adm-stack-tags' }, tag(u.inscricao.candidaturaLabel, TONE.candidatura[u.inscricao.candidatura]), tag(`Visto: ${u.inscricao.vistoLabel.toLowerCase()}`, TONE.visto[u.inscricao.visto])) : h('span', { class: 'muted' }, '-')),
-      h('td', {}, u.progresso == null ? '-' : h('div', { class: 'adm-prog' }, h('span', {}, `${u.progresso}%`), meter(u.progresso))),
-      h('td', {}, u.alertas ? tag(String(u.alertas), u.alertaAlto ? 'bad' : 'warn') : h('span', { class: 'muted' }, '-')),
+      h('td', {}, u.inscricao ? h('div', { class: 'adm-stack-tags' }, tag(u.inscricao.candidaturaLabel, TONE.candidatura[u.inscricao.candidatura]), tag(`Visto: ${u.inscricao.vistoLabel.toLowerCase()}`, TONE.visto[u.inscricao.visto])) : h('span', { class: 'muted' }, '—')),
+      h('td', {}, u.progresso == null ? '—' : h('div', { class: 'adm-prog' }, h('span', {}, `${u.progresso}%`), meter(u.progresso))),
+      h('td', {}, u.alertas ? tag(String(u.alertas), u.alertaAlto ? 'bad' : 'warn') : h('span', { class: 'muted' }, '—')),
     ))) : empty(query || filtro !== 'todos' ? 'Nenhum aluno encontrado com esses filtros.' : 'Nenhum aluno cadastrado ainda.'));
   }
 
@@ -356,7 +356,7 @@ async function overviewPage(root, section) {
       t.bloqueados ? tag(`${t.bloqueados} conta(s) suspensa(s)`, 'warn') : null,
       t.loginsFalhos24h ? tag(`${t.loginsFalhos24h} login(s) falho(s) em 24 h`, t.loginsFalhos24h >= 5 ? 'bad' : 'warn') : null,
       o.ipsSuspeitos.length ? tag(`IPs suspeitos: ${o.ipsSuspeitos.map((x) => `${x.ip} (${x.tentativas})`).join(', ')}`, 'bad') : null,
-      o.ia.mentor.problemaConfig ? h('a', { href: '#/admin/status' }, tag('IA com problema de configuração, ver Status', 'bad')) : null,
+      o.ia.mentor.problemaConfig ? h('a', { href: '#/admin/status' }, tag('IA com problema de configuração — ver Status', 'bad')) : null,
     ].filter(Boolean);
 
     const search = h('input', { type: 'search', class: 'adm-search', placeholder: 'Buscar por nome ou e-mail…', value: query, 'aria-label': 'Buscar aluno' });

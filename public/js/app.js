@@ -249,7 +249,7 @@ const NAV_ADMIN = [
   { href: '/admin', label: 'Alunos', icon: 'users', match: (p) => p === '/admin' || p.startsWith('/admin/aluno') },
   { href: '/admin/inscricoes', label: 'Inscrições', icon: 'flag' },
   { href: '/admin/uso', label: 'Uso dos módulos', icon: 'target' },
-  { href: '/admin/ia', label: 'IA', icon: 'chat' },
+  { href: '/admin/ia', label: 'IA', icon: 'sparkles' },
   { href: '/admin/eventos', label: 'Eventos', icon: 'clock' },
   { href: '/admin/status', label: 'Status', icon: 'pulse' },
   { href: '/admin/logs', label: 'Logs', icon: 'terminal' },
