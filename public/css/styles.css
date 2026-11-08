@@ -932,3 +932,17 @@ html .panel.panel-fold { padding: 0; }
 .trail-docs > div { flex: 1; min-width: 200px; display: grid; gap: 2px; }
 .trail-docs p { margin: 0; }
 .trail-docs-ic { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; flex: none; color: var(--green, var(--ok)); background: color-mix(in srgb, var(--ok) 13%, transparent); }
+
+/* Seletor de idioma (PT/ES/EN) */
+.topbar-actions { display: flex; align-items: center; gap: 8px; }
+.lang-switch { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface-2); color: var(--text); flex: none; }
+.lang-switch .lang-ic { display: inline-flex; color: var(--muted); }
+.lang-select { appearance: none; -webkit-appearance: none; border: 0; background: transparent; color: var(--text); font: inherit; font-size: .86rem; font-weight: 600; padding: 0 16px 0 0; cursor: pointer; outline: none; }
+.lang-select option { color: var(--text); background: var(--surface); }
+.lang-switch:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lang-switch-sm { padding: 5px 8px; }
+.lang-switch-sm .lang-select { font-size: .8rem; }
+.lang-switch-block { display: flex; width: 100%; margin-bottom: 10px; }
+.lang-switch-block .lang-select { flex: 1; }
+.sidebar-lang { padding: 0 8px; }
+.sidebar-lang:empty { display: none; }

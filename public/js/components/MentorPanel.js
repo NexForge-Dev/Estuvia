@@ -7,6 +7,7 @@ import { icon } from '../icons.js';
 import { api } from '../api.js';
 import { state, go, currentPath, invalidate } from '../app.js';
 import { renderResult } from './ResultCard.js';
+import { locale } from '../i18n.js';
 
 // Estilos próprios, carregados uma vez (CSP: só arquivos do próprio site).
 function ensureStyles() {
@@ -34,7 +35,7 @@ export function routeContext() {
 }
 
 const fmt = (iso) => (iso ? iso.split('-').reverse().join('/') : '');
-const eur = (v) => `€ ${Math.round(Number(v) || 0).toLocaleString('pt-BR')}`;
+const eur = (v) => `€ ${Math.round(Number(v) || 0).toLocaleString(locale())}`;
 // A CSP bloqueia o atributo style inline: a largura é aplicada via CSSOM.
 const fill = (attrs, pct) => { const el = h('span', attrs); el.style.width = `${Math.max(0, Math.min(100, pct))}%`; return el; };
 const time = (t) => (t ? `${Number(t.slice(0, 2))}h${t.slice(3) === '00' ? '' : t.slice(3)}` : '');
@@ -80,7 +81,7 @@ function card(c, ui) {
       c.itens.forEach((it, i) => { if (!days.has(it.data)) days.set(it.data, []); days.get(it.data).push({ it, i }); });
       const editable = ui.proposal?.passos?.[0]?.ferramenta === 'create_calendar_event' && ui.proposal.passos[0].editavel?.includes('itens');
       return box('Proposta da semana', 'calendar',
-        h('div', { class: 'mt-week' }, [...days].map(([d, list]) => h('div', { class: 'mt-day' }, h('p', { class: 'mt-day-title' }, new Date(`${d}T12:00:00Z`).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: 'UTC' })),
+        h('div', { class: 'mt-week' }, [...days].map(([d, list]) => h('div', { class: 'mt-day' }, h('p', { class: 'mt-day-title' }, new Date(`${d}T12:00:00Z`).toLocaleDateString(locale(), { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: 'UTC' })),
           list.map(({ it, i }) => h('label', { class: `mt-block p-${it.prioridade || 'normal'}` },
             editable ? h('input', { type: 'checkbox', checked: true, dataset: { idx: i }, onChange: (e) => ui.toggleItem(i, e.target.checked) }) : null,
             h('span', { class: 'mt-block-time' }, `${time(it.inicio)}–${time(it.fim)}`), h('span', {}, it.titulo), it.motivo ? h('small', { class: 'muted' }, it.motivo) : null))))),
@@ -152,7 +153,7 @@ function card(c, ui) {
           h('a', { href: i.url, target: '_blank', rel: 'noopener noreferrer' }, i.titulo, ' ', icon('external', { size: 11 })),
           i.resumo ? h('p', { class: 'small muted' }, i.resumo) : null,
           h('small', {}, h('span', { class: 'mt-nat' }, i.naturezaLabel), i.fonte ? ` · ${i.fonte}` : '', i.publicadoEm ? ` · ${fmt(i.publicadoEm.slice(0, 10))}` : '')))),
-        h('p', { class: 'small muted' }, `${c.aviso} Consultado em ${new Date(c.consultadoEm).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}.`));
+        h('p', { class: 'small muted' }, `${c.aviso} Consultado em ${new Date(c.consultadoEm).toLocaleString(locale(), { dateStyle: 'short', timeStyle: 'short' })}.`));
     case 'videos': {
       const player = h('div', { class: 'mt-player' });
       const play = (v) => {
@@ -458,7 +459,7 @@ export async function mentorMemoryView() {
         d.notas.length ? h('ul', { class: 'mt-list' }, d.notas.map((n) => h('li', {}, `${n.texto} `, h('small', { class: 'muted' }, n.resolvidaEm ? '(resolvida)' : `(${fmt(n.criadaEm.slice(0, 10))})`), h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Apagar', onClick: () => api.del(`/mentor/memory/notes/${n.id}`).then(load) }, icon('trash', { size: 14 }))))) : h('p', { class: 'muted' }, 'Nada guardado.')),
       h('section', { class: 'mt-card' }, h('div', { class: 'mt-card-head' }, icon('target', { size: 15 }), h('strong', {}, 'O que o Mentor vê agora (resumo)')), h('pre', { class: 'mt-ctx' }, d.contexto)),
       h('section', { class: 'mt-card' }, h('div', { class: 'mt-card-head' }, icon('clock', { size: 15 }), h('strong', {}, 'Ações do Mentor (registro)')),
-        d.historico.length ? h('ul', { class: 'mt-list small' }, d.historico.slice(0, 30).map((x) => h('li', {}, h('strong', {}, new Date(x.em).toLocaleString('pt-BR')), ` · ${x.resultado} · ${x.resumo}`, x.erro ? h('span', { class: 'muted' }, ` (${x.erro})`) : null))) : h('p', { class: 'muted' }, 'Nenhuma ação ainda.')),
+        d.historico.length ? h('ul', { class: 'mt-list small' }, d.historico.slice(0, 30).map((x) => h('li', {}, h('strong', {}, new Date(x.em).toLocaleString(locale())), ` · ${x.resultado} · ${x.resumo}`, x.erro ? h('span', { class: 'muted' }, ` (${x.erro})`) : null))) : h('p', { class: 'muted' }, 'Nenhuma ação ainda.')),
       h('button', { type: 'button', class: 'btn btn-ghost', onClick: async () => { await api.del('/mentor/memory'); toast('Memória e registro apagados.', 'ok'); load(); } }, icon('trash', { size: 14 }), ' Apagar pendências e registro'),
     );
   };

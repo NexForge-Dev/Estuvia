@@ -266,7 +266,7 @@ export function MissionHub(m, ctx) {
   if (other.length && active) alerts.push(h('p', { class: 'mh-alert' }, icon('alert', { size: 14 }), ' ', other[0].texto));
   if (m.status === 'nao-aplicavel') alerts.push(h('p', { class: 'mh-alert' }, icon('minus', { size: 14 }), ' ', m.motivoNaoAplicavel || 'Esta missão não se aplica ao seu caso e não conta como pendência.'));
   if (m.status === 'ignorada') alerts.push(h('p', { class: 'mh-alert' }, icon('minus', { size: 14 }), ' Você decidiu pular esta missão (é opcional).'));
-  if (m.status === 'aguardando') alerts.push(h('p', { class: 'mh-alert' }, icon('hourglass', { size: 14 }), ' Aguardando resposta de terceiros. Quando ela chegar, registre em "', tools.find((t) => t.painel === 'guia')?.titulo || 'Passo a passo', '".'));
+  if (m.status === 'aguardando') alerts.push(h('p', { class: 'mh-alert' }, icon('hourglass', { size: 14 }), ` Aguardando resposta de terceiros. Quando ela chegar, registre em "${tools.find((t) => t.painel === 'guia')?.titulo || 'Passo a passo'}".`));
 
   drawGrid();
   return h('article', { class: `mh g-${m.status}` },

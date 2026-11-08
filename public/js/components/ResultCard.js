@@ -10,6 +10,7 @@
 // renderResult(dados, opts) escolhe o componente; registerResult(tipo, fn) acrescenta novos tipos.
 import { h, toast } from '../ui.js';
 import { icon } from '../icons.js';
+import { locale } from '../i18n.js';
 
 let styled = false;
 function ensureStyles() {
@@ -18,7 +19,7 @@ function ensureStyles() {
   document.head.append(h('link', { rel: 'stylesheet', href: '/css/results.css' }));
 }
 
-const fmtDate = (iso) => (iso ? new Date(`${iso.slice(0, 10)}T12:00:00Z`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '');
+const fmtDate = (iso) => (iso ? new Date(`${iso.slice(0, 10)}T12:00:00Z`).toLocaleDateString(locale(), { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '');
 
 async function copy(text, label = 'Copiado') {
   try { await navigator.clipboard.writeText(text); toast(`${label}!`, 'ok'); return true; } catch { toast('Não consegui copiar: selecione o texto manualmente.', 'err'); return false; }

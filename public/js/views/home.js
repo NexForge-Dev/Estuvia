@@ -7,8 +7,9 @@ import { RoundCard } from '../components/RoundCard.js';
 import { DeadlinesPanel } from '../components/JourneyProgress.js';
 import { pctLabel, fmtDate } from '../components/common.js';
 import { CATEGORY } from '../components/WeeklyPlanner.js';
+import { locale } from '../i18n.js';
 
-const eur = (v) => `€ ${Math.round(v || 0).toLocaleString('pt-BR')}`;
+const eur = (v) => `€ ${Math.round(v || 0).toLocaleString(locale())}`;
 
 function smartAlerts(j, user, fin, planner) {
   const alerts = [];
@@ -66,7 +67,7 @@ export async function homeView() {
       h('section', { class: 'panel' },
         h('div', { class: 'section-head' }, h('h2', { class: 'panel-title' }, icon('calendar', { size: 18 }), 'Agenda'), h('a', { class: 'link-arrow', href: '#/agenda' }, 'Abrir', icon('arrow', { size: 14 }))),
         upcoming.length
-          ? h('ul', { class: 'agenda-mini' }, upcoming.map((e) => h('li', {}, h('span', { class: `wp-dot ${CATEGORY[e.categoria]?.cls}` }), h('div', {}, h('strong', {}, e.titulo), h('small', { class: 'muted' }, `${new Date(`${e.data}T12:00:00`).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })} · ${e.inicio}–${e.fim}`)))))
+          ? h('ul', { class: 'agenda-mini' }, upcoming.map((e) => h('li', {}, h('span', { class: `wp-dot ${CATEGORY[e.categoria]?.cls}` }), h('div', {}, h('strong', {}, e.titulo), h('small', { class: 'muted' }, `${new Date(`${e.data}T12:00:00`).toLocaleDateString(locale(), { weekday: 'short', day: '2-digit', month: 'short' })} · ${e.inicio}–${e.fim}`)))))
           : h('div', { class: 'stack' }, h('p', { class: 'muted small' }, 'Nenhuma atividade planejada.'), h('a', { class: 'btn btn-ghost btn-sm', href: '#/agenda#organizar' }, icon('calendar', { size: 14 }), 'Organizar minha semana'))),
       DeadlinesPanel(j),
       h('section', { class: 'panel' },

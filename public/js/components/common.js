@@ -1,10 +1,11 @@
 // Componentes visuais reutilizáveis da jornada + feedback de conquistas.
 import { h, toast } from '../ui.js';
 import { icon, ring, STATUS_ICON } from '../icons.js';
+import { locale } from '../i18n.js';
 
 export const pct = (v) => `${Math.round((v || 0) * 100)}%`;
 // Rótulo com até 1 casa decimal no padrão brasileiro (ex.: "37,5%").
-export const pctLabel = (v) => `${(Math.round((v || 0) * 1000) / 10).toLocaleString('pt-BR')}%`;
+export const pctLabel = (v) => `${(Math.round((v || 0) * 1000) / 10).toLocaleString(locale())}%`;
 
 export function progressBar(value, { label, cls = '' } = {}) {
   const fill = h('span', { class: 'bar-fill' });
@@ -22,7 +23,7 @@ export function priorityTag(p) {
   return h('span', { class: `prio prio-${p}` }, h('i', { 'aria-hidden': 'true' }), PRIORITY[p]);
 }
 
-export const fmtDate = (iso) => (iso ? new Date(`${iso.slice(0, 10)}T12:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : '');
+export const fmtDate = (iso) => (iso ? new Date(`${iso.slice(0, 10)}T12:00:00`).toLocaleDateString(locale(), { day: '2-digit', month: 'short', year: 'numeric' }) : '');
 
 export function deadlineTag(prazo) {
   if (!prazo) return null;

@@ -4,8 +4,9 @@ import { h, mount, toast } from '../../ui.js';
 import { icon } from '../../icons.js';
 import { api } from '../../api.js';
 import { hubIcon } from './hub-icons.js';
+import { locale } from '../../i18n.js';
 
-export const eur = (v) => (v === null || v === undefined ? '-' : `€ ${Math.round(v).toLocaleString('pt-BR')}`);
+export const eur = (v) => (v === null || v === undefined ? '-' : `€ ${Math.round(v).toLocaleString(locale())}`);
 const plan = async () => api.get('/finance');
 // A CSP bloqueia o atributo style inline: a largura é aplicada via CSSOM.
 const fill = (attrs, pct) => { const el = h('span', attrs); el.style.width = `${Math.max(0, Math.min(100, pct))}%`; return el; };

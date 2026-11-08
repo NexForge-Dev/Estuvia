@@ -10,6 +10,7 @@ import { MissionChecklist, DocumentsBlock } from './MissionDetail.js';
 import { MissionTool } from './MissionTools.js';
 import { defaultWeek } from './WeeklyPlanner.js';
 import { go } from '../app.js';
+import { locale } from '../i18n.js';
 
 const COLORS = { laranja: 'k-orange', dourado: 'k-gold', azul: 'k-blue', roxo: 'k-purple', verde: 'k-green', destaque: 'k-accent', rosa: 'k-pink', ciano: 'k-cyan' };
 
@@ -81,7 +82,7 @@ export function MissionContent(m, ctx) {
     },
     exigencia: {
       titulo: 'Entenda a exigência', desc: 'O que precisa ser comprovado, por quê e o que é estimativa.', ic: 'scale', cor: 'laranja',
-      dica: () => (m.financeiro ? `Visto: € ${Math.round(m.financeiro.exigenciaVisto).toLocaleString('pt-BR')}` : def.tempoEstimado),
+      dica: () => (m.financeiro ? `Visto: € ${Math.round(m.financeiro.exigenciaVisto).toLocaleString(locale())}` : def.tempoEstimado),
       render: () => h('div', { class: 'stack' }, h('p', { class: 'mc-lead' }, def.objetivo), h('p', {}, def.porque),
         m.financeiro ? h('p', { class: 'notice' }, `Regra parametrizada: ${Math.round(m.financeiro.iprem.percentual * 100)}% do IPREM mensal (€${m.financeiro.iprem.mensal} em ${m.financeiro.iprem.ano}${m.financeiro.iprem.status === 'pendente' ? ', valor pendente de confirmação' : ''}) × ${m.financeiro.meses} meses. ${m.financeiro.iprem.regra}`) : null,
         h('h3', { class: 'small-title' }, 'Erros comuns'), list(m.errosComuns, (e) => [icon('alert', { size: 14 }), ' ', e])),
@@ -135,7 +136,7 @@ export function MissionContent(m, ctx) {
     },
     simulador: {
       titulo: 'Meu planejamento financeiro', desc: 'Quanto custa, quanto você já tem e quanto falta.', ic: 'euro', cor: 'verde',
-      dica: () => (m.financeiro ? (m.financeiro.deficit > 0 ? `Faltam € ${Math.round(m.financeiro.deficit).toLocaleString('pt-BR')}` : 'Plano coberto') : 'Abrir planejamento'),
+      dica: () => (m.financeiro ? (m.financeiro.deficit > 0 ? `Faltam € ${Math.round(m.financeiro.deficit).toLocaleString(locale())}` : 'Plano coberto') : 'Abrir planejamento'),
       render: async () => h('div', { class: 'stack' }, m.financeiro ? MissionTool({ ...m, definicao: { ...def, ferramenta: 'financeiro' } }, { journey, onChange: ctx.reload }) : await FinanceLive(), h('a', { class: 'btn btn-cta', href: '#/financiamento' }, 'Abrir meu planejamento financeiro', icon('arrow', { size: 14 }))),
     },
     alternativas: {
@@ -332,7 +333,7 @@ function AgendaCard(m, ctx, base) {
       const drawProposal = () => mount(proposalHost, items.length
         ? h('div', { class: 'panel' },
             h('h3', { class: 'small-title' }, `Proposta para a semana de ${fmtDate(p.semana)}`),
-            h('ul', { class: 'mc-list' }, items.map((x, i) => h('li', {}, `${new Date(`${x.data}T12:00:00`).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit' })} · ${x.inicio}–${x.fim} - ${x.titulo}`,
+            h('ul', { class: 'mc-list' }, items.map((x, i) => h('li', {}, `${new Date(`${x.data}T12:00:00`).toLocaleDateString(locale(), { weekday: 'long', day: '2-digit' })} · ${x.inicio}–${x.fim} - ${x.titulo}`,
               h('button', { type: 'button', class: 'icon-btn sm', 'aria-label': 'Remover', onClick: () => { items.splice(i, 1); drawProposal(); } }, icon('x', { size: 12 }))))),
             h('div', { class: 'row' }, h('button', { type: 'button', class: 'btn btn-cta btn-sm', disabled: !items.length, onClick: async () => {
               try { await api.post('/planner/approve', { itens: items.map(({ prioridadeLabel, ...x }) => Object.fromEntries(Object.entries(x).filter(([, v]) => v != null))) }); toast('Horários adicionados à Agenda.', 'ok'); mount(proposalHost); loadEvents(); } catch (e) { toast(e.message, 'err'); }
@@ -414,7 +415,7 @@ function AssistantCard(m, ctx) {
 
 async function FinanceLive() {
   const f = (await api.get('/finance')).plano;
-  return h('p', {}, `Exigência do visto: € ${Math.round(f.exigenciaVisto).toLocaleString('pt-BR')} · Orçamento: € ${Math.round(f.orcamento).toLocaleString('pt-BR')} · Recursos confirmados: € ${Math.round(f.confirmados).toLocaleString('pt-BR')}`);
+  return h('p', {}, `Exigência do visto: € ${Math.round(f.exigenciaVisto).toLocaleString(locale())} · Orçamento: € ${Math.round(f.orcamento).toLocaleString(locale())} · Recursos confirmados: € ${Math.round(f.confirmados).toLocaleString(locale())}`);
 }
 
 async function Alternatives() {
@@ -422,7 +423,7 @@ async function Alternatives() {
   if (!f.informouRecursos) return h('div', { class: 'stack' }, h('p', {}, 'Registre seus recursos (mesmo que seja zero) para calcular a diferença e receber caminhos personalizados.'), h('a', { class: 'btn btn-cta', href: '#/financiamento#recursos' }, 'Registrar recursos'));
   if (!f.caminhos.length) return h('p', {}, `Pelos seus dados, os recursos confirmados cobrem o plano. Confirme com o consulado quais comprovantes são aceitos.`);
   return h('div', { class: 'stack' },
-    h('p', { class: 'mc-lead' }, `Faltam cerca de € ${Math.round(f.deficit).toLocaleString('pt-BR')} (estimativa).`),
+    h('p', { class: 'mc-lead' }, `Faltam cerca de € ${Math.round(f.deficit).toLocaleString(locale())} (estimativa).`),
     h('ul', { class: 'paths' }, f.caminhos.map((c) => h('li', {}, h('strong', {}, c.titulo), h('p', { class: 'small' }, c.texto), c.rota ? h('a', { class: 'link-arrow', href: `#${c.rota}` }, 'Abrir', icon('arrow', { size: 12 })) : null))),
     h('p', { class: 'hint' }, 'Nenhum caminho garante a aprovação do visto. Trabalho ou estágio na Espanha não substituem a comprovação inicial.'));
 }

@@ -5,6 +5,7 @@ import { h, tag } from '../ui.js';
 import { icon } from '../icons.js';
 import { api } from '../api.js';
 import { state } from '../app.js';
+import { languageSwitcher } from '../i18n.js';
 
 export const QUIZ_KEY = 'estuvia:quiz';
 
@@ -85,6 +86,7 @@ function nav(logged, appName) {
       h('nav', { class: 'lp-links', 'aria-label': 'Seções da página' },
         anchor('video', 'Vídeo'), anchor('diagnostico', 'Onde você está'), anchor('rodadas', 'Rodadas'), anchor('mentor', 'Mentor'), anchor('perguntas', 'Perguntas')),
       h('div', { class: 'lp-nav-actions' },
+        languageSwitcher(),
         logged
           ? h('a', { href: '#/', class: 'btn btn-cta btn-sm' }, 'Meu painel')
           : [h('a', { href: '#/entrar', class: 'btn btn-ghost btn-sm' }, 'Entrar'), h('a', { href: '#/cadastro', class: 'btn btn-cta btn-sm' }, 'Criar conta')])));

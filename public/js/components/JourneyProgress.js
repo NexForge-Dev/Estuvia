@@ -2,6 +2,7 @@
 import { h } from '../ui.js';
 import { icon, ring } from '../icons.js';
 import { pctLabel, fmtDate, deadlineTag, FoldPanel } from './common.js';
+import { locale } from '../i18n.js';
 
 export function JourneyProgress(j) {
   const d = j.destino;
@@ -54,7 +55,7 @@ export function DeadlinesPanel(j) {
 
 export function FinancePanel(j) {
   const f = j.financas;
-  const fmt = (v) => `€ ${Math.round(v).toLocaleString('pt-BR')}`;
+  const fmt = (v) => `€ ${Math.round(v).toLocaleString(locale())}`;
   const hint = !f.informouRecursos ? 'não informado' : f.diferenca !== null && f.diferenca < 0 ? `faltam ${fmt(-f.diferenca)}` : 'coberto';
   return FoldPanel({ id: 'financas', title: 'Situação financeira', ic: 'euro', hint },
     h('dl', { class: 'fin' },

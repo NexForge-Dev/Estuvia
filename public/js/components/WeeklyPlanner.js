@@ -5,6 +5,7 @@ import { h, mount, toast } from '../ui.js';
 import { icon } from '../icons.js';
 import { api } from '../api.js';
 import { go } from '../app.js';
+import { locale } from '../i18n.js';
 
 export const CATEGORY = {
   academico: { label: 'Acadêmico', cls: 'c-academico' },
@@ -35,7 +36,7 @@ const todayIso = () => { const d = new Date(); return `${d.getFullYear()}-${Stri
 const nowMin = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
 // Semana padrão: a atual, ou a próxima se hoje já for sábado/domingo.
 export const defaultWeek = () => { const t = todayIso(); const dow = (new Date(`${t}T12:00:00Z`).getUTCDay() + 6) % 7; return dow >= 5 ? addDays(mondayOf(t), 7) : mondayOf(t); };
-const fmtDay = (d, opts) => new Date(`${d}T12:00:00`).toLocaleDateString('pt-BR', opts);
+const fmtDay = (d, opts) => new Date(`${d}T12:00:00`).toLocaleDateString(locale(), opts);
 const fmtH = (m) => `${Math.floor(m / 60)}h${m % 60 ? String(m % 60).padStart(2, '0') : ''}`;
 const isSmall = () => window.matchMedia('(max-width: 720px)').matches;
 const store = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch { /* sem storage */ } } };
@@ -49,7 +50,7 @@ function madridTime(date, time, fromTz) {
     return Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute) - base.getTime();
   };
   const real = new Date(`${date}T${time}:00Z`).getTime() - asUtc(fromTz);
-  return new Intl.DateTimeFormat('pt-BR', { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit' }).format(new Date(real));
+  return new Intl.DateTimeFormat(locale(), { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit' }).format(new Date(real));
 }
 
 export function WeeklyPlanner({ initialWeek, autoOrganize = false } = {}) {

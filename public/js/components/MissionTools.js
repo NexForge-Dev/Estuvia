@@ -4,8 +4,9 @@ import { icon } from '../icons.js';
 import { api } from '../api.js';
 import { state } from '../app.js';
 import { ConsulateResult } from './ResultCard.js';
+import { locale } from '../i18n.js';
 
-const eur = (v) => `€ ${Math.round(v || 0).toLocaleString('pt-BR')}`;
+const eur = (v) => `€ ${Math.round(v || 0).toLocaleString(locale())}`;
 const EL_STATUS = {
   declarado: ['Atende (declarado por você)', 'ok'],
   'falta-comprovar': ['Falta comprovar', 'warn'],

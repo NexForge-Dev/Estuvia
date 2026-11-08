@@ -15,9 +15,10 @@ import { QuickPlan } from './QuickPlan.js';
 import { QUICK } from './AIJourneyAssistant.js';
 import { termsIn } from '../glossary.js';
 import { ConsulateResult } from './ResultCard.js';
+import { locale } from '../i18n.js';
 
 const ESTADOS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
-const eur = (v) => `€ ${Math.round(v || 0).toLocaleString('pt-BR')}`;
+const eur = (v) => `€ ${Math.round(v || 0).toLocaleString(locale())}`;
 
 const primary = (label, onClick, ic = 'check') => h('button', { type: 'button', class: 'btn btn-cta btn-lg guide-primary', onClick }, icon(ic, { size: 18 }), label);
 const secondary = (label, onClick, ic) => h('button', { type: 'button', class: 'guide-secondary', onClick }, ic ? icon(ic, { size: 14 }) : null, label);

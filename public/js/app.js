@@ -22,6 +22,7 @@ import { documentsView } from './views/documents.js';
 import { sourcesView } from './views/sources.js';
 import { resetChat } from './components/AIJourneyAssistant.js';
 import { startLive, stopLive } from './live.js';
+import { initI18n, languageSwitcher } from './i18n.js';
 
 // Estado global: conteúdo público, estudante logado e caches das jornadas calculadas no servidor.
 export const state = { app: null, content: null, me: null, journeys: null, jcache: new Map(), route: { path: '/', params: [] } };
@@ -260,13 +261,14 @@ function renderNav() {
   const foot = document.getElementById('sidebar-foot');
   const top = document.getElementById('topbar-actions');
   const tabbar = document.getElementById('tabbar');
+  mount(document.getElementById('sidebar-lang'), languageSwitcher({ block: true }));
   document.body.classList.toggle('has-tabbar', !!state.me && !isAdminMode());
   if (isAdminMode()) {
     tabbar.hidden = true;
     const activeAdmin = (n) => (n.match ? n.match(path) : path === n.href);
     mount(nav, h('p', { class: 'nav-section' }, 'Painel admin'), h('ul', {}, NAV_ADMIN.map((n) => h('li', {}, h('a', { href: `#${n.href}`, class: activeAdmin(n) ? 'active' : '', 'aria-current': activeAdmin(n) ? 'page' : false }, icon(n.icon, { size: 18 }), h('span', {}, n.label))))));
     mount(foot, h('button', { class: 'btn btn-ghost btn-block', type: 'button', onClick: logout }, 'Sair'));
-    mount(top, h('button', { class: 'btn btn-sm btn-ghost', type: 'button', onClick: logout }, 'Sair'));
+    mount(top, languageSwitcher({ compact: true }), h('button', { class: 'btn btn-sm btn-ghost', type: 'button', onClick: logout }, 'Sair'));
   } else if (state.me) {
     const p = state.me.user.profile;
     const isActive = (n) => (n.match ? n.match(path) : path.startsWith(n.href));
@@ -288,14 +290,14 @@ function renderNav() {
     mount(foot, h('a', { href: '#/perfil', class: `me-card ${path === '/perfil' ? 'active' : ''}` },
       h('span', { class: 'avatar' }, p.avatar || '🎓'),
       h('span', { class: 'me-text' }, h('strong', {}, p.apelido || p.nome), h('small', {}, 'Meu perfil'))));
-    mount(top, h('a', { class: 'icon-btn', href: '#/perfil', 'aria-label': 'Meu perfil' }, h('span', { class: 'avatar sm' }, p.avatar || '🎓')));
+    mount(top, languageSwitcher({ compact: true }), h('a', { class: 'icon-btn', href: '#/perfil', 'aria-label': 'Meu perfil' }, h('span', { class: 'avatar sm' }, p.avatar || '🎓')));
   } else {
     tabbar.hidden = true;
     mount(nav, h('ul', {},
       [['/', 'Início', 'home'], ['/entrar', 'Entrar', 'user'], ['/cadastro', 'Criar conta', 'user']].map(([href, label, ic]) =>
         h('li', {}, h('a', { href: `#${href}`, class: path === href ? 'active' : '' }, icon(ic, { size: 18 }), h('span', {}, label))))));
     mount(foot, h('div', { class: 'stack' }, h('a', { href: '#/cadastro', class: 'btn btn-cta btn-block' }, 'Criar conta grátis'), h('a', { href: '#/entrar', class: 'btn btn-ghost btn-block' }, 'Entrar')));
-    mount(top, h('a', { href: '#/entrar', class: 'btn btn-sm btn-ghost' }, 'Entrar'));
+    mount(top, languageSwitcher({ compact: true }), h('a', { href: '#/entrar', class: 'btn btn-sm btn-ghost' }, 'Entrar'));
   }
 }
 
@@ -325,6 +327,7 @@ export async function logout() {
 }
 
 async function boot() {
+  initI18n();
   document.getElementById('menu-btn').addEventListener('click', () => (document.body.classList.contains('nav-open') ? closeSidebar() : openSidebar()));
   document.getElementById('scrim').addEventListener('click', closeSidebar);
   const [app, content] = await Promise.all([api.get('/content/app'), api.get('/content/journey')]);

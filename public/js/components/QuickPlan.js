@@ -4,6 +4,7 @@ import { h, mount, toast } from '../ui.js';
 import { icon } from '../icons.js';
 import { api } from '../api.js';
 import { defaultWeek } from './WeeklyPlanner.js';
+import { locale } from '../i18n.js';
 
 const SLOTS = [
   { id: 'manha', rotulo: 'Manhãs', ic: 'sun', dias: [1, 2, 3, 4, 5], janela: { inicio: '08:00', fim: '10:00' } },
@@ -11,7 +12,7 @@ const SLOTS = [
   { id: 'noite', rotulo: 'Noites', ic: 'moon', dias: [1, 2, 3, 4, 5], janela: { inicio: '19:00', fim: '21:00' } },
   { id: 'fds', rotulo: 'Fins de semana', ic: 'calendar', dias: [6, 7], janela: { inicio: '10:00', fim: '13:00' } },
 ];
-const weekday = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString('pt-BR', { weekday: 'long' });
+const weekday = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString(locale(), { weekday: 'long' });
 
 export function QuickPlan({ journeyId, missaoId, onDone } = {}) {
   const host = h('div', { class: 'quick-plan' });

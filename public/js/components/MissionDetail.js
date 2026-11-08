@@ -158,7 +158,7 @@ export function MissionDetail(m, ctx) {
   const plan = h('form', { class: 'stack plan-form' },
     h('div', { class: 'grid-3 tight' },
       h('input', { type: 'date', name: 'data', required: true, 'aria-label': 'Data' }),
-      h('input', { type: 'time', name: 'inicio', value: '09:00', required: true, step: 900, 'aria-label': 'Início' }),
+      h('input', { type: 'time', name: 'inicio', value: '09:00', required: true, step: 900, 'aria-label': 'Hora de início' }),
       h('input', { type: 'time', name: 'fim', value: '10:00', required: true, step: 900, 'aria-label': 'Fim' })),
     h('button', { class: 'btn btn-ghost btn-block', type: 'submit' }, icon('calendar', { size: 16 }), 'Reservar horário na Agenda'));
   plan.addEventListener('submit', async (e) => {
