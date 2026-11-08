@@ -1,8 +1,11 @@
+import crypto from 'node:crypto';
 import { Router } from 'express';
 import { z } from 'zod';
 import { users, audit, newId } from '../store.js';
 import { hashPassword, verifyPassword, issueSession, clearSession, requireAuth, authLimiter, DUMMY_HASH, clientInfo } from '../security.js';
 import { publicUser } from './me.js';
+import { config } from '../config.js';
+import { sendEmail } from '../email.js';
 
 const router = Router();
 
@@ -32,7 +35,8 @@ router.post('/register', authLimiter, async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: firstError(parsed) });
   const { nome, email, senha } = parsed.data;
 
-  if (users.findByEmail(email)) {
+  // O e-mail do admin é reservado: a conta é criada só pelo servidor (ADMIN_EMAIL no .env).
+  if (users.findByEmail(email) || (config.adminEmail && email.toLowerCase() === config.adminEmail)) {
     return res.status(409).json({ error: 'Já existe uma conta com este e-mail. Tente entrar.' });
   }
 
@@ -99,6 +103,55 @@ router.post('/change-password', requireAuth, authLimiter, async (req, res) => {
   const user = await users.update(req.user.id, (u) => { u.passwordHash = passwordHash; u.tokenVersion += 1; });
   await audit.log({ action: 'password-changed', userId: user.id });
   issueSession(res, user);
+  res.json({ ok: true });
+});
+
+// ---------- Recuperação de senha por e-mail ----------
+// Resposta sempre igual (não revela se o e-mail tem conta). O token vale 1 hora, só é guardado como hash
+// e é de uso único; redefinir a senha encerra todas as sessões abertas.
+const RESET_TTL_MS = 60 * 60 * 1000;
+const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
+const RESET_SENT = 'Se houver uma conta com este e-mail, enviamos um link para criar uma nova senha. Confira também o spam.';
+
+router.post('/forgot-password', authLimiter, async (req, res) => {
+  const parsed = z.object({ email: z.email('E-mail inválido.').max(120) }).safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: firstError(parsed) });
+  // Em produção o link usa só a origem configurada (nunca o Host da requisição, que pode ser forjado).
+  const origin = config.allowedOrigin || (config.isProd ? null : `${req.protocol}://${req.get('host')}`);
+  if (!origin) return res.status(503).json({ error: 'Recuperação de senha indisponível no momento. Fale com a equipe.' });
+  const user = users.findByEmail(parsed.data.email);
+  // A senha do administrador vem do .env (admin-seed.js): não é redefinida por e-mail.
+  if (!user || user.blocked || user.role === 'admin') return res.json({ ok: true, message: RESET_SENT });
+  const token = crypto.randomBytes(32).toString('base64url');
+  await users.update(user.id, (u) => { u.passwordReset = { hash: hashToken(token), expiresAt: Date.now() + RESET_TTL_MS }; });
+  const link = `${origin}/#/redefinir-senha/${token}`;
+  const sent = await sendEmail({
+    to: user.email,
+    subject: `${config.appName}: crie uma nova senha`,
+    text: `Olá! Recebemos um pedido para redefinir a senha da sua conta ${config.appName}.
+
+Para criar uma nova senha, abra o link abaixo (vale por 1 hora):
+${link}
+
+Se não foi você, ignore este e-mail: sua senha continua a mesma.`,
+  });
+  await audit.log({ action: 'password-reset-requested', userId: user.id, enviado: sent, ...clientInfo(req) });
+  if (!sent) return res.status(503).json({ error: 'Não conseguimos enviar o e-mail agora. Tente novamente em alguns minutos.' });
+  res.json({ ok: true, message: RESET_SENT });
+});
+
+router.post('/reset-password', authLimiter, async (req, res) => {
+  const parsed = z.object({ token: z.string().min(20).max(100), senha: password }).safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: firstError(parsed) });
+  const hash = hashToken(parsed.data.token);
+  const user = users.all().find((u) => u.passwordReset?.hash === hash);
+  if (!user || user.passwordReset.expiresAt < Date.now()) {
+    return res.status(400).json({ error: 'Este link é inválido ou expirou. Peça um novo em "Esqueci minha senha".' });
+  }
+  const passwordHash = await hashPassword(parsed.data.senha);
+  await users.update(user.id, (u) => { u.passwordHash = passwordHash; u.tokenVersion += 1; delete u.passwordReset; });
+  await audit.log({ action: 'password-reset', userId: user.id, ...clientInfo(req) });
+  clearSession(res);
   res.json({ ok: true });
 });
 

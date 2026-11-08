@@ -85,7 +85,7 @@ export async function catalogView() {
               h('button', { class: 'btn btn-cta btn-sm', type: 'button', onClick: () => createJourney(p) }, 'Criar jornada'))));
       })) : h('p', { class: 'empty-inline' }, 'Nenhum programa com esses filtros.'),
       h('section', { class: 'panel' }, h('h2', { class: 'panel-title' }, 'Universidades públicas andaluzas'),
-        h('ul', { class: 'unis' }, universities.map((u) => h('li', {}, h('a', { href: u.url, target: '_blank', rel: 'noopener noreferrer' }, `${u.sigla} — ${u.nome}`), h('span', { class: 'muted small' }, ` · ${u.cidade}`))))),
+        h('ul', { class: 'unis' }, universities.map((u) => h('li', {}, h('a', { href: u.url, target: '_blank', rel: 'noopener noreferrer' }, `${u.sigla} - ${u.nome}`), h('span', { class: 'muted small' }, ` · ${u.cidade}`))))),
     );
   }
   draw();

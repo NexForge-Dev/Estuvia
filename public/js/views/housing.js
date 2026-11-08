@@ -10,7 +10,8 @@ import { addFile, listFiles, removeFile } from '../localfiles.js';
 import { openAssistant } from '../components/AIJourneyAssistant.js';
 import { fmtDate } from '../components/common.js';
 
-const eur = (v) => (v === null || v === undefined ? '—' : `€ ${Math.round(v).toLocaleString('pt-BR')}`);
+// Valores na moeda em que a moradia foi informada (sem conversão).
+const eur = (v, moeda = 'EUR') => (v === null || v === undefined ? '-' : `${moeda === 'BRL' ? 'R$' : '€'} ${Math.round(v).toLocaleString('pt-BR')}`);
 const STATUS_ORDER = ['quero-conhecer', 'contato', 'aguardando', 'visitado', 'contrato', 'escolhida'];
 const AGENDA = [
   ['conversar', 'Conversar com o anunciante'],
@@ -54,7 +55,7 @@ export async function housingView() {
   function header() {
     const dest = d.destino;
     return h('header', { class: 'hs-head' },
-      h('div', {}, h('h1', {}, 'Meu Novo Lar 🏠'), h('p', { class: 'muted' }, 'Encontre e organize sua moradia no exterior.')),
+      h('div', {}, h('h1', {}, 'Meu novo lar'), h('p', { class: 'muted' }, 'Encontre e organize sua moradia no exterior.')),
       h('div', { class: 'hs-dest card' }, h('span', { class: 'hs-dest-ic' }, icon('pin', { size: 18 })),
         dest.cidade
           ? h('div', {}, h('small', {}, 'Seu destino'), h('strong', {}, `${dest.cidade}, ${dest.pais}`), h('span', { class: 'muted small' }, `${dest.universidade?.nome || ''} · estadia de ${dest.meses} meses`))
@@ -177,8 +178,8 @@ export async function housingView() {
         h('div', { class: 'row between' }, h('span', { class: 'tag tag-info' }, x.tipoLabel), safetyBadge(x)),
         h('h3', {}, x.nome),
         x.bairro ? h('p', { class: 'small muted' }, icon('pin', { size: 12 }), ` ${x.bairro}`) : null,
-        h('p', { class: 'hs-price' }, h('strong', {}, eur(c.mensal)), h('span', {}, '/mês')),
-        h('p', { class: 'small muted' }, x.contasIncluidas ? 'Contas incluídas' : c.adicionais !== null ? `inclui € ${c.adicionais} de contas/despesas` : 'Contas: ainda não informadas', c.caucao !== null ? ` · caução ${eur(c.caucao)}` : ''),
+        h('p', { class: 'hs-price' }, h('strong', {}, eur(c.mensal, c.moeda)), h('span', {}, '/mês')),
+        h('p', { class: 'small muted' }, x.contasIncluidas ? 'Contas incluídas' : c.adicionais !== null ? `inclui ${eur(c.adicionais, c.moeda)} de contas/despesas` : 'Contas: ainda não informadas', c.caucao !== null ? ` · caução ${eur(c.caucao, c.moeda)}` : ''),
         h('div', { class: 'hs-card-foot' },
           status,
           h('label', { class: 'hs-pick' }, pick, h('span', {}, 'Comparar')),
@@ -217,13 +218,13 @@ export async function housingView() {
     const cmp = st.comparacao;
     if (!cmp) return null;
     const rows = [
-      ['Aluguel mensal', (o) => eur(o.custos.aluguel)],
-      ['Contas e despesas', (o) => (o.contasIncluidas ? 'Incluídas' : o.custos.adicionais === null ? 'Não informadas' : `${eur(o.custos.adicionais)}/mês`)],
-      ['Custo mensal', (o) => eur(o.custos.mensal), 'strong'],
-      ['Caução (reembolsável)', (o) => (o.custos.caucao === null ? 'Não informada' : eur(o.custos.caucao))],
-      ['Custo inicial (1º mês + caução + taxas)', (o) => `${eur(o.custos.inicial)}${o.custos.inicialParcial ? ' + ?' : ''}`],
-      [`Total da estadia (${cmp.meses} meses)`, (o) => eur(o.custos.totalEstadia), 'strong'],
-      ['Localização', (o) => o.bairro || '—'],
+      ['Aluguel mensal', (o) => eur(o.custos.aluguel, o.custos.moeda)],
+      ['Contas e despesas', (o) => (o.contasIncluidas ? 'Incluídas' : o.custos.adicionais === null ? 'Não informadas' : `${eur(o.custos.adicionais, o.custos.moeda)}/mês`)],
+      ['Custo mensal', (o) => eur(o.custos.mensal, o.custos.moeda), 'strong'],
+      ['Caução (reembolsável)', (o) => (o.custos.caucao === null ? 'Não informada' : eur(o.custos.caucao, o.custos.moeda))],
+      ['Custo inicial (1º mês + caução + taxas)', (o) => `${eur(o.custos.inicial, o.custos.moeda)}${o.custos.inicialParcial ? ' + ?' : ''}`],
+      [`Total da estadia (${cmp.meses} meses)`, (o) => eur(o.custos.totalEstadia, o.custos.moeda), 'strong'],
+      ['Localização', (o) => o.bairro || '-'],
       ['Até a universidade', (o) => o.distancia || 'Não informado'],
       ['Contrato', (o) => o.duracaoContrato || 'Não informado'],
       ['Conferir antes de pagar', (o) => (o.seguranca.alertas.length ? `${o.seguranca.alertas.length} alerta(s)` : `${o.seguranca.confirmadas}/${o.seguranca.total} conferido`)],
@@ -246,7 +247,7 @@ export async function housingView() {
       h('h2', {}, `Escolher "${x.nome}" como minha moradia?`),
       h('p', {}, 'O aluguel, as contas e a caução passam a alimentar o seu planejamento financeiro. Se você trocar depois, o plano acompanha.'),
       s.nivel === 'alerta' ? h('p', { class: 'notice' }, icon('alert', { size: 14 }), ` Há ${s.alertas.length} sinal(is) de alerta: ${s.alertas.join(' · ')}`) : null,
-      s.nivel !== 'conferido' ? h('p', { class: 'small muted' }, `Você conferiu ${s.confirmadas} de ${s.total} itens de "Conferir antes de pagar". Não envie dinheiro antes de conferir.`) : h('p', { class: 'small muted' }, 'Conferências feitas — isso ajuda, mas não garante que o anúncio é seguro.'),
+      s.nivel !== 'conferido' ? h('p', { class: 'small muted' }, `Você conferiu ${s.confirmadas} de ${s.total} itens de "Conferir antes de pagar". Não envie dinheiro antes de conferir.`) : h('p', { class: 'small muted' }, 'Conferências feitas, isso ajuda, mas não garante que o anúncio é seguro.'),
       h('div', { class: 'row wrap' },
         h('button', { class: 'btn btn-cta', type: 'button', onClick: async () => { closeSheet(); await put(id, { status: 'escolhida' }); toast('Moradia escolhida. Seu planejamento financeiro foi atualizado.', 'ok'); } }, icon('check', { size: 16 }), 'Sim, escolher'),
         s.nivel !== 'conferido' ? h('button', { class: 'btn btn-ghost', type: 'button', onClick: () => openDetail(id, 'seguranca') }, 'Conferir antes') : null,
@@ -305,8 +306,8 @@ export async function housingView() {
           const [hh, mm] = time.value.split(':').map(Number);
           const end = `${String(Math.min(23, hh + (mm + 45 >= 60 ? 1 : 0))).padStart(2, '0')}:${String((mm + 45) % 60).padStart(2, '0')}`;
           try {
-            await api.post('/planner', { titulo: `${AGENDA.find(([v]) => v === what.value)[1]} — ${x.nome}`.slice(0, 120), categoria: 'viagem', data: date.value, inicio: time.value, fim: end > time.value ? end : '23:59', motivo: 'Meu Novo Lar', nota: 'Combine o horário com o anunciante: a Estuvia não agenda com terceiros.' });
-            toast('Adicionado à sua Agenda AI.', 'ok');
+            await api.post('/planner', { titulo: `${AGENDA.find(([v]) => v === what.value)[1]} - ${x.nome}`.slice(0, 120), categoria: 'viagem', data: date.value, inicio: time.value, fim: end > time.value ? end : '23:59', motivo: 'Meu Novo Lar', nota: 'Combine o horário com o anunciante: a Estuvia não agenda com terceiros.' });
+            toast('Adicionado à sua Agenda.', 'ok');
           } catch (e) { toast(e.message, 'err'); }
         } }, icon('calendar', { size: 13 }), 'Pôr na minha agenda'),
         h('p', { class: 'hint' }, 'Fica na sua agenda como lembrete. Você combina o horário com o anunciante.'));
@@ -334,16 +335,16 @@ export async function housingView() {
       h('div', { class: 'hs-detail-head' }, h('span', { class: 'tag tag-info' }, x.tipoLabel), x.fonte ? h('span', { class: 'tag' }, x.fonte) : null, x.status === 'escolhida' ? h('span', { class: 'tag tag-ok' }, 'Minha moradia') : null),
       h('h2', {}, x.nome),
       h('div', { class: 'hs-costs' },
-        h('div', {}, h('small', {}, 'Por mês'), h('strong', {}, eur(c.mensal)), c.contasDesconhecidas ? h('span', { class: 'small warn' }, 'contas não informadas') : null),
-        h('div', {}, h('small', {}, 'Para entrar'), h('strong', {}, `${eur(c.inicial)}${c.inicialParcial ? ' + ?' : ''}`), h('span', { class: 'small muted' }, '1º aluguel + caução + taxas')),
-        h('div', {}, h('small', {}, `Total em ${c.meses} meses`), h('strong', {}, eur(c.totalEstadia)), c.caucao ? h('span', { class: 'small muted' }, `+ caução de ${eur(c.caucao)} (costuma voltar)`) : null)),
+        h('div', {}, h('small', {}, 'Por mês'), h('strong', {}, eur(c.mensal, c.moeda)), c.contasDesconhecidas ? h('span', { class: 'small warn' }, 'contas não informadas') : null),
+        h('div', {}, h('small', {}, 'Para entrar'), h('strong', {}, `${eur(c.inicial, c.moeda)}${c.inicialParcial ? ' + ?' : ''}`), h('span', { class: 'small muted' }, '1º aluguel + caução + taxas')),
+        h('div', {}, h('small', {}, `Total em ${c.meses} meses`), h('strong', {}, eur(c.totalEstadia, c.moeda)), c.caucao ? h('span', { class: 'small muted' }, `+ caução de ${eur(c.caucao, c.moeda)} (costuma voltar)`) : null)),
       h('section', { class: 'hs-next' }, h('h3', {}, 'Próximas ações'),
         h('div', { class: 'hs-next-grid' },
           x.link ? h('a', { class: 'choice', href: x.link, target: '_blank', rel: 'noopener noreferrer' }, icon('external', { size: 16 }), h('span', {}, 'Abrir anúncio original')) : null,
           h('button', { class: 'choice', type: 'button', onClick: () => document.getElementById('hs-seguranca')?.scrollIntoView({ behavior: 'smooth' }) }, icon('shield', { size: 16 }), h('span', {}, 'Conferir contrato')),
           h('button', { class: 'choice', type: 'button', 'aria-pressed': String(st.selected.has(id)), onClick: () => { if (st.selected.has(id)) st.selected.delete(id); else if (st.selected.size < 3) st.selected.add(id); else return toast('Compare até 3 opções.', 'err'); draw(); openDetail(id); } }, icon('scale', { size: 16 }), h('span', {}, st.selected.has(id) ? 'Na comparação' : 'Adicionar à comparação')),
           h('button', { class: 'choice', type: 'button', onClick: () => document.getElementById('hs-agenda-sec')?.scrollIntoView({ behavior: 'smooth' }) }, icon('calendar', { size: 16 }), h('span', {}, 'Organizar uma visita')),
-          h('button', { class: 'choice', type: 'button', onClick: () => openAssistant({ pergunta: `Esse anúncio de moradia parece suspeito? "${x.nome}", ${eur(c.mensal)}/mês${x.bairro ? `, ${x.bairro}` : ''}.` }) }, icon('chat', { size: 16 }), h('span', {}, 'Perguntar ao Mentor'))),
+          h('button', { class: 'choice', type: 'button', onClick: () => openAssistant({ pergunta: `Esse anúncio de moradia parece suspeito? "${x.nome}", ${eur(c.mensal, c.moeda)}/mês${x.bairro ? `, ${x.bairro}` : ''}.` }) }, icon('chat', { size: 16 }), h('span', {}, 'Perguntar ao Mentor'))),
         x.status !== 'escolhida' ? h('button', { class: 'btn btn-cta btn-lg', type: 'button', onClick: () => choose(id) }, icon('check', { size: 16 }), 'Selecionar como minha moradia') : h('p', { class: 'ok-line' }, icon('check', { size: 16 }), ' Esta é a sua moradia. O planejamento financeiro usa os valores dela.')),
       h('section', {}, h('h3', {}, 'Situação'), tracker),
       safety,
@@ -359,7 +360,7 @@ export async function housingView() {
         field('Distância da universidade', 'distancia', { maxlength: 60, placeholder: 'Ex.: 15 min a pé' }),
         field('Link do anúncio', 'link', { type: 'url', maxlength: 400, placeholder: 'https://…' }))),
       h('section', {}, h('h3', {}, 'Minhas anotações'), notes),
-      h('section', { id: 'hs-agenda-sec' }, h('h3', {}, 'Organizar na Agenda AI'), agenda),
+      h('section', { id: 'hs-agenda-sec' }, h('h3', {}, 'Organizar na Agenda'), agenda),
       h('details', { class: 'guide-more' }, h('summary', {}, icon('mail', { size: 14 }), ' Escrever ao anunciante (em espanhol)'), draft()),
       h('div', { class: 'row wrap' },
         x.status !== 'descartada' ? h('button', { class: 'guide-secondary', type: 'button', onClick: () => put(id, { status: 'descartada' }) }, 'Descartar esta opção') : h('button', { class: 'guide-secondary', type: 'button', onClick: () => put(id, { status: 'quero-conhecer' }) }, 'Recuperar opção'),

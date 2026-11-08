@@ -1,6 +1,8 @@
 // Conta de administrador definida no .env (ADMIN_EMAIL + ADMIN_PASSWORD).
 // Na inicialização: cria a conta se não existir; se existir, garante o papel "admin" e
 // sincroniza a senha com o .env (trocar ADMIN_PASSWORD e reiniciar troca a senha).
+// Se alguém tiver se cadastrado antes com esse e-mail, a senha é trocada pela do .env e todas as
+// sessões dessa conta caem: o operador assume a conta. A senha nunca é registrada em log.
 import { config } from './config.js';
 import { users, audit, newId } from './store.js';
 import { hashPassword, verifyPassword } from './security.js';
@@ -16,8 +18,9 @@ async function syncAdmin() {
     console.warn('[admin] defina ADMIN_EMAIL e ADMIN_PASSWORD juntos no .env para ativar o painel admin.');
     return null;
   }
-  if (senha.length < 8) {
-    console.warn('[admin] ADMIN_PASSWORD precisa ter pelo menos 8 caracteres — conta admin não criada.');
+  const minimo = config.isProd ? 12 : 8;
+  if (senha.length < minimo || !/[A-Za-z]/.test(senha) || !/[0-9]/.test(senha)) {
+    console.warn(`[admin] ADMIN_PASSWORD precisa ter pelo menos ${minimo} caracteres, com letras e números. Conta admin não criada/atualizada.`);
     return null;
   }
 

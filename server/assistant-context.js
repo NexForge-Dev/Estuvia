@@ -90,12 +90,12 @@ export function contextText(user, { journey, mission, finance }) {
   if (!journey) return `${lines[0]}\nO estudante ainda não criou nenhuma jornada.`;
   const d = journey.destino;
   const atual = journey.rodadas.find((r) => r.numero === journey.rodadaAtual);
-  lines.push(`Jornada: ${d.origem} → ${d.universidade?.nome || '-'} (${d.cidade || '-'}); mestrado ${d.programa?.nome || 'não definido'}${d.programa?.demo ? ' [DADO DEMONSTRATIVO]' : ''}; ano ${d.anoAcademico || '-'}; duração ${d.duracaoMeses || '-'} meses; progresso ${Math.round(journey.progresso * 100)}%; rodada atual ${atual.numero} — ${atual.titulo}.`);
+  lines.push(`Jornada: ${d.origem} → ${d.universidade?.nome || '-'} (${d.cidade || '-'}); mestrado ${d.programa?.nome || 'não definido'}${d.programa?.demo ? ' [DADO DEMONSTRATIVO]' : ''}; ano ${d.anoAcademico || '-'}; duração ${d.duracaoMeses || '-'} meses; progresso ${Math.round(journey.progresso * 100)}%; rodada atual ${atual.numero} - ${atual.titulo}.`);
   lines.push(`Situação registrada: adjudicação=${journey.situacao.adjudicacao}; matrícula=${journey.situacao.matricula}; visto=${journey.situacao.visto}.`);
   lines.push(`Próxima missão recomendada: ${journey.proximaMissao ? `${journey.proximaMissao.label} ${journey.proximaMissao.titulo} (${journey.proximaMissao.statusLabel})` : 'nenhuma'}.`);
   if (mission) {
     const pend = mission.objetivos.filter((o) => !o.feito).map((o) => o.texto);
-    lines.push(`Missão em foco: ${mission.label} ${mission.definicao.titulo} — ${mission.statusLabel}. Complexidade: ${mission.complexidade || 'guiada'}${mission.complexidade === 'simples' ? ' (responda em 1–2 frases e ofereça mostrar mais)' : mission.complexidade === 'complexa' ? ' (acompanhe etapa por etapa)' : ''}; risco: ${mission.riscoInfo?.nivel || 'baixo'}. Objetivo: ${mission.definicao.objetivo} Pendentes: ${pend.join('; ') || 'nenhum'}. Bloqueada por: ${mission.bloqueadaPor.map((b) => b.label || b.titulo).join(', ') || 'nada'}.`);
+    lines.push(`Missão em foco: ${mission.label} ${mission.definicao.titulo} - ${mission.statusLabel}. Complexidade: ${mission.complexidade || 'guiada'}${mission.complexidade === 'simples' ? ' (responda em 1–2 frases e ofereça mostrar mais)' : mission.complexidade === 'complexa' ? ' (acompanhe etapa por etapa)' : ''}; risco: ${mission.riscoInfo?.nivel || 'baixo'}. Objetivo: ${mission.definicao.objetivo} Pendentes: ${pend.join('; ') || 'nenhum'}. Bloqueada por: ${mission.bloqueadaPor.map((b) => b.label || b.titulo).join(', ') || 'nada'}.`);
   }
   lines.push(`Documentos ainda não prontos: ${pendingDocs(user, journey).map((x) => `${x.nome} (${DOC_STATUS_LABEL[x.status]})`).join('; ') || 'nenhum'}.`);
   lines.push(`Prazos cadastrados: ${journey.prazos.map((x) => `${x.titulo} em ${x.data} (${x.origem === 'oficial' ? 'regra oficial' : x.origem === 'previsto' ? 'previsão' : 'declarado pelo estudante'})`).join('; ') || 'nenhum'}.`);
@@ -161,7 +161,7 @@ export function quickAnswer(action, user, ctx, pergunta = '') {
       if (!falta.length) return { texto: 'Esta missão não pede um documento que esteja faltando para você. Se for outro documento, veja a área **Documentos**.', fontes: [], acoes: [rota('/documentos', 'Abrir meus documentos')] };
       return {
         texto: `Sem problema. Veja como conseguir:\n${falta.slice(0, 3).map((d) => `- **${d.nome}:** ${d.dica}`).join('\n')}\n\nEnquanto isso, marque o documento como **Em preparação** para não esquecer.`,
-        fontes: [], acoes: [rota('/documentos', 'Abrir meus documentos'), { tipo: 'organizar-semana', rotulo: 'Lembrar na Agenda AI' }, ask('dificuldade', 'Ainda não sei como conseguir')],
+        fontes: [], acoes: [rota('/documentos', 'Abrir meus documentos'), { tipo: 'organizar-semana', rotulo: 'Lembrar na Agenda' }, ask('dificuldade', 'Ainda não sei como conseguir')],
       };
     }
     case 'depois': {
@@ -180,28 +180,28 @@ export function quickAnswer(action, user, ctx, pergunta = '') {
       const n = journey.proximaMissao;
       if (!n) return { texto: 'Não há missões disponíveis agora: as restantes estão concluídas, aguardando terceiros ou bloqueadas por dependências.', fontes: [], acoes: [] };
       return {
-        texto: `Sua próxima missão é a **${n.label} — ${n.titulo}** (${n.statusLabel.toLowerCase()}${n.prioridade === 'critica' ? ', prioridade crítica' : ''}).\n\n${n.resumo}\n\n_Recomendação calculada pela plataforma a partir de prazos, dependências e prioridade._`,
+        texto: `Sua próxima missão é a **${n.label} - ${n.titulo}** (${n.statusLabel.toLowerCase()}${n.prioridade === 'critica' ? ', prioridade crítica' : ''}).\n\n${n.resumo}\n\n_Recomendação calculada pela plataforma a partir de prazos, dependências e prioridade._`,
         fontes: [], acoes: [rota(mPath(n.id), `Abrir missão ${n.label}`)],
       };
     }
     case 'documentos': {
       if (m?.documentos.length) {
-        return { texto: `Para a **Missão ${m.label} — ${m.definicao.titulo}**:\n\n${m.documentos.map((d) => `- **${d.nome}** — ${d.statusLabel}. ${d.dica}`).join('\n')}`, fontes: m.fontes, acoes: [rota('/documentos', 'Abrir área de documentos')] };
+        return { texto: `Para a **Missão ${m.label} - ${m.definicao.titulo}**:\n\n${m.documentos.map((d) => `- **${d.nome}**: ${d.statusLabel}. ${d.dica}`).join('\n')}`, fontes: m.fontes, acoes: [rota('/documentos', 'Abrir área de documentos')] };
       }
       const docs = pendingDocs(user, journey);
-      return { texto: docs.length ? `Documentos ainda não prontos:\n\n${docs.map((d) => `- **${d.nome}** — ${DOC_STATUS_LABEL[d.status]}`).join('\n')}` : 'Todos os documentos das suas missões abertas estão prontos ou não se aplicam. 👏', fontes: [], acoes: [rota('/documentos', 'Abrir área de documentos')] };
+      return { texto: docs.length ? `Documentos ainda não prontos:\n\n${docs.map((d) => `- **${d.nome}**: ${DOC_STATUS_LABEL[d.status]}`).join('\n')}` : 'Todos os documentos das suas missões abertas estão prontos ou não se aplicam. 👏', fontes: [], acoes: [rota('/documentos', 'Abrir área de documentos')] };
     }
     case 'vistodocs': {
       const docs = pendingDocs(user, journey, 'visto');
       const c = consulateForState(user.profile?.estado);
       return {
-        texto: `${docs.length ? `Para o visto ainda faltam (conforme o seu checklist):\n\n${docs.map((d) => `- **${d.nome}** — ${DOC_STATUS_LABEL[d.status]} (${d.exigencia === 'requerido' ? 'requerido' : 'conforme o caso'})`).join('\n')}` : 'No seu checklist, os documentos do visto estão prontos ou não se aplicam.'}\n\nA lista que vale é a do **seu consulado**${c ? ` (${c.nome})` : ''}: confirme lá antes de agendar [O7].`,
+        texto: `${docs.length ? `Para o visto ainda faltam (conforme o seu checklist):\n\n${docs.map((d) => `- **${d.nome}**: ${DOC_STATUS_LABEL[d.status]} (${d.exigencia === 'requerido' ? 'requerido' : 'conforme o caso'})`).join('\n')}` : 'No seu checklist, os documentos do visto estão prontos ou não se aplicam.'}\n\nA lista que vale é a do **seu consulado**${c ? ` (${c.nome})` : ''}: confirme lá antes de agendar [O7].`,
         fontes: [], acoes: [rota('/documentos', 'Ver checklist do visto'), rota(mPath('5.3'), 'Abrir Missão 5.3')],
       };
     }
     case 'custo':
       return {
-        texto: `**Sua jornada (estimativa):** ${eur(f.orcamento)}${f.parcial ? ` — faltam ${f.faltamInformar.length} item(ns) sem valor` : ''}.\n- Para se instalar: ${eur(f.instalacao)}\n- Por mês no destino: ${eur(f.mensal)} × ${f.meses} meses\n\n**Para o visto** você precisa *comprovar* ${eur(f.exigenciaVisto)} (${Math.round(f.iprem.percentual * 100)}% do IPREM de ${f.iprem.ano} × ${f.meses} meses [O6]). Isso não é um gasto a mais.`,
+        texto: `**Sua jornada (estimativa):** ${eur(f.orcamento)}${f.parcial ? `, faltam ${f.faltamInformar.length} item(ns) sem valor` : ''}.\n- Para se instalar: ${eur(f.instalacao)}\n- Por mês no destino: ${eur(f.mensal)} × ${f.meses} meses\n\n**Para o visto** você precisa *comprovar* ${eur(f.exigenciaVisto)} (${Math.round(f.iprem.percentual * 100)}% do IPREM de ${f.iprem.ano} × ${f.meses} meses [O6]). Isso não é um gasto a mais.`,
         fontes: [], acoes: [rota('/financiamento', 'Ver meu planejamento')],
       };
     case 'suficiente': {
@@ -231,13 +231,13 @@ export function quickAnswer(action, user, ctx, pergunta = '') {
     }
     case 'apoio':
       return {
-        texto: '**Apoio financeiro familiar** (ex.: pai, mãe, padrasto):\n- Registre o apoiador e o valor como recurso "Apoio familiar" — conta como previsto até você ter a documentação.\n- O consulado decide se aceita patrocínio de terceiros e quais documentos pede: costumam ser comprovação de rendimentos e da origem dos recursos, documentos do apoiador e uma declaração de apoio.\n- Confirme isso no site do seu consulado ou por e-mail (Missão 5.2) antes de reunir os papéis.\n\nNão assuma que qualquer declaração será aceita automaticamente.',
+        texto: '**Apoio financeiro familiar** (ex.: pai, mãe, padrasto):\n- Registre o apoiador e o valor como recurso "Apoio familiar", conta como previsto até você ter a documentação.\n- O consulado decide se aceita patrocínio de terceiros e quais documentos pede: costumam ser comprovação de rendimentos e da origem dos recursos, documentos do apoiador e uma declaração de apoio.\n- Confirme isso no site do seu consulado ou por e-mail (Missão 5.2) antes de reunir os papéis.\n\nNão assuma que qualquer declaração será aceita automaticamente.',
         fontes: [], acoes: [rota('/financiamento#recursos', 'Registrar apoio familiar'), rota(mPath('5.2'), 'Abrir e-mail ao consulado')],
       };
     case 'bolsas': {
       const saved = new Set((user.scholarshipApps || []).map((a) => a.catalogId));
       return {
-        texto: `Fontes para pesquisar (nenhuma cobre automaticamente o seu mestrado — confira o edital vigente):\n\n${SCHOLARSHIPS.map((s) => `- **${s.nome}** — ${s.entidade}. ${s.abrangencia} _Status: ${SCHOLARSHIP_STATUS[s.status]}._`).join('\n')}\n\nPosso salvar as que fizerem sentido e criar as tarefas de candidatura.`,
+        texto: `Fontes para pesquisar (nenhuma cobre automaticamente o seu mestrado, confira o edital vigente):\n\n${SCHOLARSHIPS.map((s) => `- **${s.nome}**: ${s.entidade}. ${s.abrangencia} _Status: ${SCHOLARSHIP_STATUS[s.status]}._`).join('\n')}\n\nPosso salvar as que fizerem sentido e criar as tarefas de candidatura.`,
         fontes: [],
         acoes: [rota('/financiamento#bolsas', 'Abrir buscador de bolsas'), ...SCHOLARSHIPS.filter((s) => !saved.has(s.id)).slice(0, 2).map((s) => ({ tipo: 'salvar-bolsa', catalogId: s.id, rotulo: `Salvar "${s.nome}" e criar tarefas` }))],
       };
@@ -251,22 +251,22 @@ export function quickAnswer(action, user, ctx, pergunta = '') {
       const p = user.profile || {};
       const prog = journey.destino.programa?.nome || '[nombre del máster]';
       return {
-        texto: `Rascunho (revise antes de enviar — o envio é feito por você, no seu e-mail):\n\n**Asunto:** Consulta sobre el ${prog}\n\nEstimado/a profesor/a [apellido]:\n\nMe llamo ${p.nome || '[su nombre]'} y soy ${p.formacao ? `graduado/a en ${p.formacao}` : '[su formación]'}${p.instituicao ? ` por la ${p.instituicao}` : ''} (Brasil). He presentado / voy a presentar mi solicitud al ${prog} a través del Distrito Único Andaluz.\n\nQuisiera consultarle lo siguiente: [su duda concreta].\n\nMuchas gracias por su atención.\n\nAtentamente,\n${p.nome || '[su nombre]'}\n\n_Dica: uma dúvida específica tem mais chance de resposta do que uma mensagem genérica._`,
+        texto: `Rascunho (revise antes de enviar, o envio é feito por você, no seu e-mail):\n\n**Asunto:** Consulta sobre el ${prog}\n\nEstimado/a profesor/a [apellido]:\n\nMe llamo ${p.nome || '[su nombre]'} y soy ${p.formacao ? `graduado/a en ${p.formacao}` : '[su formación]'}${p.instituicao ? ` por la ${p.instituicao}` : ''} (Brasil). He presentado / voy a presentar mi solicitud al ${prog} a través del Distrito Único Andaluz.\n\nQuisiera consultarle lo siguiente: [su duda concreta].\n\nMuchas gracias por su atención.\n\nAtentamente,\n${p.nome || '[su nombre]'}\n\n_Dica: uma dúvida específica tem mais chance de resposta do que uma mensagem genérica._`,
         fontes: [], acoes: [rota(mPath('3.8'), 'Registrar contato e envio')],
       };
     }
     case 'moradia': {
       const casas = (user.housing || []).filter((c) => c.status !== 'descartada').sort((a, b) => (a.aluguel + (a.adicionais || 0)) - (b.aluguel + (b.adicionais || 0)));
       return {
-        texto: `${casas.length ? `Suas opções, da mais barata para a mais cara (aluguel + despesas adicionais):\n${casas.map((c) => `- **${c.nome}** — €${c.aluguel + (c.adicionais || 0)}/mês${c.caucao ? `, caução €${c.caucao}` : ''}`).join('\n')}\n\n` : 'Você ainda não salvou opções no "Meu novo lar".\n\n'}**Para economizar** _(orientação prática)_: compare quartos em apartamento compartilhado, verifique o que está incluso (contas, internet), considere bairros com bom transporte em vez de só os mais centrais e nunca pague caução sem verificar anúncio e contrato.`,
+        texto: `${casas.length ? `Suas opções, da mais barata para a mais cara (aluguel + despesas adicionais):\n${casas.map((c) => `- **${c.nome}**, €${c.aluguel + (c.adicionais || 0)}/mês${c.caucao ? `, caução €${c.caucao}` : ''}`).join('\n')}\n\n` : 'Você ainda não salvou opções no "Meu novo lar".\n\n'}**Para economizar** _(orientação prática)_: compare quartos em apartamento compartilhado, verifique o que está incluso (contas, internet), considere bairros com bom transporte em vez de só os mais centrais e nunca pague caução sem verificar anúncio e contrato.`,
         fontes: [], acoes: [rota('/novo-lar', 'Abrir Meu novo lar')],
       };
     }
     case 'semana':
-      return { texto: 'Posso montar uma proposta para a semana com as suas missões abertas, prioridades, prazos e horários livres. Você revisa, ajusta e aprova — nada é marcado como concluído automaticamente.', fontes: [], acoes: [{ tipo: 'organizar-semana', rotulo: 'Gerar proposta na Agenda AI' }] };
+      return { texto: 'Posso montar uma proposta para a semana com as suas missões abertas, prioridades, prazos e horários livres. Você revisa, ajusta e aprova, nada é marcado como concluído automaticamente.', fontes: [], acoes: [{ tipo: 'organizar-semana', rotulo: 'Gerar proposta na Agenda' }] };
     case 'dua':
       return {
-        texto: 'Inscrição no DUA, missão por missão (Rodada 3):\n- **3.1** Acessar o portal oficial do DUA [O8].\n- **3.2** Identificar a fase do seu perfil e ano (não reutilize prazos antigos).\n- **3.3** Criar a solicitação e preencher os dados.\n- **3.4** Selecionar até 6 mestrados em ordem de preferência (2026/27).\n- **3.5** Anexar a documentação.\n- **3.6** Enviar no portal oficial — a Estuvia não envia por você.\n- **3.7** Salvar o comprovante.',
+        texto: 'Inscrição no DUA, missão por missão (Rodada 3):\n- **3.1** Acessar o portal oficial do DUA [O8].\n- **3.2** Identificar a fase do seu perfil e ano (não reutilize prazos antigos).\n- **3.3** Criar a solicitação e preencher os dados.\n- **3.4** Selecionar até 6 mestrados em ordem de preferência (2026/27).\n- **3.5** Anexar a documentação.\n- **3.6** Enviar no portal oficial, a Estuvia não envia por você.\n- **3.7** Salvar o comprovante.',
         fontes: [], acoes: [rota(`/j/${jr.id}/r/3`, 'Abrir a Rodada 3')],
       };
     case 'certificado': {
@@ -286,14 +286,14 @@ export function quickAnswer(action, user, ctx, pergunta = '') {
     case 'simples': {
       if (!m) break;
       const next = m.objetivos.find((o) => !o.feito);
-      return { texto: `**Em poucas palavras:** ${m.definicao.objetivo}\n\n**Por quê?** ${m.definicao.porque}\n\n${next ? `**Seu próximo passo pequeno:** ${next.texto}.` : 'Você já cumpriu todos os objetivos — falta só confirmar a conclusão.'}`, fontes: m.fontes, acoes: [rota(mPath(m.id), `Abrir missão ${m.label}`)] };
+      return { texto: `**Em poucas palavras:** ${m.definicao.objetivo}\n\n**Por quê?** ${m.definicao.porque}\n\n${next ? `**Seu próximo passo pequeno:** ${next.texto}.` : 'Você já cumpriu todos os objetivos, falta só confirmar a conclusão.'}`, fontes: m.fontes, acoes: [rota(mPath(m.id), `Abrir missão ${m.label}`)] };
     }
     case 'dificuldade': {
       if (!m) break;
       if (m.status === 'bloqueada') return { texto: `A Missão ${m.label} ainda está bloqueada. Antes: ${m.bloqueadaPor.map((b) => `**${b.label || ''} ${b.titulo}**`).join(', ')}.`, fontes: [], acoes: [] };
       const pend = m.objetivos.filter((o) => !o.feito);
       return {
-        texto: `Vamos por partes na **Missão ${m.label} — ${m.definicao.titulo}**.\n\n${pend.map((o, i) => `${i + 1}. ${o.texto}`).join('\n') || 'Todos os objetivos estão feitos: confirme a conclusão.'}\n\n**Como executar:**\n${m.definicao.comoExecutar.map((c) => `- **${c.titulo}:** ${c.texto}`).join('\n')}\n\nSe algo na fonte oficial estiver diferente, vale a fonte oficial.`,
+        texto: `Vamos por partes na **Missão ${m.label} - ${m.definicao.titulo}**.\n\n${pend.map((o, i) => `${i + 1}. ${o.texto}`).join('\n') || 'Todos os objetivos estão feitos: confirme a conclusão.'}\n\n**Como executar:**\n${m.definicao.comoExecutar.map((c) => `- **${c.titulo}:** ${c.texto}`).join('\n')}\n\nSe algo na fonte oficial estiver diferente, vale a fonte oficial.`,
         fontes: m.fontes, acoes: [rota(mPath(m.id), `Abrir missão ${m.label}`)],
       };
     }

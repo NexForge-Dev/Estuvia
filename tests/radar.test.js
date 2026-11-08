@@ -1,4 +1,4 @@
-import { test, before, after } from 'node:test';
+import { test, before, after, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -12,6 +12,12 @@ process.env.RADAR_SCHEDULER = 'off';
 process.env.RADAR_ADMIN_EMAILS = 'equipe@radar.dev';
 delete process.env.ANTHROPIC_API_KEY;
 delete process.env.ANTHROPIC_AUTH_TOKEN;
+
+// Relógio fixo: os snapshots oficiais foram capturados em 24/10/2026 e a regra de frescor
+// (STALE_AFTER_HOURS) depende do "agora". Sem relógio fixo a suíte quebra com o passar dos dias.
+// Só o Date é simulado (timers reais), um dia depois da captura.
+const NOW = Date.parse('2026-10-25T12:00:00Z');
+mock.timers.enable({ apis: ['Date'], now: NOW });
 
 const SEED = new URL('../server/radar/seed/', import.meta.url);
 const seed = (f, latin1) => new TextDecoder(latin1 ? 'windows-1252' : 'utf-8').decode(fs.readFileSync(new URL(f, SEED)));
@@ -161,6 +167,9 @@ test('critérios 7–10: acompanhar, receber alerta de nova data oficial e ver h
   const r1 = pipeline.ingest('dua-calendario', { url: 'https://dua.example/cal', text: next });
   assert.equal(r1.publicado, true);
   assert.equal(r1.novoCiclo, true);
+  // ingest() é a etapa de extração; quem registra a verificação bem-sucedida é runSource().
+  // Simulamos aqui o que runSource faria após esta coleta.
+  radarDb.data().sources.find((s) => s.id === 'dua-calendario').ultimaVerificacaoOk = new Date().toISOString();
   const { onPublished } = await import('../server/radar/notify.js');
   onPublished(r1.revisions);
   onPublished(r1.revisions); // repetição não duplica alerta

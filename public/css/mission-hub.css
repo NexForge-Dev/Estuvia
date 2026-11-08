@@ -204,3 +204,70 @@
   .mh-tool-ic { width: 64px; height: 64px; }
   .mh-tool.is-primary .mh-tool-ic { width: 72px; height: 72px; }
 }
+
+/* Minhas anotações — caderno do estudante (nota, tarefa, preciso de ajuda) */
+.mn { display: grid; gap: 16px; --t-nota: var(--info); --t-tarefa: var(--ok); --t-ajuda: var(--warn); }
+.mn-head { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.mn-head > div { flex: 1; min-width: 200px; }
+.mn-head h2 { margin: 0 0 2px; font-size: 1.12rem; }
+.mn-head p { margin: 0; }
+.mn-head-ic { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; flex: none; color: var(--accent); background: var(--accent-soft); }
+.mn-counts { display: flex; gap: 6px; flex-wrap: wrap; align-self: center; }
+.mn-pill { font-size: .74rem; font-weight: 800; padding: 4px 10px; border-radius: 999px; background: color-mix(in srgb, var(--c) 14%, transparent); color: var(--c); }
+.mn-pill.t-tarefa { --c: var(--t-tarefa); }
+.mn-pill.t-ajuda { --c: var(--t-ajuda); }
+
+.mn-composer { display: grid; gap: 10px; padding: 14px; border-radius: 16px; background: var(--surface-2); border: 1px solid var(--border); }
+.mn-types { display: flex; gap: 6px; flex-wrap: wrap; }
+.mn-type { --c: var(--t-nota); display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border-2); background: var(--surface); color: var(--muted); font: inherit; font-size: .82rem; font-weight: 700; cursor: pointer; transition: all .15s ease; }
+.mn-type.t-tarefa { --c: var(--t-tarefa); }
+.mn-type.t-ajuda { --c: var(--t-ajuda); }
+.mn-type:hover { color: var(--text); border-color: color-mix(in srgb, var(--c) 50%, var(--border-2)); }
+.mn-type[aria-checked="true"] { color: var(--c); border-color: var(--c); background: color-mix(in srgb, var(--c) 12%, var(--surface)); }
+.mn-type:focus-visible, .mn-check:focus-visible, .mn-filter:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 60%, transparent); outline-offset: 2px; }
+.mn-input { display: flex; gap: 8px; align-items: flex-end; }
+.mn-input textarea, .mn-body textarea { flex: 1; width: 100%; min-height: 44px; resize: none; padding: 11px 14px; border-radius: 12px; border: 1px solid var(--border-2); background: var(--surface); color: var(--text); font: inherit; font-size: .92rem; line-height: 1.4; }
+.mn-input textarea:focus, .mn-body textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.mn-add { flex: none; min-height: 44px; display: inline-flex; align-items: center; gap: 6px; }
+@media (max-width: 520px) { .mn-add span { display: none; } }
+
+.mn-filters { display: flex; gap: 4px; flex-wrap: wrap; }
+.mn-filter { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: .8rem; font-weight: 700; cursor: pointer; }
+.mn-filter span { font-size: .7rem; padding: 1px 7px; border-radius: 999px; background: var(--surface-3); }
+.mn-filter[aria-selected="true"] { background: var(--accent-soft); color: var(--accent); }
+
+.mn-list { display: grid; gap: 8px; }
+.mn-item { --c: var(--t-nota); display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--border); border-left: 3px solid var(--c); background: var(--surface); transition: opacity .2s ease; }
+.mn-item.t-tarefa { --c: var(--t-tarefa); }
+.mn-item.t-ajuda { --c: var(--t-ajuda); background: color-mix(in srgb, var(--t-ajuda) 5%, var(--surface)); }
+.mn-item.is-done { opacity: .62; background: var(--surface); }
+.mn-item.is-done .mn-text { text-decoration: line-through; color: var(--muted); }
+.mn-ic { flex: none; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); }
+.mn-check { flex: none; display: grid; place-items: center; width: 24px; height: 24px; margin-top: 1px; border-radius: 7px; border: 2px solid var(--border-2); background: transparent; color: var(--bg); cursor: pointer; padding: 0; transition: all .15s ease; }
+.mn-check:hover { border-color: var(--t-tarefa); }
+.mn-check[aria-checked="true"] { background: var(--t-tarefa); border-color: var(--t-tarefa); }
+.mn-body { flex: 1; min-width: 0; display: grid; gap: 4px; }
+.mn-text { margin: 0; font-size: .93rem; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+.mn-meta { color: var(--faint); font-size: .74rem; }
+.mn-edit-bar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+.mn-edit-bar select { padding: 5px 8px; border-radius: 8px; border: 1px solid var(--border-2); background: var(--surface); color: var(--text); font: inherit; font-size: .82rem; }
+.mn-actions { flex: none; display: flex; align-items: center; gap: 2px; flex-wrap: wrap; justify-content: flex-end; }
+.mn-actions .icon-btn { opacity: .55; }
+.mn-item:hover .mn-actions .icon-btn, .mn-actions .icon-btn:focus-visible { opacity: 1; }
+.mn-mentor { display: inline-flex; align-items: center; gap: 5px; border: 0; padding: 5px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font: inherit; font-size: .76rem; font-weight: 800; cursor: pointer; }
+.mn-mentor:hover { filter: brightness(1.12); }
+.mn-link { border: 0; background: none; color: var(--muted); font: inherit; font-size: .76rem; font-weight: 700; cursor: pointer; padding: 5px 8px; text-decoration: underline; text-underline-offset: 2px; }
+.mn-confirm { font-size: .8rem; font-weight: 700; color: var(--danger); margin-right: 4px; }
+.mn-empty { display: grid; gap: 10px; padding: 18px; border-radius: 14px; border: 1px dashed var(--border-2); text-align: center; color: var(--muted); }
+.mn-empty p { margin: 0; }
+.mn-suggest { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+@media (max-width: 560px) { .mn-item { flex-wrap: wrap; } .mn-actions { width: 100%; justify-content: flex-start; padding-left: 38px; } .mn-actions .icon-btn { opacity: 1; } }
+@media (hover: none) { .mn-actions .icon-btn { opacity: 1; } }
+
+/* Painel "Experiências e fontes" */
+.mh-panel { display: grid; gap: 14px; }
+.mh-panel .mh-section-head h3, .mh-sub { margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 6px; }
+.mh-sub { margin-top: 6px; }
+.mh-source-list { margin: 0; padding-left: 18px; display: grid; gap: 8px; font-size: .9rem; }
+/* Anotações dentro do painel: sem moldura de card (o painel já é a moldura) */
+.mn.is-sheet { background: none; border: 0; padding: 0; }

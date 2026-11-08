@@ -1,4 +1,4 @@
-// Agenda AI: planejador da jornada. Regras determinísticas e explicáveis:
+// Agenda: planejador da jornada. Regras determinísticas e explicáveis:
 // prioriza (crítica → alta → normal → aguardando resposta), respeita a disponibilidade
 // e os compromissos existentes, e propõe blocos que o estudante aprova ou edita.
 // Nunca marca missões como concluídas e só planeja missões liberadas pela progressão (bloqueadas ficam de fora;
@@ -16,6 +16,12 @@ export const DEFAULT_AVAILABILITY = {
   preferencia: 'curtas',                            // curtas: blocos de até 45 min · longas: até 120 min
   fuso: 'America/Sao_Paulo',
 };
+
+// "Hoje" no fuso escolhido pelo estudante (à noite no Brasil o UTC já está no dia seguinte).
+export function todayFor(user, now = new Date()) {
+  const fuso = user?.agenda?.disponibilidade?.fuso || DEFAULT_AVAILABILITY.fuso;
+  try { return new Intl.DateTimeFormat('en-CA', { timeZone: fuso, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now); } catch { return now.toISOString().slice(0, 10); }
+}
 
 const toMin = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
 const toTime = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
@@ -39,15 +45,15 @@ export function workItems(user, today) {
         const prioridade = m.prioridade === 'critica' ? 'critica' : m.prioridade === 'alta' ? 'alta' : 'normal';
         items.push({
           ...base,
-          titulo: `Missão ${m.label} — ${m.titulo}`,
+          titulo: `Missão ${m.label} - ${m.titulo}`,
           minutos: Math.max(15, Math.round(((m.duracaoMin || 60) * restante) / 15) * 15),
           prioridade,
           prazo: m.prazo?.data || null,
-          motivo: prioridade === 'critica' ? (m.prazo ? `Prazo em ${m.prazo.diasRestantes} dia(s)` : 'Ação urgente após mudança na sua situação') : m.status === 'atencao' ? 'Missão com atenção necessária' : m.status === 'em-andamento' ? 'Continuar o que você começou' : m.trilha && !j.rodadas.find((r) => r.numero === m.rodada)?.desbloqueada ? `Preparação antecipada — ${m.trilha.titulo}` : 'Disponível agora',
+          motivo: prioridade === 'critica' ? (m.prazo ? `Prazo em ${m.prazo.diasRestantes} dia(s)` : 'Ação urgente após mudança na sua situação') : m.status === 'atencao' ? 'Missão com atenção necessária' : m.status === 'em-andamento' ? 'Continuar o que você começou' : m.trilha && !j.rodadas.find((r) => r.numero === m.rodada)?.desbloqueada ? `Preparação antecipada: ${m.trilha.titulo}` : 'Disponível agora',
           rodada: m.rodada,
         });
       } else if (m.status === 'aguardando') {
-        items.push({ ...base, titulo: `Verificar resposta — Missão ${m.label}`, minutos: 15, prioridade: 'aguardando', prazo: m.prazo?.data || null, motivo: 'Depende de terceiros: só conferir se houve resposta', rodada: m.rodada });
+        items.push({ ...base, titulo: `Verificar resposta: Missão ${m.label}`, minutos: 15, prioridade: 'aguardando', prazo: m.prazo?.data || null, motivo: 'Depende de terceiros: só conferir se houve resposta', rodada: m.rodada });
       }
     }
   }
@@ -57,7 +63,7 @@ export function workItems(user, today) {
     if (!pend.length) continue;
     const dias = app.prazo ? Math.ceil((new Date(`${app.prazo}T23:59:59Z`) - new Date(`${today}T12:00:00Z`)) / 86400000) : null;
     items.push({
-      titulo: `Bolsa ${app.nome} — ${pend[0].texto}`, minutos: 45, categoria: 'financeiro', bolsaId: app.id,
+      titulo: `Bolsa ${app.nome} - ${pend[0].texto}`, minutos: 45, categoria: 'financeiro', bolsaId: app.id,
       prioridade: dias !== null && dias <= 7 ? 'critica' : dias !== null && dias <= 30 ? 'alta' : 'normal',
       prazo: app.prazo || null, motivo: app.prazo ? `Prazo do edital em ${dias} dia(s)` : 'Tarefa de candidatura à bolsa', rodada: 9,
     });
@@ -66,7 +72,7 @@ export function workItems(user, today) {
   return items;
 }
 
-export function suggestWeek(user, weekStart, today = new Date().toISOString().slice(0, 10), { journeyId, missaoId } = {}) {
+export function suggestWeek(user, weekStart, today = todayFor(user), { journeyId, missaoId } = {}) {
   const av = { ...DEFAULT_AVAILABILITY, ...(user.agenda?.disponibilidade || {}) };
   const start = mondayOf(weekStart);
   const maxBlock = av.preferencia === 'longas' ? 120 : 45;
@@ -135,7 +141,7 @@ export function suggestWeek(user, weekStart, today = new Date().toISOString().sl
 
 // Replanejamento: remove blocos sugeridos futuros que deixaram de fazer sentido
 // (missão concluída, bloqueada ou aguardando terceiros) e explica o porquê.
-export function staleSuggestions(user, today = new Date().toISOString().slice(0, 10)) {
+export function staleSuggestions(user, today = todayFor(user)) {
   const states = new Map();
   for (const jr of user.journeys || []) {
     const j = computeJourney(user, jr);
@@ -149,7 +155,7 @@ export function staleSuggestions(user, today = new Date().toISOString().slice(0,
     if (e.titulo.startsWith('Verificar resposta')) { if (m.status !== 'aguardando') removed.push({ id: e.id, titulo: e.titulo, motivo: 'A missão não está mais aguardando resposta' }); continue; }
     if (m.status === 'concluida') removed.push({ id: e.id, titulo: e.titulo, motivo: 'Missão já concluída' });
     else if (m.status === 'bloqueada') removed.push({ id: e.id, titulo: e.titulo, motivo: `Bloqueada: depende de ${m.bloqueadaPor.map((b) => b.label || b.titulo).join(', ')}` });
-    else if (m.status === 'aguardando') removed.push({ id: e.id, titulo: e.titulo, motivo: 'Aguardando terceiros — o bloco vira uma verificação curta' });
+    else if (m.status === 'aguardando') removed.push({ id: e.id, titulo: e.titulo, motivo: 'Aguardando terceiros, o bloco vira uma verificação curta' });
     else if (m.status === 'nao-aplicavel') removed.push({ id: e.id, titulo: e.titulo, motivo: 'Não se aplica mais' });
   }
   return removed;

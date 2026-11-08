@@ -138,9 +138,9 @@ export async function simulateDev({ anoAcademico, abertura, encerramento }, por)
   const d = data();
   const curso = parseAcademicYear(anoAcademico);
   if (!curso) throw err(400, 'Ano acadêmico inválido.');
-  if (d.windows.some((w) => w.anoAcademico === curso.rotulo && !w.demo)) throw err(409, 'Já existe calendário oficial para este curso — a simulação não sobrescreve dados reais.');
+  if (d.windows.some((w) => w.anoAcademico === curso.rotulo && !w.demo)) throw err(409, 'Já existe calendário oficial para este curso, a simulação não sobrescreve dados reais.');
   const source = d.sources.find((s) => s.id === 'dua-calendario');
-  const parsed = { tipo: 'calendario', procedimentoId: 'dua-masteres', anoAcademico: curso.rotulo, avisos: [], fases: [{ fase: 1, titulo: 'FASE 1 — SIMULAÇÃO (DEMONSTRATIVO)', publico: 'estrangeiros', confirmacao: 'confirmado', itens: [{ ordem: 1, tipo: 'candidatura', rotulo: 'Simulação', texto: 'DADO DEMONSTRATIVO', inicio: abertura, fim: encerramento }] }] };
+  const parsed = { tipo: 'calendario', procedimentoId: 'dua-masteres', anoAcademico: curso.rotulo, avisos: [], fases: [{ fase: 1, titulo: 'FASE 1: SIMULAÇÃO (DEMONSTRATIVO)', publico: 'estrangeiros', confirmacao: 'confirmado', itens: [{ ordem: 1, tipo: 'candidatura', rotulo: 'Simulação', texto: 'DADO DEMONSTRATIVO', inicio: abertura, fim: encerramento }] }] };
   const result = applyCalendar(parsed, { source, snapshot: { id: 'demo', url: 'demo://simulacao', versao: 0 }, force: true, por: `${por} (simulação)` });
   for (const w of d.windows.filter((x) => x.anoAcademico === curso.rotulo)) w.demo = true;
   for (const o of d.opportunities.filter((x) => x.anoAcademico === curso.rotulo)) o.demo = true;
@@ -179,7 +179,7 @@ export async function importCommunityFeed() {
     const before = data().reviews.length;
     openReview({
       tipo: 'comunidade', sourceId: 'comunidade', snapshotId: null, impacto: 'medio', chave: `comunidade:${item.postId}:${item.verificadaEm}`,
-      motivo: `${item.instituicao} — ${item.titulo}${item.prazo ? ` (prazo informado: ${item.prazo})` : ''}. Conferir em ${item.linkOficial}.${match.match ? ` Já existe no Radar: ${match.programa}.` : ''}`,
+      motivo: `${item.instituicao} - ${item.titulo}${item.prazo ? ` (prazo informado: ${item.prazo})` : ''}. Conferir em ${item.linkOficial}.${match.match ? ` Já existe no Radar: ${match.programa}.` : ''}`,
       proposta: null,
     });
     if (data().reviews.length > before) n += 1;

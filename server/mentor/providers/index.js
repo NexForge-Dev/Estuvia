@@ -13,9 +13,18 @@
 //   MENTOR_PROVIDER = none | anthropic | openai-compatible     (padrão: none)
 //   MENTOR_MODEL    = modelo do provedor (anthropic: claude-opus-5-5)
 //   MENTOR_BASE_URL / MENTOR_API_KEY   (openai-compatible: OpenAI, Ollama, LM Studio, vLLM…)
+//   MENTOR_TIMEOUT_MS = tempo máximo de UMA chamada ao modelo (padrão 60 s)
+//
+// O retorno de chat() pode trazer uso: { entrada, saida } (tokens) para o teto diário por estudante.
 
 import { anthropicProvider } from './anthropic.js';
 import { openAICompatibleProvider } from './openai-compatible.js';
+
+/** Tempo máximo de uma chamada ao provedor (lido a cada uso para os testes poderem reduzir). */
+export function providerTimeoutMs() {
+  const v = Number(process.env.MENTOR_TIMEOUT_MS);
+  return Number.isFinite(v) && v > 0 ? v : 60_000;
+}
 
 const none = { id: 'none', nome: 'Modo Guiado (sem IA generativa)', disponivel: false };
 

@@ -1,10 +1,11 @@
 // Componentes visuais reutilizáveis da jornada + feedback de conquistas.
 import { h, toast } from '../ui.js';
 import { icon, ring, STATUS_ICON } from '../icons.js';
+import { locale } from '../i18n.js';
 
 export const pct = (v) => `${Math.round((v || 0) * 100)}%`;
 // Rótulo com até 1 casa decimal no padrão brasileiro (ex.: "37,5%").
-export const pctLabel = (v) => `${(Math.round((v || 0) * 1000) / 10).toLocaleString('pt-BR')}%`;
+export const pctLabel = (v) => `${(Math.round((v || 0) * 1000) / 10).toLocaleString(locale())}%`;
 
 export function progressBar(value, { label, cls = '' } = {}) {
   const fill = h('span', { class: 'bar-fill' });
@@ -22,7 +23,7 @@ export function priorityTag(p) {
   return h('span', { class: `prio prio-${p}` }, h('i', { 'aria-hidden': 'true' }), PRIORITY[p]);
 }
 
-export const fmtDate = (iso) => (iso ? new Date(`${iso.slice(0, 10)}T12:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : '');
+export const fmtDate = (iso) => (iso ? new Date(`${iso.slice(0, 10)}T12:00:00`).toLocaleDateString(locale(), { day: '2-digit', month: 'short', year: 'numeric' }) : '');
 
 export function deadlineTag(prazo) {
   if (!prazo) return null;
@@ -43,7 +44,7 @@ export function roundRing(round, size = 64) {
 // ---------- Feedback de eventos vindos do servidor ----------
 // O servidor decide o que foi concluído e desbloqueado; aqui só comunicamos visualmente.
 
-const roundName = (r) => (r.sigla ? `Trilha ${r.sigla} — ${r.titulo}` : `Rodada ${r.numero} — ${r.titulo}`);
+const roundName = (r) => (r.sigla ? `Trilha ${r.sigla} - ${r.titulo}` : `Rodada ${r.numero} - ${r.titulo}`);
 
 export function showEvents(events = []) {
   const roundDone = events.find((e) => e.tipo === 'rodada-concluida');
@@ -60,6 +61,9 @@ export function showEvents(events = []) {
     const names = unlocked.missoes.slice(0, 2).map((m) => `${m.label || m.id} ${m.titulo}`).join(', ');
     toast(`Desbloqueado: ${names}${unlocked.missoes.length > 2 ? ` e mais ${unlocked.missoes.length - 2}` : ''}`, 'info');
   }
+  // Missão de preparo concluída → o documento foi guardado como pronto na Carteira.
+  const carteira = events.find((e) => e.tipo === 'carteira');
+  if (carteira) setTimeout(() => toast(`Guardado na sua Carteira de Documentos: ${carteira.documentos.map((d) => d.nome).join(', ')} (pronto).`, 'ok'), roundDone || roundOpen || done ? 900 : 0);
   import('../app.js').then((m) => m.checkAchievements()).catch(() => {});
 }
 
@@ -84,14 +88,14 @@ function missionModal({ jid, done, unlocked, milestones }) {
   const { card } = dialog('Missão concluída', 'is-mission', (close) => [
     h('span', { class: 'celebrate-badge pop' }, icon('check', { size: 32 })),
     h('p', { class: 'eyebrow' }, 'Missão concluída!'),
-    h('h2', {}, `${done.label} — ${done.titulo}`),
+    h('h2', {}, `${done.label} - ${done.titulo}`),
     done.resultado ? h('p', { class: 'muted' }, done.resultado) : null,
     done.progressoRodada !== null && done.progressoRodada !== undefined
       ? h('div', { class: 'celebrate-progress' }, h('div', { class: 'bar' }, fill), h('small', { class: 'muted' }, `Rodada ${done.rodada}: ${pctLabel(done.progressoRodada)}`))
       : null,
     milestones.length ? h('p', { class: 'celebrate-milestone' }, icon(milestones[0].icone || 'trophy', { size: 16 }), `Marco conquistado: ${milestones.map((m) => m.titulo).join(' · ')}`) : null,
     next
-      ? h('div', { class: 'unlock-next' }, h('span', { class: 'unlock-ic' }, icon('unlock', { size: 18 })), h('div', {}, h('small', {}, 'Próximo desafio desbloqueado'), h('strong', {}, `${next.label} — ${next.titulo}`)))
+      ? h('div', { class: 'unlock-next' }, h('span', { class: 'unlock-ic' }, icon('unlock', { size: 18 })), h('div', {}, h('small', {}, 'Próximo desafio desbloqueado'), h('strong', {}, `${next.label} - ${next.titulo}`)))
       : null,
     h('div', { class: 'row wrap center' },
       next && jid ? link(`#/j/${jid}/m/${next.id}`, 'Continuar', 'btn-cta', close, 'arrow') : h('button', { class: 'btn btn-cta', type: 'button', onClick: close }, 'Continuar'),
@@ -113,10 +117,10 @@ function roundModal({ jid, roundDone, roundOpen, milestones = [] }) {
           roundOpen.banner ? h('img', { src: roundOpen.banner, alt: '' }) : null,
           h('div', {}, h('small', {}, 'Nova rodada desbloqueada'), h('strong', {}, roundName(roundOpen).toUpperCase()), roundOpen.etapa ? h('span', { class: 'muted small' }, roundOpen.etapa) : null))
       : roundOpen && roundOpen.etapa ? h('p', { class: 'muted' }, roundOpen.etapa) : null,
-    roundOpen ? h('p', { class: 'small muted' }, 'A Agenda AI já pode incluir as novas missões no seu planejamento.') : h('p', { class: 'muted small' }, 'Registrado no seu histórico de marcos.'),
+    roundOpen ? h('p', { class: 'small muted' }, 'A Agenda já pode incluir as novas missões no seu planejamento.') : h('p', { class: 'muted small' }, 'Registrado no seu histórico de marcos.'),
     h('div', { class: 'row wrap center' },
       roundOpen && jid ? link(`#/j/${jid}/r/${roundOpen.numero}`, 'Continuar', 'btn-cta', close, 'arrow') : h('button', { class: 'btn btn-cta', type: 'button', onClick: close }, 'Continuar jornada'),
-      roundOpen ? link('#/agenda#organizar', 'Organizar na Agenda AI', 'btn-ghost', close, 'sparkles') : null),
+      roundOpen ? link('#/agenda#organizar', 'Organizar na Agenda', 'btn-ghost', close, 'calendar') : null),
   ]);
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) sparks(card);
 }
@@ -130,4 +134,18 @@ function sparks(card) {
     layer.append(s);
   }
   card.append(layer);
+}
+
+// Painel recolhível: começa fechado (tela limpa) e mostra um resumo curto ao lado do título.
+// O estado aberto/fechado é lembrado só neste navegador (conveniência; funciona sem armazenamento).
+export function FoldPanel({ id, title, ic, hint = null, cls = '' }, ...body) {
+  const key = `estuvia:fold:${id}`;
+  let open = false;
+  try { open = localStorage.getItem(key) === '1'; } catch { /* sem armazenamento: começa fechado */ }
+  const el = h('details', { class: `panel panel-fold ${cls}`, open },
+    h('summary', { class: 'panel-title' }, icon(ic, { size: 18 }), h('span', { class: 'pf-title' }, title),
+      hint ? h('span', { class: 'pf-hint' }, hint) : null, icon('chevron', { size: 16, cls: 'pf-chev' })),
+    h('div', { class: 'pf-body' }, body));
+  el.addEventListener('toggle', () => { try { localStorage.setItem(key, el.open ? '1' : '0'); } catch { /* ignora */ } });
+  return el;
 }

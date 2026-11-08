@@ -1,5 +1,7 @@
 // Ícones SVG em linha (traço 2px, 24×24), criados via DOM — sem dependências externas.
 const PATHS = {
+  pulse: ['M22 12h-4l-3 9L9 3l-3 9H2'],
+  terminal: ['m4 17 6-6-6-6', 'M12 19h8'],
   compass: ['M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z', 'm16.2 7.8-2.1 6.3-6.3 2.1 2.1-6.3 6.3-2.1Z'],
   folder: ['M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.7-.9l-.8-1.2A2 2 0 0 0 7.9 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z'],
   flag: ['M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z', 'M4 22v-7'],

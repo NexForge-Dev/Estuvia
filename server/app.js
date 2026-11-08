@@ -1,4 +1,6 @@
+import { requestMetrics } from './ops.js';
 import express from 'express';
+import Layer from 'express/lib/router/layer.js';
 import cookieParser from 'cookie-parser';
 import { config } from './config.js';
 import { securityHeaders, csrfGuard, apiLimiter } from './security.js';
@@ -19,8 +21,27 @@ import travelRoutes from './routes/travel.js';
 import documentRoutes from './routes/documents.js';
 import adminRoutes from './routes/admin.js';
 import trackRoutes from './routes/track.js';
+import eventRoutes from './routes/events.js';
 import { ensureAdminAccount } from './admin-seed.js';
 import { initRadar } from './radar/service.js';
+import { storeHealth } from './store.js';
+
+// O Express 4 não captura promessas rejeitadas: um erro em rota async derrubava o processo
+// inteiro (Node 22 encerra em unhandledRejection). Aqui toda rota async encaminha o erro ao
+// tratador central, que responde 500 sem vazar detalhes.
+if (!Layer.prototype.handle_request.asyncSafe) {
+  const original = Layer.prototype.handle_request;
+  Layer.prototype.handle_request = function handle(req, res, next) {
+    if (this.handle.length > 3) return original.call(this, req, res, next);
+    try {
+      const result = this.handle(req, res, next);
+      if (result && typeof result.catch === 'function') result.catch(next);
+    } catch (err) {
+      next(err);
+    }
+  };
+  Layer.prototype.handle_request.asyncSafe = true;
+}
 
 export function createApp() {
   initRadar().catch((err) => console.error('[radar] falha ao iniciar:', err.message));
@@ -34,9 +55,13 @@ export function createApp() {
   app.use(cookieParser());
 
   const api = express.Router();
-  api.use(apiLimiter, csrfGuard);
+  api.use(requestMetrics, apiLimiter, csrfGuard);
   api.use((req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
-  api.get('/health', (req, res) => res.json({ ok: true }));
+  // 503 quando a última gravação da base falhou (monitoramento externo deve alertar).
+  api.get('/health', (req, res) => {
+    const store = storeHealth();
+    res.status(store.ok ? 200 : 503).json({ ok: store.ok, ...(store.ok ? {} : { erro: 'Falha ao gravar a base de dados.' }) });
+  });
   api.use('/auth', authRoutes);
   api.use('/me', meRoutes);
   api.use('/journeys', journeyRoutes);
@@ -52,6 +77,7 @@ export function createApp() {
   api.use('/documents', documentRoutes);
   api.use('/admin', adminRoutes);
   api.use('/track', trackRoutes);
+  api.use('/events', eventRoutes);
   api.use('/content', contentRoutes);
   api.use('/assistant', assistantRoutes);
   api.use((req, res) => res.status(404).json({ error: 'Rota não encontrada.' }));
@@ -66,6 +92,7 @@ export function createApp() {
     if (err.type === 'entity.parse.failed') return res.status(400).json({ error: 'JSON inválido.' });
     if (err.type === 'entity.too.large') return res.status(413).json({ error: 'Conteúdo grande demais.' });
     console.error('[erro]', err);
+    if (res.headersSent) return;
     res.status(500).json({ error: 'Algo deu errado do nosso lado. Tente novamente.' });
   });
   return app;

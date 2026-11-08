@@ -10,6 +10,7 @@ import { sourceById } from './content/sources.js';
 import { consulateForState, consulateResult, CONSULATE_LIST_URL } from './content/places.js';
 import { computeFinance } from './finance-engine.js';
 import { ROUND_UNLOCK, PARALLEL_TRACKS, trackOf, EVIDENCE, PRIOR_STAGES, situacaoRank, complexityOf, riskOf, REQUIREMENTS } from './content/progression.js';
+import { todayMadrid, daysBetween } from './radar/dates.js';
 
 export const STATUS = {
   bloqueada: 'Bloqueada',
@@ -230,7 +231,9 @@ function officialFor(ctx, missionId) {
   return ctx._official.find((d) => d.missaoId === missionId) || null;
 }
 
-const daysUntil = (iso, now) => Math.ceil((new Date(`${iso}T23:59:59Z`).getTime() - now.getTime()) / DAY);
+// Dias de calendário até o prazo, contados em Madri (os prazos oficiais são do horário espanhol):
+// 0 = o prazo é hoje, negativo = já venceu. Igual ao Radar.
+const daysUntil = (iso, now) => daysBetween(todayMadrid(now), iso);
 const fmtDate = (iso) => iso.split('-').reverse().join('/');
 
 // ---------- Desbloqueio de rodadas (RoundUnlockRule) ----------
@@ -619,6 +622,9 @@ export function missionDetail(user, jr, id, now = new Date()) {
     }),
     prazoDeclarado: mp.prazo || null,
     nota: mp.nota || '',
+    anotacoes: mp.anotacoes || [],
+    // Documentos da Carteira ligados a esta missão (rounds.js + catálogo): a central mostra o card de documentos.
+    docsCarteira: DOCUMENTS.filter((d) => !d.agregado && (d.prepara === id || (d.missoesExtra || []).includes(id) || (def.documentos || []).includes(d.id))).length,
     naoAplicavelMarcado: Boolean(mp.naoAplicavel),
     ignoradaMarcada: Boolean(mp.ignorada),
     ...extra,
@@ -638,10 +644,22 @@ function editable(user, jr, id) {
   return { def, state };
 }
 
-export function setSituacao(jr, campo, valor) {
+// Decisões externas são DECLARADAS pelo estudante (a plataforma não consulta os sistemas oficiais).
+// Coerência mínima: matrícula e visto só avançam depois de uma admissão registrada (voltar ao
+// estado inicial é sempre permitido, para corrigir um engano). O registro guarda a origem e a data.
+export function setSituacao(jr, campo, valor, now = new Date()) {
   if (!SITUACAO[campo]) throw new JourneyError(400, 'Situação desconhecida.');
   if (!SITUACAO[campo].some(([v]) => v === valor)) throw new JourneyError(400, 'Valor de situação inválido.');
-  ensureJourney(jr).situacao[campo] = valor;
+  ensureJourney(jr);
+  if (campo !== 'adjudicacao' && valor !== DEFAULT_SITUACAO[campo] && jr.situacao.adjudicacao !== 'admitido') {
+    throw new JourneyError(409, campo === 'visto' ? 'Registre primeiro a admissão: o pedido de visto de estudante exige a carta de admissão.' : 'Registre primeiro a admissão para registrar a matrícula.');
+  }
+  jr.situacao[campo] = valor;
+  recordSituacao(jr, campo, valor, 'declarado', now);
+}
+
+function recordSituacao(jr, campo, valor, origem, now) {
+  jr.situacaoRegistro = { ...(jr.situacaoRegistro || {}), [campo]: { valor, origem, em: now.toISOString() } };
 }
 
 export function setObjective(user, jr, missionId, objId, { feito, valor }) {
@@ -675,6 +693,8 @@ export function setObjective(user, jr, missionId, objId, { feito, valor }) {
 export function completeMission(user, jr, missionId, confirmo, evidencia) {
   const { state } = editable(user, jr, missionId);
   if (!confirmo) throw new JourneyError(400, 'Confirme que realizou o procedimento.');
+  // Envio duplicado (clique duplo, nova tentativa): não regrava a data nem a evidência.
+  if (state.status === 'concluida') throw new JourneyError(409, 'Esta missão já está concluída.');
   const ev = EVIDENCE[missionId];
   const ref = String(evidencia || '').trim().slice(0, 200);
   if (ev?.obrigatoria && !ref && state.podeConcluir) throw new JourneyError(400, `Registre a evidência: ${ev.rotulo}.`);
@@ -691,6 +711,8 @@ export function reopenMission(user, jr, missionId) {
   const { state } = editable(user, jr, missionId);
   if (state.status !== 'concluida') throw new JourneyError(409, 'A missão não está concluída.');
   const mp = ensureJourney(jr).missions[missionId];
+  // Marcada pela resposta "Sim, já tenho": reabrir aqui seria desfeito pela própria resposta.
+  if (mp.requisitoAtendido) throw new JourneyError(409, 'Esta missão foi marcada pela sua resposta em "O que eu já tenho" (Meu perfil). Corrija a resposta lá para reabri-la.');
   delete mp.concluidaEm;
   delete mp.declarada;
   delete mp.requisitoAtendido;
@@ -748,12 +770,71 @@ export function setMissionFlags(user, jr, missionId, { aguardando, naoAplicavel,
   }
 }
 
+// ---------- Anotações da missão (só do estudante: lembretes, tarefas e "preciso de ajuda") ----------
+// Não contam como objetivo nem concluem nada: são o caderno do estudante dentro da missão.
+
+export const NOTE_TYPES = { nota: 'Anotação', tarefa: 'Tarefa', ajuda: 'Preciso de ajuda' };
+export const MAX_NOTES = 40;
+
+// Missão bloqueada: o conteúdo ainda não foi liberado, então não recebe anotações novas
+// (as que já existem continuam editáveis se ela voltar a bloquear após uma reabertura).
+export function assertMissionOpen(user, jr, missionId) {
+  const { state } = editable(user, jr, missionId);
+  if (state.status === 'bloqueada') throw new JourneyError(409, 'Esta missão ainda está bloqueada. Conclua os pré-requisitos primeiro.');
+}
+
+function noteTarget(jr, missionId) {
+  if (!missionById(missionId)) throw new JourneyError(404, 'Missão não encontrada.');
+  const mp = mp_(jr, missionId);
+  mp.anotacoes ??= [];
+  return mp.anotacoes;
+}
+
+export function addNote(jr, missionId, { texto, tipo = 'nota' }, id, now = new Date()) {
+  const list = noteTarget(jr, missionId);
+  if (!NOTE_TYPES[tipo]) throw new JourneyError(400, 'Tipo de anotação inválido.');
+  const t = String(texto || '').trim().slice(0, 500);
+  if (!t) throw new JourneyError(400, 'Escreva a anotação.');
+  if (list.length >= MAX_NOTES) throw new JourneyError(409, `Limite de ${MAX_NOTES} anotações nesta missão. Apague as que não precisa mais.`);
+  const note = { id, tipo, texto: t, feito: false, criadaEm: now.toISOString() };
+  list.unshift(note);
+  return note;
+}
+
+export function updateNote(jr, missionId, noteId, { texto, tipo, feito }, now = new Date()) {
+  const note = noteTarget(jr, missionId).find((n) => n.id === noteId);
+  if (!note) throw new JourneyError(404, 'Anotação não encontrada.');
+  if (tipo !== undefined) {
+    if (!NOTE_TYPES[tipo]) throw new JourneyError(400, 'Tipo de anotação inválido.');
+    note.tipo = tipo;
+  }
+  if (texto !== undefined) {
+    const t = String(texto).trim().slice(0, 500);
+    if (!t) throw new JourneyError(400, 'A anotação não pode ficar vazia.');
+    note.texto = t;
+  }
+  if (feito !== undefined) {
+    note.feito = Boolean(feito);
+    if (note.feito) note.feitaEm = now.toISOString();
+    else delete note.feitaEm;
+  }
+  note.atualizadaEm = now.toISOString();
+  return note;
+}
+
+export function deleteNote(jr, missionId, noteId) {
+  const list = noteTarget(jr, missionId);
+  const i = list.findIndex((n) => n.id === noteId);
+  if (i < 0) throw new JourneyError(404, 'Anotação não encontrada.');
+  list.splice(i, 1);
+}
+
 // ---------- Progresso anterior e chegada (fatos declarados pelo estudante, com confirmação) ----------
 
-const today = (now) => now.toISOString().slice(0, 10);
+// A entrada acontece na Espanha: "hoje" é a data de Madri (à frente do UTC e do Brasil).
 function validEntry(dataEntrada, now) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dataEntrada || '')) throw new JourneyError(400, 'Informe a data de entrada na Espanha.');
-  if (dataEntrada > today(now)) throw new JourneyError(400, 'A data de entrada não pode estar no futuro.');
+  if (dataEntrada > todayMadrid(now)) throw new JourneyError(400, 'A data de entrada não pode estar no futuro.');
 }
 
 // Registra etapas já cumpridas fora da Estuvia. Nunca rebaixa uma situação nem desfaz conclusões.
@@ -768,7 +849,7 @@ export function declarePriorProgress(user, jr, etapa, { dataEntrada, confirmo } 
   const marcadas = [];
   for (const st of stages) {
     for (const [campo, valor] of Object.entries(st.situacao || {})) {
-      if (situacaoRank(campo, valor) > situacaoRank(campo, jr.situacao[campo])) jr.situacao[campo] = valor;
+      if (situacaoRank(campo, valor) > situacaoRank(campo, jr.situacao[campo])) { jr.situacao[campo] = valor; recordSituacao(jr, campo, valor, 'progresso-anterior', now); }
     }
     for (const id of st.missoes) {
       const mp = mp_(jr, id);

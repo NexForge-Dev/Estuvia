@@ -7,7 +7,7 @@
 
 import { SYSTEM_PROMPT, MENTOR_NAME, GUIDED_NAME } from './prompt.js';
 import { getProvider } from './providers/index.js';
-import { recordAI } from '../ai-health.js';
+import { recordAI, recordTokens, aiBudget } from '../ai-health.js';
 import { guidedReply, QUICK_ACTIONS } from './guided.js';
 import { buildContext } from './context.js';
 import { catalog, useTool, makeCtx, TOOLS } from './tools/index.js';
@@ -15,6 +15,11 @@ import { propose } from './actions.js';
 import { can } from './memory.js';
 
 const MAX_STEPS = 6;
+// Tetos por mensagem: o modelo (ou um texto injetado num resultado de busca) não pode disparar
+// dezenas de consultas, nem prender a requisição além do prazo total.
+export const MAX_CALLS_PER_STEP = 6;
+export const MAX_CALLS_TOTAL = 12;
+const deadlineMs = () => { const v = Number(process.env.MENTOR_DEADLINE_MS); return Number.isFinite(v) && v > 0 ? v : 120_000; };
 
 export function mode() {
   const p = getProvider();
@@ -27,8 +32,17 @@ export async function handleMessage(user, { mensagem, acao, contexto = {}, histo
     recordAI('mentor', 'guiado', { user });
     return guidedReply(user, { mensagem, acao, contexto, historico });
   }
+  if (aiBudget(user).esgotado) {
+    // Teto diário de custo: o estudante continua atendido, e a resposta diz que NÃO é IA generativa.
+    recordAI('mentor', 'guiado', { user });
+    const r = await guidedReply(user, { mensagem, acao, contexto, historico });
+    return { ...r, aviso: 'Você atingiu o limite diário de uso da IA: respondi pelo Modo Guiado (sem IA generativa), com os seus dados reais. A IA volta amanhã.' };
+  }
+  // Prazo total da mensagem (todas as chamadas ao modelo); a desconexão do estudante também cancela.
+  const deadline = AbortSignal.timeout(deadlineMs());
+  const combined = signal ? AbortSignal.any([signal, deadline]) : deadline;
   try {
-    const reply = await agentReply(provider, user, { mensagem: mensagem || QUICK_ACTIONS.find((q) => q.id === acao)?.mensagem || '', contexto, historico }, signal);
+    const reply = await agentReply(provider, user, { mensagem: mensagem || QUICK_ACTIONS.find((q) => q.id === acao)?.mensagem || '', contexto, historico }, combined);
     recordAI('mentor', 'ok', { user });
     return reply;
   } catch (err) {
@@ -36,7 +50,7 @@ export async function handleMessage(user, { mensagem, acao, contexto = {}, histo
     recordAI('mentor', 'erro', { erro: `${provider.id}: ${err.message}`, user });
     console.error(`[mentor] IA indisponível (${provider.id}): ${err.message}`);
     const r = await guidedReply(user, { mensagem, acao, contexto, historico });
-    return { ...r, aviso: 'A IA está indisponível agora: respondi pelo Modo Guiado, com os seus dados reais.' };
+    return { ...r, aviso: 'A IA está indisponível agora: respondi pelo Modo Guiado (sem IA generativa), com os seus dados reais.' };
   }
 }
 
@@ -62,6 +76,8 @@ function cardFor(name, d) {
     case 'draft_email': return { tipo: 'email', ...d };
     case 'find_consulate': return d.status === 'sem-estado' ? null : d;
     case 'get_official_sources': return d.trechos.length ? { tipo: 'fontes', trechos: d.trechos } : null;
+    case 'search_web': return { tipo: 'web', consulta: d.consulta, consultadoEm: d.consultadoEm, itens: d.itens, falhas: d.falhas, aviso: d.aviso };
+    case 'search_videos': return { tipo: 'videos', ...d };
     default: return null;
   }
 }
@@ -76,15 +92,26 @@ async function agentReply(provider, user, { mensagem, contexto, historico }, sig
   const passos = [];
   const fontes = [];
   let texto = '';
+  let totalCalls = 0;
 
   for (let step = 0; step < MAX_STEPS; step++) {
+    if (step > 0 && aiBudget(ctx.user).esgotado) break; // teto diário atingido no meio do laço
     const res = await provider.chat({ system: SYSTEM_PROMPT, messages, tools, signal });
+    if (!res || typeof res !== 'object') throw new Error('resposta vazia do provedor');
+    if (res.uso) recordTokens(ctx.user, 'mentor', res.uso);
+    if (!Array.isArray(res.chamadas)) res.chamadas = [];
     if (res.parada === 'refusal') throw new Error('o modelo recusou a mensagem');
     texto = res.texto || texto;
     if (!res.chamadas.length) break;
     messages.push({ role: 'assistant', content: res.texto, chamadas: res.chamadas, bruto: res.bruto });
     const resultados = [];
-    for (const c of res.chamadas) {
+    for (const [i, c] of res.chamadas.entries()) {
+      // Toda chamada precisa de um resultado (o provedor exige); as que passam do teto NÃO executam.
+      if (i >= MAX_CALLS_PER_STEP || totalCalls >= MAX_CALLS_TOTAL) {
+        resultados.push({ id: c.id, nome: c.nome, conteudo: JSON.stringify({ erro: { codigo: 'limite', mensagem: 'Limite de consultas desta mensagem atingido: responda com o que já tem.' } }), erro: true });
+        continue;
+      }
+      totalCalls += 1;
       const r = c.input?.__invalido ? { ok: false, erro: { codigo: 'entrada', mensagem: 'JSON inválido' } } : await useTool(ctx, c.nome, c.input);
       usadas.push({ nome: c.nome, ok: r.ok, efeito: TOOLS.get(c.nome)?.efeito || null });
       let conteudo;

@@ -101,7 +101,7 @@ Estudante (login):
 - `POST /api/radar/opportunities/:id/agenda` — `{ itens: [{ id, data?, inicio?, fim? }] }` (prazo oficial mantém a data)
 - `POST /api/radar/agenda-changes/:linkId` — `{ aceitar }`
 
-Admin (`role: admin` ou e-mail em `RADAR_ADMIN_EMAILS`): `GET /api/radar/admin`, `POST /sources`, `POST /sources/:id/run`, `PUT /sources/:id/availability`, `POST /reviews/:id`, `POST /calendars`, `POST /corrections`, `POST /republish`, `POST /community/import`, e em desenvolvimento `POST|DELETE /dev/simulate`.
+Admin (`role: admin` ou `role: radar`, concedido pelo administrador em `#/admin/aluno/:id`; `RADAR_ADMIN_EMAILS` só vale fora de produção): `GET /api/radar/admin`, `POST /sources`, `POST /sources/:id/run`, `PUT /sources/:id/availability`, `POST /reviews/:id`, `POST /calendars`, `POST /corrections`, `POST /republish`, `POST /community/import`, e em desenvolvimento `POST|DELETE /dev/simulate`.
 
 ## Integrações (contratos em `server/radar/service.js`)
 
@@ -123,7 +123,7 @@ Ligados (verificados ponta a ponta em 24/10/2026):
 ## Desenvolvimento
 
 - `RADAR_SCHEDULER=off` desliga o atualizador (os testes fazem isso).
-- `RADAR_ADMIN_EMAILS=email1,email2` libera o painel em `#/radar/admin`.
+- `RADAR_ADMIN_EMAILS=email1,email2` libera o painel em `#/radar/admin` **apenas em desenvolvimento/testes**. Em produção o cadastro não verifica e-mail, então o papel é concedido no painel admin (Papel → Equipe do Radar).
 - `RADAR_DATA_FILE` muda o arquivo da base (padrão: `data/radar.json`).
 - **Simulação**: no painel (somente fora de produção), "Simular publicação" cria um calendário marcado como **DADO DEMONSTRATIVO** em toda a interface para testar alertas e Agenda; nunca sobrescreve calendário oficial e pode ser removido por completo.
 

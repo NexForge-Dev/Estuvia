@@ -33,11 +33,9 @@ router.get('/landing', (req, res) => {
   });
 });
 
-// ---------- Somente com conta ----------
-router.use(requireAuth);
-
-// Manual de referência: o mapa do processo (rodadas e nomes das missões). A execução detalhada
-// — guias, checklists, ferramentas — só existe dentro de "Minha Jornada", liberada pela progressão.
+// Manual público (explica a plataforma a quem não tem conta): o mapa do processo (rodadas e nomes
+// das missões). A execução detalhada — guias, checklists, ferramentas — só existe dentro de
+// "Minha Jornada", liberada pela progressão.
 router.get('/manual', (req, res) => res.json({
   rounds: ROUNDS.map((r) => ({
     numero: r.numero, sigla: r.sigla || null, titulo: r.titulo, etapa: r.etapa, banner: r.banner, resumo: r.resumo, conclusao: r.conclusao, transversal: Boolean(r.transversal),
@@ -45,6 +43,9 @@ router.get('/manual', (req, res) => res.json({
   })),
   trilhas: PARALLEL_TRACKS,
 }));
+
+// ---------- Somente com conta ----------
+router.use(requireAuth);
 router.get('/sources', (req, res) => res.json({ sources: SOURCES, tags: TAGS }));
 router.get('/catalog', (req, res) => res.json({ universities: UNIVERSITIES, programs: PROGRAMS }));
 router.get('/documents', (req, res) => res.json({ documents: DOCUMENTS, statusLabel: DOC_STATUS_LABEL }));

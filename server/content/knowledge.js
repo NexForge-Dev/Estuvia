@@ -42,14 +42,14 @@ export const FAQ = [
   },
   {
     q: 'Quais documentos o visto de estudos costuma pedir?',
-    a: 'As referências oficiais incluem: admissão/matrícula, comprovação de meios econômicos, seguro saúde, documentos pessoais e, quando aplicável, antecedentes criminais e atestado médico. Cada consulado publica sua lista — use a do seu consulado. Apostila e tradução apenas quando exigidas.',
+    a: 'As referências oficiais incluem: admissão/matrícula, comprovação de meios econômicos, seguro saúde, documentos pessoais e, quando aplicável, antecedentes criminais e atestado médico. Cada consulado publica sua lista, use a do seu consulado. Apostila e tradução apenas quando exigidas.',
     tag: 'verificado',
     fontes: ['O6', 'O7'],
     keywords: ['visto', 'consulado', 'seguro', 'antecedentes', 'atestado', 'apostila', 'tradução', 'traducao', 'meios', 'financeiro'],
   },
   {
     q: 'Quanto dinheiro preciso comprovar para o visto?',
-    a: 'O valor mínimo é definido pela norma vigente e conferido pelo consulado — consulte a fonte oficial atualizada. O planejador da plataforma separa a exigência oficial do seu custo de vida estimado, mas nenhum valor "garante" o visto.',
+    a: 'O valor mínimo é definido pela norma vigente e conferido pelo consulado, consulte a fonte oficial atualizada. O planejador da plataforma separa a exigência oficial do seu custo de vida estimado, mas nenhum valor "garante" o visto.',
     tag: 'pendente',
     fontes: ['O6', 'O7'],
     keywords: ['dinheiro', 'quanto', 'valor', 'comprovar', 'renda', 'extrato', 'iprem', 'recursos', 'custo'],
@@ -86,10 +86,10 @@ export const FAQ = [
 
 // Texto compacto para o system prompt do assistente: estável (bom para cache).
 export function knowledgeAsText() {
-  const src = SOURCES.map((s) => `[${s.id}] ${s.orgao} — ${s.titulo}${s.url ? ` — ${s.url}` : ''} (revisado em ${s.revisadoEm})`).join('\n');
+  const src = SOURCES.map((s) => `[${s.id}] ${s.orgao} - ${s.titulo}${s.url ? ` - ${s.url}` : ''} (revisado em ${s.revisadoEm})`).join('\n');
   const phases = ROUNDS.map(
     (r) =>
-      `RODADA ${r.numero} — ${r.titulo}: ${r.resumo}\n` +
+      `RODADA ${r.numero} - ${r.titulo}: ${r.resumo}\n` +
       r.missoes.map((m) => `  - Missão ${m.id} ${m.titulo} [${m.tag}; fontes ${m.fontes.join(',')}]: ${m.objetivo} ${m.porque} ${(m.comoExecutar || []).map((c) => c.texto).join(' ')}`).join('\n'),
   ).join('\n\n');
   const faq = FAQ.map((f) => `P: ${f.q}\nR: ${f.a} [${f.tag}; fontes ${f.fontes.join(',')}]`).join('\n\n');

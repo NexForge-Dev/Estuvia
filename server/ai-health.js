@@ -31,6 +31,46 @@ export function recordAI(servico, resultado, { erro, user } = {}) {
   });
 }
 
+// ---------- Orçamento diário de tokens por estudante (teto de custo da IA) ----------
+// O limite por hora (rate limit) conta mensagens; este conta tokens, que é o que gera custo:
+// uma mensagem do Mentor pode virar várias chamadas ao modelo. Somado entre Mentor e Assistente.
+// AI_DAILY_TOKENS_PER_USER=0 desliga o teto.
+const DEFAULT_DAILY_TOKENS = 300_000;
+export const dailyTokenLimit = () => {
+  const raw = process.env.AI_DAILY_TOKENS_PER_USER;
+  const v = Number(raw);
+  return raw && Number.isFinite(v) && v >= 0 ? v : DEFAULT_DAILY_TOKENS;
+};
+const utcDay = (now = new Date()) => now.toISOString().slice(0, 10);
+
+/** Tokens gastos hoje pelo estudante e se o teto foi atingido. */
+export function aiBudget(user, now = new Date()) {
+  const limite = dailyTokenLimit();
+  const hoje = user?.aiUso?.hoje;
+  const usados = hoje?.dia === utcDay(now) ? hoje.tokens || 0 : 0;
+  return { usados, limite, esgotado: limite > 0 && usados >= limite };
+}
+
+/** Soma tokens de UMA chamada ao modelo (entrada + saída) no uso do estudante e no total do serviço. */
+export function recordTokens(user, servico, uso, now = new Date()) {
+  const n = Math.max(0, Math.round(Number(uso?.entrada) || 0)) + Math.max(0, Math.round(Number(uso?.saida) || 0));
+  if (!n) return 0;
+  analytics.mutate((a) => {
+    if (user) {
+      user.aiUso ||= {};
+      const dia = utcDay(now);
+      if (user.aiUso.hoje?.dia !== dia) user.aiUso.hoje = { dia, tokens: 0 };
+      user.aiUso.hoje.tokens += n;
+      const u = (user.aiUso[servico] ||= { mensagens: 0, ultimaEm: null });
+      u.tokens = (u.tokens || 0) + n;
+    }
+    a.ai ||= {};
+    const s = (a.ai[servico] ||= { ok: 0, erro: 0, guiado: 0, offline: 0, ultimoOk: null, ultimoErro: null, erros: [] });
+    s.tokens = (s.tokens || 0) + n;
+  });
+  return n;
+}
+
 export function aiStatus() {
   const provider = getProvider();
   const id = (process.env.MENTOR_PROVIDER || 'none').toLowerCase();

@@ -89,7 +89,7 @@ export async function onboardingView() {
         return [
           !firstTime ? h('p', { class: 'lead-sm' }, 'Escolha o destino da nova jornada. Seu perfil, documentos e finanças são reaproveitados.') : null,
           h('div', { class: 'grid-2' },
-            field('Universidade de destino', sel('universidadeId', universities.map((u) => [u.id, `${u.sigla} — ${u.nome} (${u.cidade})`]))),
+            field('Universidade de destino', sel('universidadeId', universities.map((u) => [u.id, `${u.sigla} - ${u.nome} (${u.cidade})`]))),
             field('Ano acadêmico', sel('anoAcademico', cycles.map((c) => [c, c])))),
           h('fieldset', { class: 'program-pick' }, h('legend', {}, 'Mestrado pretendido'),
             list.length ? list.map((pr) => {
@@ -104,12 +104,12 @@ export async function onboardingView() {
             }) : h('p', { class: 'muted' }, 'Ainda não há programas cadastrados para esta universidade no piloto.')),
           h('p', { class: 'hint' }, 'Programas "Demo" são dados demonstrativos: regras diferentes por programa geram jornadas diferentes. Confirme sempre na ficha oficial.'),
           h('div', { class: 'grid-2' },
-            field('Data prevista de início das aulas', input('inicioAulas', { type: 'date' }), 'Opcional — use a data publicada pela universidade.'),
+            field('Data prevista de início das aulas', input('inicioAulas', { type: 'date' }), 'Opcional, use a data publicada pela universidade.'),
             field('Duração da estadia (meses)', input('duracaoMeses', { type: 'number', min: 1, max: 48 }), 'Mais de 6 meses ativa as missões da TIE.')),
           h('fieldset', { class: 'program-pick' }, h('legend', {}, 'Em qual etapa você está?'),
             h('p', { class: 'hint' }, 'Já começou o processo por conta própria? Diga onde está e você não precisa refazer o que já fez.'),
             sel('etapa', etapas.map((e) => [e.id, e.rotulo])),
-            etapas.find((e) => e.id === draft.etapa)?.exigeDataEntrada ? field('Quando você entrou na Espanha?', input('dataEntrada', { type: 'date', max: new Date().toISOString().slice(0, 10) })) : null,
+            etapas.find((e) => e.id === draft.etapa)?.exigeDataEntrada ? field('Quando você entrou na Espanha?', input('dataEntrada', { type: 'date', max: new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Madrid' }).format(new Date()) })) : null,
             draft.etapa !== 'inicio' ? (() => {
               const chk = h('input', { type: 'checkbox', checked: draft.confirmaEtapa });
               chk.addEventListener('change', () => { draft.confirmaEtapa = chk.checked; });
@@ -168,7 +168,7 @@ export async function onboardingView() {
       h('div', { class: 'stack' }, stepBody()),
       h('div', { class: 'ob-actions' },
         step > 0 ? h('button', { class: 'btn btn-ghost', type: 'button', onClick: () => { step -= 1; draw(); } }, icon('back', { size: 16 }), 'Voltar') : h('a', { class: 'btn btn-ghost', href: '#/jornadas' }, 'Cancelar'),
-        h('button', { class: 'btn btn-cta btn-lg', type: 'button', onClick: () => { if (last) finish(); else { step += 1; draw(); } } }, last ? 'Gerar minha jornada' : 'Continuar', icon(last ? 'sparkles' : 'arrow', { size: 16 })))));
+        h('button', { class: 'btn btn-cta btn-lg', type: 'button', onClick: () => { if (last) finish(); else { step += 1; draw(); } } }, last ? 'Gerar minha jornada' : 'Continuar', icon(last ? 'map' : 'arrow', { size: 16 })))));
   }
   draw();
   return root;

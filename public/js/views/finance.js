@@ -8,7 +8,7 @@ import { loadJourneys, invalidate, checkAchievements, currentAnchor } from '../a
 import { fmtDate, pct } from '../components/common.js';
 import { openAssistant } from '../components/AIJourneyAssistant.js';
 
-const eur = (v) => (v === null || v === undefined ? '—' : `€ ${Math.round(v).toLocaleString('pt-BR')}`);
+const eur = (v) => (v === null || v === undefined ? '-' : `€ ${Math.round(v).toLocaleString('pt-BR')}`);
 const brl = (v) => `R$ ${Math.round(v).toLocaleString('pt-BR')}`;
 const APP_STATUS = [['interesse', 'Interesse'], ['verificando', 'Verificando elegibilidade'], ['preparando', 'Preparando'], ['enviada', 'Enviada'], ['concedida', 'Concedida'], ['negada', 'Negada'], ['desisti', 'Desisti']];
 const ORIGEM = { premissa: ['Estimativa Estuvia', 'tag-info'], usuario: ['Você informou', 'tag-ok'], moradia: ['Meu novo lar', 'tag-ok'], viagem: ['Viagem', 'tag-ok'] };
@@ -63,11 +63,11 @@ export async function financeView() {
       h('h1', {}, 'Seu destino 🇪🇸'),
       h('div', { class: 'fp-dest' },
         h('strong', {}, dd.universidade?.nome || 'Universidade a definir'),
-        h('span', {}, `${dd.cidade || '—'}, ${dd.pais}`),
-        h('span', { class: 'muted' }, `${dd.programa?.nome || 'Mestrado a definir'}${dd.anoAcademico ? ` — ${dd.anoAcademico}` : ''} · ${p.meses} meses`),
+        h('span', {}, `${dd.cidade || '-'}, ${dd.pais}`),
+        h('span', { class: 'muted' }, `${dd.programa?.nome || 'Mestrado a definir'}${dd.anoAcademico ? ` - ${dd.anoAcademico}` : ''} · ${p.meses} meses`),
         dd.programa?.demo ? h('span', { class: 'chip-demo' }, 'Mestrado demonstrativo') : null),
       h('p', { class: 'fp-lead' }, 'Vamos descobrir quanto você vai precisar para estudar aqui. A Estuvia já prepara uma estimativa; você ajusta o que quiser.'),
-      h('button', { class: 'btn btn-cta btn-lg', type: 'button', onClick: () => call('put', '/finance', { iniciar: true }) }, icon('sparkles', { size: 16 }), 'Calcular meus custos'),
+      h('button', { class: 'btn btn-cta btn-lg', type: 'button', onClick: () => call('put', '/finance', { iniciar: true }) }, icon('euro', { size: 16 }), 'Calcular meus custos'),
       h('p', { class: 'hint' }, 'Usamos só valores com fonte identificada. O que não tiver fonte fica marcado para você informar.'))];
   }
 
@@ -79,14 +79,14 @@ export async function financeView() {
       h('div', { class: 'fp-main card' },
         h('p', { class: 'eyebrow' }, 'Quanto preciso planejar para minha jornada?'),
         h('strong', { class: 'fp-big' }, eur(p.orcamento)),
-        p.cambio ? h('p', { class: 'fp-brl' }, `≈ ${brl(p.orcamento * p.cambio)}`, h('small', {}, ` · câmbio R$ ${p.cambio.toFixed(2).replace('.', ',')} (${fx.origem === 'manual' ? 'informado por você' : `${fx.fonte}, ${fmtDate(fx.data)}`})`)) : h('p', { class: 'fp-brl muted' }, h('a', { href: '#/financiamento#cambio', onClick: (e) => { e.preventDefault(); go('cambio'); } }, 'Informe o câmbio'), ' para ver em reais.'),
+        p.cambio ? h('p', { class: 'fp-brl' }, `≈ ${brl(p.orcamento * p.cambio)}`, h('small', {}, ` · câmbio R$ ${p.cambio.toFixed(2).replace('.', ',')} (${fx.origem === 'manual' ? 'informado por você' : `${fx.fonte}, ${fmtDate(fx.data)}${fx.desatualizada ? ', pode estar desatualizado' : ''}`})`)) : h('p', { class: 'fp-brl muted' }, h('a', { href: '#/financiamento#cambio', onClick: (e) => { e.preventDefault(); go('cambio'); } }, 'Informe o câmbio'), ' para ver em reais.'),
         p.jaPago ? h('p', { class: 'small muted' }, `Já pago: ${eur(p.jaPago)} · falta desembolsar ${eur(p.aDesembolsar)}`) : null,
         p.parcial ? h('button', { class: 'fp-partial', type: 'button', onClick: () => { const det = document.getElementById('custos'); if (det) det.open = true; go('custos'); } }, icon('alert', { size: 14 }), `Estimativa parcial: ${p.faltamInformar.length} item(ns) sem valor. Completar`) : h('span', { class: 'tag tag-ok' }, 'Todos os itens com valor')),
       h('div', { class: 'fp-cards' },
         stat('Custos de instalação', eur(p.instalacao), p.reembolsavel ? `inclui ${eur(p.reembolsavel)} de caução (costuma voltar)` : 'pagos uma vez', 'luggage'),
         stat('Custo mensal estimado', `${eur(p.mensal)}/mês`, `× ${p.meses} meses = ${eur(p.mensalTotal)}`, 'calendar'),
         stat('Recursos disponíveis', eur(p.confirmados), p.previstos ? `+ ${eur(p.previstos)} ainda não garantidos` : 'só o que já é seu', 'shield', 'ok'),
-        stat('Quanto ainda falta?', p.informouRecursos ? eur(p.falta) : '—', p.informouRecursos ? (p.falta ? 'para a meta da jornada' : 'nada: meta coberta 🎉') : 'conte quanto você já tem', 'target', p.informouRecursos && p.falta ? 'warn' : '')),
+        stat('Quanto ainda falta?', p.informouRecursos ? eur(p.falta) : '-', p.informouRecursos ? (p.falta ? 'para a meta da jornada' : 'nada: meta coberta') : 'conte quanto você já tem', 'target', p.informouRecursos && p.falta ? 'warn' : '')),
       h('div', { class: 'fp-meter card' },
         h('div', { class: 'row between' }, h('strong', {}, 'Minha preparação financeira'), h('span', { class: 'fp-pct' }, `${Math.round(p.metaPct * 100)}%`)),
         bar(p.metaPct, 'Meta financeira alcançada'),
@@ -154,7 +154,7 @@ export async function financeView() {
           h('dt', {}, 'Reserva'), h('dd', {}, eur(c.reserva)),
           p.informouRecursos ? [h('dt', {}, 'Seus recursos'), h('dd', { class: c.diferenca < 0 ? 'neg' : 'pos' }, c.diferenca < 0 ? `faltam ${eur(-c.diferenca)}` : `sobram ${eur(c.diferenca)}`)] : null),
         p.perfil === c.perfil ? null : h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onClick: () => call('put', '/finance', { perfil: c.perfil }) }, 'Usar este cenário')))),
-      estimated.length ? h('p', { class: 'fp-premises small muted' }, icon('book', { size: 12 }), ' Premissas: ', estimated.map((i, k) => [k ? ' · ' : '', `${i.label.split(' (')[0]} ${eur(i.valorEur)} (`, h('a', { href: i.fonte.url, target: '_blank', rel: 'noopener noreferrer' }, i.fonte.orgao.split(' — ')[0]), ')'])) : null,
+      estimated.length ? h('p', { class: 'fp-premises small muted' }, icon('book', { size: 12 }), ' Premissas: ', estimated.map((i, k) => [k ? ' · ' : '', `${i.label.split(' (')[0]} ${eur(i.valorEur)} (`, h('a', { href: i.fonte.url, target: '_blank', rel: 'noopener noreferrer' }, i.fonte.orgao.split(' - ')[0]), ')'])) : null,
       savedScenarios(p));
   }
 
@@ -280,7 +280,7 @@ export async function financeView() {
       h('div', { class: 'grid-3 tight' }, h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Situação'), sel), h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Prazo do edital'), prazo),
         h('label', { class: 'field' }, h('span', { class: 'field-label' }, a.status === 'concedida' ? 'Valor concedido (€ total)' : 'Valor previsto (€ total)'), valor)),
       h('p', { class: 'hint' }, a.status === 'concedida' ? 'Bolsa concedida: o valor entra nos seus recursos garantidos.' : 'Enquanto não for concedida, a bolsa aparece como "solicitada" e não conta na meta.'),
-      h('details', {}, h('summary', {}, `Tarefas (${done}/${a.tarefas.length}) — aparecem na Agenda AI`),
+      h('details', {}, h('summary', {}, `Tarefas (${done}/${a.tarefas.length}), aparecem na Agenda`),
         h('ul', { class: 'checklist' }, a.tarefas.map((t) => {
           const b = h('button', { type: 'button', class: `ck ${t.feito ? 'done' : ''}`, role: 'checkbox', 'aria-checked': String(t.feito) }, h('span', { class: 'ck-box' }, t.feito ? icon('check', { size: 14 }) : null), h('span', { class: 'ck-text' }, t.texto));
           b.addEventListener('click', () => call('put', `/finance/scholarships/${a.id}`, { tarefa: { id: t.id, feito: !t.feito } }));
@@ -300,7 +300,7 @@ export async function financeView() {
       const input = h('input', { type: 'number', min: 0, step: 10, class: 'fp-input', value: ov && ov.valor !== null && ov.valor !== undefined ? ov.valor : i.origemTipo === 'premissa' ? Math.round(i.valorEur) : '', placeholder: 'Informe', 'aria-label': i.label, dataset: { key: `v-${i.id}` } });
       const cur = moneySelect(ov?.moeda, `m-${i.id}`);
       const status = h('select', { class: 'fp-status', 'aria-label': `Situação de ${i.label}`, dataset: { key: `s-${i.id}` } }, STATUS.map(([v, l]) => h('option', { value: v, selected: v === (ov?.status || 'estimado') }, l)));
-      const due = i.grupo === 'instalacao' ? h('input', { type: 'date', class: 'fp-due', value: ov?.vencimento || '', 'aria-label': `Data de pagamento de ${i.label}`, title: 'Data de pagamento (vai para a Agenda AI)', dataset: { key: `d-${i.id}` } }) : null;
+      const due = i.grupo === 'instalacao' ? h('input', { type: 'date', class: 'fp-due', value: ov?.vencimento || '', 'aria-label': `Data de pagamento de ${i.label}`, title: 'Data de pagamento (vai para a Agenda)', dataset: { key: `d-${i.id}` } }) : null;
       const send = () => {
         const valor = input.value === '' ? null : Number(input.value);
         const body = valor === null && !ov ? null : { valor, moeda: cur.value, status: status.value, ...(due ? { vencimento: due.value } : {}) };
@@ -345,7 +345,8 @@ export async function financeView() {
     return h('section', { class: 'fp-fx card', id: 'cambio' },
       h('h2', {}, icon('globe', { size: 16 }), ' Câmbio'),
       fx.taxa
-        ? h('p', {}, h('strong', {}, `R$ ${fx.taxa.toFixed(4).replace('.', ',')} por € 1`), h('br'), h('small', { class: 'muted' }, fx.origem === 'manual' ? `Informada por você${fx.data ? ` em ${fmtDate(fx.data)}` : ''}` : `${fx.fonte} · cotação de ${fmtDate(fx.data)} · atualizada às ${new Date(fx.obtidoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`))
+        ? h('p', {}, h('strong', {}, `R$ ${fx.taxa.toFixed(4).replace('.', ',')} por € 1`), h('br'), h('small', { class: 'muted' }, fx.origem === 'manual' ? `Informada por você${fx.data ? ` em ${fmtDate(fx.data)}` : ''}` : `${fx.fonte} · cotação de ${fmtDate(fx.data)} · obtida em ${fmtDate(fx.obtidoEm)} às ${new Date(fx.obtidoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`),
+          fx.desatualizada ? h('small', { class: 'warn' }, h('br'), 'Não conseguimos atualizar a taxa de referência: este valor pode estar desatualizado. Confira ou informe a taxa que você conseguiu.') : null)
         : h('p', { class: 'small' }, 'Sem taxa automática agora. Informe a taxa que você conseguiu (ela fica marcada como "informada por você").'),
       h('div', { class: 'fp-fx-grid' },
         h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Usar outra taxa (R$ por €1)'), rate),
@@ -372,7 +373,7 @@ export async function financeView() {
   function view() {
     const p = d.plano;
     const picker = journeys.length > 1 ? (() => {
-      const s = h('select', { 'aria-label': 'Jornada' }, journeys.map((j) => h('option', { value: j.id, selected: j.id === jid }, `${j.destino.universidade?.sigla} — ${j.destino.programa?.nome || ''}`)));
+      const s = h('select', { 'aria-label': 'Jornada' }, journeys.map((j) => h('option', { value: j.id, selected: j.id === jid }, `${j.destino.universidade?.sigla} - ${j.destino.programa?.nome || ''}`)));
       s.addEventListener('change', async () => { jid = s.value; d = await api.get(qs('/finance')); draw(); });
       return s;
     })() : null;

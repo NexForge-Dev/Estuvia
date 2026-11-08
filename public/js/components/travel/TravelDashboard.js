@@ -5,12 +5,14 @@
 //
 //   TravelHero · TravelStatusCard · RouteDiscovery · TravelRouteCard · FlightQuoteImporter
 //   RouteComparison · TravelItinerary · TravelSegment · ArrivalPlanner · TravelCostSummary · TravelAgenda
+//   LivePrices: menores preços vistos no Aviasales (via Travelpayouts, gratuito) + alerta de preço — referência, não oferta
 import { h, mount, toast } from '../../ui.js';
 import { icon } from '../../icons.js';
 import { api } from '../../api.js';
 import { invalidate, checkAchievements } from '../../app.js';
 import { hubIcon } from '../mission-hub/hub-icons.js';
 import { openMentor } from '../MentorPanel.js';
+import { onLive } from '../../live.js';
 
 function ensureStyles() {
   if (document.querySelector('link[data-travel-css]')) return;
@@ -66,18 +68,18 @@ export async function travelDashboardView() {
     const originSelect = !o.iata || o.sugerido ? originPicker() : null;
     return h('section', { class: 'tv-hero' },
       h('div', { class: 'tv-hero-top' },
-        h('div', {}, h('h1', {}, 'Minha viagem ✈️'), h('p', { class: 'tv-sub' }, 'Vamos organizar sua chegada ao exterior.')),
+        h('div', {}, h('h1', {}, 'Minha viagem'), h('p', { class: 'tv-sub' }, 'Vamos organizar sua chegada ao exterior.')),
         VisaHint()),
       h('div', { class: 'tv-route-line' },
         place('Origem', o.nome || 'Defina sua cidade', `${o.pais || 'Brasil'}${o.iata ? ` · ${o.iata}` : ''}`),
         h('div', { class: 'tv-flight-path', 'aria-hidden': 'true' }, h('span', { class: 'tv-dot' }), h('span', { class: 'tv-dash' }), h('span', { class: 'tv-plane' }, icon('plane', { size: 18 })), h('span', { class: 'tv-dash' }), h('span', { class: 'tv-dot' })),
         place('Destino', dest.cidade || 'Destino da jornada', dest.pais),
-        place('Universidade', dest.universidade?.sigla || '—', dest.universidade?.nome),
+        place('Universidade', dest.universidade?.sigla || '-', dest.universidade?.nome),
         place('Data prevista', data, d.dataViagem ? 'data da viagem' : null)),
       originSelect,
       d.status === 'pesquisando' ? h('div', { class: 'tv-hero-actions' },
         h('button', { type: 'button', class: 'btn btn-cta btn-lg', onClick: () => { ui.showWizard = true; draw(); document.querySelector('.tv-wizard')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, icon('search', { size: 18 }), ' Encontrar minha rota'),
-        h('button', { type: 'button', class: 'tv-link', onClick: () => FlightQuoteImporter() }, 'Já encontrei uma passagem — adicionar cotação')) : null);
+        h('button', { type: 'button', class: 'tv-link', onClick: () => FlightQuoteImporter() }, 'Já encontrei uma passagem, adicionar cotação')) : null);
   }
 
   function originPicker() {
@@ -105,7 +107,7 @@ export async function travelDashboardView() {
         h('h2', {}, `${d.origem.nome || 'Brasil'} → ${d.destino.cidade || 'Destino'}`),
         h('div', { class: 'tv-status-grid' },
           stat('Data da partida', q?.dataViagem ? fmtDate(q.dataViagem) : 'A definir'),
-          stat('Rota escolhida', q?.percursoNome || q?.rota || '—'),
+          stat('Rota escolhida', q?.percursoNome || q?.rota || '-'),
           stat('Custo previsto', custo?.total !== null && custo?.total !== undefined ? `${money(custo.total, q.moeda)}${custo.completo ? '' : ' + itens a confirmar'}` : 'Preço a consultar'),
           stat('Situação', d.statusLabel)),
         Stepper(),
@@ -113,7 +115,7 @@ export async function travelDashboardView() {
           act('Ver itinerário', 'map', () => document.querySelector('.tv-itin')?.scrollIntoView({ behavior: 'smooth' })),
           act('Comparar outra rota', 'scale', () => { ui.showCompare = !ui.showCompare; draw(); }),
           act('Editar viagem', 'edit', () => FlightQuoteImporter(q)),
-          act('Abrir Agenda AI', 'calendar', null, '#/agenda'),
+          act('Abrir Agenda', 'calendar', null, '#/agenda'),
           d.destino.journeyId ? act('Ver documentos', 'file', null, `#/j/${d.destino.journeyId}/m/6.4`) : null,
           act('Preparar chegada', 'pin', () => document.querySelector('.tv-arrival')?.scrollIntoView({ behavior: 'smooth' })))),
       q && !q.comprada && d.status !== 'concluida' ? PurchaseBox(q) : null);
@@ -141,14 +143,14 @@ export async function travelDashboardView() {
     if (!routes.length) return h('section', { class: 'tv-section' }, h('h2', {}, 'Como você pode chegar ao seu destino?'), h('p', { class: 'muted' }, 'Ainda não temos percursos cadastrados para esta cidade. Você pode adicionar a sua cotação.'));
     return h('section', { class: 'tv-section' },
       h('div', { class: 'tv-section-head' }, h('div', {}, h('h2', {}, 'Como você pode chegar ao seu destino?'), h('p', { class: 'muted' }, 'Percursos possíveis, não voos confirmados. Os preços aparecem quando você salva uma cotação.')),
-        h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onClick: () => ask(`Compensa mais ir para ${d.destino.cidade || 'o destino'} por Madri ou por Málaga?`) }, icon('sparkles', { size: 14 }), ' Qual compensa mais?')),
+        h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onClick: () => ask(`Compensa mais ir para ${d.destino.cidade || 'o destino'} por Madri ou por Málaga?`) }, icon('chat', { size: 14 }), ' Qual compensa mais?')),
       h('div', { class: 'tv-routes' }, routes.map(TravelRouteCard)));
   }
 
   function TravelRouteCard(r) {
     const preco = r.precoConhecido;
-    // Cidades do percurso sem repetição ("Madri (MAD)" e "Madri — estação" viram uma só parada).
-    const city = (s) => s.replace(/ —.*$/, '').replace(/ \([A-Z]{3}\)$/, '').trim();
+    // Cidades do percurso sem repetição ("Madri (MAD)" e "Madri, estação" viram uma só parada).
+    const city = (s) => s.replace(/(,| —).*$/, '').replace(/ \([A-Z]{3}\)$/, '').trim();
     const stops = [d.origem.iata || 'Brasil', ...r.etapas.map((e) => city(e.para)), d.destino.cidade || 'Destino'].filter((x, i, a) => i === 0 || x !== a[i - 1]);
     return h('article', { class: `tv-route ${r.escolhida ? 'is-chosen' : ''}` },
       h('div', { class: 'tv-route-img' }, h('img', { src: r.imagem, alt: '', loading: 'lazy' }), r.escolhida ? h('span', { class: 'tv-pill is-ok tv-route-badge' }, icon('check', { size: 12 }), ' Escolhida') : null),
@@ -175,7 +177,7 @@ export async function travelDashboardView() {
       h('div', { class: 'tv-detail-actions' },
         r.busca.length ? h('div', {}, h('small', { class: 'tv-eyebrow' }, 'Pesquisar passagens (preços reais no site)'), h('div', { class: 'row wrap' }, r.busca.map((b) => h('a', { class: 'btn btn-ghost btn-sm', href: b.url, target: '_blank', rel: 'noopener noreferrer' }, b.rotulo, ' ', icon('external', { size: 12 }))))) : h('p', { class: 'small muted' }, 'Defina o aeroporto de origem para gerar os links de pesquisa.'),
         h('button', { type: 'button', class: 'btn btn-cta', onClick: () => { s.close(); FlightQuoteImporter(null, r); } }, icon('plane', { size: 15 }), ' Salvar cotação desta rota'),
-        h('button', { type: 'button', class: 'btn btn-ghost', onClick: () => { s.close(); ask(`Quero ir para ${d.destino.cidade} ${r.nome.toLowerCase()}. O que preciso saber?`); } }, icon('sparkles', { size: 14 }), ' Perguntar ao Mentor')),
+        h('button', { type: 'button', class: 'btn btn-ghost', onClick: () => { s.close(); ask(`Quero ir para ${d.destino.cidade} ${r.nome.toLowerCase()}. O que preciso saber?`); } }, icon('chat', { size: 14 }), ' Perguntar ao Mentor')),
       h('div', { class: 'tv-sources' }, h('small', {}, 'Fontes oficiais: '), r.fontes.map((f, i) => [i ? ' · ' : '', h('a', { href: f.url, target: '_blank', rel: 'noopener noreferrer' }, f.titulo)])),
       h('p', { class: 'hint' }, 'Horários, duração e preços dependem da data e da companhia: confira sempre no site antes de comprar.'));
   }
@@ -210,7 +212,7 @@ export async function travelDashboardView() {
     return h('section', { class: 'tv-wizard' },
       h('div', { class: 'tv-wizard-dots' }, qs.map((_, i) => h('span', { class: i <= step ? 'on' : '' }))),
       h('div', { class: 'tv-wizard-q' }, qs[step]()),
-      h('p', { class: 'hint' }, `Destino: ${d.destino.cidade || 'da sua jornada'} — você não precisa informar de novo.`));
+      h('p', { class: 'hint' }, `Destino: ${d.destino.cidade || 'da sua jornada'}, você não precisa informar de novo.`));
   }
 
   // ---------------------------------------------------------------------------
@@ -249,7 +251,7 @@ export async function travelDashboardView() {
         h('label', {}, h('span', {}, 'Percurso'), f.percursoId),
         h('label', {}, h('span', {}, 'Preço do voo (ou total conhecido)'), h('div', { class: 'row' }, f.moeda, f.voo)),
         h('label', {}, h('span', {}, 'Data da viagem'), f.dataViagem)),
-      h('details', { class: 'tv-more', open: Boolean(quote) }, h('summary', {}, 'Mais detalhes (opcional) — bagagem, trecho por terra, conexões'),
+      h('details', { class: 'tv-more', open: Boolean(quote) }, h('summary', {}, 'Mais detalhes (opcional), bagagem, trecho por terra, conexões'),
         h('div', { class: 'tv-form-grid' },
           num('bagagem', 'Bagagem despachada'), num('terrestre', 'Trecho até a cidade (ônibus/trem)'), num('transporteLocal', 'Transporte local até a moradia'), num('pernoite', 'Pernoite (se precisar)', 10),
           num('conexoes', 'Conexões', 1), num('malasIncluidas', 'Malas incluídas', 1), txt('horarioChegada', 'Horário de chegada', { type: 'time' }), txt('companhia', 'Companhia aérea', { maxlength: 60 }),
@@ -278,18 +280,18 @@ export async function travelDashboardView() {
     const list = d.cotacoes;
     if (!list.length) return null;
     const max = Math.max(...list.map((c) => c.custo.total || 0), 1);
-    const cell = (c, id) => { const p = c.custo.partes.find((x) => x.id === id); return p.valor === null ? h('span', { class: 'muted' }, '—') : money(p.valor, c.moeda); };
+    const cell = (c, id) => { const p = c.custo.partes.find((x) => x.id === id); return p.valor === null ? h('span', { class: 'muted' }, '-') : money(p.valor, c.moeda); };
     const rows = [['voo', 'Voo'], ['bagagem', 'Bagagem'], ['terrestre', 'Até a cidade'], ['transporteLocal', 'Transporte local'], ['pernoite', 'Pernoite']].filter(([id]) => list.some((c) => c.custo.partes.find((p) => p.id === id).valor !== null) || ['voo', 'bagagem', 'terrestre'].includes(id));
     return h('section', { class: 'tv-section tv-compare' },
       h('div', { class: 'tv-section-head' }, h('div', {}, h('h2', {}, 'Comparar minhas cotações'), h('p', { class: 'muted' }, 'O total considera voo, bagagem e transporte. A mais barata nem sempre é a melhor: veja os alertas.')),
         h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onClick: () => FlightQuoteImporter() }, icon('plane', { size: 14 }), ' Adicionar cotação')),
       h('div', { class: 'tv-quotes' }, list.map((c) => h('article', { class: `tv-quote ${c.escolhida ? 'is-chosen' : ''}` },
-        h('header', {}, h('div', {}, h('strong', {}, c.rota), h('small', { class: 'muted' }, `${c.percursoNome || 'Percurso próprio'} · cotada em ${fmtDate(c.cotadoEm) || '—'}${c.fonte ? ` · ${c.fonte}` : ''}`)),
+        h('header', {}, h('div', {}, h('strong', {}, c.rota), h('small', { class: 'muted' }, `${c.percursoNome || 'Percurso próprio'} · cotada em ${fmtDate(c.cotadoEm) || '-'}${c.fonte ? ` · ${c.fonte}` : ''}`)),
           c.escolhida ? h('span', { class: `tv-pill ${c.comprada ? 'is-ok' : 'is-accent'}` }, c.comprada ? 'Comprada' : 'Escolhida') : null),
         h('dl', { class: 'tv-costs' }, rows.map(([id, label]) => [h('dt', {}, label), h('dd', {}, cell(c, id))]),
           h('dt', { class: 'tv-total' }, 'Total'), h('dd', { class: 'tv-total' }, c.custo.total === null ? 'Preço a consultar' : money(c.custo.total, c.moeda))),
         c.custo.total !== null ? (() => { const b = h('span', {}); b.style.width = `${Math.round((c.custo.total / max) * 100)}%`; return h('div', { class: 'tv-bar' }, b); })() : null,
-        h('p', { class: 'small' }, !c.custo.completo ? h('span', { class: 'tv-warn' }, `Faltam: ${c.custo.desconhecidas.map((x) => ({ bagagem: 'bagagem', terrestre: 'trecho por terra' }[x])).join(' e ')} — o total pode subir.`) : c.diferencaParaMenor === 0 ? h('span', { class: 'tv-good' }, 'Menor custo total entre as completas') : c.diferencaParaMenor ? `+${money(c.diferencaParaMenor, c.moeda)} que a mais barata` : null),
+        h('p', { class: 'small' }, !c.custo.completo ? h('span', { class: 'tv-warn' }, `Faltam: ${c.custo.desconhecidas.map((x) => ({ bagagem: 'bagagem', terrestre: 'trecho por terra' }[x])).join(' e ')}, o total pode subir.`) : c.diferencaParaMenor === 0 ? h('span', { class: 'tv-good' }, 'Menor custo total entre as completas') : c.diferencaParaMenor ? `+${money(c.diferencaParaMenor, c.moeda)} que a mais barata` : null),
         c.consideracoes.length ? h('ul', { class: 'tv-cons' }, c.consideracoes.map((x) => h('li', { class: `n-${x.nivel}` }, icon(x.nivel === 'risco' ? 'alert' : x.nivel === 'atencao' ? 'clock' : 'help', { size: 12 }), ' ', x.texto))) : null,
         h('div', { class: 'tv-quote-actions' },
           c.escolhida ? null : h('button', { type: 'button', class: 'btn btn-cta btn-sm', onClick: () => call('post', `/quotes/${c.id}/choose`, {}, 'Rota escolhida. O custo entrou no seu planejamento como estimativa.') }, 'Escolher esta rota'),
@@ -342,7 +344,7 @@ export async function travelDashboardView() {
       h('div', {}, h('small', { class: 'tv-eyebrow' }, 'Como vou chegar à minha moradia?'), btns),
       h('div', { class: 'row wrap' },
         h('button', { type: 'button', class: 'btn btn-cta', onClick: () => call('put', '/arrival', { aeroporto: c.aeroporto || undefined, data: data.value, horario: hora.value, ...(sel.meio ? { meio: sel.meio } : {}) }, 'Chegada salva e adicionada ao itinerário.') }, icon('check', { size: 15 }), ' Adicionar ao meu itinerário'),
-        h('button', { type: 'button', class: 'btn btn-ghost', onClick: () => ask('Como chego do aeroporto até minha casa?') }, icon('sparkles', { size: 14 }), ' Perguntar ao Mentor')));
+        h('button', { type: 'button', class: 'btn btn-ghost', onClick: () => ask('Como chego do aeroporto até minha casa?') }, icon('chat', { size: 14 }), ' Perguntar ao Mentor')));
   }
 
   // ---------------------------------------------------------------------------
@@ -373,7 +375,7 @@ export async function travelDashboardView() {
       const itens = rows.filter((r) => r.chk.checked).map((r) => ({ chave: r.i.chave, data: r.i.data, inicio: r.ini.value, fim: r.fim.value, titulo: r.i.titulo }));
       if (!itens.length) return toast('Marque ao menos um compromisso.', 'err');
       if (itens.some((x) => !x.inicio || !x.fim || x.fim <= x.inicio)) return toast('Defina início e fim de cada compromisso marcado.', 'err');
-      await call('post', '/agenda', { itens }, 'Compromissos criados na Agenda AI.');
+      await call('post', '/agenda', { itens }, 'Compromissos criados na Agenda.');
     };
     return h('section', { class: 'tv-section tv-agenda' },
       h('h2', {}, 'Compromissos da viagem'),
@@ -382,24 +384,89 @@ export async function travelDashboardView() {
         h('div', { class: 'row' }, h('button', { type: 'button', class: 'btn btn-cta btn-sm', onClick: () => call('post', '/agenda/changes', { aceitar: a.alteracoes.map((c) => c.eventId) }, 'Agenda atualizada.') }, 'Atualizar datas'),
           h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onClick: () => call('post', '/agenda/changes', { aceitar: [], recusar: a.alteracoes.map((c) => c.eventId) }, 'Datas mantidas.') }, 'Manter como está'))) : null,
       pend.length ? [h('p', { class: 'small muted' }, `A partir da viagem em ${fmtDate(a.sugestoes.base)}. Escolha o que entra na sua agenda; horários do voo você define.`), h('ul', { class: 'tv-agenda-list' }, rows.map((r) => r.el)),
-        h('button', { type: 'button', class: 'btn btn-cta', onClick: create }, icon('calendar', { size: 15 }), ' Criar na Agenda AI')] : h('p', { class: 'small muted' }, 'Os compromissos da viagem já estão na sua agenda.'));
+        h('button', { type: 'button', class: 'btn btn-cta', onClick: create }, icon('calendar', { size: 15 }), ' Criar na Agenda')] : h('p', { class: 'small muted' }, 'Os compromissos da viagem já estão na sua agenda.'));
   }
 
   // ---------------------------------------------------------------------------
   function MentorBar() {
     const qs = ['Qual é a melhor forma de chegar a Granada?', 'Quanto vou gastar com bagagem?', 'Essa conexão é muito curta?'];
-    return h('section', { class: 'tv-mentor' }, h('span', { class: 'tv-mentor-ic' }, icon('sparkles', { size: 16 })),
+    return h('section', { class: 'tv-mentor' }, h('span', { class: 'tv-mentor-ic' }, icon('chat', { size: 16 })),
       h('div', {}, h('strong', {}, 'Dúvidas sobre a viagem? Pergunte ao Mentor'), h('div', { class: 'chips' }, qs.map((q) => h('button', { type: 'button', class: 'chip', onClick: () => ask(q.replace('Granada', d.destino.cidade || 'Granada')) }, q.replace('Granada', d.destino.cidade || 'Granada'))))));
   }
+
+  // ---------------------------------------------------------------------------
+  // Preços vistos agora (referência) + alerta de preço. Recolhido por padrão para a tela ficar limpa.
+  let prices = null; // resposta de /travel/prices (carregada ao abrir)
+  let pricesOpen = false;
+  const jq = () => (d.destino.journeyId ? `?journeyId=${d.destino.journeyId}` : '');
+  const loadPrices = async () => {
+    try { prices = await api.get(`/travel/prices${jq()}`); } catch (e) { prices = { erroGeral: e.message, rotas: [] }; }
+    draw();
+  };
+  const IATA_ROUTE = { MAD: 'via-madri', AGP: 'via-malaga', GRX: 'via-granada' };
+  const saveOffer = (o) => call('post', '/quotes', {
+    rota: `${o.origem} → ${o.destino}${o.companhia ? ` (${o.companhia})` : ''}`, percursoId: IATA_ROUTE[o.destino] || null,
+    voo: o.preco, moeda: 'BRL', ...(o.link ? { link: o.link } : {}), fonte: 'Aviasales (preço visto, a confirmar)',
+    ...(o.partida ? { dataViagem: o.partida.slice(0, 10) } : {}), ...(o.companhia ? { companhia: o.companhia } : {}), ...(o.conexoes !== null ? { conexoes: Math.min(o.conexoes, 5) } : {}),
+    notas: 'Preço visto no Aviasales; bagagem e valor final a confirmar no site.',
+  }, 'Cotação salva. Confirme bagagem e preço final no site antes de comprar.');
+  const when = (iso) => new Date(iso || Date.now()).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+
+  function LivePrices() {
+    if (['comprada', 'concluida'].includes(d.status)) return null;
+    const best = prices?.menor;
+    const det = h('details', { class: 'tv-prices', open: pricesOpen },
+      h('summary', {}, icon('plane', { size: 16 }), h('span', { class: 'tv-prices-title' }, 'Preços vistos agora'),
+        h('span', { class: 'tv-prices-hint' }, best ? `a partir de ${money(best.preco, 'BRL')}` : d.alertaPreco?.ativo ? `alerta até ${money(d.alertaPreco.teto, 'BRL')}` : 'abrir'),
+        icon('chevron', { size: 16, cls: 'tv-prices-chev' })));
+    det.addEventListener('toggle', () => { pricesOpen = det.open; if (det.open && !prices) loadPrices(); });
+    if (!pricesOpen) return det;
+    if (!prices) { det.append(h('p', { class: 'muted small tv-prices-body' }, 'Consultando…')); return det; }
+    const body = h('div', { class: 'tv-prices-body' });
+    if (prices.erroGeral) body.append(h('p', { class: 'notice' }, prices.erroGeral));
+    else if (prices.motivo) body.append(h('p', { class: 'notice' }, prices.motivo));
+    for (const r of prices.rotas || []) {
+      body.append(h('div', { class: 'tv-price-route' },
+        h('strong', {}, `${r.origem} → ${r.destino}`),
+        r.erro ? h('p', { class: 'small muted' }, `Não consegui consultar agora: ${r.erro}.`)
+          : r.ofertas.length ? h('ul', {}, r.ofertas.map((o) => h('li', {},
+            h('span', { class: 'tv-price' }, money(o.preco, 'BRL')),
+            h('span', { class: 'small muted' }, [o.partida ? fmtDate(o.partida.slice(0, 10)) : null, o.companhia, o.conexoes === null ? null : o.conexoes === 0 ? 'direto' : `${o.conexoes} conexão(ões)`].filter(Boolean).join(' · ')),
+            h('span', { class: 'tv-price-actions' },
+              o.link ? h('a', { class: 'btn btn-sm btn-ghost', href: o.link, target: '_blank', rel: 'noopener noreferrer' }, 'Ver no site ', icon('external', { size: 11 })) : null,
+              h('button', { type: 'button', class: 'btn btn-sm', onClick: () => saveOffer(o) }, 'Salvar como cotação')))))
+            : h('p', { class: 'small muted' }, 'Nenhum preço visto recentemente para este mês.')));
+    }
+    if (prices.rotas?.length) body.append(h('p', { class: 'hint' }, `${prices.fonte.natureza} Fonte: ${prices.fonte.nome}. Consultado em ${when(prices.rotas[0].consultadoEm)}${prices.mes ? ` · mês ${prices.mes.split('-').reverse().join('/')}` : ''}.`));
+    if (prices.configurado) body.append(PriceAlert());
+    body.append(h('button', { type: 'button', class: 'tv-link', onClick: () => { prices = null; loadPrices(); } }, icon('refresh', { size: 13 }), ' Atualizar'));
+    det.append(body);
+    return det;
+  }
+
+  function PriceAlert() {
+    const a = d.alertaPreco || {};
+    const teto = h('input', { type: 'number', min: '100', step: '50', inputmode: 'numeric', value: a.teto || '', placeholder: 'Ex.: 3500', 'aria-label': 'Preço máximo em reais' });
+    const save = (ativo) => call('put', `/price-alert${jq()}`, { ativo, teto: teto.value ? Number(teto.value) : null }, ativo ? 'Alerta ativado: avisamos quando aparecer um preço abaixo do seu teto.' : 'Alerta desativado.');
+    return h('div', { class: 'tv-alert' },
+      h('div', {}, h('strong', {}, icon('bell', { size: 14 }), ' Alerta de preço'), h('p', { class: 'small muted' }, 'Conferimos a cada 6 horas e avisamos aqui na Estuvia quando o menor preço visto ficar abaixo do seu teto. Nada é comprado.')),
+      h('div', { class: 'tv-alert-row' }, h('span', {}, 'R$'), teto,
+        h('button', { type: 'button', class: 'btn btn-sm btn-cta', onClick: () => save(true) }, a.ativo ? 'Atualizar alerta' : 'Ativar alerta'),
+        a.ativo ? h('button', { type: 'button', class: 'btn btn-sm btn-ghost', onClick: () => save(false) }, 'Desativar') : null),
+      a.ultimoAviso ? h('p', { class: 'small' }, `Último aviso: ${a.ultimoAviso.origem} → ${a.ultimoAviso.destino} por ${money(a.ultimoAviso.preco, 'BRL')} em ${when(a.ultimoAviso.em)}.`) : null);
+  }
+  // Aviso ao vivo de preço: recarrega os dados da viagem e os preços.
+  onLive(root, ['preco-passagem'], async () => { try { d = await api.get('/travel'); prices = null; if (pricesOpen) loadPrices(); else draw(); } catch { /* mantém a tela */ } });
 
   function draw() {
     const planned = ['escolhida', 'comprada', 'concluida'].includes(d.status);
     mount(root,
-      planned ? [h('div', { class: 'tv-planned-top' }, h('h1', {}, 'Minha viagem ✈️'), VisaHint()), TravelStatusCard()] : TravelHero(),
+      planned ? [h('div', { class: 'tv-planned-top' }, h('h1', {}, 'Minha viagem'), VisaHint()), TravelStatusCard()] : TravelHero(),
       ui.showWizard && !planned ? Wizard() : null,
+      LivePrices(),
       planned ? [TravelItinerary(), ArrivalPlanner(), TravelCostSummary(), TravelAgenda(), ui.showCompare ? RouteComparison() : null] : [RouteDiscovery(), RouteComparison()],
       MentorBar(),
-      h('p', { class: 'hint tv-foot' }, 'A Estuvia não vende passagens e não mostra preços que você não informou. Percursos são possibilidades; confira sempre horários e condições nos sites oficiais.'));
+      h('p', { class: 'hint tv-foot' }, 'A Estuvia não vende passagens. "Preços vistos agora" são referência, com fonte e hora; os demais valores são os que você informou. Confira sempre horários e condições nos sites oficiais.'));
   }
   draw();
   return root;

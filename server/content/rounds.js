@@ -12,7 +12,7 @@
 //   regra                          — aplicabilidade (requisito do programa, perfil ou situação)
 //   condicional / condicaoTexto    — o estudante pode marcar "não se aplica" após conferir
 //   opcional                       — recomendação: não conta como pendência se não for iniciada
-//   prioridade: alta|media|baixa, tempoEstimado, duracaoMin (Agenda AI), documentos[], fontes[]
+//   prioridade: alta|media|baixa, tempoEstimado, duracaoMin (Agenda), documentos[], fontes[]
 //   tag, criterio, prazo, marco, acoes[], ferramenta
 
 const SITUACAO = {
@@ -87,7 +87,7 @@ export const ROUNDS = [
       },
       {
         id: '1.4', titulo: 'Verificar minha elegibilidade',
-        resumo: 'Compare os requisitos do mestrado com o seu perfil — sem presumir.',
+        resumo: 'Compare os requisitos do mestrado com o seu perfil, sem presumir.',
         objetivo: 'Saber o que você já atende, o que falta e o que precisa de confirmação.',
         porque: 'A plataforma não marca ninguém como elegível sem evidência suficiente. A decisão é da universidade.',
         comoExecutar: [{ titulo: 'Leitura do resultado', texto: '"Atende (declarado)", "falta comprovar" ou "não confirmado". Nenhum desses estados garante admissão.' }],
@@ -101,7 +101,7 @@ export const ROUNDS = [
       },
       {
         id: '1.5', titulo: 'Criar meu planejamento financeiro inicial',
-        resumo: 'Quanto o projeto custa e quanto você já tem — antes da candidatura.',
+        resumo: 'Quanto o projeto custa e quanto você já tem, antes da candidatura.',
         objetivo: 'Ter uma estimativa inicial do custo total e dos recursos disponíveis.',
         porque: 'O dinheiro define destino, data de mudança e a comprovação do visto. Planejar cedo dá tempo de buscar bolsas e apoio.',
         comoExecutar: [{ titulo: 'Simulador', texto: 'Preencha custos e recursos no módulo "Como vou financiar meus estudos?". Valores são estimativas suas.' }],
@@ -269,7 +269,7 @@ export const ROUNDS = [
         porque: 'É nela que você indicará as opções e anexará os documentos.',
         comoExecutar: [
           { titulo: 'Passo a passo', texto: '1) Entre na área de másteres; 2) crie a solicitação; 3) preencha dados pessoais e acadêmicos; 4) salve antes de sair.' },
-          { titulo: 'Credenciais', texto: 'Guarde usuário e senha fora da plataforma — a Estuvia não pede nem armazena essas credenciais.' },
+          { titulo: 'Credenciais', texto: 'Guarde usuário e senha fora da plataforma, a Estuvia não pede nem armazena essas credenciais.' },
         ],
         objetivos: [{ id: 'criar', texto: 'Criar a solicitação' }, { id: 'dados', texto: 'Preencher dados pessoais e acadêmicos' }, { id: 'guardar', texto: 'Guardar as credenciais em local seguro' }],
         dependencias: ['3.2'], prioridade: 'alta', tempoEstimado: '40 min', duracaoMin: 45, fontes: ['O8'], tag: 'verificado', criterio: 'Solicitação criada.',
@@ -308,7 +308,7 @@ export const ROUNDS = [
           { titulo: '5. Como selecionar os mestrados', texto: 'Inclua os programas da sua lista em "Minhas opções" (até 6 no ciclo 2026/27).' },
           { titulo: '6. Como organizar as preferências', texto: 'Ordene pela sua preferência real: a adjudicação respeita essa ordem.' },
           { titulo: '7. Como anexar documentos', texto: 'Anexe cada documento exigido no formato e tamanho pedidos (Missão 3.5). Abra cada arquivo depois de enviar para conferir.' },
-          { titulo: '8. Como revisar e enviar', texto: 'Revise todas as telas antes de confirmar. Depois do envio, alterações podem ser limitadas. Use o botão de envio do portal oficial — a Estuvia não envia por você.' },
+          { titulo: '8. Como revisar e enviar', texto: 'Revise todas as telas antes de confirmar. Depois do envio, alterações podem ser limitadas. Use o botão de envio do portal oficial, a Estuvia não envia por você.' },
           { titulo: '9. Como guardar o comprovante', texto: 'Baixe o comprovante logo após o envio e registre a referência na Missão 3.7.' },
         ],
         errosComuns: ['Enviar fora do prazo da sua fase (ou usar prazo de outro ano).', 'Nome diferente do passaporte nos dados pessoais.', 'Anexos ilegíveis ou faltando.', 'Fechar o portal sem baixar o comprovante.'],
@@ -322,7 +322,7 @@ export const ROUNDS = [
         id: '3.7', titulo: 'Salvar o comprovante',
         resumo: 'A prova de que você se candidatou.', objetivo: 'Comprovante guardado e referenciado.',
         porque: 'Em caso de problema, o comprovante é sua evidência de envio no prazo.',
-        comoExecutar: [{ titulo: 'Referência', texto: 'Anote número/data do comprovante. Você pode anexar o PDF — ele fica só neste dispositivo.' }],
+        comoExecutar: [{ titulo: 'Referência', texto: 'Anote número/data do comprovante. Você pode anexar o PDF, ele fica só neste dispositivo.' }],
         objetivos: [{ id: 'baixar', texto: 'Baixar o comprovante' }, { id: 'ref', texto: 'Referência do comprovante (número ou data)', tipo: 'texto', campo: 'comprovanteDua' }],
         dependencias: ['3.6'], prioridade: 'media', tempoEstimado: '10 min', duracaoMin: 15, documentos: ['comprovante-dua'], fontes: ['M'], tag: 'pratica',
         criterio: 'Comprovante salvo e referência registrada.',
@@ -330,7 +330,7 @@ export const ROUNDS = [
       {
         id: '3.8', titulo: 'Entrar em contato com a universidade',
         resumo: 'Recomendação: coordenação ou professor, quando houver dúvida relevante.', objetivo: 'Esclarecer uma dúvida relevante com o contato institucional correto.',
-        porque: 'Recomendação baseada na experiência do idealizador — não é exigência de admissão e não aumenta, por si, suas chances. Evite mensagens genéricas em massa.',
+        porque: 'Recomendação baseada na experiência do idealizador, não é exigência de admissão e não aumenta, por si, suas chances. Evite mensagens genéricas em massa.',
         comoExecutar: [
           { titulo: 'Encontrar o contato', texto: '1) Abra a página oficial do mestrado; 2) procure "Profesorado", "Coordinación", "Organización" ou "Contacto"; 3) identifique o coordenador ou professor relacionado; 4) consulte o diretório da UGR para o e-mail institucional.' },
           { titulo: 'Mensagem', texto: 'Escreva em espanhol, de forma educada e específica. Use a ferramenta para gerar um rascunho e registre o envio.' },
@@ -342,9 +342,9 @@ export const ROUNDS = [
       {
         id: '3.9', titulo: 'Acompanhar a adjudicação',
         resumo: 'Consulte o resultado e registre a sua situação.', objetivo: 'Saber o resultado e agir conforme a situação.',
-        porque: 'Admitido, lista de espera, não admitido e "exige ação" pedem ações diferentes — às vezes com prazo curto.',
+        porque: 'Admitido, lista de espera, não admitido e "exige ação" pedem ações diferentes, às vezes com prazo curto.',
         comoExecutar: [
-          { titulo: 'Datas', texto: 'Cadastre as datas de publicação da sua fase no campo "Prazo" para a Agenda AI lembrar você.' },
+          { titulo: 'Datas', texto: 'Cadastre as datas de publicação da sua fase no campo "Prazo" para a Agenda lembrar você.' },
           { titulo: 'Enquanto aguarda', texto: 'Adiante a trilha financeira, o dossiê do visto (Rodada 5) e a pesquisa de moradia.' },
         ],
         objetivos: [{ id: 'datas', texto: 'Cadastrar a data de publicação dos resultados (campo "Prazo")' }, { id: 'situacao', texto: 'Resultado da adjudicação', tipo: 'situacao', campo: 'adjudicacao', concluiQuandoNao: ['nao-enviada', 'aguardando'] }],
@@ -382,7 +382,7 @@ export const ROUNDS = [
         prioridade: 'alta', tempoEstimado: '15 min', duracaoMin: 15, fontes: ['O2'], tag: 'verificado', criterio: 'Admissão conferida na fonte oficial.',
       },
       {
-        id: '4.2', titulo: 'Identificar o procedimento de confirmação', resumo: 'Confirmação, reserva ou matrícula — conforme a sua situação.', objetivo: 'Saber exatamente qual ação a instrução vigente pede.',
+        id: '4.2', titulo: 'Identificar o procedimento de confirmação', resumo: 'Confirmação, reserva ou matrícula, conforme a sua situação.', objetivo: 'Saber exatamente qual ação a instrução vigente pede.',
         porque: 'Ser admitido não é o mesmo que confirmar/reservar a vaga nem estar matriculado.',
         objetivos: [{ id: 'instrucao', texto: 'Ler a instrução vigente para a minha situação' }, { id: 'prazo', texto: 'Registrar o prazo da ação (campo "Prazo")' }],
         dependencias: ['4.1'], requer: { campo: 'adjudicacao', valores: ['admitido'], rotulo: 'Resultado: admitido(a)' }, urgenteSe: { campo: 'adjudicacao', valores: ['admitido'] },
@@ -442,7 +442,7 @@ export const ROUNDS = [
       },
       {
         id: '5.2', titulo: 'Enviar um e-mail ao consulado', resumo: 'Recomendação: confirme documentos, agendamento, taxas e traduções.', objetivo: 'Esclarecer as regras que se aplicam ao seu caso.',
-        porque: 'Prática usada pelo idealizador. Útil para dúvidas — não é obrigação quando as instruções oficiais já estabelecem outro procedimento.',
+        porque: 'Prática usada pelo idealizador. Útil para dúvidas, não é obrigação quando as instruções oficiais já estabelecem outro procedimento.',
         comoExecutar: [{ titulo: 'O que perguntar', texto: 'Documentos necessários, como solicitar e agendar, taxas, documentos financeiros aceitos (inclusive apoio familiar), traduções/apostilamentos e regras para o seu caso.' }],
         objetivos: [{ id: 'rascunho', texto: 'Revisar o rascunho do e-mail' }, { id: 'enviado', texto: 'Data em que enviei (no meu e-mail)', tipo: 'data', campo: 'emailConsuladoEnviado' }, { id: 'resposta', texto: 'Registrar a resposta recebida (resumo)', tipo: 'texto', campo: 'respostaConsulado' }],
         dependencias: ['5.1'], opcional: true, prioridade: 'media', tempoEstimado: '30 min', duracaoMin: 30, fontes: ['O11', 'M'], tag: 'pratica', aguardavel: true,
@@ -469,7 +469,7 @@ export const ROUNDS = [
         dependencias: ['5.3'], prioridade: 'media', tempoEstimado: '2 h', duracaoMin: 60, documentos: ['seguro'], fontes: ['O6', 'O7'], tag: 'verificado', criterio: 'Seguro contratado.',
       },
       {
-        id: '5.6', titulo: 'Preparar documentação complementar', resumo: 'Atestado médico, antecedentes, apostilamento e traduções — conforme o caso.', objetivo: 'Complementares no formato exigido.',
+        id: '5.6', titulo: 'Preparar documentação complementar', resumo: 'Atestado médico, antecedentes, apostilamento e traduções, conforme o caso.', objetivo: 'Complementares no formato exigido.',
         porque: 'Dependem da duração dos estudos e do consulado; apostila e tradução podem levar semanas.',
         objetivos: [{ id: 'antecedentes', texto: 'Antecedentes criminais (se exigidos)' }, { id: 'atestado', texto: 'Atestado médico (se exigido)' }, { id: 'apostila', texto: 'Apostilas e traduções (se exigidas)' }],
         dependencias: ['5.3'], prioridade: 'media', tempoEstimado: '1–3 semanas', duracaoMin: 60, documentos: ['antecedentes', 'atestado', 'traducoes'], fontes: ['O7'], tag: 'verificado',
@@ -509,7 +509,7 @@ export const ROUNDS = [
     conclusao: 'Moradia escolhida, viagem planejada e chegada organizada.',
     missoes: [
       {
-        id: '6.1', titulo: 'Encontrar moradia', resumo: 'Pesquise e compare no "Meu novo lar" — pode começar enquanto o visto é analisado.', objetivo: 'Ter opções comparáveis e checadas contra fraude.',
+        id: '6.1', titulo: 'Encontrar moradia', resumo: 'Pesquise e compare no "Meu novo lar", pode começar enquanto o visto é analisado.', objetivo: 'Ter opções comparáveis e checadas contra fraude.',
         porque: 'Pesquisar cedo dá tempo de comparar e evitar golpes. Cadastrar um anúncio não o torna seguro.',
         objetivos: [{ id: 'opcoes', texto: 'Salvar ao menos 2 opções de moradia', tipo: 'auto', regra: 'temMoradias' }, { id: 'comparar', texto: 'Comparar as opções salvas', tipo: 'auto', regra: 'comparouMoradias' }],
         dependencias: ['1.3'], prioridade: 'media', tempoEstimado: '2–4 h', duracaoMin: 90, fontes: ['M'], tag: 'pratica', criterio: 'Opções pesquisadas e checadas.', ferramenta: 'novo-lar',
@@ -523,7 +523,7 @@ export const ROUNDS = [
         prioridade: 'media', tempoEstimado: '1–2 semanas', duracaoMin: 60, fontes: ['M'], tag: 'pratica', criterio: 'Moradia escolhida e contrato verificado.', ferramenta: 'novo-lar',
       },
       {
-        id: '6.3', titulo: 'Comprar passagens', resumo: 'Compare rotas com o custo total — no momento certo.', objetivo: 'Passagem comprada com risco financeiro controlado.',
+        id: '6.3', titulo: 'Comprar passagens', resumo: 'Compare rotas com o custo total, no momento certo.', objetivo: 'Passagem comprada com risco financeiro controlado.',
         porque: 'Comprar antes do visto aprovado é risco. Compare o custo total, incluindo bagagem e trecho terrestre.',
         objetivos: [{ id: 'cotacoes', texto: 'Registrar cotações de ao menos 2 rotas', tipo: 'auto', regra: 'temCotacoes' }, { id: 'escolher', texto: 'Escolher a rota', tipo: 'auto', regra: 'rotaEscolhida' }, { id: 'comprar', texto: 'Registrar a passagem comprada', tipo: 'auto', regra: 'passagemComprada' }],
         dependencias: ['1.3'], urgenteSe: { campo: 'visto', valores: ['aprovado'] },
@@ -556,7 +556,7 @@ export const ROUNDS = [
     missoes: [
       { id: '7.1', titulo: 'Chegar à moradia', resumo: 'Registre a data de entrada: ela inicia prazos legais.', objetivo: 'Entrada registrada.', porque: 'Prazos como o da TIE contam a partir da entrada na Espanha.',
         objetivos: [{ id: 'data', texto: 'Data de entrada na Espanha', tipo: 'data', campo: 'dataEntrada' }, { id: 'embarque', texto: 'Guardar o cartão de embarque' }],
-        dependencias: ['5.9'], prioridade: 'alta', tempoEstimado: '—', duracaoMin: 15, fontes: ['O6'], tag: 'verificado', marco: 'chegou', criterio: 'Data de entrada registrada.', ferramenta: 'guia-cidade' },
+        dependencias: ['5.9'], prioridade: 'alta', tempoEstimado: '-', duracaoMin: 15, fontes: ['O6'], tag: 'verificado', marco: 'chegou', criterio: 'Data de entrada registrada.', ferramenta: 'guia-cidade' },
       { id: '7.2', titulo: 'Conferir documentos e condições da habitação', resumo: 'Contrato, estado do imóvel e inventário.', objetivo: 'Moradia conferida no primeiro dia.', porque: 'Registrar o estado do imóvel protege sua caução.',
         objetivos: [{ id: 'contrato', texto: 'Conferir o contrato com o que foi combinado' }, { id: 'fotos', texto: 'Fotografar o estado do imóvel' }], dependencias: ['7.1'], prioridade: 'media', tempoEstimado: '30 min', duracaoMin: 30, fontes: ['M'], tag: 'pratica', criterio: 'Moradia conferida.' },
       { id: '7.3', titulo: 'Localizar a universidade', resumo: 'Faculdade, secretaria e serviço internacional.', objetivo: 'Saber chegar e com quem falar.', porque: 'Alguns trâmites só são liberados após a apresentação.',
@@ -564,7 +564,7 @@ export const ROUNDS = [
       { id: '7.4', titulo: 'Ativar os acessos acadêmicos', resumo: 'E-mail institucional, plataformas e cartão universitário.', objetivo: 'Acessos acadêmicos ativos.', porque: 'Comunicações do mestrado chegam pelos canais institucionais.',
         objetivos: [{ id: 'email', texto: 'Ativar o e-mail institucional' }, { id: 'cartao', texto: 'Obter o cartão universitário' }], dependencias: ['7.3'], prioridade: 'media', tempoEstimado: '1 h', duracaoMin: 60, fontes: ['M'], tag: 'pratica', criterio: 'Acessos ativos.' },
       { id: '7.5', titulo: 'Conferir horários, disciplinas e início das aulas', resumo: 'Calendário acadêmico do mestrado.', objetivo: 'Calendário acadêmico organizado.', porque: 'Evita perder a primeira semana de aulas ou prazos internos.',
-        objetivos: [{ id: 'horarios', texto: 'Conferir horários e disciplinas' }, { id: 'agenda', texto: 'Registrar compromissos na Agenda AI' }], dependencias: ['7.4'], prioridade: 'media', tempoEstimado: '30 min', duracaoMin: 30, fontes: ['M'], tag: 'pratica', criterio: 'Calendário acadêmico conferido.' },
+        objetivos: [{ id: 'horarios', texto: 'Conferir horários e disciplinas' }, { id: 'agenda', texto: 'Registrar compromissos na Agenda' }], dependencias: ['7.4'], prioridade: 'media', tempoEstimado: '30 min', duracaoMin: 30, fontes: ['M'], tag: 'pratica', criterio: 'Calendário acadêmico conferido.' },
       { id: '7.6', titulo: 'Organizar telefone e conectividade', resumo: 'Número local e internet.', objetivo: 'Comunicação local resolvida.', porque: 'Muitos trâmites pedem número de telefone local.',
         objetivos: [{ id: 'chip', texto: 'Ativar um chip local' }], dependencias: ['7.1'], prioridade: 'media', tempoEstimado: '1 h', duracaoMin: 60, fontes: ['M'], tag: 'pratica', criterio: 'Chip ativo.', ferramenta: 'guia-cidade' },
       { id: '7.7', titulo: 'Organizar meios de pagamento e banco', resumo: 'Conta e cartões para o dia a dia.', objetivo: 'Finanças locais organizadas.', porque: 'Pagar aluguel e serviços com conta local costuma ser mais simples.',
@@ -581,7 +581,7 @@ export const ROUNDS = [
     etapa: 'Regularização e documentação pós-chegada',
     banner: '/img/rounds/regularizacao.svg',
     icone: 'shield',
-    resumo: 'TIE e obrigações administrativas — só quando aplicáveis.',
+    resumo: 'TIE e obrigações administrativas, só quando aplicáveis.',
     conclusao: 'Estadia regularizada.',
     missoes: (() => {
       const tie = { tipo: 'perfil', campo: 'duracaoMeses', maiorQue: 6, senao: 'nao-aplicavel' };
@@ -636,8 +636,8 @@ export const ROUNDS = [
       { id: '9.8', titulo: 'Organizar documentação do financiamento', resumo: 'Extratos, declarações de apoio, carta de bolsa.', objetivo: 'Comprovantes financeiros organizados.', porque: 'Apoio familiar e outras fontes exigem documentação do apoiador e da origem dos recursos, conforme o consulado.',
         objetivos: [{ id: 'proprios', texto: 'Comprovantes dos recursos próprios' }, { id: 'apoio', texto: 'Documentação do apoiador (se houver apoio familiar)' }, { id: 'bolsa', texto: 'Carta de concessão (se houver bolsa)' }], dependencias: ['9.3'], prioridade: 'media', tempoEstimado: '1–2 semanas', duracaoMin: 60, documentos: ['meios', 'apoio-familiar'], fontes: ['O6', 'O7'], tag: 'pendente', criterio: 'Documentação organizada.' },
       { id: '9.9', titulo: 'Confirmar comprovantes aceitos pelo consulado', resumo: 'Formatos e fontes de recursos aceitos.', objetivo: 'Saber o que o seu consulado aceita.', porque: 'Não presuma que qualquer declaração de apoio será aceita.',
-        objetivos: [{ id: 'confirmar', texto: 'Confirmar com o consulado (site oficial ou e-mail — Missão 5.2)' }], dependencias: ['9.8'], prioridade: 'media', tempoEstimado: '30 min', duracaoMin: 30, fontes: ['O7', 'O11'], tag: 'pendente', criterio: 'Comprovantes aceitos confirmados.' },
-      { id: '9.10', titulo: 'Revisar a viabilidade financeira', resumo: 'Antes de solicitar o visto.', objetivo: 'Plano financeiro viável ou alternativas definidas.', porque: 'Se faltar dinheiro, é melhor descobrir antes do pedido — e escolher um caminho: bolsa, apoio, outro destino, outro período ou plano de economia.',
+        objetivos: [{ id: 'confirmar', texto: 'Confirmar com o consulado (site oficial ou e-mail: Missão 5.2)' }], dependencias: ['9.8'], prioridade: 'media', tempoEstimado: '30 min', duracaoMin: 30, fontes: ['O7', 'O11'], tag: 'pendente', criterio: 'Comprovantes aceitos confirmados.' },
+      { id: '9.10', titulo: 'Revisar a viabilidade financeira', resumo: 'Antes de solicitar o visto.', objetivo: 'Plano financeiro viável ou alternativas definidas.', porque: 'Se faltar dinheiro, é melhor descobrir antes do pedido, e escolher um caminho: bolsa, apoio, outro destino, outro período ou plano de economia.',
         objetivos: [{ id: 'viavel', texto: 'Recursos confirmados cobrem a exigência do visto e o orçamento', tipo: 'auto', regra: 'planoViavel' }, { id: 'revisar', texto: 'Revisar o plano com o assistente ou por conta própria' }], dependencias: ['9.1', '9.2', '9.3'], prioridade: 'alta', tempoEstimado: '30 min', duracaoMin: 30, fontes: ['O6'], tag: 'estimativa', criterio: 'Viabilidade confirmada.', ferramenta: 'financeiro' },
     ],
   },

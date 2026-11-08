@@ -2,8 +2,9 @@
 // (OpenAI e servidores locais/open-source como Ollama, LM Studio ou vLLM).
 // Gemini e outros podem entrar como novos arquivos com a mesma interface (ver providers/index.js).
 // Modelos locais evitam custo por mensagem, mas exigem hardware/hospedagem com GPU — avalie antes.
+import { providerTimeoutMs } from './index.js';
 
-export function openAICompatibleProvider({ baseUrl, apiKey, model } = {}) {
+export function openAICompatibleProvider({ baseUrl, apiKey, model, fetchImpl = globalThis.fetch } = {}) {
   if (!baseUrl || !model) throw new Error('defina MENTOR_BASE_URL e MENTOR_MODEL');
   const url = `${baseUrl.replace(/\/$/, '')}/chat/completions`;
 
@@ -23,9 +24,10 @@ export function openAICompatibleProvider({ baseUrl, apiKey, model } = {}) {
     nome: `Modelo compatível (${model})`,
     disponivel: true,
     async chat({ system, messages, tools, signal }) {
-      const res = await fetch(url, {
+      // Sem prazo, um servidor travado prenderia a requisição do estudante indefinidamente.
+      const res = await fetchImpl(url, {
         method: 'POST',
-        signal,
+        signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(providerTimeoutMs())]) : AbortSignal.timeout(providerTimeoutMs()),
         headers: { 'Content-Type': 'application/json', ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}) },
         body: JSON.stringify({
           model,
@@ -34,14 +36,18 @@ export function openAICompatibleProvider({ baseUrl, apiKey, model } = {}) {
         }),
       });
       if (!res.ok) throw new Error(`erro do provedor (${res.status})`);
-      const data = await res.json();
-      const msg = data.choices?.[0]?.message || {};
-      const chamadas = (msg.tool_calls || []).map((c) => {
+      let data;
+      try { data = await res.json(); } catch { throw new Error('resposta do provedor não é JSON'); }
+      const msg = data?.choices?.[0]?.message;
+      if (!msg || typeof msg !== 'object') throw new Error('resposta do provedor sem mensagem');
+      const chamadas = (Array.isArray(msg.tool_calls) ? msg.tool_calls : []).map((c) => {
         let input = {};
         try { input = JSON.parse(c.function?.arguments || '{}'); } catch { input = { __invalido: true }; }
+        if (!input || typeof input !== 'object' || Array.isArray(input)) input = { __invalido: true };
         return { id: c.id, nome: c.function?.name, input };
       });
-      return { texto: msg.content || '', chamadas, parada: chamadas.length ? 'tool_use' : data.choices?.[0]?.finish_reason || 'stop', bruto: null };
+      const uso = data.usage ? { entrada: data.usage.prompt_tokens || 0, saida: data.usage.completion_tokens || 0 } : null;
+      return { texto: typeof msg.content === 'string' ? msg.content : '', chamadas, parada: chamadas.length ? 'tool_use' : data.choices[0].finish_reason || 'stop', bruto: null, uso };
     },
   };
 }

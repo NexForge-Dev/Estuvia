@@ -148,6 +148,8 @@ const routeSchema = z.object({
 router.post('/travel/routes', async (req, res) => {
   const parsed = routeSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
+  // Mesmo limite das cotações em /travel/quotes (as duas rotas gravam em user.travel.opcoes).
+  if ((req.user.travel?.opcoes || []).length >= 20) return res.status(409).json({ error: 'Limite de cotações atingido.' });
   const user = await users.update(req.user.id, (u) => { ensureFinance(u); u.travel.opcoes.push({ id: newId(), moeda: 'EUR', escolhida: false, cotadoEm: new Date().toISOString().slice(0, 10), ...parsed.data }); });
   res.status(201).json(reply(user));
 });

@@ -66,6 +66,6 @@ let announcing = false;
 function announce(novas) {
   if (announcing) return;
   announcing = true;
-  novas.forEach((a) => toast(`🏆 Conquista desbloqueada: ${a.titulo}`, 'ok'));
+  novas.forEach((a) => toast(`Nova conquista: ${a.titulo}`, 'ok'));
   api.post('/achievements/seen', { ids: novas.map((a) => a.id) }).catch(() => {}).finally(() => { announcing = false; });
 }
