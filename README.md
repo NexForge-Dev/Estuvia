@@ -13,10 +13,12 @@ Requirements: **Node.js 20+** (tested with 22).
 ```bash
 npm install
 npm start          # http://localhost:3000
-npm test           # 128 tests (journey, planner, finances, documents, security, Radar, Community, Achievements, Mentor…)
+npm test           # 237 tests (journey, planner, finances, documents, security, Radar, Community, Achievements, Mentor…)
 ```
 
 Create an account → onboarding (5 steps) → your first journey is generated. How to use it: [23 — User guide](docs/23-guia-de-uso.md).
+
+**Free integrations (optional):** `YOUTUBE_API_KEY` lists videos/lessons in the Mentor chat and `TRAVELPAYOUTS_TOKEN` turns on flight prices and price alerts; both are free (see `.env.example` and doc 24). Web search (Canal UGR, GDELT, Wikipedia) needs no key.
 
 **AI (optional):** without a key, the Mentor answers in "verified base" mode (quick actions computed from the journey's real data). To enable Claude: `cp .env.example .env`, fill in `ANTHROPIC_API_KEY` and restart.
 
@@ -95,10 +97,12 @@ tests/
 | [21 — Documents](docs/21-documentos.md) | Digital wallet by step, **My folder**, encrypted files, integration with missions |
 | [22 — Interface and mobile](docs/22-interface-e-celular.md) | Minimalist layer, navigation ("More", bottom bar), mobile rules, how to test |
 | [23 — User guide](docs/23-guia-de-uso.md) | How to use the platform today, step by step (for students) |
+| [24 — Real time, web search, flight prices and notes](docs/24-tempo-real-e-pesquisa.md) | Live updates (SSE), adaptive Radar checks, free web/video search in the Mentor, flight prices and price alerts, mission notes |
+| [25 — Production readiness](docs/25-production-readiness.md) | What the code actually does in production, required env vars, roles, backup/restore, verified vs. unverified items, launch blockers and legal questions |
 | [11 — Opportunity Radar](docs/11-radar.md) | Monitoring of official sources |
 | [12 — Community](docs/12-comunidade.md) | Moderated community |
 | [01](docs/01-visao-produto.md), [02](docs/02-requisitos.md), [03](docs/03-arquitetura.md), [08](docs/08-manual-do-estudante.md) | Vision, requirements, architecture and manual for version 0.1 (historical context) |
 
 ---
 
-**Data and honesty:** official sources consulted on 10/24/2026. Programs in the local catalog are **demonstrative** ("Demo data" label); the Radar brings real UGR programs. The 2026 IPREM (€600), the DUA short link and the Salvador consulate's email were provided by the founder and appear as **pending confirmation**. Scholarships appear as "no confirmed call" until the current call is checked. There are no verified video tutorials — the tutorial card stays hidden until one exists.
+**Data and honesty:** official sources consulted on 10/24/2026. Programs in the local catalog are **demonstrative** ("Demo data" label); the Radar brings real UGR programs. The 2026 IPREM (€600) stays **pending confirmation**: it matches Ley 31/2022 (2023 budget, automatically extended into 2026), but no 2026-specific norm was found in the BOE on 10/28/2026. The DUA short link (`lajunta.es/portaldua` → Junta de Andalucía DUA page) and the Salvador consulate contacts were checked against the official pages on 10/28/2026. Scholarships appear as "no confirmed call" until the current call is checked. There are no verified video tutorials — the tutorial card stays hidden until one exists.

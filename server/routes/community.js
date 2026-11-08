@@ -1,5 +1,5 @@
 // Comunidade colaborativa: feed, interações, grupos, verificação de oportunidades, Radar,
-// integração com missões e Agenda AI, denúncias e moderação.
+// integração com missões e Agenda, denúncias e moderação.
 import fs from 'node:fs';
 import path from 'node:path';
 import express, { Router } from 'express';
@@ -55,6 +55,9 @@ function authorView(id) {
   return { nome: p.apelido || `${first}${rest.length ? ` ${rest.at(-1)[0]}.` : ''}`, avatar: p.avatar || '🎓', moderador: isModerator(u) };
 }
 
+// Estado de moderação visto pelo autor: motivo e nota, nunca o id de quem moderou.
+const moderationView = (m, mod) => (mod ? m : { estado: m.estado, motivos: m.motivos, nota: m.nota, em: m.em });
+
 const canSee = (post, viewer) =>
   isModerator(viewer) || (post.moderacao.estado === 'publicado') || (post.autorId === viewer.id && post.moderacao.estado !== 'removido');
 
@@ -92,7 +95,7 @@ function postView(c, post, viewer) {
     salvei: post.salvos.includes(viewer.id),
     compartilhamentos: post.compartilhamentos || 0,
     comentarios: c.comments.filter((x) => x.postId === post.id && x.moderacao.estado === 'publicado').length,
-    moderacao: mine || mod ? post.moderacao : { estado: post.moderacao.estado },
+    moderacao: mine || mod ? moderationView(post.moderacao, mod) : { estado: post.moderacao.estado },
     possivelDuplicata: mod ? post.possivelDuplicata || null : undefined,
     denuncias: mod ? post.denuncias || 0 : undefined,
     naJornada: (viewer.opportunities || []).some((o) => o.postId === post.id),
@@ -105,7 +108,7 @@ function postView(c, post, viewer) {
 function commentView(cm, viewer) {
   return {
     id: cm.id, texto: cm.texto, autor: authorView(cm.autorId), meu: cm.autorId === viewer.id,
-    criadoEm: cm.criadoEm, moderacao: cm.autorId === viewer.id || isModerator(viewer) ? cm.moderacao : { estado: cm.moderacao.estado },
+    criadoEm: cm.criadoEm, moderacao: cm.autorId === viewer.id || isModerator(viewer) ? moderationView(cm.moderacao, isModerator(viewer)) : { estado: cm.moderacao.estado },
   };
 }
 
@@ -297,7 +300,7 @@ router.post('/posts', communityWriteLimiter, async (req, res) => {
     if (prep.campos.oportunidade) {
       const dup = findDuplicate(c, prep.campos.oportunidade);
       if (dup && !parsed.data.ignorarDuplicata) {
-        return { erro: [409, 'Esta oportunidade parece já ter sido compartilhada. Veja a publicação existente — você pode comentar nela.'], extra: { duplicata: { id: dup.id, titulo: dup.titulo } } };
+        return { erro: [409, 'Esta oportunidade parece já ter sido compartilhada. Veja a publicação existente, você pode comentar nela.'], extra: { duplicata: { id: dup.id, titulo: dup.titulo } } };
       }
       possivelDuplicata = dup?.id || null;
     }
@@ -336,7 +339,7 @@ router.put('/posts/:id', communityWriteLimiter, async (req, res) => {
       prep.avisos.push('Como a publicação já estava verificada, ela voltou para verificação.');
     }
     if (!post.verificacao && isVerifiable(prep.campos)) post.verificacao = { status: 'nao-verificada', historico: [] };
-    c.media.filter((m) => m.postId === post.id && !prep.campos.imagens.includes(m.id)).forEach((m) => { m.postId = null; });
+    c.media.filter((m) => m.postId === post.id && !prep.campos.imagens.includes(m.id)).forEach((m) => { m.postId = null; m.soltaEm = now(); });
     c.media.filter((m) => prep.campos.imagens.includes(m.id)).forEach((m) => { m.postId = post.id; });
     Object.assign(post, prep.campos, { editadoEm: now() });
     return { post, avisos: prep.avisos };
@@ -441,6 +444,11 @@ async function report(req, res, alvo) {
     if (!target) return { erro: [404, 'Conteúdo não encontrado.'] };
     if (target.autorId === req.user.id) return { erro: [400, 'Você não pode denunciar o próprio conteúdo.'] };
     if (c.reports.some((r) => r.alvoId === target.id && r.autorId === req.user.id && r.status === 'aberta')) return { erro: [409, 'Você já denunciou este conteúdo. A moderação vai analisar.'] };
+    // Só se denuncia o que se pode ver: id de conteúdo oculto, em revisão ou removido não serve para nada (nem para sondar).
+    const post = alvo === 'post' ? target : findPost(c, target.postId);
+    const visible = post && canSee(post, req.user) && post.moderacao.estado !== 'removido'
+      && (alvo === 'post' || target.moderacao.estado === 'publicado' || isModerator(req.user));
+    if (!visible) return { erro: [404, 'Conteúdo não encontrado.'] };
     c.reports.push({ id: newId(), alvo, alvoId: target.id, postId: alvo === 'post' ? target.id : target.postId, autorId: req.user.id, ...parsed.data, status: 'aberta', criadoEm: now() });
     const abertas = c.reports.filter((r) => r.alvoId === target.id && r.status === 'aberta').length;
     if (alvo === 'post') target.denuncias = abertas;
@@ -486,7 +494,7 @@ router.get('/missions/:missaoId', (req, res) => {
   const { missaoId, universidadeId, limit } = parsed.data;
   res.json({
     missaoId,
-    aviso: 'Experiências de outros estudantes — não são regra oficial. Confirme sempre na fonte oficial.',
+    aviso: 'Experiências de outros estudantes, não são regra oficial. Confirme sempre na fonte oficial.',
     relatos: community.read((c) => c.posts
       .filter((p) => p.missaoId === missaoId && p.tipo === 'publicacao' && p.natureza !== 'orientacao-oficial' && p.moderacao.estado === 'publicado')
       .map((p) => ({ p, score: relevance(p, { viewer: req.user, commentsCount: 0 }) + (universidadeId && p.local?.universidadeId === universidadeId ? 1000 : 0) }))
@@ -641,7 +649,7 @@ router.delete('/my-opportunities/:id', async (req, res) => {
   res.json({ oportunidades: myOpportunities(user) });
 });
 
-// ---------- Integração com a Agenda AI ----------
+// ---------- Integração com a Agenda ----------
 
 export const AGENDA_CATEGORY = {
   'vagas-mestrado': 'academico', bolsas: 'financeiro', 'estagios-empregos': 'pessoal', moradia: 'viagem',
@@ -656,7 +664,7 @@ function agendaEvents(post) {
   const base = {
     categoria: AGENDA_CATEGORY[post.categoria] || 'pessoal', oportunidadeId: post.id, origem: 'comunidade',
     nota: `Fonte: ${op.linkOficial}`.slice(0, 300),
-    motivo: verified ? 'Prazo verificado pela equipe no edital oficial.' : 'Prazo informado pela comunidade — confirme no edital oficial.',
+    motivo: verified ? 'Prazo verificado pela equipe no edital oficial.' : 'Prazo informado pela comunidade, confirme no edital oficial.',
   };
   const events = [{ ...base, id: newId(), oportunidadeTipo: 'prazo', titulo: `Prazo: ${op.titulo}`.slice(0, 120), data: op.prazo, inicio: '09:00', fim: '09:30', prioridade: 'critica', criadoEm: now() }];
   const review = addDays(op.prazo, -REVIEW_DAYS_BEFORE);
@@ -697,7 +705,7 @@ mod.get('/queue', (req, res) => {
       comentarios: c.comments.filter((x) => x.moderacao.estado === 'em-revisao').map((cm) => ({ ...commentView(cm, req.user), postId: cm.postId })),
       denuncias: c.reports.filter((r) => r.status === 'aberta').sort(byDate).map((r) => {
         const alvo = r.alvo === 'post' ? findPost(c, r.alvoId) : c.comments.find((x) => x.id === r.alvoId);
-        return { ...r, autorId: undefined, motivoLabel: REPORT_REASONS[r.motivo], trecho: alvo ? `${alvo.titulo ? `${alvo.titulo} — ` : ''}${alvo.texto}`.slice(0, 280) : '(conteúdo removido)' };
+        return { ...r, autorId: undefined, motivoLabel: REPORT_REASONS[r.motivo], trecho: alvo ? `${alvo.titulo ? `${alvo.titulo} - ` : ''}${alvo.texto}`.slice(0, 280) : '(conteúdo removido)' };
       }),
     };
   }));
@@ -844,18 +852,42 @@ const SIGNATURES = [
 
 const mediaPath = (m) => path.join(config.mediaDir, `${m.id}.${m.ext}`);
 function deleteMediaFile(m) { fs.promises.unlink(mediaPath(m)).catch(() => {}); }
+// Imagem enviada e nunca publicada (composição abandonada, removida da prévia ou tirada de um post na edição)
+// expira depois de 24 h: não fica guardada para sempre nem trava o limite de pendentes.
+const PENDING_MEDIA_MS = 24 * 3600000;
+const expiredPending = (m, at = Date.now()) => !m.postId && at - new Date(m.soltaEm || m.criadoEm) > PENDING_MEDIA_MS;
+function dropMedia(c, pred) {
+  const gone = c.media.filter(pred);
+  gone.forEach(deleteMediaFile);
+  if (gone.length) c.media = c.media.filter((m) => !gone.includes(m));
+  return gone.length;
+}
 
 router.post('/media', communityWriteLimiter, express.raw({ type: SIGNATURES.map((s) => s.mime), limit: '2mb' }), async (req, res) => {
   if (!Buffer.isBuffer(req.body) || req.body.length < 16) return res.status(400).json({ error: 'Envie uma imagem PNG, JPEG, WebP ou GIF.' });
   const sig = SIGNATURES.find((s) => s.test(req.body));
   if (!sig) return res.status(400).json({ error: 'O arquivo não é uma imagem válida.' });
+  if (community.read((c) => c.media.some((m) => expiredPending(m)))) await community.mutate((c) => dropMedia(c, (m) => expiredPending(m)));
   const pending = community.read((c) => c.media.filter((m) => m.ownerId === req.user.id && !m.postId).length);
   if (pending >= 12) return res.status(429).json({ error: 'Muitas imagens não publicadas. Publique ou descarte antes de enviar outras.' });
   const m = { id: newId(), ownerId: req.user.id, ext: sig.ext, mime: sig.mime, tamanho: req.body.length, postId: null, criadoEm: now() };
-  await fs.promises.mkdir(config.mediaDir, { recursive: true });
-  await fs.promises.writeFile(mediaPath(m), req.body, { mode: 0o600 });
+  try {
+    await fs.promises.mkdir(config.mediaDir, { recursive: true });
+    await fs.promises.writeFile(mediaPath(m), req.body, { mode: 0o600 });
+  } catch (err) {
+    deleteMediaFile(m);
+    console.error('[comunidade] falha ao gravar imagem:', err.message);
+    return res.status(500).json({ error: 'Não foi possível guardar a imagem agora. Tente novamente.' });
+  }
   await community.mutate((c) => { c.media.push(m); });
   res.status(201).json({ id: m.id, url: `/api/community/media/${m.id}` });
+});
+
+// Descarta uma imagem enviada que ainda não está em nenhuma publicação (removida da prévia antes de publicar).
+router.delete('/media/:id', async (req, res) => {
+  const n = await community.mutate((c) => dropMedia(c, (m) => m.id === req.params.id && m.ownerId === req.user.id && !m.postId));
+  if (!n) return res.status(404).json({ error: 'Imagem não encontrada ou já publicada.' });
+  res.json({ ok: true });
 });
 
 router.get('/media/:id', (req, res) => {
@@ -876,9 +908,17 @@ router.get('/media/:id', (req, res) => {
 
 export function communityExport(userId) {
   return community.read((c) => ({
-    publicacoes: c.posts.filter((p) => p.autorId === userId),
-    comentarios: c.comments.filter((x) => x.autorId === userId),
-    denunciasFeitas: c.reports.filter((r) => r.autorId === userId).map(({ id, alvo, alvoId, motivo, status, criadoEm }) => ({ id, alvo, alvoId, motivo, status, criadoEm })),
+    // Sem dados de terceiros: quem curtiu/salvou vira contagem e o id de quem moderou/verificou sai.
+    publicacoes: c.posts.filter((p) => p.autorId === userId).map(({ curtidas, salvos, moderacao, verificacao, ...p }) => ({
+      ...p, curtidas: curtidas.length, salvos: salvos.length, moderacao: moderationView(moderacao, false),
+      verificacao: verificacao && { ...verificacao, historico: verificacao.historico.map(({ por, ...h }) => ({ ...h, por: ['sistema', 'comunidade'].includes(por) ? por : 'equipe' })) },
+    })),
+    comentarios: c.comments.filter((x) => x.autorId === userId).map((x) => ({ ...x, moderacao: moderationView(x.moderacao, false) })),
+    curtiu: c.posts.filter((p) => p.curtidas.includes(userId)).map((p) => p.id),
+    salvou: c.posts.filter((p) => p.salvos.includes(userId)).map((p) => p.id),
+    imagens: c.media.filter((m) => m.ownerId === userId).map(({ id, mime, tamanho, postId, criadoEm }) => ({ id, mime, tamanho, postId, criadoEm })),
+    gruposCriados: c.groups.filter((g) => g.criadoPor === userId).map((g) => g.id),
+    denunciasFeitas: c.reports.filter((r) => r.autorId === userId).map(({ id, alvo, alvoId, motivo, detalhe, status, decisao, criadoEm }) => ({ id, alvo, alvoId, motivo, detalhe, status, decisao, criadoEm })),
     grupos: c.groups.filter((g) => g.membros.includes(userId)).map((g) => g.id),
   }));
 }
@@ -888,7 +928,7 @@ export async function purgeCommunityUser(userId) {
     c.posts.filter((p) => p.autorId === userId).forEach((p) => removePost(c, p.id));
     c.comments = c.comments.filter((x) => x.autorId !== userId);
     c.posts.forEach((p) => { p.curtidas = p.curtidas.filter((id) => id !== userId); p.salvos = p.salvos.filter((id) => id !== userId); });
-    c.groups.forEach((g) => { g.membros = g.membros.filter((id) => id !== userId); });
+    c.groups.forEach((g) => { g.membros = g.membros.filter((id) => id !== userId); if (g.criadoPor === userId) g.criadoPor = null; });
     c.reports.filter((r) => r.autorId === userId).forEach((r) => { r.autorId = null; });
     c.media.filter((m) => m.ownerId === userId).forEach(deleteMediaFile);
     c.media = c.media.filter((m) => m.ownerId !== userId);

@@ -50,7 +50,7 @@ function buildChunks() {
       const fid = (m.fontes || [])[0];
       out.push({
         id: `missao:${m.id}`, tema: 'jornada', missaoId: m.id, rodada: r.numero,
-        titulo: `Missão ${m.id} — ${m.titulo}`, texto: [m.resumo, m.objetivo, m.porque].filter(Boolean).join(' '),
+        titulo: `Missão ${m.id} - ${m.titulo}`, texto: [m.resumo, m.objetivo, m.porque].filter(Boolean).join(' '),
         natureza: m.tag === 'verificado' ? 'oficial' : fid === 'M' ? 'experiencia' : 'pratica', fonte: fonteDe(fid), fontes: m.fontes || [],
         orgao: fonteDe(fid)?.orgao || null, ano: null, verificadoEm: fonteDe(fid)?.revisadoEm || null, validade: null,
         confirmacao: m.tag === 'verificado' ? 'confirmado' : m.tag === 'pendente' ? 'pendente' : 'orientacao', palavras: [],
@@ -76,7 +76,7 @@ function buildChunks() {
   }
   for (const g of Object.values(CITY_GUIDES)) {
     for (const sec of g.secoes) {
-      out.push({ id: `cidade:${normalize(g.cidade)}:${normalize(sec.titulo)}`, tema: 'chegada', titulo: `${g.cidade} — ${sec.titulo}`, texto: sec.itens.join(' '), natureza: g.fonte === 'M' ? 'experiencia' : 'pratica', fonte: fonteDe(g.fonte), fontes: [g.fonte], orgao: null, ano: null, verificadoEm: fonteDe(g.fonte)?.revisadoEm || null, validade: null, confirmacao: 'orientacao', palavras: [g.cidade] });
+      out.push({ id: `cidade:${normalize(g.cidade)}:${normalize(sec.titulo)}`, tema: 'chegada', titulo: `${g.cidade} - ${sec.titulo}`, texto: sec.itens.join(' '), natureza: g.fonte === 'M' ? 'experiencia' : 'pratica', fonte: fonteDe(g.fonte), fontes: [g.fonte], orgao: null, ano: null, verificadoEm: fonteDe(g.fonte)?.revisadoEm || null, validade: null, confirmacao: 'orientacao', palavras: [g.cidade] });
     }
   }
   for (const c of CONSULATES) {
@@ -84,7 +84,7 @@ function buildChunks() {
     out.push({ id: `consulado:${c.id}`, tema: 'visto', titulo: c.nome, texto: `Atende quem mora em: ${c.estadosConfirmados.map((uf) => UF_NOMES[uf]).join(', ')}. ${c.emailVistos ? `E-mail de vistos: ${c.emailVistos}.` : `E-mail: ${c.emailContato}.`} Visto de estudos: ${c.vistoEstudosUrl}.`, natureza: 'oficial', fonte, fontes: c.fonte ? [c.fonte] : [], orgao: c.nome, ano: null, verificadoEm: c.verificadoEm, validade: null, confirmacao: 'confirmado', palavras: ['consulado', ...c.estadosConfirmados, ...c.estadosConfirmados.map((uf) => normalize(UF_NOMES[uf]))] });
   }
   for (const s of SOURCES.filter((x) => x.url)) {
-    out.push({ id: `fonte:${s.id}`, tema: 'fontes', titulo: `${s.orgao} — ${s.titulo}`, texto: `Fonte cadastrada pela Estuvia: ${s.titulo}.`, natureza: s.tipo === 'oficial' ? 'oficial' : 'pratica', fonte: fonteDe(s.id), fontes: [s.id], orgao: s.orgao, ano: null, verificadoEm: s.revisadoEm, validade: null, confirmacao: s.pendente ? 'pendente' : 'confirmado', palavras: [] });
+    out.push({ id: `fonte:${s.id}`, tema: 'fontes', titulo: `${s.orgao} - ${s.titulo}`, texto: `Fonte cadastrada pela Estuvia: ${s.titulo}.`, natureza: s.tipo === 'oficial' ? 'oficial' : 'pratica', fonte: fonteDe(s.id), fontes: [s.id], orgao: s.orgao, ano: null, verificadoEm: s.revisadoEm, validade: null, confirmacao: s.pendente ? 'pendente' : 'confirmado', palavras: [] });
   }
   return out;
 }

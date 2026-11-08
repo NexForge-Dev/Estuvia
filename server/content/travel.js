@@ -27,8 +27,8 @@ const S = {
   mad: { titulo: 'Aeropuerto Adolfo Suárez Madrid-Barajas (Aena)', url: 'https://www.aena.es/es/adolfo-suarez-madrid-barajas.html', verificadoEm: '2026-10-25' },
   agp: { titulo: 'Aeropuerto de Málaga-Costa del Sol (Aena)', url: 'https://www.aena.es/es/malaga-costa-del-sol.html', verificadoEm: '2026-10-25' },
   grx: { titulo: 'Aeropuerto F.G.L. Granada-Jaén (Aena)', url: 'https://www.aena.es/es/f.g.l.-granada-jaen.html', verificadoEm: '2026-10-25' },
-  renfe: { titulo: 'Renfe — trens na Espanha', url: 'https://www.renfe.com/es/es', verificadoEm: '2026-10-25' },
-  alsa: { titulo: 'ALSA — ônibus de média e longa distância (confira no site)', url: 'https://www.alsa.es/', verificadoEm: null },
+  renfe: { titulo: 'Renfe, trens na Espanha', url: 'https://www.renfe.com/es/es', verificadoEm: '2026-10-25' },
+  alsa: { titulo: 'ALSA, ônibus de média e longa distância (confira no site)', url: 'https://www.alsa.es/', verificadoEm: null },
 };
 
 // Percursos por cidade de destino. "etapas" descrevem o caminho — sem horários, durações ou preços.
@@ -40,8 +40,8 @@ export const ROUTE_TEMPLATES = {
       aeroportos: ['MAD'], conexoesAereasTipicas: 'Diretos ou com uma conexão, conforme a sua cidade.', terrestre: true,
       etapas: [
         { de: 'origem', para: 'Madri (MAD)', meio: 'aviao', rotulo: 'Voo internacional' },
-        { de: 'Madri (MAD)', para: 'Madri — estação', meio: 'trem-urbano', rotulo: 'Cercanías ou metrô do aeroporto até a estação' },
-        { de: 'Madri — estação', para: 'Granada', meio: 'trem', rotulo: 'Trem (Renfe) ou ônibus de longa distância' },
+        { de: 'Madri (MAD)', para: 'Madri, estação', meio: 'trem-urbano', rotulo: 'Cercanías ou metrô do aeroporto até a estação' },
+        { de: 'Madri, estação', para: 'Granada', meio: 'trem', rotulo: 'Trem (Renfe) ou ônibus de longa distância' },
       ],
       atencao: ['Inclui troca de meio de transporte em Madri: deixe folga entre a chegada do voo e o trem/ônibus.', 'Se comprar voo e trem separados, um atraso do voo não garante remarcação do trem.'],
       fontes: [S.mad, S.renfe, S.alsa],
@@ -65,7 +65,7 @@ export const ROUTE_TEMPLATES = {
       etapas: [
         { de: 'origem', para: 'conexão na Espanha/Europa', meio: 'aviao', rotulo: 'Voo internacional' },
         { de: 'conexão na Espanha/Europa', para: 'Granada (GRX)', meio: 'aviao', rotulo: 'Voo de conexão' },
-        { de: 'Granada (GRX)', para: 'Granada — centro', meio: 'onibus', rotulo: 'Ônibus do aeroporto ou táxi' },
+        { de: 'Granada (GRX)', para: 'Granada, centro', meio: 'onibus', rotulo: 'Ônibus do aeroporto ou táxi' },
       ],
       atencao: ['Oferece menos opções de conexão: compare com cuidado o horário de chegada.'],
       fontes: [S.grx],

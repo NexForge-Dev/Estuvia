@@ -50,7 +50,7 @@ export function profileView() {
       field('Área de interesse', inp('area', { maxlength: 80 })),
       field('Espanhol', select('espanhol', NIVEIS, p.espanhol || 'nenhum')),
       field('Certificado de espanhol', select('certificadoEspanhol', [['nenhum', 'Não tenho'], ['DELE', 'DELE'], ['SIELE', 'SIELE'], ['outro', 'Outro']], p.certificadoEspanhol || 'nenhum')),
-      field('Nível do certificado', select('certificadoNivel', [['', '—'], ...NIVEIS.slice(1)], p.certificadoNivel || '')),
+      field('Nível do certificado', select('certificadoNivel', [['', '-'], ...NIVEIS.slice(1)], p.certificadoNivel || '')),
       field('Inglês', select('ingles', NIVEIS, p.ingles || 'nenhum')),
       field('Orçamento disponível (€, aproximado)', inp('orcamentoDisponivel', { type: 'number', min: 0, step: 100 }))),
     h('h2', {}, 'Seu porquê'),
@@ -83,7 +83,7 @@ export function profileView() {
   });
 
   return h('div', { class: 'stack-lg' },
-    h('header', { class: 'page-head' }, h('div', {}, h('p', { class: 'eyebrow' }, 'Missão 1.1'), h('h1', {}, 'Meu perfil'), h('p', { class: 'muted' }, 'A plataforma é sua: personalize e mantenha seu perfil acadêmico atualizado — ele define quais missões se aplicam a você.'))),
+    h('header', { class: 'page-head' }, h('div', {}, h('p', { class: 'eyebrow' }, 'Missão 1.1'), h('h1', {}, 'Meu perfil'), h('p', { class: 'muted' }, 'A plataforma é sua: personalize e mantenha seu perfil acadêmico atualizado, ele define quais missões se aplicam a você.'))),
     h('section', { class: 'panel' }, form),
     HavePanel(),
     h('section', { class: 'panel' }, h('h2', { class: 'panel-title' }, icon('shield', { size: 18 }), 'Segurança e privacidade'),

@@ -15,7 +15,7 @@ export function personalTips(user) {
   for (const jr of user.journeys) {
     const program = programById(jr.programaId);
     const req = program?.idioma;
-    const sigla = program ? program.nome.split(' — ')[0] : 'seu mestrado';
+    const sigla = program ? program.nome.split(' - ')[0] : 'seu mestrado';
     if (req?.status === 'requerido' && req.nivel && LEVELS.indexOf(p.espanhol) < LEVELS.indexOf(req.nivel)) {
       tips.push({ icone: 'lang', texto: `${sigla} pede espanhol ${req.nivel} e você declarou ${p.espanhol || 'nenhum'}. Planeje preparo e prova com antecedência.`, tag: req.fonte === 'DEMO' ? 'pendente' : 'verificado' });
     }

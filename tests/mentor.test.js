@@ -107,7 +107,7 @@ test('GET /mentor: Modo Guiado identificado, sem fingir IA generativa', async ()
   assert.equal(r.status, 200);
   assert.equal(r.data.modo, 'guiado');
   assert.match(r.data.nome, /Modo Guiado/);
-  assert.equal(r.data.acoesRapidas.length, 8);
+  assert.equal(r.data.acoesRapidas.length, 10);
   const t = await req('GET', '/mentor/tools');
   const names = t.data.ferramentas.map((f) => f.name);
   for (const n of ['get_user_journey', 'get_current_mission', 'get_pending_missions', 'get_user_availability', 'get_calendar_events', 'propose_weekly_schedule', 'create_calendar_event', 'update_calendar_event', 'get_financial_summary', 'calculate_financial_gap', 'update_financial_resource', 'search_scholarships', 'search_master_programs', 'get_verified_deadlines', 'subscribe_to_opportunity', 'get_required_documents', 'update_mission_progress', 'draft_email', 'get_housing_options', 'compare_housing_options', 'get_official_sources']) {

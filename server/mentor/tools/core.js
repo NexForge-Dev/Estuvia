@@ -13,6 +13,7 @@ import { users } from '../../store.js';
 import { computeJourney, recordUnlocks, diffEvents, journeyForClient, JourneyError } from '../../journey-engine.js';
 import { DEFAULT_AVAILABILITY } from '../../agenda-engine.js';
 import { todayIn } from '../parse.js';
+import { syncDocumentsFromMissions } from '../../document-engine.js';
 
 export class ToolError extends Error {
   constructor(codigo, mensagem, status = 400) { super(mensagem); this.codigo = codigo; this.status = status; }
@@ -21,7 +22,7 @@ export class ToolError extends Error {
 export const EFFECTS = {
   leitura: 'Somente leitura',
   rascunho: 'Gera um rascunho (nada é enviado)',
-  escrita: 'Altera seus dados na Estuvia — pede confirmação',
+  escrita: 'Altera seus dados na Estuvia, pede confirmação',
 };
 
 export function defineTool(t) {
@@ -68,6 +69,7 @@ export async function mutateJourney(ctx, jid, apply, { missionId = null } = {}) 
   const saved = await users.update(ctx.user.id, (u) => {
     const target = u.journeys.find((j) => j.id === original.id);
     for (const k of ['missions', 'dados', 'situacao', 'desbloqueios', 'progressoAnterior']) if (draft[k] !== undefined) target[k] = draft[k];
+    syncDocumentsFromMissions(u); // missão de preparo concluída → documento pronto na Carteira
   });
   ctx.user = saved;
   const after = computeJourney(saved, saved.journeys.find((j) => j.id === original.id));

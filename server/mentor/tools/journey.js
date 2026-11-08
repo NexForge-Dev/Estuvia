@@ -103,7 +103,7 @@ function describeOp(def, input, mission) {
   switch (input.operacao) {
     case 'marcar-objetivo': return `Marcar como feito: "${obj(input.objetivoId)}" (Missão ${mission.label}).`;
     case 'desmarcar-objetivo': return `Desmarcar: "${obj(input.objetivoId)}" (Missão ${mission.label}).`;
-    case 'concluir': return `Concluir a Missão ${mission.label} — ${def.titulo}.`;
+    case 'concluir': return `Concluir a Missão ${mission.label} - ${def.titulo}.`;
     case 'aguardando': return `Marcar a Missão ${mission.label} como "aguardando terceiros".`;
     case 'parar-aguardar': return `Tirar a Missão ${mission.label} de "aguardando".`;
     case 'execucao': return `Registrar na Missão ${mission.label}: ${{ 'nao-comecei': 'ainda não comecei', fazendo: 'estou fazendo', ajuda: 'preciso de ajuda' }[input.execucao] || 'situação'}.`;
@@ -161,7 +161,7 @@ export const updateMissionProgress = defineTool({
     const def = missionById(input.missaoId);
     const r = await mutateJourney(ctx, jr.id, (draft) => applyOp(ctx.user, draft, input), { missionId: input.missaoId });
     const m = flatMissions(r.journey).find((x) => x.id === input.missaoId);
-    return { resumo: `${describeOp(def, input, m).replace(/^(Marcar|Desmarcar|Concluir|Tirar|Registrar|Salvar)/, (w) => ({ Marcar: 'Marquei', Desmarcar: 'Desmarquei', Concluir: 'Concluí', Tirar: 'Tirei', Registrar: 'Registrei', Salvar: 'Salvei' })[w])} Situação atual: ${m?.statusLabel || '—'}.`, dados: { missao: m ? { id: m.id, status: m.status, statusLabel: m.statusLabel } : null, eventos: r.eventos, journeyId: jr.id } };
+    return { resumo: `${describeOp(def, input, m).replace(/^(Marcar|Desmarcar|Concluir|Tirar|Registrar|Salvar)/, (w) => ({ Marcar: 'Marquei', Desmarcar: 'Desmarquei', Concluir: 'Concluí', Tirar: 'Tirei', Registrar: 'Registrei', Salvar: 'Salvei' })[w])} Situação atual: ${m?.statusLabel || '-'}.`, dados: { missao: m ? { id: m.id, status: m.status, statusLabel: m.statusLabel } : null, eventos: r.eventos, journeyId: jr.id } };
   },
 });
 

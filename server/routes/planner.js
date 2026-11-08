@@ -1,4 +1,4 @@
-// Agenda AI: eventos (AgendaEvent), prazos das jornadas e das bolsas, disponibilidade,
+// Agenda: eventos (AgendaEvent), prazos das jornadas e das bolsas, disponibilidade,
 // proposta automática de semana, aprovação e replanejamento.
 import { Router } from 'express';
 import { z } from 'zod';
@@ -7,12 +7,13 @@ import { requireAuth } from '../security.js';
 import { computeJourney } from '../journey-engine.js';
 import { financialDeadlines } from '../finance-engine.js';
 import { missionById } from '../content/rounds.js';
-import { suggestWeek, staleSuggestions, CATEGORY_BY_ROUND, DEFAULT_AVAILABILITY, mondayOf } from '../agenda-engine.js';
+import { suggestWeek, staleSuggestions, CATEGORY_BY_ROUND, DEFAULT_AVAILABILITY, mondayOf, todayFor } from '../agenda-engine.js';
 
 const router = Router();
 router.use(requireAuth);
 
 export const CATEGORIES = ['academico', 'documentacao', 'financeiro', 'visto', 'viagem', 'pessoal'];
+export const MAX_EVENTS = 500;
 
 const time = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Horário inválido.');
 const dateRe = /^\d{4}-\d{2}-\d{2}$/;
@@ -52,6 +53,11 @@ function deadlines(user) {
   return [...fromJourneys, ...fromScholarships, ...fromOpportunities, ...fromFinance];
 }
 
+// Atividade ligada a uma jornada só pode apontar para uma jornada do próprio estudante.
+const ownsJourneys = (user, items) => items.every((e) => !e.journeyId || (user.journeys || []).some((j) => j.id === e.journeyId));
+// Mesmo bloco (dia, horário, título e missão): reenviar a aprovação não cria cópias.
+const slotKey = (e) => [e.data, e.inicio, e.fim, e.titulo, e.journeyId || '', e.missaoId || '', e.bolsaId || ''].join('|');
+
 const reply = (user, extra = {}) => ({
   events: user.planner || [],
   deadlines: deadlines(user),
@@ -65,8 +71,8 @@ router.get('/', (req, res) => res.json(reply(req.user)));
 router.post('/', async (req, res) => {
   const parsed = eventSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
-  if ((req.user.planner || []).length >= 500) return res.status(409).json({ error: 'Limite de atividades atingido.' });
-  if (parsed.data.journeyId && !(req.user.journeys || []).some((j) => j.id === parsed.data.journeyId)) return res.status(400).json({ error: 'Jornada inválida.' });
+  if ((req.user.planner || []).length >= MAX_EVENTS) return res.status(409).json({ error: 'Limite de atividades atingido.' });
+  if (!ownsJourneys(req.user, [parsed.data])) return res.status(400).json({ error: 'Jornada inválida.' });
   const event = { id: newId(), origem: 'estudante', ...parsed.data, criadoEm: new Date().toISOString() };
   const user = await users.update(req.user.id, (u) => { (u.planner ??= []).push(event); });
   res.status(201).json(reply(user, { event }));
@@ -76,6 +82,7 @@ router.put('/events/:id', async (req, res) => {
   const parsed = eventSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
   if (!(req.user.planner || []).some((e) => e.id === req.params.id)) return res.status(404).json({ error: 'Atividade não encontrada.' });
+  if (!ownsJourneys(req.user, [parsed.data])) return res.status(400).json({ error: 'Jornada inválida.' });
   const user = await users.update(req.user.id, (u) => {
     const e = u.planner.find((x) => x.id === req.params.id);
     Object.keys(e).forEach((k) => { if (!['id', 'origem', 'criadoEm', 'oportunidadeId', 'oportunidadeTipo', 'documentoId'].includes(k)) delete e[k]; });
@@ -90,7 +97,7 @@ router.delete('/events/:id', async (req, res) => {
   res.json(reply(user));
 });
 
-// ---------- Agenda AI ----------
+// ---------- Agenda ----------
 
 router.put('/availability', async (req, res) => {
   const parsed = z.object({
@@ -112,31 +119,36 @@ router.post('/suggest', (req, res) => {
   const parsed = suggestQuery.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Semana inválida.' });
   const { semana, ...focus } = parsed.data;
-  res.json(suggestWeek(req.user, semana, undefined, focus));
+  res.json(suggestWeek(req.user, semana, todayFor(req.user), focus));
 });
 
 // Aprovação: a proposta (editada ou não) vira eventos "agenda-ai" do estudante.
 router.post('/approve', async (req, res) => {
   const parsed = z.object({ itens: z.array(eventSchema).min(1).max(80) }).strict().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Proposta inválida.' });
-  const created = parsed.data.itens.map((e) => ({ id: newId(), origem: 'agenda-ai', ...e, criadoEm: new Date().toISOString() }));
+  if (!ownsJourneys(req.user, parsed.data.itens)) return res.status(400).json({ error: 'Jornada inválida.' });
+  const seen = new Set((req.user.planner || []).map(slotKey));
+  const fresh = parsed.data.itens.filter((e) => !seen.has(slotKey(e)) && seen.add(slotKey(e)));
+  if ((req.user.planner || []).length + fresh.length > MAX_EVENTS) return res.status(409).json({ error: 'Limite de atividades atingido.' });
+  const created = fresh.map((e) => ({ id: newId(), origem: 'agenda-ai', ...e, criadoEm: new Date().toISOString() }));
   const user = await users.update(req.user.id, (u) => { (u.planner ??= []).push(...created); });
-  res.status(201).json(reply(user, { criados: created.length }));
+  res.status(201).json(reply(user, { criados: created.length, repetidos: parsed.data.itens.length - created.length }));
 });
 
 // Replanejar: remove blocos sugeridos que perderam sentido e devolve nova proposta para a semana.
 router.post('/replan', async (req, res) => {
   const parsed = weekQuery.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Semana inválida.' });
-  const stale = staleSuggestions(req.user);
+  const today = todayFor(req.user);
+  const stale = staleSuggestions(req.user, today);
   const ids = new Set(stale.map((s) => s.id));
   const start = mondayOf(parsed.data.semana);
-  const today = new Date().toISOString().slice(0, 10);
-  // Também libera os blocos futuros desta semana criados pela Agenda AI, para redistribuí-los.
+  // Também libera os blocos futuros desta semana criados pela Agenda, para redistribuí-los.
+  // Compromissos do estudante e blocos que ele editou (editadoEm) ficam onde ele os colocou.
   const user = await users.update(req.user.id, (u) => {
-    u.planner = (u.planner || []).filter((e) => !ids.has(e.id) && !(e.origem === 'agenda-ai' && e.data >= today && e.data >= start && e.data <= addDays(start, 6)));
+    u.planner = (u.planner || []).filter((e) => !ids.has(e.id) && !(e.origem === 'agenda-ai' && !e.editadoEm && e.data >= today && e.data >= start && e.data <= addDays(start, 6)));
   });
-  res.json(reply(user, { removidos: stale, ...suggestWeek(user, start) }));
+  res.json(reply(user, { removidos: stale, ...suggestWeek(user, start, today) }));
 });
 
 function addDays(iso, n) { const d = new Date(`${iso}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }

@@ -28,7 +28,7 @@ export function MissionNode(m, { journeyId, current, index }) {
   const node = h('a', {
     class: `mission-node n-${m.status} ${current ? 'is-current' : ''} ${m.prioridade === 'critica' ? 'is-critical' : ''}`,
     href: `#/j/${journeyId}/m/${m.id}`,
-    'aria-label': `Missão ${m.label}: ${m.titulo} — ${m.statusLabel}${locked ? `, depende de ${m.bloqueadaPor.map((b) => b.label || b.titulo).join(', ')}. Toque para ver o que falta` : ''}`,
+    'aria-label': `Missão ${m.label}: ${m.titulo} - ${m.statusLabel}${locked ? `, depende de ${m.bloqueadaPor.map((b) => b.label || b.titulo).join(', ')}. Toque para ver o que falta` : ''}`,
     dataset: { mission: m.id },
   },
     h('span', { class: 'mn-circle' },

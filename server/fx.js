@@ -16,6 +16,18 @@ export const fxEnabled = () => (process.env.FX_PROVIDER || 'frankfurter') !== 'o
 // Taxa em memória (síncrona, para os cálculos). Pode ser null.
 export const cachedRate = () => cache;
 
+// Desatualizada: não conseguimos renovar há mais de 24 h, ou a cotação do BCE tem mais de 5 dias
+// (fim de semana e feriado são normais: o BCE não publica).
+const STALE_FETCH = 24 * 3600 * 1000;
+const STALE_DATE = 5 * 24 * 3600 * 1000;
+export function rateIsStale(rate, now = new Date()) {
+  if (!rate) return false;
+  const t = now instanceof Date ? now.getTime() : Number(now);
+  const fetched = Date.parse(rate.obtidoEm);
+  const dated = Date.parse(`${rate.data}T12:00:00Z`);
+  return !(t - fetched <= STALE_FETCH) || !(t - dated <= STALE_DATE);
+}
+
 export async function refreshRate({ force = false, fetchImpl = globalThis.fetch } = {}) {
   if (!fxEnabled()) return null;
   if (!force && cache && Date.now() - new Date(cache.obtidoEm).getTime() < TTL) return cache;
@@ -27,7 +39,7 @@ export async function refreshRate({ force = false, fetchImpl = globalThis.fetch 
       const body = await res.json();
       const taxa = Number(body?.rates?.BRL);
       if (!(taxa > 0)) throw new Error('resposta sem taxa');
-      cache = { taxa, data: body.date, obtidoEm: new Date().toISOString(), fonte: 'Banco Central Europeu — taxa de referência (via Frankfurter)', url: 'https://www.frankfurter.app/' };
+      cache = { taxa, data: body.date, obtidoEm: new Date().toISOString(), fonte: 'Banco Central Europeu, taxa de referência (via Frankfurter)', url: 'https://www.frankfurter.app/' };
       failedAt = 0;
     } catch {
       failedAt = Date.now();

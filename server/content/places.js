@@ -33,33 +33,33 @@ const office = (o) => {
     emailContatoTipo: o.emailVistos ? 'vistos' : o.emailContatoTipo,
     pais: 'Brasil',
     servicos: ['visto-estudos'],
-    verificadoEm: VERIFICADO_EM,
+    verificadoEm: o.verificadoEm || VERIFICADO_EM,
   };
 };
 
 export const CONSULATES = [
   office({
     id: 'salvador', nome: 'Consulado Geral da Espanha em Salvador da Bahia', cidade: 'Salvador', uf: 'BA', caminho: '/Consulados/salvadordebahia',
-    endereco: 'Av. Oceânica, 8, salas 102/103 — Ed. Farol Praia Center, Barra, 40140-130 Salvador (BA)', telefone: '+55 71 3014-7101',
-    emailVistos: 'cog.salvador.vis@maec.es',
+    endereco: 'Av. Oceânica, 8, salas 102/103: Ed. Farol Praia Center, Barra, 40140-130 Salvador (BA)', telefone: '+55 71 3014-7101',
+    emailVistos: 'cog.salvador.vis@maec.es', verificadoEm: '2026-10-28', // endereço, telefone e e-mail conferidos na página oficial
     estadosConfirmados: ['BA', 'SE', 'AL', 'PE', 'PB', 'RN', 'CE', 'PI', 'MA'],
     fonte: 'O11',
   }),
   office({
     id: 'sao-paulo', nome: 'Consulado Geral da Espanha em São Paulo', cidade: 'São Paulo', uf: 'SP', caminho: '/Consulados/saopaulo',
-    endereco: 'Av. Brasil, 948 — Jardim América, 01430-000 São Paulo (SP). Entrada do público: Rua Canadá, 424', telefone: null,
+    endereco: 'Av. Brasil, 948: Jardim América, 01430-000 São Paulo (SP). Entrada do público: Rua Canadá, 424', telefone: null,
     emailContato: 'cog.saopaulo@maec.es', emailContatoTipo: 'geral',
     estadosConfirmados: ['SP', 'PR', 'MS'],
   }),
   office({
     id: 'rio-de-janeiro', nome: 'Consulado Geral da Espanha no Rio de Janeiro', cidade: 'Rio de Janeiro', uf: 'RJ', caminho: '/Consulados/riodejaneiro',
-    endereco: 'Rua Lauro Müller, 116, salas 1601/02/08 — Torre Rio Sul, Botafogo, 22290-160 Rio de Janeiro (RJ)', telefone: '+55 21 3268-5476',
+    endereco: 'Rua Lauro Müller, 116, salas 1601/02/08: Torre Rio Sul, Botafogo, 22290-160 Rio de Janeiro (RJ)', telefone: '+55 21 3268-5476',
     emailVistos: 'cog.riodejaneiro.vis@maec.es',
     estadosConfirmados: ['RJ', 'MG', 'ES'],
   }),
   office({
     id: 'porto-alegre', nome: 'Consulado Geral da Espanha em Porto Alegre', cidade: 'Porto Alegre', uf: 'RS', caminho: '/Consulados/portoalegre',
-    endereco: 'Av. Carlos Gomes, 222, conj. 301 — Auxiliadora, 90480-000 Porto Alegre (RS)', telefone: '+55 51 3321-1901',
+    endereco: 'Av. Carlos Gomes, 222, conj. 301: Auxiliadora, 90480-000 Porto Alegre (RS)', telefone: '+55 51 3321-1901',
     emailContato: 'cog.portoalegre@maec.es', emailContatoTipo: 'geral',
     estadosConfirmados: ['RS', 'SC'],
   }),

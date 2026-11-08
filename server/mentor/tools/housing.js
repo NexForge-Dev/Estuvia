@@ -89,7 +89,7 @@ export const assessListingRisk = defineTool({
     const pend = ANTIFRAUDE.filter((a) => !h?.checklist?.[a.id]).map((a) => a.texto);
     return {
       sinais, checklistPendente: pend,
-      conclusao: sinais.length ? 'Encontrei sinais de alerta. Não envie dinheiro antes de esclarecer cada um.' : 'Não encontrei sinais de alerta no que analisei — isso NÃO garante que o anúncio é seguro. Complete o checklist antifraude.',
+      conclusao: sinais.length ? 'Encontrei sinais de alerta. Não envie dinheiro antes de esclarecer cada um.' : 'Não encontrei sinais de alerta no que analisei, isso NÃO garante que o anúncio é seguro. Complete o checklist antifraude.',
     };
   },
 });
@@ -110,7 +110,7 @@ export const saveHousingOption = defineTool({
     ensureFinance(ctx.user);
     if (ctx.user.housing.length >= 40) throw new ToolError('limite', 'Limite de opções atingido.', 409);
     const s = input.moeda === 'BRL' ? 'R$' : '€';
-    return { resumo: `Salvar "${input.nome}" (${input.tipo}) — ${s} ${input.aluguel}/mês${input.caucao ? `, caução ${s} ${input.caucao}` : ''}.`, detalhes: [], avisos: ['Salvar não significa que o anúncio foi verificado.'] };
+    return { resumo: `Salvar "${input.nome}" (${input.tipo}): ${s} ${input.aluguel}/mês${input.caucao ? `, caução ${s} ${input.caucao}` : ''}.`, detalhes: [], avisos: ['Salvar não significa que o anúncio foi verificado.'] };
   },
   execute: async (ctx, input) => {
     const item = { id: newId(), status: 'pesquisando', moeda: 'EUR', checklist: {}, ...input, criadoEm: new Date().toISOString() };

@@ -10,6 +10,7 @@ import { MissionChecklist, DocumentsBlock } from './MissionDetail.js';
 import { MissionTool } from './MissionTools.js';
 import { defaultWeek } from './WeeklyPlanner.js';
 import { go } from '../app.js';
+import { locale } from '../i18n.js';
 
 const COLORS = { laranja: 'k-orange', dourado: 'k-gold', azul: 'k-blue', roxo: 'k-purple', verde: 'k-green', destaque: 'k-accent', rosa: 'k-pink', ciano: 'k-cyan' };
 
@@ -30,9 +31,9 @@ const DIFF_CLS = { Baixa: 'ok', Média: 'warn', Alta: 'danger' };
 
 function progressMessage(m) {
   if (m.status === 'concluida') return 'Missão concluída. Siga para a próxima ação recomendada.';
-  if (m.status === 'nao-aplicavel') return 'Esta missão não se aplica ao seu caso — ela não conta como pendência.';
+  if (m.status === 'nao-aplicavel') return 'Esta missão não se aplica ao seu caso, ela não conta como pendência.';
   if (m.status === 'bloqueada') return m.bloqueioExterno && m.bloqueadaPor.every((b) => b.externo) ? 'Esta missão aguarda uma decisão externa. Enquanto isso, adiante outras missões disponíveis.' : 'Conclua as dependências para liberar esta missão.';
-  if (m.status === 'aguardando') return 'Você está aguardando terceiros. Isso não é atraso seu — a Agenda AI reserva só verificações curtas.';
+  if (m.status === 'aguardando') return 'Você está aguardando terceiros. Isso não é atraso seu, a Agenda reserva só verificações curtas.';
   const left = m.objetivosTotal - m.objetivosFeitos;
   if (m.objetivosFeitos === 0) return 'Comece pelo card "Antes de começar" e depois vá para "Executar missão".';
   if (left === 0) return 'Todos os objetivos estão feitos. Confirme a conclusão em "Executar missão".';
@@ -47,7 +48,7 @@ export function MissionContent(m, ctx) {
   const na = m.status === 'nao-aplicavel';
   const editable = !locked && !na && !done;
   const base = `/journeys/${journey.id}/missions/${m.id}`;
-  const roundLabel = def.rodadaSigla ? `Trilha ${def.rodadaSigla} — ${def.rodadaTitulo}` : `Rodada ${def.rodada} — ${def.rodadaTitulo}`;
+  const roundLabel = def.rodadaSigla ? `Trilha ${def.rodadaSigla} - ${def.rodadaTitulo}` : `Rodada ${def.rodada} - ${def.rodadaTitulo}`;
   const docsReady = m.documentos.filter((d) => ['pronto', 'enviado', 'nao-se-aplica'].includes(d.status)).length;
   const checklist = () => MissionChecklist(m.objetivos, {
     disabled: !editable,
@@ -61,7 +62,7 @@ export function MissionContent(m, ctx) {
   // ---------- Definição dos cards: título, descrição, ícone, cor, dica de estado e conteúdo ----------
   const CARDS = {
     antes: {
-      titulo: 'Antes de começar', desc: 'Briefing: objetivo, pré-requisitos, tempo, erros comuns e resultado esperado.', ic: 'sparkles', cor: 'laranja',
+      titulo: 'Antes de começar', desc: 'Briefing: objetivo, pré-requisitos, tempo, erros comuns e resultado esperado.', ic: 'flag', cor: 'laranja',
       dica: () => `Dificuldade ${m.dificuldade.toLowerCase()} · ${def.tempoEstimado}`,
       render: () => h('div', { class: 'stack' },
         h('p', { class: 'mc-lead' }, def.objetivo),
@@ -72,7 +73,7 @@ export function MissionContent(m, ctx) {
           fact('Resultado esperado', m.resultado)),
         h('h3', { class: 'small-title' }, 'O que será necessário'),
         list(m.objetivos, (o) => [icon(o.feito ? 'check' : 'target', { size: 14 }), ' ', o.texto]),
-        m.documentos.length ? [h('h3', { class: 'small-title' }, 'Documentos'), list(m.documentos, (d) => [icon('file', { size: 14 }), ` ${d.nome} — `, h('span', { class: 'muted' }, d.statusLabel)])] : null,
+        m.documentos.length ? [h('h3', { class: 'small-title' }, 'Documentos'), list(m.documentos, (d) => [icon('file', { size: 14 }), ` ${d.nome} - `, h('span', { class: 'muted' }, d.statusLabel)])] : null,
         h('h3', { class: 'small-title' }, 'Pré-requisitos'),
         m.antes.length || def.requer ? h('div', { class: 'flow-row' }, m.antes.map(missionLink), def.requer ? h('span', { class: `flow-chip ${m.bloqueioExterno ? 'f-bloqueada' : 'f-concluida'}` }, icon('globe', { size: 12 }), ` ${def.requer.rotulo}`, h('small', {}, 'decisão externa')) : null) : h('p', { class: 'muted small' }, 'Nenhum: você pode começar agora.'),
         h('h3', { class: 'small-title' }, 'Erros comuns'),
@@ -81,7 +82,7 @@ export function MissionContent(m, ctx) {
     },
     exigencia: {
       titulo: 'Entenda a exigência', desc: 'O que precisa ser comprovado, por quê e o que é estimativa.', ic: 'scale', cor: 'laranja',
-      dica: () => (m.financeiro ? `Visto: € ${Math.round(m.financeiro.exigenciaVisto).toLocaleString('pt-BR')}` : def.tempoEstimado),
+      dica: () => (m.financeiro ? `Visto: € ${Math.round(m.financeiro.exigenciaVisto).toLocaleString(locale())}` : def.tempoEstimado),
       render: () => h('div', { class: 'stack' }, h('p', { class: 'mc-lead' }, def.objetivo), h('p', {}, def.porque),
         m.financeiro ? h('p', { class: 'notice' }, `Regra parametrizada: ${Math.round(m.financeiro.iprem.percentual * 100)}% do IPREM mensal (€${m.financeiro.iprem.mensal} em ${m.financeiro.iprem.ano}${m.financeiro.iprem.status === 'pendente' ? ', valor pendente de confirmação' : ''}) × ${m.financeiro.meses} meses. ${m.financeiro.iprem.regra}`) : null,
         h('h3', { class: 'small-title' }, 'Erros comuns'), list(m.errosComuns, (e) => [icon('alert', { size: 14 }), ' ', e])),
@@ -112,7 +113,7 @@ export function MissionContent(m, ctx) {
         h('p', { class: 'hint' }, 'Anexar um documento na Estuvia não significa enviá-lo ao órgão oficial nem obter validação.')),
     },
     agenda: {
-      titulo: 'Agenda AI e prazos', desc: 'Prazo oficial, atividades desta missão e "Organizar na minha semana".', ic: 'calendar', cor: 'dourado',
+      titulo: 'Agenda e prazos', desc: 'Prazo oficial, atividades desta missão e "Organizar na minha semana".', ic: 'calendar', cor: 'dourado',
       dica: () => (m.prazo ? `Prazo ${fmtDate(m.prazo.data)}` : def.prazo?.tipo === 'usuario' ? 'Registre o prazo oficial' : 'Planeje sua execução'),
       render: () => AgendaCard(m, ctx, base),
     },
@@ -122,7 +123,7 @@ export function MissionContent(m, ctx) {
       render: () => ExecuteCard(m, ctx, base, checklist),
     },
     assistente: {
-      titulo: 'Mentor IA da missão', desc: 'Pergunte com o contexto desta missão já carregado.', ic: 'chat', cor: 'roxo',
+      titulo: 'Mentor da missão', desc: 'Pergunte com o contexto desta missão já carregado.', ic: 'chat', cor: 'roxo',
       dica: () => `${m.objetivosTotal - m.objetivosFeitos} objetivo(s) pendente(s) no contexto`,
       render: () => AssistantCard(m, ctx),
     },
@@ -135,7 +136,7 @@ export function MissionContent(m, ctx) {
     },
     simulador: {
       titulo: 'Meu planejamento financeiro', desc: 'Quanto custa, quanto você já tem e quanto falta.', ic: 'euro', cor: 'verde',
-      dica: () => (m.financeiro ? (m.financeiro.deficit > 0 ? `Faltam € ${Math.round(m.financeiro.deficit).toLocaleString('pt-BR')}` : 'Plano coberto') : 'Abrir planejamento'),
+      dica: () => (m.financeiro ? (m.financeiro.deficit > 0 ? `Faltam € ${Math.round(m.financeiro.deficit).toLocaleString(locale())}` : 'Plano coberto') : 'Abrir planejamento'),
       render: async () => h('div', { class: 'stack' }, m.financeiro ? MissionTool({ ...m, definicao: { ...def, ferramenta: 'financeiro' } }, { journey, onChange: ctx.reload }) : await FinanceLive(), h('a', { class: 'btn btn-cta', href: '#/financiamento' }, 'Abrir meu planejamento financeiro', icon('arrow', { size: 14 }))),
     },
     alternativas: {
@@ -148,7 +149,7 @@ export function MissionContent(m, ctx) {
       render: () => Scholarships(),
     },
     elegibilidadeBolsa: {
-      titulo: 'Requisitos de elegibilidade', desc: 'O que cada edital costuma exigir — confira sempre o edital vigente.', ic: 'scale', cor: 'laranja',
+      titulo: 'Requisitos de elegibilidade', desc: 'O que cada edital costuma exigir, confira sempre o edital vigente.', ic: 'scale', cor: 'laranja',
       render: () => Scholarships({ elegibilidade: true }),
     },
     radar: {
@@ -167,7 +168,7 @@ export function MissionContent(m, ctx) {
       render: () => Housing('comparar'),
     },
     custos: {
-      titulo: 'Custos e despesas', desc: 'Aluguel, caução e despesas — integrado ao orçamento.', ic: 'euro', cor: 'verde',
+      titulo: 'Custos e despesas', desc: 'Aluguel, caução e despesas, integrado ao orçamento.', ic: 'euro', cor: 'verde',
       render: () => Housing('custos'),
     },
     seguranca: {
@@ -205,7 +206,7 @@ export function MissionContent(m, ctx) {
     h('div', { class: 'mc-context' },
       ctxCard('Jornada', `${journey.destino.origem} → ${journey.destino.universidade?.nome || 'Andaluzia'}`, 'globe'),
       ctxCard(def.rodadaSigla ? 'Trilha' : 'Rodada', roundLabel, 'flag'),
-      ctxCard('Missão', `Missão ${m.label} — ${def.titulo}`, 'target', true)),
+      ctxCard('Missão', `Missão ${m.label} - ${def.titulo}`, 'target', true)),
     h('div', { class: 'mc-meta' },
       statusChip(m.status, m.statusLabel), priorityTag(m.prioridade), def.opcional ? h('span', { class: 'chip-demo' }, 'Recomendação opcional') : null,
       m.prazo ? deadlineTag(m.prazo) : null,
@@ -226,7 +227,7 @@ export function MissionContent(m, ctx) {
     h('p', { class: 'muted' }, progressMessage(m)),
     m.alertas.map((a) => h('p', { class: 'notice' }, icon('alert', { size: 14 }), ' ', a.texto)),
     m.info ? h('p', { class: 'small' }, icon('lang', { size: 14 }), ' ', m.info) : null,
-    done && journey.proximaMissao ? h('a', { class: 'btn btn-cta btn-sm', href: `#/j/${journey.id}/m/${journey.proximaMissao.id}` }, `Próxima ação: ${journey.proximaMissao.label} — ${journey.proximaMissao.titulo}`, icon('arrow', { size: 14 })) : null,
+    done && journey.proximaMissao ? h('a', { class: 'btn btn-cta btn-sm', href: `#/j/${journey.id}/m/${journey.proximaMissao.id}` }, `Próxima ação: ${journey.proximaMissao.label} - ${journey.proximaMissao.titulo}`, icon('arrow', { size: 14 })) : null,
   );
 
   const grid = h('div', { class: 'mc-grid' }, layout.map((key) => {
@@ -240,7 +241,7 @@ export function MissionContent(m, ctx) {
 
   const community = h('section', { class: 'mc-community' },
     h('div', { class: 'section-head' }, h('h2', {}, icon('users', { size: 18 }), ' Experiências de outros estudantes'), h('a', { class: 'btn btn-ghost btn-sm', href: `#/comunidade/missao/${m.id}` }, icon('edit', { size: 14 }), 'Compartilhar sua experiência')),
-    h('p', { class: 'muted small' }, 'Relatos pessoais da comunidade — não são regra oficial. Confirme sempre na fonte oficial.'));
+    h('p', { class: 'muted small' }, 'Relatos pessoais da comunidade, não são regra oficial. Confirme sempre na fonte oficial.'));
   api.get(`/community/missions/${m.id}?limit=3${journey.destino.universidade ? `&universidadeId=${journey.destino.universidade.id}` : ''}`)
     .then((r) => community.append(r.relatos?.length
       ? h('div', { class: 'mc-stories' }, r.relatos.map((p) => h('a', { class: 'story', href: p.url },
@@ -321,10 +322,10 @@ function AgendaCard(m, ctx, base) {
     const late = m.prazo ? mine.filter((e) => e.data > m.prazo.data) : [];
     mount(events,
       h('h3', { class: 'small-title' }, 'Compromissos desta missão'),
-      mine.length ? h('ul', { class: 'mc-list' }, mine.map((e) => h('li', {}, icon('calendar', { size: 14 }), ` ${fmtDate(e.data)} ${e.inicio}–${e.fim} · ${e.titulo}`, e.origem === 'agenda-ai' ? h('span', { class: 'tag tag-info' }, 'Agenda AI') : null))) : h('p', { class: 'muted small' }, 'Nenhum horário reservado ainda.'),
-      late.length ? h('div', { class: 'notice' }, `${late.length} compromisso(s) estão depois do prazo (${fmtDate(m.prazo.data)}). O prazo pode ter mudado: `, h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onClick: () => go('/agenda#organizar') }, 'Replanejar na Agenda AI')) : null);
+      mine.length ? h('ul', { class: 'mc-list' }, mine.map((e) => h('li', {}, icon('calendar', { size: 14 }), ` ${fmtDate(e.data)} ${e.inicio}–${e.fim} · ${e.titulo}`, e.origem === 'agenda-ai' ? h('span', { class: 'tag tag-info' }, 'Agenda') : null))) : h('p', { class: 'muted small' }, 'Nenhum horário reservado ainda.'),
+      late.length ? h('div', { class: 'notice' }, `${late.length} compromisso(s) estão depois do prazo (${fmtDate(m.prazo.data)}). O prazo pode ter mudado: `, h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onClick: () => go('/agenda#organizar') }, 'Replanejar na Agenda')) : null);
   };
-  const organize = h('button', { type: 'button', class: 'btn btn-cta', disabled: ['concluida', 'nao-aplicavel', 'bloqueada'].includes(m.status) }, icon('sparkles', { size: 16 }), 'Organizar esta missão na minha semana');
+  const organize = h('button', { type: 'button', class: 'btn btn-cta', disabled: ['concluida', 'nao-aplicavel', 'bloqueada'].includes(m.status) }, icon('calendar', { size: 16 }), 'Organizar esta missão na minha semana');
   organize.addEventListener('click', async () => {
     try {
       const p = await api.post('/planner/suggest', { semana: week, journeyId: ctx.journey.id, missaoId: m.id });
@@ -332,13 +333,13 @@ function AgendaCard(m, ctx, base) {
       const drawProposal = () => mount(proposalHost, items.length
         ? h('div', { class: 'panel' },
             h('h3', { class: 'small-title' }, `Proposta para a semana de ${fmtDate(p.semana)}`),
-            h('ul', { class: 'mc-list' }, items.map((x, i) => h('li', {}, `${new Date(`${x.data}T12:00:00`).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit' })} · ${x.inicio}–${x.fim} — ${x.titulo}`,
+            h('ul', { class: 'mc-list' }, items.map((x, i) => h('li', {}, `${new Date(`${x.data}T12:00:00`).toLocaleDateString(locale(), { weekday: 'long', day: '2-digit' })} · ${x.inicio}–${x.fim} - ${x.titulo}`,
               h('button', { type: 'button', class: 'icon-btn sm', 'aria-label': 'Remover', onClick: () => { items.splice(i, 1); drawProposal(); } }, icon('x', { size: 12 }))))),
             h('div', { class: 'row' }, h('button', { type: 'button', class: 'btn btn-cta btn-sm', disabled: !items.length, onClick: async () => {
-              try { await api.post('/planner/approve', { itens: items.map(({ prioridadeLabel, ...x }) => Object.fromEntries(Object.entries(x).filter(([, v]) => v != null))) }); toast('Horários adicionados à Agenda AI.', 'ok'); mount(proposalHost); loadEvents(); } catch (e) { toast(e.message, 'err'); }
-            } }, icon('check', { size: 14 }), 'Aprovar'), h('a', { class: 'btn btn-ghost btn-sm', href: '#/agenda' }, 'Editar na Agenda AI')),
-            h('p', { class: 'hint' }, 'Sugestões editáveis. A Agenda AI nunca conclui a missão quando o horário passa.'))
-        : h('p', { class: 'notice' }, 'Não há horários livres nesta semana pela sua disponibilidade. Ajuste em Agenda AI → Minha disponibilidade.'));
+              try { await api.post('/planner/approve', { itens: items.map(({ prioridadeLabel, ...x }) => Object.fromEntries(Object.entries(x).filter(([, v]) => v != null))) }); toast('Horários adicionados à Agenda.', 'ok'); mount(proposalHost); loadEvents(); } catch (e) { toast(e.message, 'err'); }
+            } }, icon('check', { size: 14 }), 'Aprovar'), h('a', { class: 'btn btn-ghost btn-sm', href: '#/agenda' }, 'Editar na Agenda')),
+            h('p', { class: 'hint' }, 'Sugestões editáveis. A Agenda nunca conclui a missão quando o horário passa.'))
+        : h('p', { class: 'notice' }, 'Não há horários livres nesta semana pela sua disponibilidade. Ajuste em Agenda → Minha disponibilidade.'));
       drawProposal();
     } catch (e) { toast(e.message, 'err'); }
   });
@@ -372,7 +373,7 @@ function ExecuteCard(m, ctx, base, checklist) {
     mount(confirmHost, h('div', { class: 'confirm-box' },
       h('p', {}, h('strong', {}, 'Confirmação: '), `você realmente concluiu esta etapa? Critério: ${def.criterio}`),
       h('label', { class: 'check', for: 'mc-confirm' }, chk, h('span', {}, 'Sim, realizei o procedimento no canal oficial e guardei o comprovante (quando houver).')),
-      m.documentos.some((d) => d.id.startsWith('comprovante')) ? h('p', { class: 'hint' }, 'Você pode anexar o comprovante no card "Documentos e checklist" — ele fica só neste dispositivo.') : null,
+      m.documentos.some((d) => d.id.startsWith('comprovante')) ? h('p', { class: 'hint' }, 'Você pode anexar o comprovante no card "Documentos e checklist", ele fica só neste dispositivo.') : null,
       btn));
   };
   return h('div', { class: 'stack' },
@@ -381,7 +382,8 @@ function ExecuteCard(m, ctx, base, checklist) {
       m.linkOficial ? h('a', { class: 'btn btn-cta btn-lg', href: m.linkOficial.url, target: '_blank', rel: 'noopener noreferrer' }, icon('external', { size: 16 }), m.linkOficial.rotulo) : null,
       m.linkOficial ? h('p', { class: 'hint' }, 'Abrir o portal não conclui a missão. Volte aqui e registre o que aconteceu.') : null),
     done
-      ? h('button', { type: 'button', class: 'btn btn-ghost', onClick: () => ctx.mutate(api.post(`${base}/reopen`, {})) }, icon('refresh', { size: 16 }), 'Reabrir missão')
+      // Requisito já atendido é desfeito em "Meu perfil → O que eu já tenho", não aqui.
+      ? (m.conclusao === 'requisito-atendido' ? h('p', { class: 'hint' }, 'Você informou que já tem isso. Se mudar, corrija em "Meu perfil".') : h('button', { type: 'button', class: 'btn btn-ghost', onClick: () => ctx.mutate(api.post(`${base}/reopen`, {})) }, icon('refresh', { size: 16 }), 'Reabrir missão'))
       : blocked ? null : [
           h('p', { class: 'small-title' }, 'Registrar a execução'),
           h('div', { class: 'exec-options', role: 'group', 'aria-label': 'Estado da execução' }, options.map(([k, label, ic, fn]) => h('button', { type: 'button', class: `exec-opt ${current === k ? 'on' : ''}`, 'aria-pressed': String(current === k), onClick: fn }, icon(ic, { size: 16 }), label))),
@@ -396,9 +398,9 @@ function AssistantCard(m, ctx) {
   const first = m.fontes.find((s) => s.url);
   const actions = [
     ['Explicar mais simples', () => ask({ acao: 'simples' })],
-    ['Mostrar um exemplo', () => ask({ pergunta: `Mostre um exemplo prático de como realizar a Missão ${m.label} — ${m.definicao.titulo}.` })],
+    ['Mostrar um exemplo', () => ask({ pergunta: `Mostre um exemplo prático de como realizar a Missão ${m.label} - ${m.definicao.titulo}.` })],
     ['Criar um checklist', () => ask({ acao: 'dificuldade' })],
-    ['Organizar na Agenda AI', () => { ctx.state.open = 'agenda'; ctx.reopen(); }],
+    ['Organizar na Agenda', () => { ctx.state.open = 'agenda'; ctx.reopen(); }],
     first ? ['Consultar fonte oficial', () => window.open(first.url, '_blank', 'noopener')] : null,
     ['Preparar e-mail institucional', () => ask({ acao: m.definicao.rodada === 5 ? 'vistodocs' : 'email' })],
     ['Quais documentos estão faltando?', () => ask({ acao: 'documentos' })],
@@ -408,12 +410,12 @@ function AssistantCard(m, ctx) {
     h('div', { class: 'ai-context' }, icon('target', { size: 14 }), h('span', {}, `Contexto: Missão ${m.label} · ${m.statusLabel} · ${m.objetivosFeitos}/${m.objetivosTotal} objetivos · ${m.fontes.length} fonte(s) oficial(is)`)),
     h('p', { class: 'muted small' }, 'O Mentor recebe esta missão, o destino, a universidade, os objetivos pendentes e as fontes associadas. Ele não inventa requisitos oficiais.'),
     h('div', { class: 'chips' }, actions.map(([label, fn]) => h('button', { type: 'button', class: 'chip', onClick: fn }, label))),
-    h('button', { type: 'button', class: 'btn btn-cta', onClick: () => ask({}) }, icon('sparkles', { size: 16 }), 'Abrir conversa'));
+    h('button', { type: 'button', class: 'btn btn-cta', onClick: () => ask({}) }, icon('chat', { size: 16 }), 'Abrir conversa'));
 }
 
 async function FinanceLive() {
   const f = (await api.get('/finance')).plano;
-  return h('p', {}, `Exigência do visto: € ${Math.round(f.exigenciaVisto).toLocaleString('pt-BR')} · Orçamento: € ${Math.round(f.orcamento).toLocaleString('pt-BR')} · Recursos confirmados: € ${Math.round(f.confirmados).toLocaleString('pt-BR')}`);
+  return h('p', {}, `Exigência do visto: € ${Math.round(f.exigenciaVisto).toLocaleString(locale())} · Orçamento: € ${Math.round(f.orcamento).toLocaleString(locale())} · Recursos confirmados: € ${Math.round(f.confirmados).toLocaleString(locale())}`);
 }
 
 async function Alternatives() {
@@ -421,7 +423,7 @@ async function Alternatives() {
   if (!f.informouRecursos) return h('div', { class: 'stack' }, h('p', {}, 'Registre seus recursos (mesmo que seja zero) para calcular a diferença e receber caminhos personalizados.'), h('a', { class: 'btn btn-cta', href: '#/financiamento#recursos' }, 'Registrar recursos'));
   if (!f.caminhos.length) return h('p', {}, `Pelos seus dados, os recursos confirmados cobrem o plano. Confirme com o consulado quais comprovantes são aceitos.`);
   return h('div', { class: 'stack' },
-    h('p', { class: 'mc-lead' }, `Faltam cerca de € ${Math.round(f.deficit).toLocaleString('pt-BR')} (estimativa).`),
+    h('p', { class: 'mc-lead' }, `Faltam cerca de € ${Math.round(f.deficit).toLocaleString(locale())} (estimativa).`),
     h('ul', { class: 'paths' }, f.caminhos.map((c) => h('li', {}, h('strong', {}, c.titulo), h('p', { class: 'small' }, c.texto), c.rota ? h('a', { class: 'link-arrow', href: `#${c.rota}` }, 'Abrir', icon('arrow', { size: 12 })) : null))),
     h('p', { class: 'hint' }, 'Nenhum caminho garante a aprovação do visto. Trabalho ou estágio na Espanha não substituem a comprovação inicial.'));
 }
@@ -430,20 +432,20 @@ async function Scholarships({ elegibilidade = false, comparar = false } = {}) {
   const d = await api.get('/finance');
   const saved = new Map(d.candidaturas.map((a) => [a.catalogId, a]));
   if (elegibilidade) {
-    return h('ul', { class: 'paths' }, d.catalogo.map((s) => h('li', {}, h('strong', {}, `${s.nome} — ${s.entidade}`), h('p', { class: 'small' }, s.elegibilidade), h('p', { class: 'small muted' }, `Abrangência: ${s.abrangencia}`), h('span', { class: 'tag tag-pending' }, d.statusBolsa[s.status]))));
+    return h('ul', { class: 'paths' }, d.catalogo.map((s) => h('li', {}, h('strong', {}, `${s.nome} - ${s.entidade}`), h('p', { class: 'small' }, s.elegibilidade), h('p', { class: 'small muted' }, `Abrangência: ${s.abrangencia}`), h('span', { class: 'tag tag-pending' }, d.statusBolsa[s.status]))));
   }
   if (comparar) {
     const rows = d.candidaturas.length ? d.candidaturas : [];
     if (!rows.length) return h('p', {}, 'Salve bolsas no card "Bolsas" ou no buscador para compará-las aqui.');
     return h('div', { class: 'table-wrap' }, h('table', { class: 'cmp' },
       h('thead', {}, h('tr', {}, ['Bolsa', 'Entidade', 'Cobertura', 'Prazo', 'Status'].map((t) => h('th', {}, t)))),
-      h('tbody', {}, rows.map((a) => h('tr', {}, h('td', {}, a.nome), h('td', {}, a.entidade || '—'), h('td', {}, a.cobertura || '—'), h('td', {}, a.prazo ? fmtDate(a.prazo) : 'Sem prazo registrado'), h('td', {}, a.status))))));
+      h('tbody', {}, rows.map((a) => h('tr', {}, h('td', {}, a.nome), h('td', {}, a.entidade || '-'), h('td', {}, a.cobertura || '-'), h('td', {}, a.prazo ? fmtDate(a.prazo) : 'Sem prazo registrado'), h('td', {}, a.status))))));
   }
   return h('div', { class: 'stack' },
     h('ul', { class: 'paths' }, d.catalogo.map((s) => {
       const app = saved.get(s.id);
       const btn = h('button', { type: 'button', class: 'btn btn-ghost btn-sm', disabled: Boolean(app) }, app ? `Salva (${app.status})` : 'Salvar e criar tarefas');
-      btn.addEventListener('click', async () => { try { await api.post('/finance/scholarships', { catalogId: s.id }); toast('Bolsa salva — tarefas criadas na Agenda AI.', 'ok'); btn.disabled = true; btn.textContent = 'Salva (interesse)'; } catch (e) { toast(e.message, 'err'); } });
+      btn.addEventListener('click', async () => { try { await api.post('/finance/scholarships', { catalogId: s.id }); toast('Bolsa salva, tarefas criadas na Agenda.', 'ok'); btn.disabled = true; btn.textContent = 'Salva (interesse)'; } catch (e) { toast(e.message, 'err'); } });
       return h('li', {}, h('strong', {}, s.nome), h('p', { class: 'small muted' }, `${s.entidade} · ${d.statusBolsa[s.status]}`), h('p', { class: 'small' }, s.financia), btn);
     })),
     h('a', { class: 'btn btn-cta', href: '#/financiamento#bolsas' }, 'Gerenciar candidaturas a bolsas', icon('arrow', { size: 14 })));
@@ -456,7 +458,7 @@ async function Housing(mode) {
   const total = (x) => (x.aluguel || 0) + (x.adicionais || 0);
   if (mode === 'seguranca') {
     return h('div', { class: 'stack' }, opts.map((x) => h('details', { class: 'md-expand', open: x.status === 'escolhida' || x.status === 'negociando' },
-      h('summary', {}, h('span', {}, `${x.nome} — ${Object.values(x.checklist || {}).filter(Boolean).length}/${d.antifraude.length} verificações`), icon('chevron', { size: 16, cls: 'chev' })),
+      h('summary', {}, h('span', {}, `${x.nome} - ${Object.values(x.checklist || {}).filter(Boolean).length}/${d.antifraude.length} verificações`), icon('chevron', { size: 16, cls: 'chev' })),
       h('ul', { class: 'md-expand-body checklist' }, d.antifraude.map((a) => {
         const on = Boolean(x.checklist?.[a.id]);
         const b = h('button', { type: 'button', class: `ck ${on ? 'done' : ''}`, role: 'checkbox', 'aria-checked': String(on) }, h('span', { class: 'ck-box' }, on ? icon('check', { size: 14 }) : null), h('span', { class: 'ck-text' }, a.texto));

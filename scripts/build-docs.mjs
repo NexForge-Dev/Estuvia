@@ -13,8 +13,8 @@ const OUT = path.join(root, 'DOCUMENTACAO.md');
 const PARTS = [
   { titulo: 'Para o estudante', docs: ['23', '08'] },
   { titulo: 'Produto e jornada', docs: ['01', '02', '13', '14', '06'] },
-  { titulo: 'Módulos', docs: ['15', '07', '16', '19', '20', '21', '17', '18', '11', '12'] },
-  { titulo: 'Técnico', docs: ['22', '03', '05', '04'] },
+  { titulo: 'Módulos', docs: ['15', '07', '16', '19', '20', '21', '17', '18', '11', '24', '12'] },
+  { titulo: 'Técnico', docs: ['22', '03', '05', '04', '25'] },
   { titulo: 'Apresentação e próximos passos', docs: ['09', '10'] },
 ];
 

@@ -2,7 +2,8 @@ import { api } from './api.js';
 import { h, mount, toast } from './ui.js';
 import { icon } from './icons.js';
 import { landingView } from './views/landing.js';
-import { loginView, registerView } from './views/auth.js';
+import { loginView, registerView, forgotPasswordView, resetPasswordView } from './views/auth.js';
+import { privacyView, termsView } from './views/legal.js';
 import { onboardingView } from './views/onboarding.js';
 import { homeView } from './views/home.js';
 import { journeysView } from './views/journeys.js';
@@ -20,6 +21,8 @@ import { catalogView } from './views/catalog.js';
 import { documentsView } from './views/documents.js';
 import { sourcesView } from './views/sources.js';
 import { resetChat } from './components/AIJourneyAssistant.js';
+import { startLive, stopLive } from './live.js';
+import { initI18n, languageSwitcher } from './i18n.js';
 
 // Estado global: conteúdo público, estudante logado e caches das jornadas calculadas no servidor.
 export const state = { app: null, content: null, me: null, journeys: null, jcache: new Map(), route: { path: '/', params: [] } };
@@ -101,6 +104,10 @@ const routes = [
   { path: /^\/sobre$/, view: landingView },
   { path: /^\/entrar$/, view: loginView, guestOnly: true },
   { path: /^\/cadastro$/, view: registerView, guestOnly: true },
+  { path: /^\/esqueci-senha$/, view: forgotPasswordView, guestOnly: true },
+  { path: /^\/redefinir-senha\/([\w-]{20,100})$/, view: resetPasswordView },
+  { path: /^\/privacidade$/, view: privacyView },
+  { path: /^\/termos$/, view: termsView },
   { path: /^\/manual$/, view: manualView, guestOnly: true }, // explica a plataforma a quem ainda não tem conta
   { path: /^\/fontes$/, view: sourcesView, auth: true },
   { path: /^\/jornadas\/nova$/, view: onboardingView, auth: true },
@@ -120,7 +127,7 @@ const routes = [
   { path: /^\/oportunidades$/, view: lazy('./views/radar.js', 'radarView'), auth: true },
   { path: /^\/oportunidades\/([\w-]+)$/, view: lazy('./views/radar.js', 'radarDetailView'), auth: true },
   { path: /^\/radar\/admin$/, view: lazy('./views/radar-admin.js', 'radarAdminView'), auth: true },
-  { path: /^\/admin$/, view: lazy('./views/admin.js', 'adminView'), auth: true },
+  { path: /^\/admin(?:\/(inscricoes|uso|ia|eventos|status|logs))?$/, view: lazy('./views/admin.js', 'adminView'), auth: true },
   { path: /^\/admin\/aluno\/([\w-]+)$/, view: lazy('./views/admin.js', 'adminStudentView'), auth: true },
   { path: /^\/conquistas$/, view: lazy('./achievements.js', 'achievementsView'), auth: true },
   { path: /^\/comunidade(?:\/(post|grupos|grupo|radar|salvos|oportunidades|moderacao|missao)(?:\/([\w.-]+))?)?$/, view: lazy('./views/community.js', 'communityView'), auth: true },
@@ -173,9 +180,13 @@ async function render() {
   state.route = { path, params };
   // Landing pública ocupa a tela inteira (sem lateral do app): ver css/landing.css.
   document.body.classList.toggle('landing-mode', path === '/sobre' || (path === '/' && !state.me));
+  document.body.classList.toggle('admin-mode', isAdminMode());
   renderNav();
   if (!isAdminMode()) mountMentorLauncher();
   else document.getElementById('assistant-root')?.replaceChildren();
+  // Avisos ao vivo (Radar, preços de passagem) enquanto o estudante estiver logado.
+  if (state.me && !isAdminMode()) startLive();
+  else stopLive();
   trackView(path);
 
   const slow = setTimeout(() => mount(main, skeleton()), 120);
@@ -234,7 +245,15 @@ const NAV_MORE = [
   { href: '/assistente', label: 'Mentor IA', icon: 'chat' },
 ];
 // Só aparece para a conta de administrador (ADMIN_EMAIL no .env).
-const NAV_ADMIN = { href: '/admin', label: 'Painel admin', icon: 'shield' };
+const NAV_ADMIN = [
+  { href: '/admin', label: 'Alunos', icon: 'users', match: (p) => p === '/admin' || p.startsWith('/admin/aluno') },
+  { href: '/admin/inscricoes', label: 'Inscrições', icon: 'flag' },
+  { href: '/admin/uso', label: 'Uso dos módulos', icon: 'target' },
+  { href: '/admin/ia', label: 'IA', icon: 'chat' },
+  { href: '/admin/eventos', label: 'Eventos', icon: 'clock' },
+  { href: '/admin/status', label: 'Status', icon: 'pulse' },
+  { href: '/admin/logs', label: 'Logs', icon: 'terminal' },
+];
 
 function renderNav() {
   const path = currentPath();
@@ -242,12 +261,14 @@ function renderNav() {
   const foot = document.getElementById('sidebar-foot');
   const top = document.getElementById('topbar-actions');
   const tabbar = document.getElementById('tabbar');
+  mount(document.getElementById('sidebar-lang'), languageSwitcher({ block: true }));
   document.body.classList.toggle('has-tabbar', !!state.me && !isAdminMode());
   if (isAdminMode()) {
     tabbar.hidden = true;
-    mount(nav, h('ul', {}, h('li', {}, h('a', { href: '#/admin', class: 'active', 'aria-current': path === '/admin' ? 'page' : false }, icon(NAV_ADMIN.icon, { size: 18 }), h('span', {}, NAV_ADMIN.label)))));
+    const activeAdmin = (n) => (n.match ? n.match(path) : path === n.href);
+    mount(nav, h('p', { class: 'nav-section' }, 'Painel admin'), h('ul', {}, NAV_ADMIN.map((n) => h('li', {}, h('a', { href: `#${n.href}`, class: activeAdmin(n) ? 'active' : '', 'aria-current': activeAdmin(n) ? 'page' : false }, icon(n.icon, { size: 18 }), h('span', {}, n.label))))));
     mount(foot, h('button', { class: 'btn btn-ghost btn-block', type: 'button', onClick: logout }, 'Sair'));
-    mount(top, h('button', { class: 'btn btn-sm btn-ghost', type: 'button', onClick: logout }, 'Sair'));
+    mount(top, languageSwitcher({ compact: true }), h('button', { class: 'btn btn-sm btn-ghost', type: 'button', onClick: logout }, 'Sair'));
   } else if (state.me) {
     const p = state.me.user.profile;
     const isActive = (n) => (n.match ? n.match(path) : path.startsWith(n.href));
@@ -269,14 +290,14 @@ function renderNav() {
     mount(foot, h('a', { href: '#/perfil', class: `me-card ${path === '/perfil' ? 'active' : ''}` },
       h('span', { class: 'avatar' }, p.avatar || '🎓'),
       h('span', { class: 'me-text' }, h('strong', {}, p.apelido || p.nome), h('small', {}, 'Meu perfil'))));
-    mount(top, h('a', { class: 'icon-btn', href: '#/perfil', 'aria-label': 'Meu perfil' }, h('span', { class: 'avatar sm' }, p.avatar || '🎓')));
+    mount(top, languageSwitcher({ compact: true }), h('a', { class: 'icon-btn', href: '#/perfil', 'aria-label': 'Meu perfil' }, h('span', { class: 'avatar sm' }, p.avatar || '🎓')));
   } else {
     tabbar.hidden = true;
     mount(nav, h('ul', {},
-      [['/', 'Início', 'home'], ['/entrar', 'Entrar', 'user'], ['/cadastro', 'Criar conta', 'sparkles']].map(([href, label, ic]) =>
+      [['/', 'Início', 'home'], ['/entrar', 'Entrar', 'user'], ['/cadastro', 'Criar conta', 'user']].map(([href, label, ic]) =>
         h('li', {}, h('a', { href: `#${href}`, class: path === href ? 'active' : '' }, icon(ic, { size: 18 }), h('span', {}, label))))));
     mount(foot, h('div', { class: 'stack' }, h('a', { href: '#/cadastro', class: 'btn btn-cta btn-block' }, 'Criar conta grátis'), h('a', { href: '#/entrar', class: 'btn btn-ghost btn-block' }, 'Entrar')));
-    mount(top, h('a', { href: '#/entrar', class: 'btn btn-sm btn-ghost' }, 'Entrar'));
+    mount(top, languageSwitcher({ compact: true }), h('a', { href: '#/entrar', class: 'btn btn-sm btn-ghost' }, 'Entrar'));
   }
 }
 
@@ -296,6 +317,7 @@ export async function logout() {
   lastView = null;
   state.me = null;
   state.content.privado = false;
+  stopLive();
   invalidate();
   resetChat();
   resetMentor();
@@ -305,6 +327,7 @@ export async function logout() {
 }
 
 async function boot() {
+  initI18n();
   document.getElementById('menu-btn').addEventListener('click', () => (document.body.classList.contains('nav-open') ? closeSidebar() : openSidebar()));
   document.getElementById('scrim').addEventListener('click', closeSidebar);
   const [app, content] = await Promise.all([api.get('/content/app'), api.get('/content/journey')]);

@@ -1,3 +1,7 @@
+import { DOC_TYPES, DOC_CATEGORIES, CATEGORY_USES, CATEGORY_DEFAULTS } from './document-catalog.js';
+
+export { DOC_CATEGORIES, CATEGORY_USES, CONDITIONS, DOC_STATES, FILE_ROLES, APOSTILLE_GUIDE, TRANSLATION_GUIDE, CATALOG_REVIEWED_AT } from './document-catalog.js';
+
 // Área documental (UserDocument). "finalidade" separa candidatura, visto e financiamento (RN-07).
 // "exigencia": requerido | condicional | verificar — sempre com fonte (RN-04).
 // O status é organização do estudante: "pronto" ou "enviado" NÃO significa validação oficial.
@@ -11,7 +15,9 @@
 // A aplicabilidade por perfil (idioma do mestrado, duração da estada, apoio familiar, bolsa) é calculada em
 // document-engine.js, sempre a partir de dados do catálogo ou do próprio estudante — nunca da IA.
 
-export const DOCUMENTS = [
+// Campos herdados da primeira versão (25 documentos). O catálogo completo está em document-catalog.js;
+// aqui ficam só os campos que já existiam (prepara, antecedencia, comoObter, acao…), mesclados abaixo.
+const LEGACY = [
   // ---------- Minha candidatura ----------
   { id: 'passaporte', nome: 'Passaporte válido', finalidade: 'dua', exigencia: 'requerido', fonte: 'M', dica: 'A validade precisa cobrir a estadia.',
     etapa: 'candidatura', icone: 'passport', descricao: 'Seu documento de viagem. Ele identifica você na candidatura, no visto e na chegada.', acao: 'Preparar meu passaporte', prepara: '2.1', validade: true,
@@ -96,6 +102,40 @@ export const DOCUMENTS = [
     etapa: 'estadia', icone: 'user', descricao: 'O cartão que identifica você como estrangeiro residente na Espanha.', acao: 'Retirar minha TIE', prepara: '8.8',
     comoObter: ['Acompanhe o aviso de emissão.', 'Retire o cartão pessoalmente no local indicado.'] },
 ];
+
+// ---------------------------------------------------------------------------
+// DOCUMENTS = catálogo completo no formato que o resto da plataforma já usa (missões, Mentor, admin).
+// Documentos novos ganham os campos antigos a partir do catálogo; os 25 antigos mantêm os seus e ganham os novos.
+// ---------------------------------------------------------------------------
+const FINALIDADE = { pessoais: 'dua', academicos: 'dua', candidatura: 'dua', matricula: 'dua', financeira: 'financiamento', visto: 'visto', saude: 'visto', familiares: 'visto', moradia: 'viagem', viagem: 'viagem' };
+const CLASS_TO_EXIGENCIA = { O: 'requerido', C: 'condicional', R: 'recomendado' };
+const LEGACY_BY_ID = new Map(LEGACY.map((d) => [d.id, d]));
+/** Os 25 documentos da primeira versão (usados por telas que mostram o núcleo do checklist). */
+export const LEGACY_IDS = LEGACY.map((d) => d.id);
+const CATEGORY_BY_ID = new Map(DOC_CATEGORIES.map((c) => [c.id, c]));
+
+export const DOCUMENTS = DOC_TYPES.map((t) => {
+  const cat = CATEGORY_BY_ID.get(t.categoria);
+  const def = CATEGORY_DEFAULTS[t.categoria] || {};
+  const home = (CATEGORY_USES[t.categoria] || []).find((x) => x.doc === t.id);
+  const detail = {
+    categoria: t.categoria,
+    oque: t.oque, para: t.para, onde: t.onde || def.onde || null, quando: t.quando || def.quando || null,
+    apostila: t.apostila || def.apostila || 'nao', traducao: t.traducao || def.traducao || 'nao',
+    apostilaNota: t.apostilaNota || null, traducaoNota: t.traducaoNota || null,
+    tipoValidade: t.validade || null, partes: t.partes || null, multiplos: Boolean(t.multiplos),
+    fontes: t.fontes || def.fontes || ['M'], missoesExtra: t.missoes || [], agregado: t.agregado || null, atendidoPor: t.atendidoPor || null,
+  };
+  const old = LEGACY_BY_ID.get(t.id);
+  if (old) return { ...old, ...detail, nome: t.nome, descricao: old.descricao, validade: t.validade === 'data' || Boolean(old.validade), prepara: old.prepara || t.prepara || undefined };
+  return {
+    id: t.id, nome: t.nome, finalidade: FINALIDADE[t.categoria] || 'estadia', exigencia: CLASS_TO_EXIGENCIA[home?.classe] || 'condicional',
+    fonte: detail.fontes[0], dica: '', etapa: cat?.etapa || null, icone: t.icone || cat?.icone || 'file', descricao: t.oque,
+    acao: t.agregado ? 'Ver documentos' : 'Organizar documento', validade: t.validade === 'data',
+    comoObter: [detail.onde, detail.quando].filter(Boolean), prepara: t.prepara || undefined,
+    ...detail,
+  };
+});
 
 export const DOC_STATUS = ['pendente', 'em-preparacao', 'pronto', 'enviado', 'correcao', 'nao-se-aplica'];
 export const DOC_STATUS_LABEL = {
