@@ -5,8 +5,6 @@
 // servidos só ao dono autenticado e por link assinado que expira (15 min), sem cache e em sandbox.
 // A Estuvia NÃO analisa nem valida o conteúdo dos arquivos e não os envia a serviços de IA.
 import crypto from 'node:crypto';
-import fs from 'node:fs';
-import path from 'node:path';
 import zlib from 'node:zlib';
 import express, { Router } from 'express';
 import { z } from 'zod';
@@ -15,6 +13,7 @@ import { config } from '../config.js';
 import { requireAuth, documentUploadLimiter } from '../security.js';
 import { DOCUMENTS, DOC_STATUS, PROCEDURES, DOC_STAGES, DOC_STATES, FILE_ROLES, CONDITIONS, DOC_CATEGORIES } from '../content/documents.js';
 import { dashboard, documentDetail, docsForMission, docsForRound, missionSyncChanges, applyMissionSync, publicFile, docById, listDocuments } from '../document-engine.js';
+import { putDocument, getDocument, deleteDocument, purgeDocuments } from '../storage.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -373,9 +372,6 @@ export function pdfHasActiveContent(buf) {
   return false;
 }
 
-const userDir = (userId) => path.join(config.docsDir, userId);
-const filePath = (userId, fid) => path.join(userDir(userId), `${fid}.bin`);
-
 // GCM: IV aleatório de 96 bits por arquivo e etiqueta de 128 bits. A decifra exige os 16 bytes da etiqueta
 // (sem authTagLength o Node aceita uma etiqueta truncada, de até 4 bytes).
 const TAG_BYTES = 16;
@@ -400,7 +396,7 @@ const cleanName = (s, ext) => {
   return name || `documento.${ext}`;
 };
 async function removeFile(userId, meta) {
-  await fs.promises.unlink(filePath(userId, meta.id)).catch(() => {});
+  await deleteDocument(userId, meta.id);
 }
 
 router.post('/:docId/files', documentUploadLimiter, express.raw({ type: ['application/pdf', 'image/png', 'image/jpeg', 'image/webp', 'application/octet-stream'], limit: MAX_BYTES }), async (req, res) => {
@@ -435,8 +431,7 @@ router.post('/:docId/files', documentUploadLimiter, express.raw({ type: ['applic
   const id = newId();
   const enc = encrypt(req.body);
   try {
-    await fs.promises.mkdir(userDir(req.user.id), { recursive: true, mode: 0o700 });
-    await fs.promises.writeFile(filePath(req.user.id, id), enc.data, { mode: 0o600 });
+    await putDocument(req.user.id, id, enc.data);
   } catch (err) {
     // Disco cheio ou sem permissão: apaga o que ficou pela metade e responde (o Express 4 não captura erro assíncrono).
     await removeFile(req.user.id, { id });
@@ -491,7 +486,7 @@ router.get('/files/:fid', async (req, res) => {
   if (!meta) return res.status(404).json({ error: 'Arquivo não encontrado.' });
   if (!validToken(req.user.id, meta.id, req.query.t)) return res.status(403).json({ error: 'Este link expirou. Abra o documento de novo na carteira.' });
   let buf;
-  try { buf = decrypt(await fs.promises.readFile(filePath(req.user.id, meta.id)), meta); } catch { return res.status(410).json({ error: 'Não foi possível abrir este arquivo.' }); }
+  try { buf = decrypt(await getDocument(req.user.id, meta.id), meta); } catch { return res.status(410).json({ error: 'Não foi possível abrir este arquivo.' }); }
   const disposition = req.query.download === '1' ? 'attachment' : 'inline';
   res.setHeader('Content-Disposition', `${disposition}; filename*=UTF-8''${encodeURIComponent(meta.nome)}`);
   res.setHeader('Cache-Control', 'private, no-store');
@@ -524,8 +519,7 @@ router.delete('/files', async (req, res) => {
 
 /** Exclusão de conta (LGPD): remove todos os arquivos do estudante. */
 export async function purgeUserDocuments(userId) {
-  if (!/^[\w-]+$/.test(userId)) return;
-  await fs.promises.rm(userDir(userId), { recursive: true, force: true }).catch(() => {});
+  await purgeDocuments(userId).catch(() => {});
 }
 
 export default router;

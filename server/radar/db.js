@@ -1,6 +1,5 @@
-// Persistência do Radar: arquivo JSON próprio (data/radar.json), com escrita atômica — mesmo
-// padrão de server/store.js. Separado da base de usuários para que o atualizador de fontes
-// grave sem disputar a base principal. Trocável por tabelas PostgreSQL (ver docs/11-radar.md).
+// Persistência do Radar: JSON local ou estado JSONB próprio no Supabase.
+// Separado da base principal para que o atualizador grave sem disputar dados dos usuários.
 //
 // Coleções (modelo de dados da especificação):
 //   sources         SourceRegistry       — fontes monitoradas e sua saúde
@@ -21,6 +20,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { config } from '../config.js';
+import { loadState, saveState, usesSupabase } from '../database.js';
 
 const COLLECTIONS = ['sources', 'snapshots', 'programs', 'opportunities', 'windows', 'events', 'availability', 'revisions', 'reviews', 'runs', 'subscriptions', 'alerts', 'agendaLinks'];
 const LIMITS = { runs: 1000, snapshots: 600, alerts: 20000, revisions: 20000 };
@@ -29,6 +29,8 @@ export const radarFile = () => process.env.RADAR_DATA_FILE || path.join(path.dir
 
 let db = null;
 let writing = Promise.resolve();
+let remoteVersion = null;
+let lastWriteError = null;
 
 const empty = () => Object.fromEntries(COLLECTIONS.map((c) => [c, []]));
 
@@ -47,17 +49,39 @@ export function data() {
   return db;
 }
 
+const normalize = (parsed) => ({ ...empty(), ...(parsed || {}) });
+
+/** Run before Radar initialization when DB_PROVIDER=supabase. */
+export async function initRadarStore() {
+  if (!usesSupabase()) return;
+  const remote = await loadState('radar', data());
+  db = normalize(remote.state);
+  remoteVersion = remote.version;
+  lastWriteError = null;
+}
+
+export const radarStoreHealth = () => ({ ok: !lastWriteError, erro: lastWriteError });
+
 export function save() {
   const d = data();
   for (const [k, max] of Object.entries(LIMITS)) if (d[k].length > max) d[k] = d[k].slice(-max);
   const snapshot = JSON.stringify(d);
   const file = radarFile();
   writing = writing.then(async () => {
+    if (usesSupabase()) {
+      if (remoteVersion === null) throw new Error('Supabase Radar store was not initialized before writing.');
+      remoteVersion = await saveState('radar', JSON.parse(snapshot), remoteVersion);
+      lastWriteError = null;
+      return;
+    }
     await fs.promises.mkdir(path.dirname(file), { recursive: true });
     const tmp = `${file}.${process.pid}.tmp`;
     await fs.promises.writeFile(tmp, snapshot, { mode: 0o600 });
     await fs.promises.rename(tmp, file);
-  }).catch((err) => console.error('[radar] falha ao gravar:', err.message));
+  }).catch((err) => {
+    lastWriteError = { mensagem: err.message, em: new Date().toISOString() };
+    console.error('[radar] falha ao gravar:', err.message);
+  });
   return writing;
 }
 
@@ -68,4 +92,6 @@ export const hash = (value) => crypto.createHash('sha256').update(typeof value =
 /** Apenas para testes: descarta o estado em memória. */
 export function resetForTests() {
   db = empty();
+  remoteVersion = null;
+  lastWriteError = null;
 }
