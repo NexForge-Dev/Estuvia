@@ -6,7 +6,7 @@
 |---|---|---|
 | 0 — Base editorial | Manual convertido em regras, tarefas e fontes | ✅ `server/content/` |
 | 1 — Protótipo | Perfil, catálogo piloto, ficha, roadmap e tarefas | ✅ |
-| 2 — MVP | 6 preferências, status manual, orçamento, fontes, IA, gamificação | ✅ (calendário pendente) |
+| 2 — MVP | Preferências, status manual, orçamento, fontes, IA, gamificação | ✅ (calendário 2026/27 cadastrado no Radar; próximo ciclo depende de publicação oficial) |
 | 3 — Validação | Entrevistas, usabilidade, disposição a pagar | ⏳ próximo |
 | 4 — Andaluzia | Mais universidades e cursos com revisão editorial | ⏳ |
 | 5 — Expansão | Comunidade, oportunidades, novas regiões | ⏳ |
@@ -15,8 +15,8 @@
 
 1. **Banco de dados:** PostgreSQL, reimplementando `server/store.js` (ver `03-arquitetura.md`).
 2. **Recuperação de senha e verificação de e-mail.**
-3. **Catálogo real:** escolher 3–5 mestrados UGR de áreas diferentes, com pelo menos um que exija idioma e um com exigência não confirmada, e verificar cada requisito na ficha oficial.
-4. **Calendário (RF-08):** cadastrar as datas oficiais do ciclo com fonte, mais lembretes opt-in por e-mail. Data sem fonte não gera alerta.
+3. **Catálogo real por programa:** o Radar cobre 138 mestrados UGR em 2026/27. Verificar requisitos acadêmicos, idioma, documentos e oferta de cada programa diretamente na ficha oficial antes de recomendar candidatura; o coletor atual não confirma idioma nem todos os requisitos.
+4. **Calendário (RF-08):** importar e revisar o calendário de cada novo ciclo assim que houver publicação oficial, com fonte. Lembretes por e-mail continuam pendentes; data sem fonte não gera alerta.
 5. **Painel editorial (RF-10):** tela para cadastrar requisito, fonte, data de revisão e status, com alerta de regra vencida.
 6. **Avaliação do Guia:** conjunto de perguntas reais com resposta esperada.
 7. **Analytics com privacidade** para as métricas de ativação e uso contínuo.

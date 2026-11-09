@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+data/
+node_modules/
+tests/
+docs/
+video/
+supabase/
+scripts/
+.git/
+.vercel/
+*.log

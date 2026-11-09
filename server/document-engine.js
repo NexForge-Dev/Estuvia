@@ -449,8 +449,8 @@ export function dashboard(user, jr, now = new Date()) {
   const proximos = [...daEtapa].sort((a, b) => Number(isPending(b)) - Number(isPending(a)) || byRank(a, b)).slice(0, 6).map(slim);
 
   // Exceção ao desbloqueio: o que precisa de antecedência aparece antes (sem virar pendência da etapa atual).
-  const antecedencia = views.filter((v) => v.antecedencia && stageIdx(v) > ai && !v.resolvido && v.exigencia === 'requerido');
-  const candidatos = [...daEtapa.filter(isPending), ...antecedencia].sort(byRank);
+  const antecedencia = views.filter((v) => v.antecedencia && stageIdx(v) > ai && !v.resolvido && ['requerido', 'verificar'].includes(v.exigencia));
+  const candidatos = [...daEtapa.filter(isPending), ...antecedencia.filter((v) => v.exigencia === 'requerido')].sort(byRank);
   const prox = candidatos[0] || null;
 
   const exigidos = views.filter(counts);

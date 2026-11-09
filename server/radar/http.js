@@ -1,7 +1,7 @@
 // Coleta HTTP "educada": identifica-se, respeita robots.txt, limita a taxa por domínio,
 // tem timeout e nunca envia credenciais nem tenta contornar bloqueios (401/403/429 = parar).
 
-const USER_AGENT = 'EstuviaRadar/0.1 (monitoramento de calendarios academicos oficiais)';
+const USER_AGENT = 'EstuviaRadar/0.1 (monitoramento de fontes academicas oficiais)';
 const TIMEOUT_MS = 20000;
 const MIN_INTERVAL_MS = 4000; // entre requisições ao mesmo domínio
 const ROBOTS_TTL_MS = 12 * 3600 * 1000;
@@ -116,12 +116,14 @@ function checkTarget(u, allowedHosts) {
  * Com "validadores" (ETag / Last-Modified da coleta anterior) faz uma requisição condicional:
  * se a página não mudou, o servidor responde 304 e devolvemos { naoModificada: true } sem baixar o conteúdo.
  */
-export async function politeFetch(url, { fetchImpl = fetch, validadores = null, allowedHosts = null, maxBytes = MAX_BYTES } = {}) {
+export async function politeFetch(url, { fetchImpl = fetch, validadores = null, allowedHosts = null, maxBytes = MAX_BYTES, method = 'GET', body = null } = {}) {
   let u = new URL(url);
+  const verb = String(method || 'GET').toUpperCase();
+  if (!['GET', 'POST'].includes(verb)) throw new FetchError(`Método ${verb} não permitido.`, { blocked: true });
   checkTarget(u, allowedHosts);
   const conditional = {};
-  if (validadores?.etag) conditional['If-None-Match'] = validadores.etag;
-  if (validadores?.lastModified) conditional['If-Modified-Since'] = validadores.lastModified;
+  if (verb === 'GET' && validadores?.etag) conditional['If-None-Match'] = validadores.etag;
+  if (verb === 'GET' && validadores?.lastModified) conditional['If-Modified-Since'] = validadores.lastModified;
   let res;
   // Redirecionamentos seguidos manualmente: cada salto é validado (protocolo, domínio permitido,
   // robots.txt do destino). Um redirecionamento para fora das fontes oficiais é recusado.
@@ -132,7 +134,9 @@ export async function politeFetch(url, { fetchImpl = fetch, validadores = null, 
     await throttle(u.host);
     try {
       res = await fetchImpl(u.href, {
-        headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,application/xhtml+xml,application/rss+xml;q=0.9,*/*;q=0.8', ...conditional },
+        method: verb,
+        headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,application/xhtml+xml,application/rss+xml;q=0.9,*/*;q=0.8', ...(verb === 'POST' ? { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'X-Requested-With': 'XMLHttpRequest' } : {}), ...conditional },
+        ...(verb === 'POST' && body !== null ? { body: String(body) } : {}),
         redirect: 'manual',
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
@@ -143,6 +147,7 @@ export async function politeFetch(url, { fetchImpl = fetch, validadores = null, 
     const location = res.headers.get('location');
     if (!location) throw new FetchError(`HTTP ${res.status} sem destino.`, { status: res.status });
     if (hop + 1 >= MAX_REDIRECTS) throw new FetchError('Redirecionamentos demais.', { status: res.status });
+    if (verb === 'POST') throw new FetchError(`A fonte redirecionou uma consulta POST (HTTP ${res.status}); a coleta foi interrompida sem reenviar os dados.`, { status: res.status, blocked: true });
     const next = new URL(location, u);
     checkTarget(next, allowedHosts);
     if (u.protocol === 'https:' && next.protocol !== 'https:') throw new FetchError('Redirecionamento para HTTP sem criptografia recusado.', { blocked: true });

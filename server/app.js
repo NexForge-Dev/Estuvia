@@ -25,6 +25,7 @@ import eventRoutes from './routes/events.js';
 import { ensureAdminAccount } from './admin-seed.js';
 import { initRadar } from './radar/service.js';
 import { storeHealth } from './store.js';
+import { radarStoreHealth } from './radar/db.js';
 
 // O Express 4 não captura promessas rejeitadas: um erro em rota async derrubava o processo
 // inteiro (Node 22 encerra em unhandledRejection). Aqui toda rota async encaminha o erro ao
@@ -59,8 +60,9 @@ export function createApp() {
   api.use((req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
   // 503 quando a última gravação da base falhou (monitoramento externo deve alertar).
   api.get('/health', (req, res) => {
-    const store = storeHealth();
-    res.status(store.ok ? 200 : 503).json({ ok: store.ok, ...(store.ok ? {} : { erro: 'Falha ao gravar a base de dados.' }) });
+    const stores = { principal: storeHealth(), radar: radarStoreHealth() };
+    const ok = stores.principal.ok && stores.radar.ok;
+    res.status(ok ? 200 : 503).json({ ok, ...(ok ? {} : { erro: 'Falha ao gravar uma das bases de dados.', stores }) });
   });
   api.use('/auth', authRoutes);
   api.use('/me', meRoutes);

@@ -1,11 +1,8 @@
 // Comunidade colaborativa: feed, interações, grupos, verificação de oportunidades, Radar,
 // integração com missões e Agenda, denúncias e moderação.
-import fs from 'node:fs';
-import path from 'node:path';
 import express, { Router } from 'express';
 import { z } from 'zod';
 import { users, community, audit, newId } from '../store.js';
-import { config } from '../config.js';
 import { requireAuth, requireModerator, isModerator, communityWriteLimiter } from '../security.js';
 import { UNIVERSITIES, universityById } from '../content/catalog.js';
 import {
@@ -15,6 +12,7 @@ import {
   analyzeLink, extractLinks, protectText, spamSignals, opportunityFingerprint, isDuplicate,
   effectiveVerification, isVerifiable, relevance, communityRadarFeed,
 } from '../community-engine.js';
+import { putMedia, getMedia, deleteMedia } from '../storage.js';
 
 // Radar oficial (opcional): se o módulo falhar ao carregar, a comunidade segue sem a checagem.
 let findOfficialMatch = () => ({ match: false });
@@ -850,8 +848,7 @@ const SIGNATURES = [
   { ext: 'webp', mime: 'image/webp', test: (b) => b.subarray(0, 4).toString('latin1') === 'RIFF' && b.subarray(8, 12).toString('latin1') === 'WEBP' },
 ];
 
-const mediaPath = (m) => path.join(config.mediaDir, `${m.id}.${m.ext}`);
-function deleteMediaFile(m) { fs.promises.unlink(mediaPath(m)).catch(() => {}); }
+function deleteMediaFile(m) { deleteMedia(m.id, m.ext).catch(() => {}); }
 // Imagem enviada e nunca publicada (composição abandonada, removida da prévia ou tirada de um post na edição)
 // expira depois de 24 h: não fica guardada para sempre nem trava o limite de pendentes.
 const PENDING_MEDIA_MS = 24 * 3600000;
@@ -872,8 +869,7 @@ router.post('/media', communityWriteLimiter, express.raw({ type: SIGNATURES.map(
   if (pending >= 12) return res.status(429).json({ error: 'Muitas imagens não publicadas. Publique ou descarte antes de enviar outras.' });
   const m = { id: newId(), ownerId: req.user.id, ext: sig.ext, mime: sig.mime, tamanho: req.body.length, postId: null, criadoEm: now() };
   try {
-    await fs.promises.mkdir(config.mediaDir, { recursive: true });
-    await fs.promises.writeFile(mediaPath(m), req.body, { mode: 0o600 });
+    await putMedia(m.id, m.ext, req.body, m.mime);
   } catch (err) {
     deleteMediaFile(m);
     console.error('[comunidade] falha ao gravar imagem:', err.message);
@@ -890,7 +886,7 @@ router.delete('/media/:id', async (req, res) => {
   res.json({ ok: true });
 });
 
-router.get('/media/:id', (req, res) => {
+router.get('/media/:id', async (req, res) => {
   const m = community.read((c) => {
     const item = c.media.find((x) => x.id === req.params.id);
     if (!item) return null;
@@ -899,9 +895,11 @@ router.get('/media/:id', (req, res) => {
     return post && canSee(post, req.user) ? item : null;
   });
   if (!m) return res.status(404).json({ error: 'Imagem não encontrada.' });
+  let buf;
+  try { buf = await getMedia(m.id, m.ext); } catch { return res.status(404).json({ error: 'Imagem não encontrada.' }); }
   res.setHeader('Cache-Control', 'private, max-age=3600');
   res.setHeader('Content-Disposition', 'inline');
-  res.type(m.mime).sendFile(mediaPath(m), (err) => { if (err && !res.headersSent) res.status(404).json({ error: 'Imagem não encontrada.' }); });
+  res.type(m.mime).send(buf);
 });
 
 // ---------- Privacidade (exportação e exclusão de conta) ----------

@@ -9,7 +9,7 @@ Legenda de status: ✅ implementado no MVP · 🟡 parcial · ⏳ planejado
 | ID | Prior. | Requisito | Status | Onde |
 |---|---|---|---|---|
 | RF-01 | P0 | Onboarding: nome, formação, área, estado, idiomas, ano pretendido, "porquê" | ✅ | `public/js/views/profile.js`, `PUT /api/me/profile` |
-| RF-02 | P0 | Catálogo de universidades e mestrados | 🟡 9 universidades + 3 programas de demonstração | `server/content/catalog.js` |
+| RF-02 | P0 | Catálogo de universidades e mestrados | 🟡 9 universidades; 5 programas locais demonstrativos; Radar com 138 mestrados UGR para 2026/27. O conector DUA consulta as nove universidades e a UNIA, mas a base local ainda não recebeu esses catálogos; requisitos detalhados por programa também seguem pendentes. | `server/content/catalog.js`, `server/radar/` |
 | RF-03 | P0 | Checagem preliminar de requisitos (requerido / verificar) com fonte | ✅ | Ficha do programa em `catalog.js` (view) |
 | RF-04 | P0 | Roadmap com dependências e tarefas paralelas | ✅ 6 fases, 23 missões, desbloqueio e missões paralelas | `server/content/journey.js`, `server/game.js` |
 | RF-05 | P0 | Gestor de até 6 opções ordenáveis | ✅ | `PUT /api/me/choices` |

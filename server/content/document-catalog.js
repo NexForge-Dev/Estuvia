@@ -48,7 +48,9 @@ export const DOC_CATEGORIES = [
 // ---------------------------------------------------------------------------
 export const CONDITIONS = {
   residenteBrasil: { rotulo: 'Moro no Brasil', ajuda: 'Define o consulado que atende você.', detect: 'perfil' },
-  longa: { rotulo: 'Meu curso dura mais de seis meses', ajuda: 'Acima de 180 dias: antecedentes, atestado médico e TIE passam a valer.', detect: 'jornada' },
+  longa: { rotulo: 'Minha autorização de estudos terá mais de seis meses', ajuda: 'Define a obrigação da TIE. A carteira estima pela duração informada do curso; confirme a duração que será concedida no visto/autorização.', detect: 'jornada' },
+  antecedentesConsulares: { rotulo: 'Meu consulado exige antecedentes criminais para minha duração de estadia', ajuda: 'Confira o limite da lista atual do seu consulado (algumas instruções usam mais de 180 dias; a regra migratória espanhola também usa mais de seis meses).', padrao: null },
+  atestadoConsular: { rotulo: 'Meu consulado exige atestado médico para minha duração de estadia', ajuda: 'Confira o limite e o texto exigido na lista atual do seu consulado; não presuma que 180 dias e seis meses sejam sempre equivalentes.', padrao: null },
   idiomaEspanhol: { rotulo: 'Meu mestrado exige certificado de espanhol', ajuda: 'Vem da ficha oficial do mestrado.', detect: 'mestrado' },
   idiomaIngles: { rotulo: 'Meu mestrado exige certificado de inglês', ajuda: 'Confira na ficha do mestrado.', padrao: null },
   bolsa: { rotulo: 'Tenho bolsa concedida', ajuda: 'Detectado quando você registra uma bolsa como concedida.', detect: 'financas' },
@@ -110,7 +112,7 @@ T('passaporte', 'pessoais', 'Passaporte válido', { icone: 'passport', validade:
   oque: 'Seu documento de viagem, emitido pela Polícia Federal. Ele identifica você na candidatura, no visto, na viagem e na TIE.',
   para: 'Identificar você em todos os procedimentos e receber o visto colado nele.',
   onde: 'Na Polícia Federal: agende pelo gov.br, pague a taxa (GRU) e compareça ao atendimento.',
-  quando: 'O quanto antes: a validade precisa cobrir toda a estadia, e a emissão leva algumas semanas.',
+  quando: 'O quanto antes: a validade precisa cobrir toda a estadia, e a emissão leva algumas semanas. Para o visto, confirme também páginas em branco e eventual limite para a data de emissão na página do seu consulado.',
   apostila: 'nao', traducao: 'nao' });
 T('rg-cin', 'pessoais', 'RG ou Carteira de Identidade Nacional (CIN)', { icone: 'user', partes: ['frente', 'verso'], apostila: 'nao', traducao: 'nao',
   oque: 'Seu documento de identidade brasileiro.', para: 'Identificação complementar quando um procedimento pedir.', onde: 'No órgão de identificação do seu estado.' });
@@ -275,7 +277,7 @@ T('alojamento-pago', 'financeira', 'Comprovante de alojamento integralmente pago
 T('formulario', 'visto', 'Formulário oficial de visto nacional', { icone: 'edit', prepara: '5.7', apostila: 'nao', traducao: 'nao',
   oque: 'O formulário de pedido do visto nacional (tipo D) de estudos, preenchido e assinado.', para: 'É o próprio pedido do visto.', onde: 'Na página de vistos do SEU consulado.' });
 T('antecedentes', 'visto', 'Certidão de antecedentes criminais da Polícia Federal', { icone: 'shield', validade: 'recencia', fontes: ['O6', 'O22'],
-  oque: 'A certidão de que você não tem antecedentes criminais no Brasil.', para: 'Exigida de adultos para estadas acima de 180 dias.',
+  oque: 'A certidão de que você não tem antecedentes criminais no Brasil.', para: 'A exigência e o limite de duração variam conforme a regra migratória e a lista do consulado competente. Confira a instrução vigente do seu consulado.',
   onde: 'Emita gratuitamente no gov.br (Polícia Federal). Confira se o consulado também pede a estadual.',
   quando: 'Perto do pedido do visto: o consulado pode aceitar só certidões recentes.',
   apostilaNota: 'Costuma ser exigida para uso na Espanha: confira na lista do seu consulado.', traducaoNota: 'Confira na lista do seu consulado.' });
@@ -283,7 +285,7 @@ T('antecedentes-outros-paises', 'visto', 'Certidões criminais de outros países
   oque: 'Certidões dos países onde você morou nos últimos anos.', para: 'Quando o consulado pedir, conforme os países e o período de residência.', onde: 'Nos órgãos de cada país (geralmente pelo consulado dele).' });
 T('atestado', 'visto', 'Atestado médico (Regulamento Sanitário Internacional de 2005)', { icone: 'help', validade: 'recencia',
   oque: 'Atestado de que você não tem doenças com repercussão grave para a saúde pública, nos termos do Regulamento Sanitário Internacional de 2005.',
-  para: 'Exigido para estadas acima de 180 dias.', onde: 'Com um médico registrado, usando o texto pedido pelo consulado.' });
+  para: 'A exigência e o limite de duração dependem da regra vigente e da lista do consulado competente.', onde: 'Com um médico registrado, usando o texto pedido pelo consulado.' });
 T('taxa-visto', 'visto', 'Comprovante de pagamento da taxa do visto', { icone: 'euro', prepara: '5.7', missoes: ['5.7'], ...ES,
   oque: 'O recibo da taxa consular.', para: 'O visto só é processado com a taxa paga.', onde: 'Conforme as instruções do consulado (valor e forma mudam).' });
 T('agendamento-consular', 'visto', 'Comprovante de agendamento consular', { icone: 'calendar', missoes: ['5.7'], ...ES,
@@ -629,9 +631,9 @@ export const CATEGORY_USES = {
     u('comprovante-pagamento', 'O', { rotulo: 'Comprovante de pagamento da matrícula' }),
     u('meios', 'O', { rotulo: 'Comprovação financeira' }),
     u('seguro', 'O', { rotulo: 'Certificado de seguro médico' }),
-    u('antecedentes', 'C', { cond: ['longa', '!menor'], condicao: 'Para adultos, em estadas acima de 180 dias.' }),
-    u('antecedentes-outros-paises', 'C', { cond: ['longa', 'residiuOutrosPaises'] }),
-    u('atestado', 'C', { cond: 'longa', condicao: 'Para estadas acima de 180 dias.' }),
+    u('antecedentes', 'C', { cond: ['antecedentesConsulares', '!menor'], condicao: 'Para adultos, quando exigido pela lista vigente do consulado.' }),
+    u('antecedentes-outros-paises', 'C', { cond: ['antecedentesConsulares', 'residiuOutrosPaises'] }),
+    u('atestado', 'C', { cond: 'atestadoConsular', condicao: 'Quando exigido pela lista vigente do consulado.' }),
     u('comprovante-residencia-br', 'O', { cond: 'residenteBrasil', rotulo: 'Comprovante de residência na jurisdição consular' }),
     u('taxa-visto', 'O'),
     u('agendamento-consular', 'C', { condicao: 'Quando o consulado atende com agendamento.' }),
@@ -645,9 +647,9 @@ export const CATEGORY_USES = {
     u('seguro', 'O'),
     u('apolice-seguro', 'C', { condicao: 'Se o consulado pedir.' }),
     u('pagamento-seguro', 'C', { condicao: 'Se o consulado pedir.' }),
-    u('atestado', 'C', { cond: 'longa', rotulo: 'Atestado médico para visto de longa duração' }),
-    u('atestado', 'C', { cond: 'longa', rotulo: 'Apostila do atestado médico', nota: 'A apostila é anexada no próprio atestado, quando o consulado pedir.' }),
-    u('atestado', 'C', { cond: 'longa', rotulo: 'Tradução oficial do atestado', nota: 'A tradução é anexada no próprio atestado, quando o consulado pedir.' }),
+    u('atestado', 'C', { cond: 'atestadoConsular', rotulo: 'Atestado médico para visto de longa duração' }),
+    u('atestado', 'C', { cond: 'atestadoConsular', rotulo: 'Apostila do atestado médico', nota: 'A apostila é anexada no próprio atestado, quando o consulado pedir.' }),
+    u('atestado', 'C', { cond: 'atestadoConsular', rotulo: 'Tradução oficial do atestado', nota: 'A tradução é anexada no próprio atestado, quando o consulado pedir.' }),
     u('historico-medico', 'R'),
     u('relatorios-medicos', 'R'),
     u('receitas', 'R'),
@@ -782,8 +784,8 @@ export const CATEGORY_USES = {
     u('certidoes-filhos', 'C', { cond: ['familiares', 'filhos'] }),
     u('recursos-adicionais', 'C', { cond: 'familiares' }),
     u('seguro-acompanhantes', 'C', { cond: 'familiares' }),
-    u('antecedentes-acompanhantes', 'C', { cond: ['familiares', 'longa'], condicao: 'Quando exigidos.' }),
-    u('atestados-acompanhantes', 'C', { cond: ['familiares', 'longa'], condicao: 'Quando exigidos.' }),
+    u('antecedentes-acompanhantes', 'C', { cond: ['familiares', 'antecedentesConsulares'], condicao: 'Quando exigidos pelo consulado competente.' }),
+    u('atestados-acompanhantes', 'C', { cond: ['familiares', 'atestadoConsular'], condicao: 'Quando exigidos pelo consulado competente.' }),
     u('guarda-custodia', 'C', { cond: ['familiares', 'filhos'] }),
     u('autorizacao-responsaveis', 'C', { cond: ['familiares', 'filhos'] }),
     u('procuracao', 'C', { cond: ['familiares', 'representante'], rotulo: 'Documentos de representação' }),

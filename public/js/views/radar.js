@@ -18,6 +18,12 @@ const PHASE_LABEL = { abertas: 'Inscrições abertas', anunciadas: 'Anunciada', 
 const VERIF_ICON = { confirmada: 'shield', pendente: 'clock', 'nao-confirmada': 'alert', prevista: 'hourglass', desatualizada: 'alert', demonstrativo: 'wand' };
 
 const shortYear = (curso) => (curso ? curso.replace(/^(\d{4})\/\d{2}(\d{2})$/, '$1/$2') : curso);
+const nextAcademicYear = (curso) => {
+  const match = /^(\d{4})\/(\d{2}|\d{4})$/.exec(String(curso || ''));
+  if (!match) return null;
+  const end = Number(match[2].length === 2 ? `${match[1].slice(0, 2)}${match[2]}` : match[2]);
+  return `${end}/${String(end + 1).slice(-2)}`;
+};
 
 // ---------- Componentes ----------
 
@@ -72,11 +78,17 @@ async function toggleFollow(c, btn, onChange) {
 async function addToJourney(c) {
   const jr = (state.journeys || []).find?.((j) => j.destino?.programa?.id === c.programId);
   if (c.naJornada || jr) return toast('Este mestrado já está nas suas jornadas.');
+  const cicloPublicado = shortYear(c.anoAcademico);
+  const cicloPlanejado = c.estado === 'encerradas' ? nextAcademicYear(cicloPublicado) : cicloPublicado;
+  if (!cicloPlanejado) return toast('Não consegui identificar o ciclo acadêmico deste programa.', 'err');
+  if (cicloPlanejado !== cicloPublicado && !window.confirm(`As candidaturas de ${cicloPublicado} estão encerradas. Posso criar uma jornada de planejamento para ${cicloPlanejado} usando esta ficha como referência. A oferta, os requisitos e as datas do próximo ciclo ainda precisam ser confirmados oficialmente. Continuar?`)) return;
   try {
-    const r = await api.post('/journeys', { programaId: c.programId, anoAcademico: shortYear(c.anoAcademico) });
+    const r = await api.post('/journeys', { programaId: c.programId, anoAcademico: cicloPlanejado });
     invalidate?.();
     c.naJornada = true;
-    toast('Mestrado adicionado à sua jornada. As datas oficiais alimentam a Rodada 3.', 'ok');
+    toast(cicloPlanejado === cicloPublicado
+      ? 'Mestrado adicionado à sua jornada. As datas oficiais alimentam a Rodada 3.'
+      : `Jornada de planejamento ${cicloPlanejado} criada. Confira novamente a oferta e os requisitos quando o novo ciclo for publicado.`, 'ok');
     if (r.journey?.id) go(`/j/${r.journey.id}`);
   } catch (e) { toast(e.message, 'err'); }
 }

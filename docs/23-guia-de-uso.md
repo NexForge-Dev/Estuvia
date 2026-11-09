@@ -37,6 +37,8 @@ No celular, Início, Jornada, Agenda e Documentos ficam na **barra de baixo**. O
 - **Preciso de ajuda:** a missão vira passo a passo, e o Mentor ajuda.
 - Rodadas futuras aparecem bloqueadas até a hora certa. Prazos oficiais aparecem mesmo assim.
 
+Para candidatura com título estrangeiro, confira a lista de documentos acadêmicos da missão 2.4: diploma, histórico, comprovação oficial de acesso à pós-graduação no país de origem e escala de notas. A fase 1 do DUA não oferece vaga em todos os mestrados. Antes do visto, use o prazo de pelo menos dois meses e a lista atual do consulado que atende sua residência; os requisitos de antecedentes e atestado variam.
+
 ## 4. Minha pasta (guardar documentos para a viagem)
 
 Fica no topo de **Documentos**.
@@ -70,7 +72,7 @@ Abaixo da pasta fica a **carteira por etapa**: o que falta para a etapa atual, o
 
 ## 6. Financiamento
 
-Três contas que nunca se misturam: **quanto custa preparar**, **quanto custa morar lá** e **quanto o visto exige comprovar**. Registre seus recursos para saber se o plano fecha. Se faltar, a tela mostra caminhos: bolsas, apoio da família, economia, destinos mais baratos.
+Três contas que nunca se misturam: **quanto custa preparar**, **quanto custa morar lá** e **quanto o visto exige comprovar**. A referência 2026 cadastrada é €600 por mês para estudante individual; dependentes e alojamento antecipado podem alterar o cálculo e devem ser confirmados no consulado. Registre seus recursos para saber se o plano fecha. Se faltar, a tela mostra caminhos: bolsas, apoio da família, economia, destinos mais baratos.
 
 ## 7. Mentor
 

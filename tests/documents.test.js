@@ -98,9 +98,10 @@ test('personalização: mestrado sem idioma e sem apoio/bolsa → "Não necessá
   assert.ok(cat(d, 'candidatura').naoAplicaveis >= 1);
   // Estada de 18 meses → EX-17 da TIE exigido.
   assert.equal((await doc('tie-solicitacao')).exigencia, 'requerido');
-  // Estada de 18 meses → antecedentes exigidos; apoio familiar só com apoio registrado.
+  // Antecedentes aparecem para confirmação, pois a exigência depende da lista do consulado.
   const { data: a } = await req('GET', `/documents/antecedentes?journeyId=${jid}`);
-  assert.equal(a.documento.exigencia, 'requerido');
+  assert.equal(a.documento.exigencia, 'verificar');
+  assert.ok(d.antecedencia.some((v) => v.id === 'antecedentes' && v.exigencia === 'verificar'));
   const { data: ap } = await req('GET', `/documents/apoio-familiar?journeyId=${jid}`);
   assert.equal(ap.documento.exigencia, 'nao-necessario');
 });

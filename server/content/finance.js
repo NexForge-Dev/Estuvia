@@ -5,17 +5,18 @@ export const IPREM = {
   2026: {
     mensal: 600,
     moeda: 'EUR',
-    fonte: 'Ley 31/2022 (PGE 2023, prorrogados em 2026): €600/mês. Nenhuma norma específica de 2026 localizada no BOE em 28/10/2026; confirme antes de usar como valor oficial.',
-    status: 'pendente', // passa a "verificado" após revisão editorial com link oficial
-    atualizadoEm: '2026-10-28',
+    fonte: 'Guia oficial para estudantes: €600/mês (100% do IPREM); os Orçamentos do Estado de 2023 seguem prorrogados em 2026. Confirme a lista e o cálculo aceito pelo consulado competente.',
+    status: 'verificado',
+    atualizadoEm: '2026-11-09',
   },
 };
 
 // Regra de referência para visto de estudos: % do IPREM mensal por mês de estadia.
 export const VISA_RULE = {
   percentualEstudante: 1.0,
-  descricao: 'Referência geral: 100% do IPREM mensal para o estudante, por mês de estadia. Deduções (ex.: alojamento ou bolsa já pagos) e condições específicas dependem do consulado.',
+  descricao: 'Estimativa de referência: 100% do IPREM mensal para o estudante por mês. Dependentes podem elevar o valor (75% do IPREM para o primeiro familiar e 50% para cada um dos demais); alojamento pago antecipadamente pode alterar o cálculo. O simulador não calcula esses ajustes: confirme o valor e as provas aceitas no consulado competente.',
   fonte: 'O6',
+  fontes: ['O6', 'O28', 'O29'],
 };
 
 export function ipremFor(year) {

@@ -174,7 +174,8 @@ test('14: missão não aplicável não impede a progressão', async () => {
   await req('PUT', '/me/documents', { passaporte: 'pronto', diploma: 'pronto', historico: 'pronto' });
   const mid = (await req('GET', `/journeys/${jid}`)).data.journey;
   assert.equal(find(mid, '2.5').status, 'nao-aplicavel', 'o mestrado de arquitetura (demo) não exige certificado');
-  for (const id of ['2.4', '2.6']) await req('PUT', `/journeys/${jid}/missions/${id}/state`, { naoAplicavel: true });
+  await doMission(req, jid, '2.4');
+  await req('PUT', `/journeys/${jid}/missions/2.6/state`, { naoAplicavel: true });
   const r = await doMission(req, jid, '2.7');
   assert.equal(round(r.journey, 2).status, 'concluida');
   assert.ok(r.events.some((e) => e.tipo === 'rodada-concluida' && e.numero === 2));

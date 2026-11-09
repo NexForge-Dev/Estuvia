@@ -1,4 +1,4 @@
-# 25 — Production readiness (audit of 2026-10-28)
+# 25 — Production readiness (audit of 2026-11-09)
 
 This document describes what the code **actually** does today and what must happen before a commercial launch. It replaces assumptions in older docs where they conflict.
 
@@ -62,7 +62,7 @@ Roles come only from the server-side `role` field: `admin` (only the `ADMIN_EMAI
 1. **No email verification.** Password reset by email now exists (`POST /api/auth/forgot-password` / `reset-password`, Resend via `RESEND_API_KEY` + `EMAIL_FROM`, 1-hour single-use token stored hashed, resets revoke sessions). Without those variables in production, recovery responds 503. Registration still does not verify the email address.
 2. **Single-instance JSON persistence** with no automated backups. Acceptable for a small pilot on one server with disk backups; not for scale.
 3. **Legal review (LGPD/GDPR)** — see below.
-4. **Official-data status:** IPREM 2026 (€600) still *pending* (matches Ley 31/2022, extended budgets; no 2026-specific norm found in the BOE on 2026-10-28). DUA short link and Salvador consulate contacts verified on 2026-10-28. The local catalog is demonstrative; scholarships show "no confirmed call".
+4. **Official-data status:** the Ministry's student guide lists €600/month as the 2026 IPREM reference and the 2023 state budget remains extended in 2026. The visa simulator remains an estimate and does not model dependents or prepaid accommodation. DUA short link and Salvador consulate contacts verified on 2026-10-28. The local catalog is demonstrative; scholarships show "no confirmed call".
 5. **Self-declared official outcomes:** admission/enrollment/visa are student-declared (now recorded with `origem: 'declarado'`, audited, and enrollment/visa require a declared admission first). There is no officially-confirmed state; product decision needed.
 
 ## Legal questions for qualified review
@@ -71,7 +71,7 @@ Roles come only from the server-side `role` field: `admin` (only the `ADMIN_EMAI
 - Whether internal admin notes must be included in the data export (currently **excluded**, matching the admin panel's promise).
 - Consent text says only the student accesses documents, while the server holds the key (encryption at rest, not end-to-end). Changing it may require bumping `CONSENT_VERSION`.
 - Free-text detail of reports by deleted users is kept (author id removed).
-- Visa proof-of-funds is shown as an estimate (100% IPREM × months, single applicant); dependents and deductions are not modelled. Never presented as a guarantee.
+- Visa proof-of-funds is shown as an estimate (100% IPREM × months, single applicant); dependent allowances and prepaid accommodation adjustments are not modelled. Never presented as a guarantee.
 
 ## Known limitations (accepted for now)
 

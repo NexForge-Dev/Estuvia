@@ -1,11 +1,15 @@
 import './ops.js'; // primeiro: captura os logs da inicialização para o painel admin
 import { createApp } from './app.js';
 import { config } from './config.js';
-import { flush } from './store.js';
-import { flushRadar } from './radar/db.js';
+import { flush, initStore } from './store.js';
+import { flushRadar, initRadarStore } from './radar/db.js';
+import { initDocRules } from './document-rules.js';
 import { startScheduler } from './radar/scheduler.js';
 import { startPriceWatcher } from './flight-prices.js';
 import { videosEnabled, startFeedWarmer } from './websearch/index.js';
+
+// Carrega/migra o estado antes de criar rotas que fazem leituras síncronas do store.
+await Promise.all([initStore(), initRadarStore(), initDocRules()]);
 
 const server = createApp().listen(config.port, () => {
   console.log(`\n  ${config.appName} rodando em http://localhost:${config.port}`);

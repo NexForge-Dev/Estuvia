@@ -17,7 +17,8 @@ Express (server/app.js)
         │
         ├─ game.js     regras de XP, desbloqueio, conquistas, dicas
         ├─ content/*   conteúdo editorial versionado
-        └─ store.js    persistência (JSON hoje → PostgreSQL amanhã)
+        ├─ store.js    estado de usuários/comunidade (JSON local ou Supabase)
+        └─ radar/db.js estado do Radar (JSON local ou Supabase)
 ```
 
 ## Decisões técnicas
@@ -28,14 +29,16 @@ Express (server/app.js)
 | **Front sem build** (HTML + CSS + ES modules) | Roda com `npm start`, sem bundler nem etapa de compilação, e é fácil de apresentar e modificar. A migração para Next.js/React continua possível (o documento de visão cita isso como stack candidata). |
 | **Roteamento por hash** (`#/jornada`) | Funciona em qualquer hospedagem estática. |
 | **Conteúdo em `server/content/`** | A base editorial fica versionada no git, revisável por pull request, com fonte e data. É o embrião do painel editorial (RF-10). |
-| **Persistência em arquivo JSON** | Atende ao "sem banco por enquanto". Toda leitura e escrita passa por `store.js`, então trocar por banco é isolado. |
+| **Persistência intercambiável** | `DB_PROVIDER=json` mantém os arquivos locais. `DB_PROVIDER=supabase` grava os estados principais em linhas JSONB no Supabase, sem expor a chave secreta ao navegador. |
 | **SSE para o assistente** | A resposta aparece enquanto é gerada, com uma conexão HTTP simples. |
 | **DOM via `h()` + `textContent`** | Elimina XSS por construção (nada de `innerHTML` com dados). |
 
 ## Modelo de dados (como está gravado hoje)
 
+O adaptador Supabase preserva o formato atual do MVP em duas linhas da tabela `estuvia_state`: `main` contém usuários, comunidade, auditoria e analytics; `radar` contém fontes, programas, oportunidades, janelas e alertas. Cada gravação usa uma versão esperada para detectar concorrência e evitar sobrescrita silenciosa. A estrutura normalizada continua sendo uma etapa futura.
+
 ```jsonc
-// data/db.json
+// data/db.json ou public.estuvia_state (id = "main")
 {
   "users": [{
     "id": "uuid",
@@ -73,7 +76,15 @@ Express (server/app.js)
 | BudgetItem | `user.budget` | `budget_item` |
 | AuditEvent | `audit` | `audit_event` |
 
-### Como migrar
+### Supabase
+
+1. Aplique [`supabase/schema.sql`](../supabase/schema.sql) no SQL Editor do projeto Supabase.
+2. No `.env` do servidor, defina `DB_PROVIDER=supabase`, `SUPABASE_URL` e `SUPABASE_SECRET_KEY` (a chave `sb_secret_...`, somente no servidor).
+3. Reinicie o servidor. Se as linhas ainda não existirem, o app importa os estados locais `data/db.json` e `data/radar.json` para `main` e `radar`. Os arquivos locais são preservados como cópia.
+
+O cliente do navegador não usa a chave secret. O `.env.local` e os helpers `@supabase/ssr` do exemplo Next.js não se aplicam a este backend Express. A mídia comunitária, os arquivos cifrados de documentos e os snapshots HTML brutos do Radar continuam no armazenamento local; esta integração migra o estado JSON principal.
+
+### Migração para tabelas normalizadas
 
 1. Criar as tabelas acima (sugestão: Prisma ou Drizzle para migrations).
 2. Reimplementar `server/store.js` mantendo a mesma interface (`users.findByEmail`, `findById`, `create`, `update`, `remove`, `audit.log`). As rotas não mudam.
@@ -82,6 +93,6 @@ Express (server/app.js)
 
 ## Escalabilidade e operação
 
-- O arquivo JSON serve para **uma instância** e para o volume de um piloto (dezenas ou centenas de usuários). Para várias instâncias, é preciso banco.
+- O provider JSON serve para **uma instância**. O provider Supabase persiste estado no Postgres e detecta conflitos entre processos com versionamento; como o app ainda carrega o estado em memória, rode uma instância de escrita até migrar para tabelas/reposórios por operação.
 - O rate limit fica em memória. Com várias instâncias, ele deve usar um store compartilhado (Redis).
 - O servidor é stateless, exceto pelo `store`. A sessão vai no cookie assinado.

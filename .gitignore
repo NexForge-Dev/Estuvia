@@ -9,3 +9,5 @@ video/tools/.venv/
 video/tools/demo-data/
 video/tools/tmp/
 video/assets/audio/*.wav
+.vercel
+.env*

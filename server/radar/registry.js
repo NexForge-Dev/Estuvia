@@ -72,9 +72,10 @@ export const SOURCE_SEED = [
     tipo: 'catalogo',
     prioridade: 1,
     autoridade: ['oferta-dua'],
-    metodo: 'revisao-manual',
+    metodo: 'html-publico',
+    conector: 'dua-catalog',
     frequenciaHoras: 24,
-    nota: 'Busca por formulário dinâmico. Coleta automática não implementada até confirmar as condições de uso.',
+    nota: 'Consulta pública da listagem por universidade e fase; o conteúdo interno das fichas ainda não é coletado automaticamente.',
   },
   {
     id: 'dua-portal',
@@ -118,5 +119,14 @@ export const APPLICATION_CHANNEL = {
 };
 
 export const UNIVERSITY_INFO = {
+  ual: { id: 'ual', sigla: 'UAL', nome: 'Universidad de Almería', cidade: 'Almería', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/andaluzia.svg' },
+  uca: { id: 'uca', sigla: 'UCA', nome: 'Universidad de Cádiz', cidade: 'Cádiz', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/cadiz.svg' },
+  uco: { id: 'uco', sigla: 'UCO', nome: 'Universidad de Córdoba', cidade: 'Córdoba', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/cordoba.svg' },
   ugr: { id: 'ugr', sigla: 'UGR', nome: 'Universidad de Granada', cidade: 'Granada', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/granada.svg' },
+  uhu: { id: 'uhu', sigla: 'UHU', nome: 'Universidad de Huelva', cidade: 'Huelva', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/andaluzia.svg' },
+  unia: { id: 'unia', sigla: 'UNIA', nome: 'Universidad Internacional de Andalucía', cidade: 'Sevilla', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/andaluzia.svg' },
+  ujaen: { id: 'ujaen', sigla: 'UJA', nome: 'Universidad de Jaén', cidade: 'Jaén', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/andaluzia.svg' },
+  uma: { id: 'uma', sigla: 'UMA', nome: 'Universidad de Málaga', cidade: 'Málaga', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/malaga.svg' },
+  upo: { id: 'upo', sigla: 'UPO', nome: 'Universidad Pablo de Olavide', cidade: 'Sevilla', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/sevilla.svg' },
+  us: { id: 'us', sigla: 'US', nome: 'Universidad de Sevilla', cidade: 'Sevilla', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/sevilla.svg' },
 };

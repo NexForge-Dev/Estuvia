@@ -164,6 +164,8 @@ export const SOURCES = [
   { id: 'O25', orgao: 'Seguridad Social (Espanha)', titulo: 'Portal da Seguridad Social, número de afiliação (NUSS)', url: 'https://www.seg-social.es/', revisadoEm: '2026-10-27', tipo: 'oficial' },
   { id: 'O26', orgao: 'Receita Federal (gov.br)', titulo: 'Meu CPF', url: 'https://www.gov.br/receitafederal/pt-br/assuntos/meu-cpf', revisadoEm: '2026-10-27', tipo: 'oficial' },
   { id: 'O27', orgao: 'Ministério da Saúde (gov.br)', titulo: 'Vacinação', url: 'https://www.gov.br/saude/pt-br/vacinacao', revisadoEm: '2026-10-27', tipo: 'oficial' },
+  { id: 'O28', orgao: 'Ministerio de Inclusión, Seguridad Social y Migraciones', titulo: 'Guía para estudiantes extranjeros: meios econômicos e IPREM', url: 'https://www.inclusion.gob.es/documents/410169/6828741/Gu%C3%ADa%2BEstudiantes.pdf/b6a0c88d-c689-6ce4-9888-6f198b32f513?t=1752143214552', revisadoEm: '2026-11-09', tipo: 'oficial' },
+  { id: 'O29', orgao: 'Boletín Oficial del Estado', titulo: 'Real Decreto-ley 3/2026: prorrogação dos Orçamentos Gerais do Estado', url: 'https://www.boe.es/eli/es/rdl/2026/02/03/3', revisadoEm: '2026-11-09', tipo: 'oficial' },
   {
     id: 'DEMO',
     orgao: 'Plataforma (protótipo)',

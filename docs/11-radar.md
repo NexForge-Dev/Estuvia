@@ -9,10 +9,10 @@ Princípio: nenhum dado sobre abertura de inscrições é apresentado como confi
 
 | Etapa | Situação |
 |---|---|
-| 1 — Radar funcional (UGR) | ✅ Catálogo oficial completo da UGR (138 másteres, curso 2026/2027), cards, filtros, detalhe, links oficiais. Calendário DUA 2026/2027 cadastrado; 2027/2028 aparece como **Não anunciado**. |
+| 1 — Radar funcional (UGR + catálogo DUA) | ✅ Catálogo oficial da UGR (138 másteres, curso 2026/2027), cards, filtros, detalhe, links oficiais. O conector DUA consulta o catálogo das nove universidades públicas andaluzas e da UNIA; ele registra nome e ficha oficial, sem inferir requisitos não coletados. Calendário DUA 2026/2027 cadastrado; 2027/2028 aparece como **Não anunciado**. |
 | 2 — Monitoramento automatizado | ✅ Conectores do calendário DUA, do listado UGR e das fichas UGR; snapshots com hash; comparação; validação; fila de revisão; agendador. |
 | 3 — Alertas e Agenda AI | ✅ "Avise-me quando abrir", alertas sem duplicação, sugestões de Agenda com prazos oficiais preservados e detecção de mudanças. Prazos oficiais aparecem nas missões e na Agenda da jornada. |
-| 4 — Expansão | ⏳ Outras universidades andaluzas, bolsas, outras regiões. Cada uma precisa de conectores e regras próprias — **não presumir DUA fora da Andaluzia**. |
+| 4 — Expansão | ⏳ Conferir requisitos detalhados por programa nas outras universidades, conectar bolsas e cobrir outras regiões. Cada região precisa de conectores e regras próprias — **não presumir DUA fora da Andaluzia**. |
 
 ## Arquitetura
 
@@ -42,6 +42,8 @@ public/css/radar.css
 tests/radar.test.js
 ```
 
+Com `DB_PROVIDER=supabase`, o estado do Radar (`sources`, `snapshots`, `programs`, `opportunities`, `windows`, `events` etc.) é persistido na linha `radar` de `public.estuvia_state`. Os snapshots HTML brutos continuam em `data/radar-snapshots/`.
+
 ### Fontes monitoradas
 
 | Fonte | Método | Frequência | Autoridade |
@@ -50,10 +52,10 @@ tests/radar.test.js
 | Listado de másteres UGR | HTML público | 24 h | catálogo |
 | Fichas dos másteres UGR | HTML público, 12 por execução | 2 h (≈ todas por dia) | dados do programa |
 | BOJA | revisão manual (buscador bloqueado por robots.txt) | — | normativa (prioridade máxima) |
-| Catálogo DUA (`mo_catalogo_top.php`) | revisão manual (formulário dinâmico) | — | oferta DUA |
+| Catálogo DUA (`mo_catalogo.php`) | HTML público, consulta POST por universidade e fase | 24 h | oferta DUA |
 | Portal DUA, SAAP UGR | revisão manual | — | canal / orientação |
 
-As frequências são metas configuráveis, não garantia de atualização instantânea. Falhas usam recuo exponencial (15 min → até a frequência da fonte).
+As frequências são metas configuráveis, não garantia de atualização instantânea. Falhas usam recuo exponencial (15 min → até a frequência da fonte). O catálogo DUA atualiza a listagem e os links oficiais das fichas; ainda não coleta automaticamente o conteúdo interno de cada ficha. A base local consultada nesta preparação contém apenas os 138 registros UGR: as últimas execuções do DUA falharam antes de publicar os catálogos das demais instituições. A execução seguinte, após esta correção, precisa ser conferida no painel do Radar.
 
 ### Regras de publicação
 
@@ -70,7 +72,7 @@ As frequências são metas configuráveis, não garantia de atualização instan
 
 Vagas ofertadas nunca significam vagas disponíveis, e a mudança de estado da oportunidade nunca significa que o estudante se candidatou (isso é registrado na missão 3.6).
 
-## Modelo de dados (data/radar.json)
+## Modelo de dados (data/radar.json ou estado Supabase)
 
 | Entidade | Chave / conteúdo |
 |---|---|

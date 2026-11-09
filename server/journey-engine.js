@@ -35,6 +35,13 @@ const PRIORITY_RANK = { critica: 0, alta: 1, media: 2, baixa: 3 };
 const ATTENTION_DAYS = 14;
 const CRITICAL_DAYS = 7;
 const DAY = 24 * 3600 * 1000;
+const addCalendarMonths = (iso, months) => {
+  const [year, month, day] = iso.split('-').map(Number);
+  const target = new Date(Date.UTC(year, month - 1 + months, 1, 12));
+  const lastDay = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0, 12)).getUTCDate();
+  target.setUTCDate(Math.min(day, lastDay));
+  return target.toISOString().slice(0, 10);
+};
 export const DEFAULT_SITUACAO = { adjudicacao: 'nao-enviada', matricula: 'nao-iniciada', visto: 'preparacao' };
 
 // ---------- Contexto ----------
@@ -217,7 +224,9 @@ function deadlineFor(mission, ctx, mp) {
     const previsto = p.base === 'dataEntrada' ? ctx.dados.dataChegadaPrevista : null;
     const base = real || previsto;
     if (!base) return null;
-    const date = new Date(new Date(`${base}T12:00:00Z`).getTime() + p.dias * DAY).toISOString().slice(0, 10);
+    const date = p.meses
+      ? addCalendarMonths(base, p.meses)
+      : new Date(new Date(`${base}T12:00:00Z`).getTime() + p.dias * DAY).toISOString().slice(0, 10);
     return { data: date, rotulo: p.rotulo, origem: real ? 'oficial' : 'previsto', fonte: p.fonte };
   }
   return null;

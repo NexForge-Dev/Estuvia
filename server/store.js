@@ -1,16 +1,17 @@
-// Camada de persistência do MVP: arquivo JSON com escrita atômica.
-// Toda leitura/escrita passa por estas funções — para migrar a PostgreSQL basta
-// reimplementar esta interface (ver docs/03-arquitetura.md).
+// Camada de persistência do MVP: JSON local ou estado JSONB no Supabase.
+// Toda leitura/escrita passa por estas funções (ver docs/03-arquitetura.md).
 
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { config } from './config.js';
+import { loadState, saveState, usesSupabase } from './database.js';
 
 const EMPTY_COMMUNITY = () => ({ posts: [], comments: [], groups: [], reports: [], media: [] });
 const EMPTY = { users: [], audit: [], community: EMPTY_COMMUNITY(), analytics: { days: {} } };
 let db = load();
 let writing = Promise.resolve();
+let remoteVersion = null;
 
 function load() {
   try {
@@ -25,6 +26,23 @@ function load() {
   }
 }
 
+const normalize = (value) => {
+  const data = { ...structuredClone(EMPTY), ...(value || {}) };
+  data.community = { ...EMPTY_COMMUNITY(), ...data.community };
+  data.analytics = { days: {}, ...data.analytics };
+  return data;
+};
+
+/** Run before accepting requests when DB_PROVIDER=supabase. */
+export async function initStore() {
+  if (!['json', 'supabase'].includes(config.databaseProvider)) throw new Error('DB_PROVIDER must be json or supabase.');
+  if (!usesSupabase()) return;
+  const remote = await loadState('main', db);
+  db = normalize(remote.state);
+  remoteVersion = remote.version;
+  lastWriteError = null;
+}
+
 // Última falha de gravação (null quando a última escrita deu certo): exposta em /api/health.
 let lastWriteError = null;
 export const storeHealth = () => ({ ok: !lastWriteError, erro: lastWriteError });
@@ -34,6 +52,12 @@ function persist() {
   // A promessa devolvida REJEITA se a gravação falhar: quem chamou não pode responder "salvo".
   const snapshot = JSON.stringify(db, null, 2);
   const run = writing.then(async () => {
+    if (usesSupabase()) {
+      if (remoteVersion === null) throw new Error('Supabase store was not initialized before writing.');
+      remoteVersion = await saveState('main', JSON.parse(snapshot), remoteVersion);
+      lastWriteError = null;
+      return;
+    }
     await fs.promises.mkdir(path.dirname(config.dataFile), { recursive: true });
     const tmp = `${config.dataFile}.${process.pid}.tmp`;
     await fs.promises.writeFile(tmp, snapshot, { mode: 0o600 });

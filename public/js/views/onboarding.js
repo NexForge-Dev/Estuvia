@@ -56,6 +56,27 @@ export async function onboardingView() {
     return input;
   };
   const input = (key, attrs = {}) => bind(h('input', { name: key, value: draft[key] ?? '', ...attrs }), key, attrs.type === 'number');
+  const dateInput = (key) => {
+    const initial = draft[key] ? draft[key].split('-').reverse().join('/') : '';
+    const el = h('input', { name: key, type: 'text', inputmode: 'numeric', autocomplete: 'off', placeholder: 'dd/mm/aaaa', maxlength: 10, value: initial, 'aria-label': 'Data prevista de início das aulas' });
+    el.addEventListener('input', () => {
+      const digits = el.value.replace(/\D/g, '').slice(0, 8);
+      const formatted = digits.length > 4 ? `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}` : digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+      if (el.value !== formatted) el.value = formatted;
+      draft[key] = '';
+      if (digits.length === 8) {
+        const day = Number(digits.slice(0, 2));
+        const month = Number(digits.slice(2, 4));
+        const year = Number(digits.slice(4));
+        const date = new Date(Date.UTC(year, month - 1, day));
+        if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
+          draft[key] = `${digits.slice(4)}-${digits.slice(2, 4)}-${digits.slice(0, 2)}`;
+        }
+      }
+    });
+    el.addEventListener('change', () => draw());
+    return el;
+  };
   const sel = (key, options) => bind(select(key, options, draft[key] ?? ''), key);
 
   function stepBody() {
@@ -104,7 +125,7 @@ export async function onboardingView() {
             }) : h('p', { class: 'muted' }, 'Ainda não há programas cadastrados para esta universidade no piloto.')),
           h('p', { class: 'hint' }, 'Programas "Demo" são dados demonstrativos: regras diferentes por programa geram jornadas diferentes. Confirme sempre na ficha oficial.'),
           h('div', { class: 'grid-2' },
-            field('Data prevista de início das aulas', input('inicioAulas', { type: 'date' }), 'Opcional, use a data publicada pela universidade.'),
+            field('Data prevista de início das aulas', dateInput('inicioAulas'), 'Opcional, digite no formato dia/mês/ano.'),
             field('Duração da estadia (meses)', input('duracaoMeses', { type: 'number', min: 1, max: 48 }), 'Mais de 6 meses ativa as missões da TIE.')),
           h('fieldset', { class: 'program-pick' }, h('legend', {}, 'Em qual etapa você está?'),
             h('p', { class: 'hint' }, 'Já começou o processo por conta própria? Diga onde está e você não precisa refazer o que já fez.'),

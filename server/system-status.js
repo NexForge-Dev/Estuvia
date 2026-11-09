@@ -4,6 +4,7 @@
 // estado: 'ok' | 'aviso' | 'erro' | 'desligado' (opcional e não configurado: não é falha).
 import fs from 'node:fs';
 import { config } from './config.js';
+import { usesSupabase } from './database.js';
 import { users } from './store.js';
 import { aiStatus, checkAI } from './ai-health.js';
 import { fxEnabled, cachedRate, refreshRate } from './fx.js';
@@ -45,6 +46,9 @@ export async function systemStatus({ check = false } = {}) {
   add({ id: 'api', nome: 'API (servidor)', grupo: 'Plataforma', estado: 'ok', detalhe: `No ar há ${Math.floor(uptimeMs() / 3600e3)} h ${Math.floor((uptimeMs() % 3600e3) / 60e3)} min · memória ${Math.round(mem.rss / 1048576)} MB · Node ${process.version}` });
 
   add(await timed(async () => {
+    if (usesSupabase()) {
+      return { id: 'base', nome: 'Base de dados', grupo: 'Plataforma', estado: 'ok', detalhe: `${users.all().length} conta(s) · estado no Supabase (Postgres)` };
+    }
     await fs.promises.access(config.dataFile, fs.constants.R_OK | fs.constants.W_OK);
     const st = await fs.promises.stat(config.dataFile);
     return { id: 'base', nome: 'Base de dados', grupo: 'Plataforma', estado: 'ok', detalhe: `${users.all().length} conta(s) · arquivo de ${(st.size / 1048576).toFixed(1)} MB, gravável` };

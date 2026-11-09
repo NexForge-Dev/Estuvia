@@ -40,6 +40,10 @@ export const config = {
   jwtSecret,
   sessionHours: 8,
   dataFile: process.env.DATA_FILE || path.join(here, '..', 'data', 'db.json'),
+  databaseProvider: process.env.DB_PROVIDER || 'json',
+  supabaseUrl: process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  // Secret key fica só no servidor. A publishable key não pode gravar com segurança usando a autenticação própria do Estuvia.
+  supabaseSecretKey: process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '',
   // Imagens da comunidade ficam ao lado da base (fora de public/: são servidas só para usuários logados).
   mediaDir: process.env.MEDIA_DIR || path.join(path.dirname(process.env.DATA_FILE || path.join(here, '..', 'data', 'db.json')), 'media'),
   // Arquivos da carteira de documentos: privados, cifrados (AES-256-GCM) e fora de public/.
