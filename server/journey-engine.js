@@ -438,7 +438,7 @@ export function computeJourney(user, jr, now = new Date()) {
     chegada: jr.dados.dataEntrada || null,
     destino: {
       origem: ctx.profile.paisResidencia || 'Brasil',
-      universidade: ctx.university ? { id: ctx.university.id, nome: ctx.university.nome, sigla: ctx.university.sigla, capa: ctx.university.capa } : null,
+      universidade: ctx.university ? { id: ctx.university.id, nome: ctx.university.nome, sigla: ctx.university.sigla, capa: ctx.university.capa, logo: ctx.university.logo } : null,
       programa: ctx.program ? { id: ctx.program.id, nome: ctx.program.nome, demo: Boolean(ctx.program.demo), url: ctx.program.url } : null,
       cidade: ctx.university?.cidade || null,
       pais: ctx.university?.pais || 'Espanha',

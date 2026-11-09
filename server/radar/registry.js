@@ -119,14 +119,14 @@ export const APPLICATION_CHANNEL = {
 };
 
 export const UNIVERSITY_INFO = {
-  ual: { id: 'ual', sigla: 'UAL', nome: 'Universidad de Almería', cidade: 'Almería', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/andaluzia.svg' },
-  uca: { id: 'uca', sigla: 'UCA', nome: 'Universidad de Cádiz', cidade: 'Cádiz', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/cadiz.svg' },
-  uco: { id: 'uco', sigla: 'UCO', nome: 'Universidad de Córdoba', cidade: 'Córdoba', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/cordoba.svg' },
-  ugr: { id: 'ugr', sigla: 'UGR', nome: 'Universidad de Granada', cidade: 'Granada', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/granada.svg' },
-  uhu: { id: 'uhu', sigla: 'UHU', nome: 'Universidad de Huelva', cidade: 'Huelva', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/andaluzia.svg' },
+  ual: { id: 'ual', sigla: 'UAL', nome: 'Universidad de Almería', cidade: 'Almería', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/andaluzia.svg', logo: '/img/universities/ual.png' },
+  uca: { id: 'uca', sigla: 'UCA', nome: 'Universidad de Cádiz', cidade: 'Cádiz', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/cadiz.svg', logo: '/img/universities/uca.gif' },
+  uco: { id: 'uco', sigla: 'UCO', nome: 'Universidad de Córdoba', cidade: 'Córdoba', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/cordoba.svg', logo: '/img/universities/uco.jpg' },
+  ugr: { id: 'ugr', sigla: 'UGR', nome: 'Universidad de Granada', cidade: 'Granada', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/granada.svg', logo: '/img/universities/ugr.jpg' },
+  uhu: { id: 'uhu', sigla: 'UHU', nome: 'Universidad de Huelva', cidade: 'Huelva', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/andaluzia.svg', logo: '/img/universities/uhu.svg' },
   unia: { id: 'unia', sigla: 'UNIA', nome: 'Universidad Internacional de Andalucía', cidade: 'Sevilla', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/andaluzia.svg' },
-  ujaen: { id: 'ujaen', sigla: 'UJA', nome: 'Universidad de Jaén', cidade: 'Jaén', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/andaluzia.svg' },
-  uma: { id: 'uma', sigla: 'UMA', nome: 'Universidad de Málaga', cidade: 'Málaga', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/malaga.svg' },
-  upo: { id: 'upo', sigla: 'UPO', nome: 'Universidad Pablo de Olavide', cidade: 'Sevilla', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/sevilla.svg' },
-  us: { id: 'us', sigla: 'US', nome: 'Universidad de Sevilla', cidade: 'Sevilla', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/sevilla.svg' },
+  ujaen: { id: 'ujaen', sigla: 'UJA', nome: 'Universidad de Jaén', cidade: 'Jaén', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/andaluzia.svg', logo: '/img/universities/ujaen.png' },
+  uma: { id: 'uma', sigla: 'UMA', nome: 'Universidad de Málaga', cidade: 'Málaga', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/malaga.svg', logo: '/img/universities/uma.png' },
+  upo: { id: 'upo', sigla: 'UPO', nome: 'Universidad Pablo de Olavide', cidade: 'Sevilla', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/sevilla.svg', logo: '/img/universities/upo.png' },
+  us: { id: 'us', sigla: 'US', nome: 'Universidad de Sevilla', cidade: 'Sevilla', pais: 'Espanha', regiao: 'Andaluzia', procedimentoId: 'dua-masteres', capa: '/img/cities/sevilla.svg', logo: '/img/universities/us.png' },
 };

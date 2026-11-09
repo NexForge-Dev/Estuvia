@@ -113,7 +113,7 @@ function card(opp, { user = null, now = Date.now() } = {}) {
     programId: opp.programId,
     tipo: opp.tipo,
     anoAcademico: opp.anoAcademico,
-    universidade: { id: u.id, sigla: u.sigla, nome: u.nome, cidade: u.cidade, pais: u.pais, regiao: u.regiao, capa: u.capa },
+    universidade: { id: u.id, sigla: u.sigla, nome: u.nome, cidade: u.cidade, pais: u.pais, regiao: u.regiao, capa: u.capa, logo: u.logo },
     programa: {
       nome: p.nome, ramos: p.ramos || [], codigo: p.codigo, tipoTitulo: p.tipoTitulo, ofertaCondicionada: Boolean(p.ofertaCondicionada),
       fichaUrl: p.fichaUrl, webPropria: p.ficha?.webPropria || p.webPropria, cursoCatalogo: p.cursoCatalogo,

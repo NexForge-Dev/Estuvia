@@ -11,3 +11,4 @@ video/tools/tmp/
 video/assets/audio/*.wav
 .vercel
 .env*
+Plantos.txt

@@ -35,6 +35,7 @@ export function JourneyCard(j, { onRemove } = {}) {
         h('span', { class: `chip-status ${cls}` }, label),
         d.programa?.demo ? h('span', { class: 'chip-demo' }, 'Dados demo') : null,
       ),
+      d.universidade?.logo ? h('span', { class: `jc-logo-badge jc-logo-${d.universidade.id}` }, h('img', { src: d.universidade.logo, alt: '', loading: 'lazy' })) : null,
       h('div', { class: 'jc-route' }, h('span', {}, d.origem), icon('arrow', { size: 14 }), h('span', {}, d.cidade || 'Andaluzia')),
       onRemove ? remove : null,
     ),

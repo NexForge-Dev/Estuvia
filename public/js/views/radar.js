@@ -102,8 +102,8 @@ function followButton(c, onChange) {
 
 function opportunityCard(c, redraw) {
   const u = c.universidade;
-  const cover = h('div', { class: 'rd-card-cover' });
-  if (u.capa) cover.style.backgroundImage = `url("${u.capa}")`;
+  const cover = h('div', { class: 'rd-card-cover', 'data-university': u.id },
+    u.logo ? h('img', { class: 'rd-card-logo', src: u.logo, alt: '', loading: 'lazy' }) : null);
   return h('article', { class: `rd-card rd-card-${c.tom}${c.demo ? ' rd-demo' : ''}` },
     cover,
     h('div', { class: 'rd-card-body' },

@@ -87,7 +87,7 @@ export async function catalogView() {
         const u = uni(p.universidadeId);
         const chosen = choices.includes(p.id);
         return h('article', { class: 'program-card' },
-          h('div', { class: 'pc-media' }, h('img', { src: u.capa, alt: '', loading: 'lazy' }), h('span', { class: 'chip-demo' }, p.demo ? 'Dados demo' : 'Verificado')),
+          h('div', { class: 'pc-media pc-media-logo', 'data-university': u.id }, h('img', { src: u.logo, alt: '', loading: 'lazy' }), h('span', { class: 'chip-demo' }, p.demo ? 'Dados demo' : 'Verificado')),
           h('div', { class: 'pc-body' },
             h('p', { class: 'eyebrow' }, `${u.sigla} · ${u.cidade}`),
             h('h3', {}, p.nome),
@@ -106,7 +106,9 @@ export async function catalogView() {
               p.demo ? h('span', { class: 'muted small' }, 'Exemplo: não iniciar candidatura com este programa.') : h('button', { class: 'btn btn-cta btn-sm', type: 'button', onClick: () => createJourney(p) }, 'Criar jornada'))));
       })) : h('p', { class: 'empty-inline' }, 'Nenhum programa com esses filtros.'),
       h('section', { class: 'panel' }, h('h2', { class: 'panel-title' }, 'Universidades públicas andaluzas'),
-        h('ul', { class: 'unis' }, universities.map((u) => h('li', {}, h('a', { href: u.url, target: '_blank', rel: 'noopener noreferrer' }, `${u.sigla} - ${u.nome}`), h('span', { class: 'muted small' }, ` · ${u.cidade}`))))),
+        h('ul', { class: 'unis' }, universities.map((u) => h('li', { class: 'uni-directory-item', 'data-university': u.id },
+          h('img', { class: 'uni-directory-logo', src: u.logo, alt: '', loading: 'lazy' }),
+          h('div', {}, h('a', { href: u.url, target: '_blank', rel: 'noopener noreferrer' }, `${u.sigla} - ${u.nome}`), h('span', { class: 'muted small' }, ` · ${u.cidade}`)))))),
     );
   }
   draw();
