@@ -1,6 +1,6 @@
 # Estuvia — Documentação completa
 
-> Documento único gerado por `node scripts/build-docs.mjs` a partir do `README.md` e de `docs/*.md` em 2026-10-29. Para alterar, edite os arquivos de origem e gere de novo.
+> Documento único gerado por `node scripts/build-docs.mjs` a partir do `README.md` e de `docs/*.md` em 2026-11-09. Para alterar, edite os arquivos de origem e gere de novo.
 
 ## Índice
 
@@ -31,7 +31,7 @@
   - [03 — Arquitetura](#doc-03)
   - [05 — Referência da API](#doc-05)
   - [04 — Segurança e privacidade](#doc-04)
-  - [25 — Production readiness (audit of 2026-10-28)](#doc-25)
+  - [25 — Production readiness (audit of 2026-11-09)](#doc-25)
 - [Parte 5 — Apresentação e próximos passos](#parte-5)
   - [09 — Roteiro de apresentação (≈10 min)](#doc-09)
   - [10 — Próximos passos](#doc-10)
@@ -147,7 +147,7 @@ tests/
 
 ---
 
-**Data and honesty:** official sources consulted on 10/24/2026. Programs in the local catalog are **demonstrative** ("Demo data" label); the Radar brings real UGR programs. The 2026 IPREM (€600) stays **pending confirmation**: it matches Ley 31/2022 (2023 budget, automatically extended into 2026), but no 2026-specific norm was found in the BOE on 10/28/2026. The DUA short link (`lajunta.es/portaldua` → Junta de Andalucía DUA page) and the Salvador consulate contacts were checked against the official pages on 10/28/2026. Scholarships appear as "no confirmed call" until the current call is checked. There are no verified video tutorials — the tutorial card stays hidden until one exists.
+**Data and honesty:** official sources consulted on 11/09/2026. Programs in the local catalog are **demonstrative** ("Demo data" label); the Radar brings real UGR programs. The official student guide lists €600/month as the IPREM reference for 2026; the simulator is an estimate for a single student and does not model dependents or prepaid accommodation, so confirm the current calculation with the competent consulate. The DUA short link (`lajunta.es/portaldua` → Junta de Andalucía DUA page) and the Salvador consulate contacts were checked against the official pages on 10/28/2026. Scholarships appear as "no confirmed call" until the current call is checked. There are no verified video tutorials — the tutorial card stays hidden until one exists.
 
 
 
@@ -198,6 +198,8 @@ No celular, Início, Jornada, Agenda e Documentos ficam na **barra de baixo**. O
 - **Preciso de ajuda:** a missão vira passo a passo, e o Mentor ajuda.
 - Rodadas futuras aparecem bloqueadas até a hora certa. Prazos oficiais aparecem mesmo assim.
 
+Para candidatura com título estrangeiro, confira a lista de documentos acadêmicos da missão 2.4: diploma, histórico, comprovação oficial de acesso à pós-graduação no país de origem e escala de notas. A fase 1 do DUA não oferece vaga em todos os mestrados. Antes do visto, use o prazo de pelo menos dois meses e a lista atual do consulado que atende sua residência; os requisitos de antecedentes e atestado variam.
+
 ### 4. Minha pasta (guardar documentos para a viagem)
 
 Fica no topo de **Documentos**.
@@ -231,7 +233,7 @@ Abaixo da pasta fica a **carteira por etapa**: o que falta para a etapa atual, o
 
 ### 6. Financiamento
 
-Três contas que nunca se misturam: **quanto custa preparar**, **quanto custa morar lá** e **quanto o visto exige comprovar**. Registre seus recursos para saber se o plano fecha. Se faltar, a tela mostra caminhos: bolsas, apoio da família, economia, destinos mais baratos.
+Três contas que nunca se misturam: **quanto custa preparar**, **quanto custa morar lá** e **quanto o visto exige comprovar**. A referência 2026 cadastrada é €600 por mês para estudante individual; dependentes e alojamento antecipado podem alterar o cálculo e devem ser confirmados no consulado. Registre seus recursos para saber se o plano fecha. Se faltar, a tela mostra caminhos: bolsas, apoio da família, economia, destinos mais baratos.
 
 ### 7. Mentor
 
@@ -470,7 +472,7 @@ Legenda de status: ✅ implementado no MVP · 🟡 parcial · ⏳ planejado
 | ID | Prior. | Requisito | Status | Onde |
 |---|---|---|---|---|
 | RF-01 | P0 | Onboarding: nome, formação, área, estado, idiomas, ano pretendido, "porquê" | ✅ | `public/js/views/profile.js`, `PUT /api/me/profile` |
-| RF-02 | P0 | Catálogo de universidades e mestrados | 🟡 9 universidades + 3 programas de demonstração | `server/content/catalog.js` |
+| RF-02 | P0 | Catálogo de universidades e mestrados | 🟡 9 universidades; 5 programas locais demonstrativos; Radar com 138 mestrados UGR para 2026/27. O conector DUA consulta as nove universidades e a UNIA, mas a base local ainda não recebeu esses catálogos; requisitos detalhados por programa também seguem pendentes. | `server/content/catalog.js`, `server/radar/` |
 | RF-03 | P0 | Checagem preliminar de requisitos (requerido / verificar) com fonte | ✅ | Ficha do programa em `catalog.js` (view) |
 | RF-04 | P0 | Roadmap com dependências e tarefas paralelas | ✅ 6 fases, 23 missões, desbloqueio e missões paralelas | `server/content/journey.js`, `server/game.js` |
 | RF-05 | P0 | Gestor de até 6 opções ordenáveis | ✅ | `PUT /api/me/choices` |
@@ -564,7 +566,7 @@ Legenda de status: ✅ implementado no MVP · 🟡 parcial · ⏳ planejado
 - **Prioridade crítica:** prazo ≤ 7 dias ou `urgenteSe` (ex.: admissão registrada → 4.1; visto aprovado → 5.9/6.2/6.3).
 - **Missões opcionais** (3.8, 5.2) não contam como pendência se não forem iniciadas.
 - **Situação externa** por jornada: adjudicação, matrícula, visto (`SITUACAO` em `rounds.js`).
-- **Prazos:** só regra oficial (TIE = entrada + 30 dias), prazo confirmado pelo Radar ou data declarada pelo estudante. Nunca inventados.
+- **Prazos:** só regra oficial (TIE = entrada + 1 mês de calendário), prazo confirmado pelo Radar ou data declarada pelo estudante. Nunca inventados.
 - **Progresso:** missão não concluída vale no máximo 85% do seu peso; rodadas e jornada só chegam a 100% com conclusões reais.
 
 ### 4. Conteúdo da missão
@@ -591,7 +593,7 @@ O card **Tutorial visual** só aparece com tutorial verificado (nenhum cadastrad
 
 ### 6. Financiamento (`finance-engine.js`)
 
-- **(A) Exigência do visto** = `IPREM[ano].mensal × 100% × meses` — tabela em `content/finance.js` (2026: €600, *pendente de confirmação*). Ano sem valor → usa o mais recente e sinaliza.
+- **(A) Exigência estimada do visto** = `IPREM[ano].mensal × 100% × meses` — tabela em `content/finance.js` (referência oficial consultada para 2026: €600). O simulador cobre apenas estudante individual; dependentes e ajustes por alojamento/bolsa antecipados exigem confirmação consular.
 - **(B) Orçamento real** = custos únicos + mensais × meses; moradia e rota escolhidas entram automaticamente.
 - Recursos: só "disponível/confirmado" contam; "previsto/solicitado" aparecem à parte. Bolsa **concedida** entra pela cobertura confirmada e cria tarefas de aceite.
 - Déficit → caminhos: bolsas, apoio familiar documentado, destinos mais baratos, outro período, plano de economia mensal, financiamento educacional (trabalho não substitui a comprovação).
@@ -1590,10 +1592,10 @@ Princípio: nenhum dado sobre abertura de inscrições é apresentado como confi
 
 | Etapa | Situação |
 |---|---|
-| 1 — Radar funcional (UGR) | ✅ Catálogo oficial completo da UGR (138 másteres, curso 2026/2027), cards, filtros, detalhe, links oficiais. Calendário DUA 2026/2027 cadastrado; 2027/2028 aparece como **Não anunciado**. |
+| 1 — Radar funcional (UGR + catálogo DUA) | ✅ Catálogo oficial da UGR (138 másteres, curso 2026/2027), cards, filtros, detalhe, links oficiais. O conector DUA consulta o catálogo das nove universidades públicas andaluzas e da UNIA; ele registra nome e ficha oficial, sem inferir requisitos não coletados. Calendário DUA 2026/2027 cadastrado; 2027/2028 aparece como **Não anunciado**. |
 | 2 — Monitoramento automatizado | ✅ Conectores do calendário DUA, do listado UGR e das fichas UGR; snapshots com hash; comparação; validação; fila de revisão; agendador. |
 | 3 — Alertas e Agenda AI | ✅ "Avise-me quando abrir", alertas sem duplicação, sugestões de Agenda com prazos oficiais preservados e detecção de mudanças. Prazos oficiais aparecem nas missões e na Agenda da jornada. |
-| 4 — Expansão | ⏳ Outras universidades andaluzas, bolsas, outras regiões. Cada uma precisa de conectores e regras próprias — **não presumir DUA fora da Andaluzia**. |
+| 4 — Expansão | ⏳ Conferir requisitos detalhados por programa nas outras universidades, conectar bolsas e cobrir outras regiões. Cada região precisa de conectores e regras próprias — **não presumir DUA fora da Andaluzia**. |
 
 ### Arquitetura
 
@@ -1623,6 +1625,8 @@ public/css/radar.css
 tests/radar.test.js
 ```
 
+Com `DB_PROVIDER=supabase`, o estado do Radar (`sources`, `snapshots`, `programs`, `opportunities`, `windows`, `events` etc.) é persistido na linha `radar` de `public.estuvia_state`. Os snapshots HTML brutos continuam em `data/radar-snapshots/`.
+
 #### Fontes monitoradas
 
 | Fonte | Método | Frequência | Autoridade |
@@ -1631,10 +1635,10 @@ tests/radar.test.js
 | Listado de másteres UGR | HTML público | 24 h | catálogo |
 | Fichas dos másteres UGR | HTML público, 12 por execução | 2 h (≈ todas por dia) | dados do programa |
 | BOJA | revisão manual (buscador bloqueado por robots.txt) | — | normativa (prioridade máxima) |
-| Catálogo DUA (`mo_catalogo_top.php`) | revisão manual (formulário dinâmico) | — | oferta DUA |
+| Catálogo DUA (`mo_catalogo.php`) | HTML público, consulta POST por universidade e fase | 24 h | oferta DUA |
 | Portal DUA, SAAP UGR | revisão manual | — | canal / orientação |
 
-As frequências são metas configuráveis, não garantia de atualização instantânea. Falhas usam recuo exponencial (15 min → até a frequência da fonte).
+As frequências são metas configuráveis, não garantia de atualização instantânea. Falhas usam recuo exponencial (15 min → até a frequência da fonte). O catálogo DUA atualiza a listagem e os links oficiais das fichas; ainda não coleta automaticamente o conteúdo interno de cada ficha. A base local consultada nesta preparação contém apenas os 138 registros UGR: as últimas execuções do DUA falharam antes de publicar os catálogos das demais instituições. A execução seguinte, após esta correção, precisa ser conferida no painel do Radar.
 
 #### Regras de publicação
 
@@ -1651,7 +1655,7 @@ As frequências são metas configuráveis, não garantia de atualização instan
 
 Vagas ofertadas nunca significam vagas disponíveis, e a mudança de estado da oportunidade nunca significa que o estudante se candidatou (isso é registrado na missão 3.6).
 
-### Modelo de dados (data/radar.json)
+### Modelo de dados (data/radar.json ou estado Supabase)
 
 | Entidade | Chave / conteúdo |
 |---|---|
@@ -1960,7 +1964,8 @@ Express (server/app.js)
         │
         ├─ game.js     regras de XP, desbloqueio, conquistas, dicas
         ├─ content/*   conteúdo editorial versionado
-        └─ store.js    persistência (JSON hoje → PostgreSQL amanhã)
+        ├─ store.js    estado de usuários/comunidade (JSON local ou Supabase)
+        └─ radar/db.js estado do Radar (JSON local ou Supabase)
 ```
 
 ### Decisões técnicas
@@ -1971,14 +1976,16 @@ Express (server/app.js)
 | **Front sem build** (HTML + CSS + ES modules) | Roda com `npm start`, sem bundler nem etapa de compilação, e é fácil de apresentar e modificar. A migração para Next.js/React continua possível (o documento de visão cita isso como stack candidata). |
 | **Roteamento por hash** (`#/jornada`) | Funciona em qualquer hospedagem estática. |
 | **Conteúdo em `server/content/`** | A base editorial fica versionada no git, revisável por pull request, com fonte e data. É o embrião do painel editorial (RF-10). |
-| **Persistência em arquivo JSON** | Atende ao "sem banco por enquanto". Toda leitura e escrita passa por `store.js`, então trocar por banco é isolado. |
+| **Persistência intercambiável** | `DB_PROVIDER=json` mantém os arquivos locais. `DB_PROVIDER=supabase` grava os estados principais em linhas JSONB no Supabase, sem expor a chave secreta ao navegador. |
 | **SSE para o assistente** | A resposta aparece enquanto é gerada, com uma conexão HTTP simples. |
 | **DOM via `h()` + `textContent`** | Elimina XSS por construção (nada de `innerHTML` com dados). |
 
 ### Modelo de dados (como está gravado hoje)
 
+O adaptador Supabase preserva o formato atual do MVP em duas linhas da tabela `estuvia_state`: `main` contém usuários, comunidade, auditoria e analytics; `radar` contém fontes, programas, oportunidades, janelas e alertas. Cada gravação usa uma versão esperada para detectar concorrência e evitar sobrescrita silenciosa. A estrutura normalizada continua sendo uma etapa futura.
+
 ```jsonc
-// data/db.json
+// data/db.json ou public.estuvia_state (id = "main")
 {
   "users": [{
     "id": "uuid",
@@ -2016,7 +2023,15 @@ Express (server/app.js)
 | BudgetItem | `user.budget` | `budget_item` |
 | AuditEvent | `audit` | `audit_event` |
 
-#### Como migrar
+#### Supabase
+
+1. Aplique [`supabase/schema.sql`](../supabase/schema.sql) no SQL Editor do projeto Supabase.
+2. No `.env` do servidor, defina `DB_PROVIDER=supabase`, `SUPABASE_URL` e `SUPABASE_SECRET_KEY` (a chave `sb_secret_...`, somente no servidor).
+3. Reinicie o servidor. Se as linhas ainda não existirem, o app importa os estados locais `data/db.json` e `data/radar.json` para `main` e `radar`. Os arquivos locais são preservados como cópia.
+
+O cliente do navegador não usa a chave secret. O `.env.local` e os helpers `@supabase/ssr` do exemplo Next.js não se aplicam a este backend Express. A mídia comunitária, os arquivos cifrados de documentos e os snapshots HTML brutos do Radar continuam no armazenamento local; esta integração migra o estado JSON principal.
+
+#### Migração para tabelas normalizadas
 
 1. Criar as tabelas acima (sugestão: Prisma ou Drizzle para migrations).
 2. Reimplementar `server/store.js` mantendo a mesma interface (`users.findByEmail`, `findById`, `create`, `update`, `remove`, `audit.log`). As rotas não mudam.
@@ -2025,7 +2040,7 @@ Express (server/app.js)
 
 ### Escalabilidade e operação
 
-- O arquivo JSON serve para **uma instância** e para o volume de um piloto (dezenas ou centenas de usuários). Para várias instâncias, é preciso banco.
+- O provider JSON serve para **uma instância**. O provider Supabase persiste estado no Postgres e detecta conflitos entre processos com versionamento; como o app ainda carrega o estado em memória, rode uma instância de escrita até migrar para tabelas/reposórios por operação.
 - O rate limit fica em memória. Com várias instâncias, ele deve usar um store compartilhado (Redis).
 - O servidor é stateless, exceto pelo `store`. A sessão vai no cookie assinado.
 
@@ -2143,7 +2158,7 @@ Módulos de outras frentes: `/radar`, `/radar/admin` (doc 11), `/community` (doc
 
 <a id="doc-25"></a>
 
-## 25 — Production readiness (audit of 2026-10-28)
+## 25 — Production readiness (audit of 2026-11-09)
 
 This document describes what the code **actually** does today and what must happen before a commercial launch. It replaces assumptions in older docs where they conflict.
 
@@ -2207,7 +2222,7 @@ Roles come only from the server-side `role` field: `admin` (only the `ADMIN_EMAI
 1. **No email verification.** Password reset by email now exists (`POST /api/auth/forgot-password` / `reset-password`, Resend via `RESEND_API_KEY` + `EMAIL_FROM`, 1-hour single-use token stored hashed, resets revoke sessions). Without those variables in production, recovery responds 503. Registration still does not verify the email address.
 2. **Single-instance JSON persistence** with no automated backups. Acceptable for a small pilot on one server with disk backups; not for scale.
 3. **Legal review (LGPD/GDPR)** — see below.
-4. **Official-data status:** IPREM 2026 (€600) still *pending* (matches Ley 31/2022, extended budgets; no 2026-specific norm found in the BOE on 2026-10-28). DUA short link and Salvador consulate contacts verified on 2026-10-28. The local catalog is demonstrative; scholarships show "no confirmed call".
+4. **Official-data status:** the Ministry's student guide lists €600/month as the 2026 IPREM reference and the 2023 state budget remains extended in 2026. The visa simulator remains an estimate and does not model dependents or prepaid accommodation. DUA short link and Salvador consulate contacts verified on 2026-10-28. The local catalog is demonstrative; scholarships show "no confirmed call".
 5. **Self-declared official outcomes:** admission/enrollment/visa are student-declared (now recorded with `origem: 'declarado'`, audited, and enrollment/visa require a declared admission first). There is no officially-confirmed state; product decision needed.
 
 ### Legal questions for qualified review
@@ -2216,7 +2231,7 @@ Roles come only from the server-side `role` field: `admin` (only the `ADMIN_EMAI
 - Whether internal admin notes must be included in the data export (currently **excluded**, matching the admin panel's promise).
 - Consent text says only the student accesses documents, while the server holds the key (encryption at rest, not end-to-end). Changing it may require bumping `CONSENT_VERSION`.
 - Free-text detail of reports by deleted users is kept (author id removed).
-- Visa proof-of-funds is shown as an estimate (100% IPREM × months, single applicant); dependents and deductions are not modelled. Never presented as a guarantee.
+- Visa proof-of-funds is shown as an estimate (100% IPREM × months, single applicant); dependent allowances and prepaid accommodation adjustments are not modelled. Never presented as a guarantee.
 
 ### Known limitations (accepted for now)
 
@@ -2261,7 +2276,7 @@ Roles come only from the server-side `role` field: `admin` (only the `ADMIN_EMAI
 |---|---|---|
 | 0 — Base editorial | Manual convertido em regras, tarefas e fontes | ✅ `server/content/` |
 | 1 — Protótipo | Perfil, catálogo piloto, ficha, roadmap e tarefas | ✅ |
-| 2 — MVP | 6 preferências, status manual, orçamento, fontes, IA, gamificação | ✅ (calendário pendente) |
+| 2 — MVP | Preferências, status manual, orçamento, fontes, IA, gamificação | ✅ (calendário 2026/27 cadastrado no Radar; próximo ciclo depende de publicação oficial) |
 | 3 — Validação | Entrevistas, usabilidade, disposição a pagar | ⏳ próximo |
 | 4 — Andaluzia | Mais universidades e cursos com revisão editorial | ⏳ |
 | 5 — Expansão | Comunidade, oportunidades, novas regiões | ⏳ |
@@ -2270,8 +2285,8 @@ Roles come only from the server-side `role` field: `admin` (only the `ADMIN_EMAI
 
 1. **Banco de dados:** PostgreSQL, reimplementando `server/store.js` (ver `03-arquitetura.md`).
 2. **Recuperação de senha e verificação de e-mail.**
-3. **Catálogo real:** escolher 3–5 mestrados UGR de áreas diferentes, com pelo menos um que exija idioma e um com exigência não confirmada, e verificar cada requisito na ficha oficial.
-4. **Calendário (RF-08):** cadastrar as datas oficiais do ciclo com fonte, mais lembretes opt-in por e-mail. Data sem fonte não gera alerta.
+3. **Catálogo real por programa:** o Radar cobre 138 mestrados UGR em 2026/27. Verificar requisitos acadêmicos, idioma, documentos e oferta de cada programa diretamente na ficha oficial antes de recomendar candidatura; o coletor atual não confirma idioma nem todos os requisitos.
+4. **Calendário (RF-08):** importar e revisar o calendário de cada novo ciclo assim que houver publicação oficial, com fonte. Lembretes por e-mail continuam pendentes; data sem fonte não gera alerta.
 5. **Painel editorial (RF-10):** tela para cadastrar requisito, fonte, data de revisão e status, com alerta de regra vencida.
 6. **Avaliação do Guia:** conjunto de perguntas reais com resposta esperada.
 7. **Analytics com privacidade** para as métricas de ativação e uso contínuo.

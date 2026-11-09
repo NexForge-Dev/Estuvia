@@ -12,6 +12,22 @@ export async function catalogView() {
   const [{ universities, programs }, sources] = await Promise.all([getCatalog(), getSources()]);
   const uni = (id) => universities.find((u) => u.id === id);
   const prog = (id) => programs.find((p) => p.id === id);
+  // Jornadas criadas a partir do Radar também aparecem em "Minhas opções".
+  // Carrega os nomes oficiais para não exibir o ID interno do programa.
+  const radarPrograms = new Map();
+  try {
+    const first = await api.get('/radar/opportunities?limit=100');
+    for (const item of first.items || []) radarPrograms.set(item.programId, item);
+    if (first.total > (first.items || []).length) {
+      const next = await api.get(`/radar/opportunities?limit=100&offset=${first.items.length}`);
+      for (const item of next.items || []) radarPrograms.set(item.programId, item);
+    }
+  } catch { /* o catálogo de exemplo continua acessível se o Radar estiver indisponível */ }
+  const selectedProgram = (id) => {
+    const local = prog(id);
+    const official = radarPrograms.get(id);
+    return local || (official ? { id, nome: official.programa.nome, universidadeId: official.universidade.id, demo: official.demo } : null);
+  };
   const filters = { universidade: '', cidade: '', area: '', modalidade: '', duracao: '' };
   const root = h('div', { class: 'stack-lg' });
 
@@ -19,6 +35,10 @@ export async function catalogView() {
     try { setMe(await api.put('/me/choices', { choices })); draw(); } catch (e) { toast(e.message, 'err'); }
   }
   async function createJourney(p) {
+    if (p.demo) {
+      toast('Este é um curso de demonstração. Abra o Radar para escolher um mestrado oficial.');
+      return;
+    }
     try {
       const year = new Date().getFullYear() + 1;
       const { journey } = await api.post('/journeys', { programaId: p.id, anoAcademico: `${year}/${String((year + 1) % 100).padStart(2, '0')}` });
@@ -44,13 +64,14 @@ export async function catalogView() {
     });
     mount(root,
       h('header', { class: 'page-head' }, h('div', {}, h('p', { class: 'eyebrow' }, 'Rodada 1 · Missões 1.2 e 1.3'), h('h1', {}, icon('cap', { size: 26 }), ' Mestrados'),
-        h('p', { class: 'muted' }, 'Universidades públicas da Andaluzia. Os programas do protótipo são demonstrativos e mostram como requisitos diferentes geram jornadas diferentes.'))),
+        h('p', { class: 'muted' }, 'Os cartões abaixo são exemplos demonstrativos e não podem ser usados numa candidatura real. Para consultar programas oficiais e iniciar uma jornada, use o Radar.'),
+        h('a', { class: 'btn btn-cta', href: '#/oportunidades' }, 'Explorar mestrados oficiais no Radar', icon('arrow', { size: 14 })))),
       h('section', { class: 'panel' },
-        h('h2', { class: 'panel-title' }, icon('flag', { size: 18 }), `Minhas opções (${choices.length}/6)`),
-        h('p', { class: 'muted small' }, 'Até 6 programas em ordem de preferência real (ciclo 2026/27). O envio oficial é feito no DUA.'),
+        h('h2', { class: 'panel-title' }, icon('flag', { size: 18 }), `Minhas opções (${choices.length}/6 na Estuvia)`),
+        h('p', { class: 'muted small' }, 'A Estuvia guarda até 6 opções. Esse limite interno não confirma quantas o edital vigente aceita. Confira o edital e faça o envio oficial no DUA.'),
         choices.length ? h('ol', { class: 'choices' }, choices.map((id, i) => h('li', { class: 'choice' },
           h('span', { class: 'choice-pos' }, String(i + 1)),
-          h('span', { class: 'choice-name' }, prog(id)?.nome || id, h('small', { class: 'muted' }, ` · ${uni(prog(id)?.universidadeId)?.sigla || ''}`)),
+          h('span', { class: 'choice-name' }, selectedProgram(id)?.nome || 'Programa oficial (consulte no Radar)', h('small', { class: 'muted' }, ` · ${uni(selectedProgram(id)?.universidadeId)?.sigla || radarPrograms.get(id)?.universidade.sigla || ''}${selectedProgram(id)?.demo ? ' · demonstração' : ''}`)),
           h('span', { class: 'row' },
             h('button', { class: 'icon-btn sm', type: 'button', disabled: i === 0, 'aria-label': 'Subir', onClick: () => move(i, -1) }, icon('back', { size: 12, cls: 'rot90' })),
             h('button', { class: 'icon-btn sm', type: 'button', disabled: i === choices.length - 1, 'aria-label': 'Descer', onClick: () => move(i, 1) }, icon('arrow', { size: 12, cls: 'rot90' })),
@@ -81,8 +102,8 @@ export async function catalogView() {
             h('ul', { class: 'reqs' }, p.requisitos.map((r) => h('li', {}, h('span', { class: `req req-${r.status}` }, STATUS_LABEL[r.status]), ' ', r.descricao, ' ', sourceLink(sources.find((s) => s.id === r.fonte))))),
             h('div', { class: 'row wrap' },
               h('a', { class: 'btn btn-ghost btn-sm', href: p.url, target: '_blank', rel: 'noopener noreferrer' }, 'Página oficial', icon('external', { size: 12 })),
-              h('button', { class: 'btn btn-ghost btn-sm', type: 'button', disabled: !chosen && choices.length >= 6, onClick: () => save(chosen ? choices.filter((c) => c !== p.id) : [...choices, p.id]) }, chosen ? 'Remover das opções' : 'Adicionar às opções'),
-              h('button', { class: 'btn btn-cta btn-sm', type: 'button', onClick: () => createJourney(p) }, 'Criar jornada'))));
+              h('button', { class: 'btn btn-ghost btn-sm', type: 'button', disabled: p.demo || (!chosen && choices.length >= 6), title: p.demo ? 'Exemplos não podem ser usados numa candidatura real' : '', onClick: () => save(chosen ? choices.filter((c) => c !== p.id) : [...choices, p.id]) }, chosen ? 'Remover das opções' : 'Adicionar às opções'),
+              p.demo ? h('span', { class: 'muted small' }, 'Exemplo: não iniciar candidatura com este programa.') : h('button', { class: 'btn btn-cta btn-sm', type: 'button', onClick: () => createJourney(p) }, 'Criar jornada'))));
       })) : h('p', { class: 'empty-inline' }, 'Nenhum programa com esses filtros.'),
       h('section', { class: 'panel' }, h('h2', { class: 'panel-title' }, 'Universidades públicas andaluzas'),
         h('ul', { class: 'unis' }, universities.map((u) => h('li', {}, h('a', { href: u.url, target: '_blank', rel: 'noopener noreferrer' }, `${u.sigla} - ${u.nome}`), h('span', { class: 'muted small' }, ` · ${u.cidade}`))))),

@@ -47,7 +47,7 @@
 - **Prioridade crítica:** prazo ≤ 7 dias ou `urgenteSe` (ex.: admissão registrada → 4.1; visto aprovado → 5.9/6.2/6.3).
 - **Missões opcionais** (3.8, 5.2) não contam como pendência se não forem iniciadas.
 - **Situação externa** por jornada: adjudicação, matrícula, visto (`SITUACAO` em `rounds.js`).
-- **Prazos:** só regra oficial (TIE = entrada + 30 dias), prazo confirmado pelo Radar ou data declarada pelo estudante. Nunca inventados.
+- **Prazos:** só regra oficial (TIE = entrada + 1 mês de calendário), prazo confirmado pelo Radar ou data declarada pelo estudante. Nunca inventados.
 - **Progresso:** missão não concluída vale no máximo 85% do seu peso; rodadas e jornada só chegam a 100% com conclusões reais.
 
 ## 4. Conteúdo da missão
@@ -74,7 +74,7 @@ O card **Tutorial visual** só aparece com tutorial verificado (nenhum cadastrad
 
 ## 6. Financiamento (`finance-engine.js`)
 
-- **(A) Exigência do visto** = `IPREM[ano].mensal × 100% × meses` — tabela em `content/finance.js` (2026: €600, *pendente de confirmação*). Ano sem valor → usa o mais recente e sinaliza.
+- **(A) Exigência estimada do visto** = `IPREM[ano].mensal × 100% × meses` — tabela em `content/finance.js` (referência oficial consultada para 2026: €600). O simulador cobre apenas estudante individual; dependentes e ajustes por alojamento/bolsa antecipados exigem confirmação consular.
 - **(B) Orçamento real** = custos únicos + mensais × meses; moradia e rota escolhidas entram automaticamente.
 - Recursos: só "disponível/confirmado" contam; "previsto/solicitado" aparecem à parte. Bolsa **concedida** entra pela cobertura confirmada e cria tarefas de aceite.
 - Déficit → caminhos: bolsas, apoio familiar documentado, destinos mais baratos, outro período, plano de economia mensal, financiamento educacional (trabalho não substitui a comprovação).

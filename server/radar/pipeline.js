@@ -380,7 +380,7 @@ export async function runSource(sourceId, { fetchImpl, now = Date.now() } = {}) 
         if (targetFailure) failed ||= targetFailure;
         const programs = [...new Map(validPages.flatMap(({ parsed }) => parsed.programas).map((p) => [p.id, p])).values()]
           .sort((a, b) => a.codigo.localeCompare(b.codigo));
-        const parsed = { ok: true, tipo: 'catalogo', ...t.parseContext, programas, avisos: [] };
+        const parsed = { ok: true, tipo: 'catalogo', ...t.parseContext, programas: programs, avisos: [] };
         const text = validPages.map(({ page }, i) => `<!-- fase ${i + 1} -->\n${page.text}`).join('\n');
         const fetchedAt = validPages.map(({ page }) => page.fetchedAt).sort().at(-1);
         const r = ingest(sourceId, { url: t.url, text, fetchedAt, snapshotKey: targetKey, parsedOverride: parsed, completo: complete });

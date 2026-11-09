@@ -99,7 +99,7 @@ test('condicionais pelo perfil: curso longo exige EX-17; acompanhantes, trabalho
   assert.equal(longa.valor, true);
   assert.equal(longa.origem, 'detectado');
   assert.equal((await doc('tie-solicitacao')).exigencia, 'requerido');
-  assert.equal((await doc('antecedentes')).exigencia, 'requerido');
+  assert.equal((await doc('antecedentes')).exigencia, 'verificar');
   for (const c of ['familiares', 'trabalho', 'renovacao']) assert.equal(d.categorias.find((x) => x.id === c).estado, 'oculta', c);
   // Nunca "obrigatório" quando depende do programa: carta de motivação é "conforme o caso".
   assert.equal((await doc('carta-motivacao')).exigencia, 'condicional');
@@ -114,7 +114,7 @@ test('"Minha situação": corrigir condições muda a carteira; null volta ao de
   assert.equal(ex17.exigencia, 'nao-necessario');
   assert.equal(ex17.estado, 'nao-aplicavel');
   assert.match(ex17.motivo, /Minha situação/);
-  assert.equal((await doc('antecedentes')).exigencia, 'nao-necessario');
+  assert.equal((await doc('antecedentes')).exigencia, 'verificar', 'a duração, sozinha, não confirma a exigência do consulado');
   assert.notEqual(d.categorias.find((c) => c.id === 'familiares').estado, 'oculta');
   assert.notEqual(d.categorias.find((c) => c.id === 'renovacao').estado, 'oculta');
   assert.equal((await doc('passaportes-acompanhantes')).exigencia, 'requerido');
