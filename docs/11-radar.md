@@ -42,6 +42,8 @@ public/css/radar.css
 tests/radar.test.js
 ```
 
+Com `DB_PROVIDER=supabase`, o estado do Radar (`sources`, `snapshots`, `programs`, `opportunities`, `windows`, `events` etc.) é persistido na linha `radar` de `public.estuvia_state`. Os snapshots HTML brutos continuam em `data/radar-snapshots/`.
+
 ### Fontes monitoradas
 
 | Fonte | Método | Frequência | Autoridade |
@@ -50,10 +52,10 @@ tests/radar.test.js
 | Listado de másteres UGR | HTML público | 24 h | catálogo |
 | Fichas dos másteres UGR | HTML público, 12 por execução | 2 h (≈ todas por dia) | dados do programa |
 | BOJA | revisão manual (buscador bloqueado por robots.txt) | — | normativa (prioridade máxima) |
-| Catálogo DUA (`mo_catalogo_top.php`) | revisão manual (formulário dinâmico) | — | oferta DUA |
+| Catálogo DUA (`mo_catalogo.php`) | HTML público, consulta POST por universidade e fase | 24 h | oferta DUA |
 | Portal DUA, SAAP UGR | revisão manual | — | canal / orientação |
 
-As frequências são metas configuráveis, não garantia de atualização instantânea. Falhas usam recuo exponencial (15 min → até a frequência da fonte).
+As frequências são metas configuráveis, não garantia de atualização instantânea. Falhas usam recuo exponencial (15 min → até a frequência da fonte). O catálogo DUA atualiza a listagem e os links oficiais das fichas; ainda não coleta automaticamente o conteúdo interno de cada ficha.
 
 ### Regras de publicação
 
@@ -70,7 +72,7 @@ As frequências são metas configuráveis, não garantia de atualização instan
 
 Vagas ofertadas nunca significam vagas disponíveis, e a mudança de estado da oportunidade nunca significa que o estudante se candidatou (isso é registrado na missão 3.6).
 
-## Modelo de dados (data/radar.json)
+## Modelo de dados (data/radar.json ou estado Supabase)
 
 | Entidade | Chave / conteúdo |
 |---|---|

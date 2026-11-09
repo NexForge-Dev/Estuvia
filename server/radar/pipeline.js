@@ -19,11 +19,12 @@ import { politeFetch, FetchError } from './http.js';
 import { SOURCE_SEED, UNIVERSITY_INFO, COLLECTION_HOSTS } from './registry.js';
 import { nextAcademicYear } from './dates.js';
 import * as duaCalendar from './connectors/dua-calendar.js';
+import * as duaCatalog from './connectors/dua-catalog.js';
 import * as ugrCatalog from './connectors/ugr-catalog.js';
 import * as ugrProgram from './connectors/ugr-program.js';
 import { onPublished } from './notify.js';
 
-export const CONNECTORS = { 'dua-calendar': duaCalendar, 'ugr-catalog': ugrCatalog, 'ugr-program': ugrProgram };
+export const CONNECTORS = { 'dua-calendar': duaCalendar, 'dua-catalog': duaCatalog, 'ugr-catalog': ugrCatalog, 'ugr-program': ugrProgram };
 
 const nowIso = (now) => new Date(now).toISOString();
 const sourceById = (id) => data().sources.find((s) => s.id === id);
@@ -187,29 +188,31 @@ export function applyCalendar(parsed, { source, snapshot, force = false, por = '
 }
 
 /** Catálogo da universidade → programas (nunca apaga: ausência vira revisão). */
-export function applyCatalog(parsed, { source, snapshot, por = 'atualizador' }) {
+export function applyCatalog(parsed, { source, snapshot, por = 'atualizador', completo = true }) {
   const d = data();
   const revisions = [];
   const evidence = { sourceId: source.id, snapshotId: snapshot?.id || null, url: source.url, versao: snapshot?.versao || null };
   const seen = new Set();
   // Carga inicial do catálogo não gera 138 entradas de histórico: só novidades posteriores.
-  const initial = !d.programs.some((x) => x.universidadeId === parsed.universidadeId);
+  const initial = !d.programs.some((x) => x.universidadeId === parsed.universidadeId && (x.catalogSourceId === source.id || x.sourceId === source.id));
   for (const p of parsed.programas) {
     seen.add(p.id);
     const cur = d.programs.find((x) => x.id === p.id);
     if (!cur) {
-      d.programs.push({ ...p, verificadoEm: snapshot?.coletadoEm || new Date().toISOString(), sourceId: source.id, ficha: null });
+      d.programs.push({ ...p, verificadoEm: snapshot?.coletadoEm || new Date().toISOString(), sourceId: source.id, catalogSourceId: source.id, ficha: null });
       if (!initial) revisions.push(revision({ entidade: 'Program', entidadeId: p.id, campo: 'catalogo', anterior: null, novo: p.nome, evidencia: evidence, por }));
       continue;
     }
-    for (const campo of ['nome', 'codigo', 'webPropria', 'cursoCatalogo', 'ofertaCondicionada']) {
+    for (const campo of ['nome', 'codigo', 'webPropria', 'cursoCatalogo', 'ofertaCondicionada', 'modalidade']) {
       if (cur[campo] !== p[campo]) revisions.push(revision({ entidade: 'Program', entidadeId: p.id, campo, anterior: cur[campo], novo: p[campo], evidencia: evidence, por }));
     }
-    Object.assign(cur, p, { verificadoEm: snapshot?.coletadoEm || cur.verificadoEm, ausenteNoCatalogo: false });
+    Object.assign(cur, p, { verificadoEm: snapshot?.coletadoEm || cur.verificadoEm, catalogSourceId: source.id, ausenteNoCatalogo: false });
   }
-  for (const p of d.programs.filter((x) => x.universidadeId === parsed.universidadeId && !seen.has(x.id) && !x.ausenteNoCatalogo)) {
-    p.ausenteNoCatalogo = true;
-    openReview({ tipo: 'programa-ausente', sourceId: source.id, snapshotId: snapshot?.id, motivo: `"${p.nome}" não aparece mais no listado oficial ${parsed.anoAcademico}. Confirmar se foi descontinuado ou renomeado.`, impacto: 'medio', chave: `ausente:${p.id}:${parsed.anoAcademico}` });
+  if (completo) {
+    for (const p of d.programs.filter((x) => x.universidadeId === parsed.universidadeId && (x.catalogSourceId === source.id || (!x.catalogSourceId && x.sourceId === source.id)) && !seen.has(x.id) && !x.ausenteNoCatalogo)) {
+      p.ausenteNoCatalogo = true;
+      openReview({ tipo: 'programa-ausente', sourceId: source.id, snapshotId: snapshot?.id, motivo: `"${p.nome}" não aparece mais no listado oficial ${parsed.anoAcademico}. Confirmar se foi descontinuado ou renomeado.`, impacto: 'medio', chave: `ausente:${p.id}:${parsed.anoAcademico}` });
+    }
   }
   if (parsed.anoAcademico) {
     ensureOpportunitiesForCycle(parsed.anoAcademico, parsed.universidadeId);
@@ -295,13 +298,17 @@ function processParsed(source, parsed, ctx) {
 }
 
 /** Processa um conteúdo já obtido (coleta real, seed ou teste). */
-export function ingest(sourceId, { url, text, fetchedAt = new Date().toISOString(), programId = null }) {
+export function ingest(sourceId, { url, text, fetchedAt = new Date().toISOString(), programId = null, snapshotKey = null, parseContext = {}, parsedOverride = null, completo = true }) {
   const source = sourceById(sourceId);
   const connector = CONNECTORS[source.conector];
-  const parsed = connector.parse(text);
-  const { snapshot, changed } = recordSnapshot(source, { url, text, parsed, fetchedAt, chave: programId ? `${source.id}:${programId}` : source.id });
+  const parsed = parsedOverride || connector.parse(text, parseContext);
+  const { snapshot, changed } = recordSnapshot(source, { url, text, parsed, fetchedAt, chave: snapshotKey || (programId ? `${source.id}:${programId}` : source.id) });
   const valido = isValidExtraction(parsed);
-  const result = changed ? processParsed(source, parsed, { source, snapshot, programId }) : { publicado: false, revisions: [], semAlteracao: true, revisao: !valido };
+  const result = changed
+    ? processParsed(source, parsed, { source, snapshot, programId, completo })
+    : parsed.tipo === 'catalogo' && valido
+      ? applyCatalog(parsed, { source, snapshot, completo })
+      : { publicado: false, revisions: [], semAlteracao: true, revisao: !valido };
   if (programId && valido) {
     const p = data().programs.find((x) => x.id === programId);
     if (p?.ficha) p.ficha.verificadaEm = fetchedAt;
@@ -324,11 +331,25 @@ export async function runSource(sourceId, { fetchImpl, now = Date.now() } = {}) 
     return run;
   }
 
+  const latestDuaCycle = data().windows.filter((w) => w.procedimentoId === 'dua-masteres').map((w) => w.anoAcademico).sort().at(-1) || null;
+  const fasesDua = [...new Set(data().windows.filter((w) => w.procedimentoId === 'dua-masteres' && w.anoAcademico === latestDuaCycle).map((w) => Number(w.fase)).filter((n) => Number.isInteger(n) && n > 0))].sort((a, b) => a - b);
   const targets = source.conector === 'ugr-program'
     ? data().programs.filter((p) => p.fichaUrl && !p.ausenteNoCatalogo)
       .sort((a, b) => (a.ficha?.verificadaEm || '').localeCompare(b.ficha?.verificadaEm || ''))
       .slice(0, source.lote || 10)
       .map((p) => ({ url: p.fichaUrl, programId: p.id }))
+    : source.conector === 'dua-catalog'
+      ? duaCatalog.UNIVERSITIES.map((u) => ({
+        url: new URL('mo_catalogo.php', source.url).href,
+        snapshotKey: `${source.id}:${u.id}`,
+        programId: null,
+        parseContext: { anoAcademico: latestDuaCycle, universidadeId: u.id },
+        queries: (fasesDua.length ? fasesDua : [1, 2, 3]).map((fase) => ({
+          fase,
+          method: 'POST',
+          body: new URLSearchParams({ univpet: u.codigo, titulpet: '', palclave: '', fase: String(fase), orden: '', virtualpet: '' }),
+        })),
+      }))
     : [{ url: source.url, programId: null }];
 
   const allRevisions = [];
@@ -337,7 +358,39 @@ export async function runSource(sourceId, { fetchImpl, now = Date.now() } = {}) 
   source.validadores ??= {};
   for (const t of targets) {
     try {
-      const page = await politeFetch(t.url, { fetchImpl, validadores: source.validadores[t.url], allowedHosts: COLLECTION_HOSTS });
+      const targetKey = t.snapshotKey || t.url;
+      if (t.queries) {
+        const pages = [];
+        let targetFailure = null;
+        for (const query of t.queries) {
+          try {
+            const page = await politeFetch(t.url, { fetchImpl, allowedHosts: COLLECTION_HOSTS, method: query.method, body: query.body });
+            const parsed = duaCatalog.parse(page.text, t.parseContext);
+            pages.push({ page, parsed });
+            run.itens += 1;
+            if (!isValidExtraction(parsed)) run.falhasExtracao = (run.falhasExtracao || 0) + 1;
+          } catch (err) {
+            targetFailure ||= err;
+            if (err instanceof FetchError && err.blocked) break;
+          }
+        }
+        const validPages = pages.filter(({ parsed }) => isValidExtraction(parsed));
+        const complete = pages.length === t.queries.length && validPages.length === t.queries.length;
+        if (!validPages.length) throw targetFailure || new Error(`Nenhuma fase válida do catálogo para ${t.parseContext.universidadeId}.`);
+        if (targetFailure) failed ||= targetFailure;
+        const programs = [...new Map(validPages.flatMap(({ parsed }) => parsed.programas).map((p) => [p.id, p])).values()]
+          .sort((a, b) => a.codigo.localeCompare(b.codigo));
+        const parsed = { ok: true, tipo: 'catalogo', ...t.parseContext, programas, avisos: [] };
+        const text = validPages.map(({ page }, i) => `<!-- fase ${i + 1} -->\n${page.text}`).join('\n');
+        const fetchedAt = validPages.map(({ page }) => page.fetchedAt).sort().at(-1);
+        const r = ingest(sourceId, { url: t.url, text, fetchedAt, snapshotKey: targetKey, parsedOverride: parsed, completo: complete });
+        allRevisions.push(...(r.revisions || []));
+        if (r.revisao) run.resultado = 'revisao';
+        if (complete && r.valido) verified += 1;
+        if (!complete && !targetFailure) failed ||= new Error(`Uma ou mais respostas do catálogo DUA de ${t.parseContext.universidadeId} não puderam ser confirmadas.`);
+        continue;
+      }
+      const page = await politeFetch(t.url, { fetchImpl, validadores: t.method === 'POST' ? null : source.validadores[targetKey], allowedHosts: COLLECTION_HOSTS, method: t.method || 'GET', body: t.body });
       if (page.naoModificada) {
         // 304: a página não mudou desde a última coleta. Só há validadores guardados quando aquela
         // coleta foi extraída com sucesso, então isto conta como verificação bem-sucedida.
@@ -347,17 +400,17 @@ export async function runSource(sourceId, { fetchImpl, now = Date.now() } = {}) 
         run.naoModificadas = (run.naoModificadas || 0) + 1;
         continue;
       }
-      const r = ingest(sourceId, { url: page.url, text: page.text, fetchedAt: page.fetchedAt, programId: t.programId });
+      const r = ingest(sourceId, { url: page.url, text: page.text, fetchedAt: page.fetchedAt, programId: t.programId, snapshotKey: t.snapshotKey, parseContext: t.parseContext });
       allRevisions.push(...(r.revisions || []));
       if (r.revisao) run.resultado = 'revisao';
       run.itens += 1;
       if (r.valido) {
         verified += 1;
-        if (page.etag || page.lastModified) source.validadores[t.url] = { etag: page.etag, lastModified: page.lastModified };
+        if (t.method !== 'POST' && (page.etag || page.lastModified)) source.validadores[targetKey] = { etag: page.etag, lastModified: page.lastModified };
       } else {
         // Sem validadores, a próxima coleta baixa a página inteira de novo (um 304 não pode
         // "confirmar" um conteúdo que não conseguimos ler).
-        delete source.validadores[t.url];
+        delete source.validadores[targetKey];
         run.falhasExtracao = (run.falhasExtracao || 0) + 1;
       }
     } catch (err) {
