@@ -42,7 +42,7 @@ public/css/radar.css
 tests/radar.test.js
 ```
 
-Com `DB_PROVIDER=supabase`, o estado do Radar (`sources`, `snapshots`, `programs`, `opportunities`, `windows`, `events` etc.) é persistido na linha `radar` de `public.estuvia_state`. Os snapshots HTML brutos continuam em `data/radar-snapshots/`.
+Com `DB_PROVIDER=supabase`, o estado do Radar (`sources`, `snapshots`, `programs`, `opportunities`, `windows`, `events` etc.) é persistido nas tabelas `radar_*` (uma por coleção; ver `docs/29-banco-de-dados.md`). Os snapshots HTML brutos continuam em `data/radar-snapshots/`.
 
 ### Fontes monitoradas
 

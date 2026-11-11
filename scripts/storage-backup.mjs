@@ -2,7 +2,7 @@
 // Uso: npm run storage:backup        (usa SUPABASE_URL/SUPABASE_SECRET_KEY do .env do ambiente atual)
 // Saída: data/backups/storage-<projeto>-<data>/<bucket>/... (fora do git; contém dados pessoais).
 // Os documentos continuam cifrados: só abrem com a DOCUMENTS_KEY do ambiente que os gravou.
-// Complementa `npm run db:backup`, que salva só a tabela estuvia_state.
+// Complementa `npm run db:backup`, que salva só as tabelas do banco.
 import 'dotenv/config';
 import fs from 'node:fs';
 import path from 'node:path';

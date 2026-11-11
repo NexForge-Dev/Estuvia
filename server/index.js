@@ -9,7 +9,9 @@ import { startPriceWatcher } from './flight-prices.js';
 import { videosEnabled, startFeedWarmer } from './websearch/index.js';
 
 // Carrega/migra o estado antes de criar rotas que fazem leituras síncronas do store.
-await Promise.all([initStore(), initRadarStore(), initDocRules()]);
+// A base principal antes do Radar: a importação do Radar confere os usuários existentes.
+await initStore();
+await Promise.all([initRadarStore(), initDocRules()]);
 
 const server = createApp().listen(config.port, () => {
   console.log(`\n  ${config.appName} rodando em http://localhost:${config.port}`);

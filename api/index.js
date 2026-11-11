@@ -12,7 +12,8 @@ let appPromise = null;
 
 function boot() {
   appPromise ??= (async () => {
-    await Promise.all([initStore(), initRadarStore()]);
+    await initStore(); // antes do Radar: a importação do Radar confere os usuários existentes
+    await initRadarStore();
     await Promise.all([initRadar(), initDocRules(), ensureAdminAccount()]);
     return createApp();
   })().catch((err) => { appPromise = null; throw err; });

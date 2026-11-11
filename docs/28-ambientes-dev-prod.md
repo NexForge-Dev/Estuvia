@@ -7,9 +7,9 @@ Decisão: o projeto atual (`pomtzhzoxwwnxztwwmft`) passa a ser **só de desenvol
 ## 1. Arquitetura de persistência
 
 - `server/store.js` (usuários, auditoria, comunidade, uso) e `server/radar/db.js` (Radar): estado JSON em memória, gravado inteiro a cada escrita.
-- `DB_PROVIDER=json`: arquivos em `data/` (`db.json`, `radar.json`). `DB_PROVIDER=supabase`: tabela `estuvia_state`, uma linha por domínio (`main`, `radar`), com controle otimista de versão (`server/database.js`).
+- `DB_PROVIDER=json`: arquivos em `data/` (`db.json`, `radar.json`). `DB_PROVIDER=supabase`: uma tabela por entidade, com versão otimista por linha (`supabase/migrations/0002_entidades.sql`, `server/entities.js`; ver `docs/29-banco-de-dados.md`). A marcação de ambiente fica em `estuvia_meta`.
 - Arquivos (documentos cifrados, imagens da comunidade, regras editoriais): disco local ou Supabase Storage (buckets privados `estuvia-documents`, `estuvia-community`, `estuvia-meta`, criados pelo servidor).
-- Autenticação é própria (JWT em cookie), não usa Supabase Auth. O banco só é acessado pelo servidor com a chave **secret**; RLS ligada e nenhum acesso para `anon`/`authenticated` (`supabase/migrations/0001_estuvia_state.sql`).
+- Autenticação é própria (JWT em cookie), não usa Supabase Auth. O banco só é acessado pelo servidor com a chave **secret**; RLS ligada e nenhum acesso para `anon`/`authenticated` (`supabase/migrations/`).
 - `npm test` sempre roda com JSON em pasta temporária e sem `.env` (`scripts/test.mjs`): os testes nunca tocam um banco real.
 
 ## 2. Barreiras implementadas
@@ -26,7 +26,7 @@ Testes: `tests/db-environments.test.js`.
 ## 3. Ferramentas
 
 ```bash
-npm run db:backup                         # backup SOMENTE LEITURA de estuvia_state → data/backups/ (fora do git)
+npm run db:backup                         # backup SOMENTE LEITURA de todas as tabelas → data/backups/ (fora do git)
 npm run db:env -- status                  # projeto, ambiente marcado, nº de usuários
 npm run db:env -- mark development --confirmo
 ```
@@ -41,7 +41,7 @@ Nada abaixo foi feito ainda: depende de acesso aos painéis do Supabase e da Ver
 
 1. **Backup do Storage do projeto atual** (documentos cifrados e imagens): Supabase → Storage → baixar os buckets `estuvia-documents`, `estuvia-community`, `estuvia-meta`, ou usar a CLI do Supabase. Os documentos só abrem com a `DOCUMENTS_KEY` do ambiente que os cifrou.
 2. **Criar o projeto de produção** no Supabase (região próxima dos usuários, ex.: São Paulo). Anotar a referência `<ref>`.
-3. No **SQL Editor do projeto novo**, aplicar `supabase/migrations/0001_estuvia_state.sql`.
+3. No **SQL Editor do projeto novo**, aplicar, em ordem, `supabase/migrations/0001_estuvia_state.sql` e `0002_entidades.sql`.
 4. Em *Project Settings → API keys*, criar uma chave **secret** só para produção. Nunca reutilizar a de desenvolvimento.
 5. Na **Vercel → Settings → Environment Variables**, escopo **Production**:
    - `NODE_ENV=production`, `APP_ENV=production`, `DB_PROVIDER=supabase`, `STORAGE_PROVIDER=supabase`

@@ -1,9 +1,9 @@
 // Persistência opcional no Supabase para este backend Express.
-// O estado atual do MVP é JSON; cada domínio usa uma linha JSONB com controle otimista de versão.
+// Uma tabela por entidade (supabase/migrations/0002_entidades.sql); a tradução coleções ↔ linhas fica em entities.js.
 
 import { config } from './config.js';
 
-const TABLE = 'estuvia_state';
+const LEGACY_TABLE = 'estuvia_state'; // modelo antigo (0001): só leitura, para importar
 let clientPromise = null;
 
 export const usesSupabase = () => config.databaseProvider === 'supabase';
@@ -44,54 +44,44 @@ async function client() {
   return clientPromise;
 }
 
-async function readRow(db, id) {
-  const { data, error } = await db.from(TABLE).select('state,version').eq('id', id).maybeSingle();
-  if (error) throw new Error(`Supabase: ${error.message}`);
-  return data || null;
-}
+// ---------------------------------------------------------------- entidades (0002_entidades.sql)
 
-/** Carrega uma linha; na primeira execução migra a cópia JSON local sem apagá-la. */
-export async function loadState(id, fallback) {
-  if (!usesSupabase()) return { state: fallback, version: null };
+let rpcOverride = null;
+/** Apenas para testes: substitui as chamadas ao Supabase (ex.: PGlite executando as mesmas funções SQL). */
+export function setRpcForTests(fn) { rpcOverride = fn; }
+
+/** Chama uma função SQL (estuvia_apply / estuvia_changes). Conflitos de versão chegam com código ESTUVIA_CONFLICT. */
+export async function rpc(name, args) {
+  if (rpcOverride) return rpcOverride(name, args);
   const db = await client();
-  const row = await readRow(db, id);
-  if (row) return { state: row.state, version: Number(row.version) };
-
-  const { data, error } = await db.from(TABLE).insert({ id, state: fallback, version: 1 }).select('state,version').single();
-  if (!error) return { state: data.state, version: Number(data.version) };
-  // Outro processo pode ter inicializado a linha entre o SELECT e o INSERT.
-  if (error.code === '23505') {
-    const raced = await readRow(db, id);
-    if (raced) return { state: raced.state, version: Number(raced.version) };
+  if (!db) throw new Error("Supabase não configurado.");
+  const { data, error } = await db.rpc(name, args);
+  if (error) {
+    const err = new Error(/estuvia_conflict/.test(error.message)
+      ? `Os dados mudaram em outra instância do servidor. Tente novamente. (${error.message})`
+      : `Supabase: ${error.message}`);
+    if (/estuvia_conflict/.test(error.message)) err.code = "ESTUVIA_CONFLICT";
+    if (/function .*estuvia_(apply|changes).* does not exist|Could not find the function/i.test(error.message)) err.code = "ESTUVIA_NO_SCHEMA";
+    throw err;
   }
-  throw new Error(`Supabase: ${error.message}`);
+  return data;
 }
+
+let legacyOverride = null;
+/** Apenas para testes. */
+export function setLegacyReaderForTests(fn) { legacyOverride = fn; }
 
 /**
- * Devolve { state, version } só se a linha no Supabase estiver numa versão diferente de `knownVersion`
- * (outra instância gravou); senão null. Uma consulta por chamada, sem trazer o estado quando nada mudou.
+ * Lê (sem gravar nada) uma linha da tabela antiga estuvia_state ("main" ou "radar"), usada só para importar
+ * os dados para as tabelas de entidades na primeira subida. Devolve o estado ou null se não existir.
  */
-export async function loadIfChanged(id, knownVersion) {
-  if (!usesSupabase()) return null;
+export async function readLegacyState(id) {
+  if (legacyOverride) return legacyOverride(id);
   const db = await client();
-  const { data, error } = await db.from(TABLE).select('state,version').eq('id', id).neq('version', knownVersion).maybeSingle();
-  if (error) throw new Error(`Supabase: ${error.message}`);
-  return data ? { state: data.state, version: Number(data.version) } : null;
-}
-
-/** Salva somente se a versão ainda for a que este processo carregou, evitando sobrescritas silenciosas. */
-export async function saveState(id, state, expectedVersion) {
-  if (!usesSupabase()) return null;
-  const db = await client();
-  const nextVersion = expectedVersion + 1;
-  const { data, error } = await db.from(TABLE)
-    .update({ state, version: nextVersion, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .eq('version', expectedVersion)
-    .select('version')
-    .maybeSingle();
-  if (error) throw new Error(`Supabase: ${error.message}`);
-  // A próxima requisição recarrega a versão atual (syncStore/syncRadarStore); quem chamou recebe o erro.
-  if (!data) throw new Error(`Conflito ao salvar ${id} no Supabase: a linha mudou em outra instância. Tente novamente.`);
-  return Number(data.version);
+  const { data, error } = await db.from(LEGACY_TABLE).select("state").eq("id", id).maybeSingle();
+  if (error) {
+    if (/does not exist|Could not find the table/i.test(error.message)) return null; // projeto criado já com a 0002
+    throw new Error(`Supabase: ${error.message}`);
+  }
+  return data?.state ?? null;
 }

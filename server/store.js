@@ -1,17 +1,19 @@
-// Camada de persistência do MVP: JSON local ou estado JSONB no Supabase.
-// Toda leitura/escrita passa por estas funções (ver docs/03-arquitetura.md).
+// Camada de persistência: JSON local ou tabelas por entidade no Supabase (migrations 0002_entidades.sql).
+// Toda leitura/escrita passa por estas funções (ver docs/03-arquitetura.md). Em memória a estrutura é a
+// mesma nos dois modos; no Supabase, entities.js grava só as linhas que mudaram.
 
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { config } from './config.js';
-import { loadState, loadIfChanged, saveState, usesSupabase, checkDatabaseEnvironment, projectRef, assertProjectAllowed } from './database.js';
+import { usesSupabase, checkDatabaseEnvironment, projectRef, assertProjectAllowed, readLegacyState } from './database.js';
+import { createEntityStore, arrayCollection, mapCollection } from './entities.js';
 
 const EMPTY_COMMUNITY = () => ({ posts: [], comments: [], groups: [], reports: [], media: [] });
 const EMPTY = { users: [], audit: [], community: EMPTY_COMMUNITY(), analytics: { days: {} } };
 let db = load();
 let writing = Promise.resolve();
-let remoteVersion = null;
+let entities = null; // sincronizador das tabelas (só no modo Supabase, depois de initStore)
 
 function load() {
   try {
@@ -33,20 +35,73 @@ const normalize = (value) => {
   return data;
 };
 
+// Coleções da base principal → tabelas. A ordem importa: pais antes dos filhos (chaves estrangeiras).
+const setCommunity = (k) => (list) => { db.community[k] = list; };
+const mainCollections = () => [
+  arrayCollection('users', () => db.users, (l) => { db.users = l; }),
+  arrayCollection('community_posts', () => db.community.posts, setCommunity('posts')),
+  arrayCollection('community_comments', () => db.community.comments, setCommunity('comments')),
+  arrayCollection('community_groups', () => db.community.groups, setCommunity('groups')),
+  arrayCollection('community_reports', () => db.community.reports, setCommunity('reports')),
+  arrayCollection('community_media', () => db.community.media, setCommunity('media')),
+  arrayCollection('audit_log', () => db.audit, (l) => { db.audit = l; }),
+  // analytics = { days: { 'AAAA-MM-DD': {...} }, ai: {...}, ... } → linhas "day:AAAA-MM-DD" e uma por chave avulsa.
+  mapCollection('analytics', {
+    entries() {
+      const m = new Map();
+      for (const [d, v] of Object.entries(db.analytics.days || {})) if (v != null) m.set(`day:${d}`, v);
+      for (const [k, v] of Object.entries(db.analytics)) if (k !== 'days' && v != null) m.set(k, v);
+      return m;
+    },
+    put(id, v) { if (id.startsWith('day:')) (db.analytics.days ||= {})[id.slice(4)] = v; else db.analytics[id] = v; },
+    del(id) { if (id.startsWith('day:')) delete db.analytics.days?.[id.slice(4)]; else delete db.analytics[id]; },
+  }),
+  mapCollection('estuvia_meta', {
+    entries: () => new Map(db.meta ? [['main', db.meta]] : []),
+    put: (_id, v) => { db.meta = v; },
+    del: () => { delete db.meta; },
+  }),
+];
+
+const hasData = (d) => !!(d && (d.users.length || d.audit.length || d.meta || Object.keys(d.analytics.days || {}).length
+  || Object.values(d.community).some((list) => list.length)));
+
 /** Run before accepting requests when DB_PROVIDER=supabase. */
 export async function initStore() {
   if (!['json', 'supabase'].includes(config.databaseProvider)) throw new Error('DB_PROVIDER must be json or supabase.');
   if (!usesSupabase()) return;
   const ref = projectRef(config.supabaseUrl);
   assertProjectAllowed(); // barreira por URL (também aplicada em todo cliente Supabase: database.js e storage.js)
-  // Primeira execução copia a base JSON local para a linha nova; em produção, nunca (dados pessoais de DEV).
-  const remote = await loadState('main', config.appEnv === 'production' ? structuredClone(EMPTY) : db);
-  const state = normalize(remote.state);
-  const env = checkDatabaseEnvironment({ appEnv: config.appEnv, ref, prodRef: config.supabaseProdRef, devRef: config.supabaseDevRef, marker: state.meta?.ambiente || null, users: state.users.length });
+  const local = db; // base JSON local (semente de desenvolvimento)
+  db = structuredClone(EMPTY);
+  const store = createEntityStore(mainCollections(), { label: 'principal' });
+  try {
+    await store.load();
+  } catch (err) {
+    if (err.code === 'ESTUVIA_NO_SCHEMA') throw new Error('[store] Tabelas de entidades ausentes: aplique supabase/migrations/0002_entidades.sql no SQL Editor do projeto.');
+    throw err;
+  }
+  db = normalize(db);
+
+  // Tabelas vazias: importa do modelo antigo (estuvia_state, só leitura; a linha antiga fica como cópia de segurança).
+  // Sem linha antiga: em desenvolvimento copia a base JSON local; em produção, nunca (dados pessoais de DEV).
+  let importFrom = null;
+  if (store.isEmpty()) {
+    const legacy = await readLegacyState('main');
+    if (legacy) importFrom = { origem: 'estuvia_state', data: normalize(legacy) };
+    else if (config.appEnv !== 'production' && hasData(local)) importFrom = { origem: 'base JSON local', data: normalize(local) };
+    if (importFrom) db = importFrom.data;
+  }
+
+  // Barreira DEV × PROD antes de qualquer gravação (inclusive da importação).
+  const env = checkDatabaseEnvironment({ appEnv: config.appEnv, ref, prodRef: config.supabaseProdRef, devRef: config.supabaseDevRef, marker: db.meta?.ambiente || null, users: db.users.length });
   if (!env.ok) throw new Error(`[store] ${env.erro}`);
-  db = state;
-  remoteVersion = remote.version;
+  entities = store;
   lastWriteError = null;
+  if (importFrom) {
+    await persist();
+    console.log(`[store] Importado de ${importFrom.origem} para as tabelas: ${db.users.length} usuário(s), ${db.audit.length} registro(s) de auditoria.`);
+  }
   if (env.aviso) console.warn(`[store] ${env.aviso}`);
   if (env.marcar) {
     db.meta = { ...(db.meta || {}), ambiente: env.marcar, marcadoEm: new Date().toISOString() };
@@ -57,16 +112,13 @@ export async function initStore() {
 
 /**
  * Na Vercel há várias instâncias, cada uma com sua cópia em memória. Antes de cada requisição /api,
- * recarrega a base se outra instância gravou (ex.: conta criada lá → sem isto, esta responde 401).
- * Espera as gravações pendentes desta instância para nunca trocar o estado no meio de uma escrita.
+ * traz as linhas que outras instâncias gravaram (ex.: conta criada lá → sem isto, esta responde 401).
+ * Espera as gravações pendentes desta instância para nunca trocar dados no meio de uma escrita.
  */
 export async function syncStore() {
-  if (!usesSupabase() || remoteVersion === null) return;
+  if (!entities) return;
   await writing;
-  const remote = await loadIfChanged('main', remoteVersion);
-  if (!remote) return;
-  db = normalize(remote.state);
-  remoteVersion = remote.version;
+  await entities.sync();
 }
 
 // Última falha de gravação (null quando a última escrita deu certo): exposta em /api/health.
@@ -74,13 +126,13 @@ let lastWriteError = null;
 export const storeHealth = () => ({ ok: !lastWriteError, erro: lastWriteError });
 
 function persist() {
-  // Serializa as escritas e grava em arquivo temporário + rename (evita JSON corrompido).
-  // A promessa devolvida REJEITA se a gravação falhar: quem chamou não pode responder "salvo".
-  const snapshot = JSON.stringify(db, null, 2);
+  // Serializa as escritas. JSON: arquivo temporário + rename (evita JSON corrompido). Supabase: só as linhas
+  // que mudaram, numa transação. A promessa devolvida REJEITA se a gravação falhar: quem chamou não pode responder "salvo".
+  const snapshot = usesSupabase() ? null : JSON.stringify(db, null, 2);
   const run = writing.then(async () => {
     if (usesSupabase()) {
-      if (remoteVersion === null) throw new Error('Supabase store was not initialized before writing.');
-      remoteVersion = await saveState('main', JSON.parse(snapshot), remoteVersion);
+      if (!entities) throw new Error('Supabase store was not initialized before writing.');
+      await entities.persist();
       lastWriteError = null;
       return;
     }

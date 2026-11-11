@@ -35,10 +35,10 @@ Express (server/app.js)
 
 ## Modelo de dados (como está gravado hoje)
 
-O adaptador Supabase preserva o formato atual do MVP em duas linhas da tabela `estuvia_state`: `main` contém usuários, comunidade, auditoria e analytics; `radar` contém fontes, programas, oportunidades, janelas e alertas. Cada gravação usa uma versão esperada para detectar concorrência e evitar sobrescrita silenciosa. A estrutura normalizada continua sendo uma etapa futura.
+No Supabase, cada entidade tem a sua tabela (`users`, `community_*`, `audit_log`, `analytics`, `estuvia_meta`, `radar_*`; migration `0002_entidades.sql`). O servidor continua trabalhando com as coleções em memória e `server/entities.js` grava só as linhas que mudaram, numa transação, com versão otimista por linha; antes de cada requisição traz o que outras instâncias gravaram. Detalhes em `docs/29-banco-de-dados.md`.
 
 ```jsonc
-// data/db.json ou public.estuvia_state (id = "main")
+// data/db.json ou as tabelas de entidades no Supabase (docs/29-banco-de-dados.md)
 {
   "users": [{
     "id": "uuid",
