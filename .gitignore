@@ -12,3 +12,6 @@ video/assets/audio/*.wav
 .vercel
 .env*
 Plantos.txt
+
+# Rascunhos de variáveis (ex.: teste.env com segredos de produção)
+*.env

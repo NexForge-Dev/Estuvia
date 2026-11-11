@@ -12,7 +12,8 @@
     "docs": "node scripts/build-docs.mjs",
     "check": "node scripts/check-syntax.mjs",
     "db:backup": "node scripts/db-backup.mjs",
-    "db:env": "node scripts/db-env.mjs"
+    "db:env": "node scripts/db-env.mjs",
+    "storage:backup": "node scripts/storage-backup.mjs"
   },
   "engines": {
     "node": ">=20"
