@@ -45,7 +45,13 @@ let total = 0;
 let failed = 0;
 for (const bucket of buckets) {
   const { error: exists } = await db.storage.getBucket(bucket);
-  if (exists) { console.log(`  ${bucket}: não existe neste projeto (${exists.message}), pulando`); continue; }
+  if (exists) {
+    // Só "não encontrado" significa bucket ausente; erro de rede/credencial não pode virar backup "vazio".
+    const notFound = /not found/i.test(exists.message) || String(exists.statusCode || exists.status) === '404';
+    if (!notFound) { console.error(`  ${bucket}: erro ao consultar (${exists.message})`); failed++; continue; }
+    console.log(`  ${bucket}: não existe neste projeto, pulando`);
+    continue;
+  }
   const files = await listAll(bucket);
   let bytes = 0;
   for (const name of files) {
