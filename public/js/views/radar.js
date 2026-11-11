@@ -4,7 +4,7 @@
 import { h, mount, toast } from '../ui.js';
 import { icon } from '../icons.js';
 import { api } from '../api.js';
-import { state, go, invalidate } from '../app.js';
+import { state, go, invalidate, loadJourneys } from '../app.js';
 import { onLive } from '../live.js';
 
 const fmt = (iso) => (iso ? new Date(`${iso.slice(0, 10)}T12:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : '');
@@ -82,6 +82,18 @@ async function addToJourney(c) {
   const cicloPlanejado = c.estado === 'encerradas' ? nextAcademicYear(cicloPublicado) : cicloPublicado;
   if (!cicloPlanejado) return toast('Não consegui identificar o ciclo acadêmico deste programa.', 'err');
   if (cicloPlanejado !== cicloPublicado && !window.confirm(`As candidaturas de ${cicloPublicado} estão encerradas. Posso criar uma jornada de planejamento para ${cicloPlanejado} usando esta ficha como referência. A oferta, os requisitos e as datas do próximo ciclo ainda precisam ser confirmados oficialmente. Continuar?`)) return;
+  // Jornada criada no onboarding com "Mestrado a definir" na mesma universidade: define o mestrado nela (com confirmação).
+  const journeys = await loadJourneys().catch(() => []);
+  const open = journeys.find((j) => !j.destino?.programa && j.destino?.universidade?.id === c.universidade?.id);
+  if (open && window.confirm(`Você já tem uma jornada para ${open.destino.universidade.sigla || open.destino.universidade.nome}${open.destino.anoAcademico ? ` (${open.destino.anoAcademico})` : ''} com o mestrado a definir. Definir "${c.programa.nome}" como o mestrado dessa jornada? (Cancelar cria uma jornada separada.)`)) {
+    try {
+      const r = await api.put(`/journeys/${open.id}/program`, { programaId: c.programId });
+      invalidate?.();
+      c.naJornada = true;
+      toast('Mestrado definido na sua jornada. A Missão 1.3 foi atualizada.', 'ok');
+      return go(`/j/${r.journey.id}`);
+    } catch (e) { return toast(e.message, 'err'); }
+  }
   try {
     const r = await api.post('/journeys', { programaId: c.programId, anoAcademico: cicloPlanejado });
     invalidate?.();

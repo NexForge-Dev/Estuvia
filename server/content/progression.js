@@ -129,9 +129,11 @@ export const riskOf = (id) => RISK[id] || { nivel: 'baixo', texto: null };
 
 // ---------- Requisitos que o estudante já atende (perguntados no onboarding, editáveis no perfil) ----------
 // "Requisito já atendido" é diferente de "missão concluída na plataforma": fica registrado com outra origem.
+// Só "tenho" muda a jornada (conclui as missões); as demais respostas mantêm a missão de providenciar/conferir.
+// "verificar" foi acrescentado em todas as perguntas (aditivo: respostas antigas continuam válidas).
 export const REQUIREMENTS = [
   { id: 'passaporte', pergunta: 'Você já tem passaporte válido?', opcoes: [['tenho', 'Sim, já tenho'], ['preciso', 'Não, preciso solicitar'], ['verificar', 'Tenho, mas preciso ver a validade']], missoes: ['2.1'], documento: 'passaporte' },
-  { id: 'diploma', pergunta: 'Você já tem o diploma da graduação?', opcoes: [['tenho', 'Sim, já tenho'], ['aguardando', 'Já me formei, mas ainda não recebi'], ['nao', 'Ainda não me formei']], missoes: ['2.2'], documento: 'diploma' },
-  { id: 'historico', pergunta: 'Você já tem o histórico da faculdade?', opcoes: [['tenho', 'Sim, já tenho'], ['preciso', 'Ainda preciso pedir']], missoes: ['2.3'], documento: 'historico' },
-  { id: 'tie', pergunta: 'Você já tem a TIE (cartão de estrangeiro)?', opcoes: [['tenho', 'Sim, já tenho'], ['nao', 'Ainda não']], missoes: ['8.1', '8.2', '8.3', '8.4', '8.5', '8.6', '8.7', '8.8'], somenteNaEspanha: true },
+  { id: 'diploma', pergunta: 'Você já tem o diploma da graduação?', opcoes: [['tenho', 'Sim, já tenho'], ['aguardando', 'Já me formei, mas ainda não recebi'], ['nao', 'Ainda não me formei'], ['verificar', 'Preciso verificar']], missoes: ['2.2'], documento: 'diploma' },
+  { id: 'historico', pergunta: 'Você já tem o histórico da faculdade?', opcoes: [['tenho', 'Sim, já tenho'], ['preciso', 'Ainda preciso pedir'], ['verificar', 'Preciso verificar']], missoes: ['2.3'], documento: 'historico' },
+  { id: 'tie', pergunta: 'Você já tem a TIE (cartão de estrangeiro)?', opcoes: [['tenho', 'Sim, já tenho'], ['nao', 'Ainda não'], ['verificar', 'Preciso verificar']], missoes: ['8.1', '8.2', '8.3', '8.4', '8.5', '8.6', '8.7', '8.8'], somenteNaEspanha: true },
 ];

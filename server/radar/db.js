@@ -54,7 +54,10 @@ const normalize = (parsed) => ({ ...empty(), ...(parsed || {}) });
 /** Run before Radar initialization when DB_PROVIDER=supabase. */
 export async function initRadarStore() {
   if (!usesSupabase()) return;
-  const remote = await loadState('radar', data());
+  // Primeira execução copia a base local para a linha nova. Em produção, só os dados públicos (programas,
+  // prazos, fontes): inscrições, alertas e vínculos com a agenda são de usuários e nunca saem do ambiente de origem.
+  const seed = config.appEnv === 'production' ? { ...data(), subscriptions: [], alerts: [], agendaLinks: [] } : data();
+  const remote = await loadState('radar', seed);
   db = normalize(remote.state);
   remoteVersion = remote.version;
   lastWriteError = null;

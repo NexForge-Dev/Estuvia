@@ -39,7 +39,7 @@ Regras em `server/content/progression.js`, avaliadas em `server/journey-engine.j
 
 ## 3. Requisitos já atendidos
 
-`GET/PUT /journeys/requirements` cobre passaporte, diploma, histórico e TIE (a TIE só depois da chegada). As perguntas aparecem uma de cada vez no onboarding e podem ser corrigidas em "Meu perfil → O que eu já tenho". "Sim, já tenho" marca a missão como **requisito já atendido** e o documento como "pronto". Mudar a resposta desfaz só o que ela marcou.
+`GET/PUT /journeys/requirements` cobre passaporte, diploma, histórico e TIE (a TIE só depois da chegada). As perguntas aparecem uma de cada vez no onboarding e podem ser corrigidas em "Meu perfil → O que eu já tenho". "Sim, já tenho" marca a missão como **requisito já atendido** e o documento como "pronto". Todas as perguntas aceitam também "Preciso verificar", que mantém a missão aberta. Mudar a resposta desfaz só o que ela marcou.
 
 ## 4. Complexidade adaptativa (interface)
 

@@ -1,6 +1,6 @@
 # Estuvia — Documentação completa
 
-> Documento único gerado por `node scripts/build-docs.mjs` a partir do `README.md` e de `docs/*.md` em 2026-11-09. Para alterar, edite os arquivos de origem e gere de novo.
+> Documento único gerado por `node scripts/build-docs.mjs` a partir do `README.md` e de `docs/*.md` em 2026-11-11. Para alterar, edite os arquivos de origem e gere de novo.
 
 ## Índice
 
@@ -12,6 +12,7 @@
   - [01 — Visão e produto](#doc-01)
   - [02 — Requisitos e regras de negócio](#doc-02)
   - [13 — Jornada Estuvia: rodadas, missões e módulos integrados](#doc-13)
+  - [27 — Onboarding: auditoria, fluxo e componentes](#doc-27)
   - [14 — Progressão, simplicidade e complexidade adaptativa](#doc-14)
   - [06 — Gamificação, progresso e conquistas](#doc-06)
 - [Parte 3 — Módulos](#parte-3)
@@ -32,6 +33,8 @@
   - [05 — Referência da API](#doc-05)
   - [04 — Segurança e privacidade](#doc-04)
   - [25 — Production readiness (audit of 2026-11-09)](#doc-25)
+  - [28 — Ambientes DEV × PROD](#doc-28)
+  - [Auditoria de lançamento — Estuvia](#doc-26)
 - [Parte 5 — Apresentação e próximos passos](#parte-5)
   - [09 — Roteiro de apresentação (≈10 min)](#doc-09)
   - [10 — Próximos passos](#doc-10)
@@ -55,10 +58,10 @@ Requirements: **Node.js 20+** (tested with 22).
 ```bash
 npm install
 npm start          # http://localhost:3000
-npm test           # 237 tests (journey, planner, finances, documents, security, Radar, Community, Achievements, Mentor…)
+npm test           # 252 tests (journey, planner, finances, documents, security, Radar, Community, Achievements, Mentor…)
 ```
 
-Create an account → onboarding (5 steps) → your first journey is generated. How to use it: [23 — User guide](#doc-23).
+Create an account → onboarding (6 steps: origin, education, languages, budget, destination, documents) → review → your first journey is generated. Later journeys only ask for the destination. Details: [27 — Onboarding](#doc-27). How to use it: [23 — User guide](#doc-23).
 
 **Free integrations (optional):** `YOUTUBE_API_KEY` lists videos/lessons in the Mentor chat and `TRAVELPAYOUTS_TOKEN` turns on flight prices and price alerts; both are free (see `.env.example` and doc 24). Web search (Canal UGR, GDELT, Wikipedia) needs no key.
 
@@ -141,6 +144,9 @@ tests/
 | [23 — User guide](#doc-23) | How to use the platform today, step by step (for students) |
 | [24 — Real time, web search, flight prices and notes](#doc-24) | Live updates (SSE), adaptive Radar checks, free web/video search in the Mentor, flight prices and price alerts, mission notes |
 | [25 — Production readiness](#doc-25) | What the code actually does in production, required env vars, roles, backup/restore, verified vs. unverified items, launch blockers and legal questions |
+| [26 — Launch and LGPD audit](#doc-26) | Launch and data-protection audit |
+| [27 — Onboarding](#doc-27) | Field-by-field audit (what each answer feeds), the 6-step flow, validation, saving order, components (Select, Toasts) |
+| [28 — DEV × PROD environments](#doc-28) | Separate Supabase projects, isolation guards, backup, migrations and the manual steps to create production |
 | [11 — Opportunity Radar](#doc-11) | Monitoring of official sources |
 | [12 — Community](#doc-12) | Moderated community |
 | [01](#doc-01), [02](#doc-02), [03](#doc-03), [08](#doc-08) | Vision, requirements, architecture and manual for version 0.1 (historical context) |
@@ -167,8 +173,8 @@ Guia prático para o estudante usar a Estuvia hoje. O conteúdo do processo (DUA
 
 ### 1. Primeiros passos
 
-1. **Crie sua conta** (Criar conta) e responda o onboarding: nacionalidade, estado, formação, o que você já tem (passaporte, diploma, histórico).
-2. **Escolha destino e mestrado.** A Estuvia gera sua jornada em **rodadas** e **missões**.
+1. **Crie sua conta** (Criar conta) e responda o onboarding em 6 etapas: origem, formação, idiomas, orçamento, destino e documentos. O painel "Seu perfil até agora" mostra o que você já informou; o rascunho fica salvo se você recarregar a página.
+2. **Escolha o destino** (universidade, ano, início das aulas, duração e em que ponto você está). O mestrado é opcional nessa hora: se ainda não escolheu, a jornada começa com "Mestrado a definir" e você o define depois pelo Radar (Missão 1.3). Revise e toque em **Gerar minha jornada**: a Estuvia monta as **rodadas** e **missões**.
 3. No **Início**, toque em **Continuar missão**. É sempre o próximo passo recomendado.
 
 ### 2. Onde fica cada coisa
@@ -471,7 +477,7 @@ Legenda de status: ✅ implementado no MVP · 🟡 parcial · ⏳ planejado
 
 | ID | Prior. | Requisito | Status | Onde |
 |---|---|---|---|---|
-| RF-01 | P0 | Onboarding: nome, formação, área, estado, idiomas, ano pretendido, "porquê" | ✅ | `public/js/views/profile.js`, `PUT /api/me/profile` |
+| RF-01 | P0 | Onboarding em 6 etapas (origem, formação, idiomas, orçamento, destino, documentos) + revisão; perfil editável depois | ✅ | `public/js/views/onboarding.js`, `public/js/views/profile.js`, `PUT /api/me/profile`, `POST /api/me/onboarding/complete` (doc 27) |
 | RF-02 | P0 | Catálogo de universidades e mestrados | 🟡 9 universidades; 5 programas locais demonstrativos; Radar com 138 mestrados UGR para 2026/27. O conector DUA consulta as nove universidades e a UNIA, mas a base local ainda não recebeu esses catálogos; requisitos detalhados por programa também seguem pendentes. | `server/content/catalog.js`, `server/radar/` |
 | RF-03 | P0 | Checagem preliminar de requisitos (requerido / verificar) com fonte | ✅ | Ficha do programa em `catalog.js` (view) |
 | RF-04 | P0 | Roadmap com dependências e tarefas paralelas | ✅ 6 fases, 23 missões, desbloqueio e missões paralelas | `server/content/journey.js`, `server/game.js` |
@@ -615,6 +621,85 @@ O card **Tutorial visual** só aparece com tutorial verificado (nenhum cadastrad
 
 Todos os cenários foram exercitados também pela interface (E2E em navegador, desktop e celular).
 
+<a id="doc-27"></a>
+
+## 27 — Onboarding: auditoria, fluxo e componentes
+
+O primeiro onboarding tem **6 etapas + revisão** e gera a primeira jornada. As jornadas seguintes pedem só o **destino** e reaproveitam perfil, requisitos, documentos e finanças.
+
+Arquivos: `public/js/views/onboarding.js` (fluxo), `public/js/views/auth.js` (login/cadastro), `public/js/components/Select.js`, `public/js/ui.js` (`toast`), `public/js/data/geo.js`, `public/js/data/academic.js`, `public/css/flow.css`, `public/js/i18n-flow.js` (traduções ES/EN).
+
+### 1. Auditoria: o que cada resposta realmente alimenta
+
+Levantado no código (não por suposição). "Obrigatório" = precisa de resposta para avançar; uma resposta como "Ainda não sei" conta como resposta.
+
+| Campo | Onde é usado | Missões | Documentos | Finanças | Progresso | Obrigatório? |
+|---|---|---|---|---|---|---|
+| `nacionalidade` | Objetivo auto `perfilOrigem` (Missão 1.1), conquista "perfil completo", contexto do Mentor, modelos de carta | 1.1 (objetivo) | — | — | — | Sim |
+| `paisResidencia` | Regra `perfil` das missões de visto (`igual: 'Brasil'`, senão "atenção"), consulado (`places.js`), condição `residenteBrasil` da Carteira, dicas | 5.x (atenção fora do Brasil) | Comprovante de residência (cond.) | — | — | Sim |
+| `estado` | Consulado por UF (`consulateForState`), objetivo `temEstado` | 5.1 (consulado) | Jurisdição consular | — | — | Sim quando o país tem lista de divisões (no Brasil, a UF; validado também no servidor) |
+| `formacao` | Objetivo `perfilFormacao`, elegibilidade "Titulação de acesso" (Missão 1.4) | 1.1, 1.4 | — | — | — | Sim |
+| `instituicao` | Contexto do Mentor, painel admin | — | — | — | — | Sim (pedido do produto: resposta manual aceita) |
+| `area` | Contexto do Mentor, painel admin | — | — | — | — | Sim (idem; "Outra área" aceita) |
+| `espanhol` | Objetivo `perfilIdioma`, elegibilidade de idioma (1.4), dicas | 1.1, 1.4 | — | — | — | Sim (`nao-sei` é válido) |
+| `certificadoEspanhol` / `certificadoNivel` | Objetivo `certificadoAtende`, elegibilidade | 2.x de idioma | — | — | — | Sim responder; ninguém precisa ter certificado |
+| `ingles` | Contexto do Mentor | — | — | — | — | Sim (`nao-sei` é válido) |
+| `orcamentoDisponivel` + `orcamentoSituacao` | **Antes:** só no painel admin (o `finance-engine` não lia). **Agora:** `plano.orcamentoDeclarado` no Planejamento financeiro, como referência | — | — | Referência, **não** recurso comprovado | — | Sim (`nao-sei` é válido; ausência nunca vira zero) |
+| `universidadeId` | Jornada: universidade, cidade, custos, Radar | todas | — | custos da cidade | — | Sim |
+| `programaId` | Exigência de idioma (2.x), duração padrão, prazos oficiais do Radar, objetivo `temProgramaPrincipal` (1.3) | 1.3, 2.x, 3.x | — | — | — | **Não** (ver §3) |
+| `anoAcademico` | Objetivo `temAnoAcademico`, IPREM do ano, prazos do Radar | 1.x, 3.x | — | ano da regra do visto | — | Sim |
+| `inicioAulas` | Prazo "Início das aulas", partida no planejador, validade do passaporte | — | passaporte | data de partida | — | Sim responder (`Ainda não sei` válido) |
+| `duracaoMeses` | Regra da TIE (`> 6` meses), meses de custo, validade do passaporte | 8.x | TIE | meses | — | Sim responder (`Ainda não sei` → TIE em "atenção") |
+| `etapa` (+ `dataEntrada`) | `declarePriorProgress` | marca missões como declaradas | — | — | Rodadas desbloqueadas | Sim; data só para "Já estou na Espanha" |
+| `requisitos.*` | `applyRequirements` + Carteira (`tenho` → documento "pronto", origem "declarado") | 2.1–2.3, 8.x | passaporte, diploma, histórico | — | conclui como "requisito atendido" | Sim (passaporte, diploma, histórico; TIE só para quem está na Espanha) |
+
+Removido da interface do onboarding: o bloco independente **"Mestrado pretendido"**. Os campos `situacaoCandidatura`/`situacaoVisto` do perfil nunca foram exibidos (o onboarding antigo só reenviava os valores padrão) e o motor não os lê; o onboarding deixou de enviá-los. A situação real fica na jornada (`etapa` → `situacao`).
+
+### 2. Fluxo
+
+1. **Origem**: nacionalidade e país (Select pesquisável, nomes via `Intl.DisplayNames`), divisão administrativa dependente do país (`geo.js`: Brasil (UF), Espanha (províncias por comunidade), Portugal, EUA, México, Argentina, Colômbia, Chile, Peru, Uruguai, Paraguai, Bolívia, Equador, Venezuela, Canadá, Itália, Alemanha, França). País sem lista: sem campo. Mensagem real: consulado da UF (de `places.js`) ou aviso de visto fora do Brasil.
+2. **Formação**: nível (chips), instituição (busca por nome/sigla; "Não encontrei" abre texto livre), área (agrupada pelos 5 ramos usados pelas universidades espanholas; "Outra área").
+3. **Idiomas**: CEFR A1–C2 + "Não falo", "Nativo", "Ainda não sei"; certificado (DELE, SIELE, outro, não tenho) e nível do certificado.
+4. **Orçamento**: valor em euros com formatação, atalhos de referência, "Ainda não sei".
+5. **Destino**: universidade (cards com logo), mestrado **opcional** dentro do destino ("Já sei qual mestrado quero", com os programas oficiais do Radar), ano, **início por período** (setembro/outubro do 1º ano ou fevereiro do 2º, ou "Ainda não sei"), duração (com efeito da TIE explicado), situação atual (linha do tempo de `PRIOR_STAGES`), data de entrada só para "Já estou na Espanha", confirmação.
+6. **Documentos**: uma pergunta por vez, respostas com categoria visual (já tenho / ainda não / preciso verificar), resumo final.
+7. **Revisão** ("Sua jornada está quase pronta.") com "Editar" por etapa → **geração** com a lista de passos → **resultado real**: rodada inicial, missões para começar, não aplicáveis, progresso reconhecido e primeira missão recomendada (tudo vindo do motor).
+
+O resumo "Seu perfil até agora" (lateral no desktop, topo no celular) mostra só o que o estudante respondeu.
+
+### 3. Mestrado opcional (decisão de arquitetura)
+
+O motor já tratava jornada sem programa (`buildContext` cai em `jr.universidadeId`; a interface mostra "Mestrado a definir"; idioma vira "atenção"). Só `POST /journeys` exigia `programaId`. Agora:
+
+- `POST /journeys` aceita `universidadeId` sem `programaId`. Nenhum programa é escolhido automaticamente.
+- Duplicidade preservada: mesmo programa → 409; e no máximo uma jornada **sem programa** por universidade + ano.
+- `PUT /journeys/:jid/program` define o mestrado depois (mesma universidade, sem repetir). O Radar oferece "definir nesta jornada" quando há uma jornada "a definir" na mesma universidade. O objetivo automático da Missão 1.3 ("Mestrado desta jornada definido") só conclui quando há programa.
+- Quem marca "Já escolhi meu mestrado" (ou etapa posterior) sem selecionar programa recebe um aviso e o seletor abre sozinho.
+
+### 4. Validação e gravação
+
+- Frontend: o botão "Continuar" fica desabilitado enquanto a etapa estiver incompleta e a linha "Falta: …" diz o quê. Strings vazias ou só com espaços não contam. Responder "não sei" ≠ não responder.
+- Servidor: `PUT /me/profile` valida cada campo (enums estritos; `certificadoNivel` só A1–C2); `POST /me/onboarding/complete` confere o essencial (inclusive UF para quem mora no Brasil, situação do orçamento, documentos e existência de jornada) e responde 422 com `faltam[]`.
+- Ordem de gravação (`finish()`): perfil → requisitos → jornada → progresso anterior → **conclusão** (`onboardingConcluido` só no fim). Antes, a flag era gravada antes de criar a jornada.
+- Repetição segura: duplo clique ignorado; o id da jornada criada fica no rascunho, e "Tentar novamente" a reaproveita (não cria outra). Perfil e requisitos são idempotentes; o progresso anterior não é reaplicado se já registrado.
+- Rascunho no `localStorage` por usuário e modo (`estuvia:onboarding:<id>:perfil|jornada`), restaurado ao recarregar e apagado ao concluir.
+
+#### Data de início (correção)
+
+O campo de data digitada foi trocado por períodos acadêmicos. O valor enviado é `inicioAulas = AAAA-MM-01` com `inicioAulasAproximado: true` (o prazo aparece como "Início das aulas (mês previsto)"). O período fica no rascunho e volta ao retornar à etapa. Não consegui reproduzir com certeza a causa original da perda da data digitada; a troca elimina a máscara manual de dd/mm/aaaa, que era o ponto frágil do fluxo.
+
+### 5. Componentes
+
+- **Select** (`components/Select.js`): combobox acessível (ARIA `combobox`/`listbox`, `aria-activedescendant`), busca com normalização de acentos, grupos, opção fixa ("Não encontrei"), teclado (setas, Home/End, PageUp/PageDown, Enter, Esc, digitação rápida), lista em portal com posição fixa que abre para cima/baixo e alinha pela borda direita para não sair da tela; no celular vira folha inferior. Expõe `value`, `setOptions`, `setInvalid`, `setDisabled` e um `<input type="hidden" name>` para formulários. Usado no onboarding, no perfil e no seletor de idioma (com bandeiras em SVG: emoji de bandeira não aparece no Windows). Os `<select>` nativos restantes ganharam o mesmo visual por CSS.
+- **Toasts** (`ui.js`): sucesso, erro, atenção e informação (`ok|err|warn|info`, compatível com as chamadas antigas), ícone, botão fechar, barra de tempo, pausa ao passar o mouse/focar, erro com `role="alert"`, no máximo 4.
+- **Modo foco** (`isFocusPath` em `app.js`): login, cadastro, recuperação de senha e onboarding sem menu lateral, barra inferior, rodapé e **sem Mentor**.
+- Movimento: transições curtas; `prefers-reduced-motion` desliga as animações.
+
+### 6. Testes
+
+- `tests/onboarding.test.js`: jornada sem mestrado, duplicidade, `PUT /program` (Missão 1.3), TIE por duração, progresso anterior sem mestrado, "não sei"/"verificar", conclusão validada, orçamento no planejador, divisões administrativas.
+- E2E em navegador (Playwright + Chrome, servidor isolado com JSON temporário): cadastro/login sem lateral, seis etapas, divisões de vários países, instituição manual, persistência ao recarregar, data de início salva, TIE, progresso anterior, documentos, revisão, geração, segunda jornada só com destino, Mentor ausente/presente, toasts, seletor de idioma dentro da tela e celular sem rolagem horizontal.
+
 <a id="doc-14"></a>
 
 ## 14 — Progressão, simplicidade e complexidade adaptativa
@@ -658,7 +743,7 @@ Regras em `server/content/progression.js`, avaliadas em `server/journey-engine.j
 
 ### 3. Requisitos já atendidos
 
-`GET/PUT /journeys/requirements` cobre passaporte, diploma, histórico e TIE (a TIE só depois da chegada). As perguntas aparecem uma de cada vez no onboarding e podem ser corrigidas em "Meu perfil → O que eu já tenho". "Sim, já tenho" marca a missão como **requisito já atendido** e o documento como "pronto". Mudar a resposta desfaz só o que ela marcou.
+`GET/PUT /journeys/requirements` cobre passaporte, diploma, histórico e TIE (a TIE só depois da chegada). As perguntas aparecem uma de cada vez no onboarding e podem ser corrigidas em "Meu perfil → O que eu já tenho". "Sim, já tenho" marca a missão como **requisito já atendido** e o documento como "pronto". Todas as perguntas aceitam também "Preciso verificar", que mantém a missão aberta. Mudar a resposta desfaz só o que ela marcou.
 
 ### 4. Complexidade adaptativa (interface)
 
@@ -2057,13 +2142,15 @@ Base `/api`, JSON. Erros: `{ "error": "mensagem" }`. Escritas exigem o cabeçalh
 `POST /auth/register {nome,email,senha,aceite}` · `POST /auth/login` · `POST /auth/logout` · `POST /auth/logout-all` · `POST /auth/change-password {atual,nova}`
 
 ### Perfil e documentos
-`GET /me` · `PUT /me/profile` (campos estritos) · `PUT /me/choices {choices}` (≤6) · `PUT /me/documents {id: pendente|em-preparacao|pronto|enviado|correcao|nao-se-aplica}` · `GET /me/export` · `DELETE /me {senha}`
+`GET /me` · `PUT /me/profile` (campos estritos; `espanhol`/`ingles` aceitam `nao-sei`; `orcamentoSituacao: informado|nao-sei`) · `POST /me/onboarding/complete` (confere o essencial no servidor e só então marca `onboardingConcluido`; 422 com `faltam[]`; idempotente) · `PUT /me/choices {choices}` (≤6) · `PUT /me/documents {id: pendente|em-preparacao|pronto|enviado|correcao|nao-se-aplica}` · `GET /me/export` · `DELETE /me {senha}`
 
 ### Jornadas
 | Método | Rota | Descrição |
 |---|---|---|
 | GET | `/journeys` | Resumos (destino, progresso, rodada atual, próxima missão, próximo prazo) |
-| POST | `/journeys` | `{programaId, anoAcademico, inicioAulas?, duracaoMeses?}` (≤6, sem duplicar programa) |
+| GET | `/journeys/progress-stages` | Etapas de progresso anterior: `{id, rotulo, exigeDataEntrada, missoes}` (missões reconhecidas, acumuladas) |
+| POST | `/journeys` | `{universidadeId e/ou programaId, anoAcademico?, inicioAulas?, inicioAulasAproximado?, duracaoMeses?}`. Mestrado opcional: sem ele a jornada nasce "Mestrado a definir". Duplicidade: mesmo programa, ou mesma universidade + ano sem programa (409). ≤6 jornadas |
+| PUT | `/journeys/:jid/program` | `{programaId}` define/troca o mestrado (mesma universidade, sem repetir outra jornada); conclui o objetivo automático da Missão 1.3 |
 | GET/PUT/DELETE | `/journeys/:jid` | Jornada calculada / editar datas / excluir |
 | PUT | `/journeys/:jid/situacao` | `{campo: adjudicacao|matricula|visto, valor}` → `{journey, events}` |
 | POST/PUT/DELETE | `/journeys/:jid/contacts[/:cid]` | Contatos acadêmicos (exige `fonteUrl` https) |
@@ -2079,7 +2166,7 @@ Mutações devolvem `{ mission, journey, events }` com eventos `missao-concluida
 `GET /planner` (eventos, prazos, disponibilidade) · `POST /planner` · `PUT/DELETE /planner/events/:id` · `PUT /planner/availability` · `POST /planner/suggest {semana, journeyId?, missaoId?}` · `POST /planner/approve {itens}` · `POST /planner/replan {semana}`
 
 ### Financiamento
-`GET /finance?journeyId=` · `PUT /finance {custos?, cambio?, informouRecursos?, nenhumaBolsaAplicavel?}` · `POST/PUT/DELETE /finance/resources[/:id]` · `POST /finance/scholarships {catalogId | nome…}` · `PUT /finance/scholarships/:id {status?, prazo?, valorTotal?, tarefa?}` · `DELETE /finance/scholarships/:id`
+`GET /finance?journeyId=` (o `plano` traz `orcamentoDeclarado {situacao: informado|nao-sei|nao-informado, valor, diferenca}`: referência do onboarding, nunca somada aos recursos) · `PUT /finance {custos?, cambio?, informouRecursos?, nenhumaBolsaAplicavel?}` · `POST/PUT/DELETE /finance/resources[/:id]` · `POST /finance/scholarships {catalogId | nome…}` · `PUT /finance/scholarships/:id {status?, prazo?, valorTotal?, tarefa?}` · `DELETE /finance/scholarships/:id`
 
 ### Moradia e viagem
 `GET /living` · `POST/PUT/DELETE /living/housing[/:id]` (status `escolhida` é única) · `POST/PUT/DELETE /living/travel/routes[/:id]` · `PUT /living/travel/arrival`
@@ -2242,6 +2329,180 @@ Roles come only from the server-side `role` field: `admin` (only the `ADMIN_EMAI
 - Mentor proposals are lost on restart; partial execution of a multi-step proposal is reported as "not executed" in the UI.
 - A monthly budget item marked "pago" counts as paid for the whole stay; a granted scholarship also added as a resource is counted twice.
 
+<a id="doc-28"></a>
+
+## 28 — Ambientes DEV × PROD
+
+**Situação em 11/11/2026:** produção **ainda não está separada**. O `.env` local usa `DB_PROVIDER=supabase` apontando para o projeto `pomtzhzoxwwnxztwwmft`, e a linha `main` desse projeto recebia gravações durante a auditoria (versão 372 → 374 em minutos). Não foi possível verificar daqui quais variáveis a Vercel usa (não há Vercel CLI nesta máquina), mas tudo indica que desenvolvimento e o ambiente publicado compartilham o mesmo banco.
+
+Decisão: o projeto atual (`pomtzhzoxwwnxztwwmft`) passa a ser **só de desenvolvimento**. Produção ganha um projeto Supabase **novo e vazio**.
+
+### 1. Arquitetura de persistência
+
+- `server/store.js` (usuários, auditoria, comunidade, uso) e `server/radar/db.js` (Radar): estado JSON em memória, gravado inteiro a cada escrita.
+- `DB_PROVIDER=json`: arquivos em `data/` (`db.json`, `radar.json`). `DB_PROVIDER=supabase`: tabela `estuvia_state`, uma linha por domínio (`main`, `radar`), com controle otimista de versão (`server/database.js`).
+- Arquivos (documentos cifrados, imagens da comunidade, regras editoriais): disco local ou Supabase Storage (buckets privados `estuvia-documents`, `estuvia-community`, `estuvia-meta`, criados pelo servidor).
+- Autenticação é própria (JWT em cookie), não usa Supabase Auth. O banco só é acessado pelo servidor com a chave **secret**; RLS ligada e nenhum acesso para `anon`/`authenticated` (`supabase/migrations/0001_estuvia_state.sql`).
+- `npm test` sempre roda com JSON em pasta temporária e sem `.env` (`scripts/test.mjs`): os testes nunca tocam um banco real.
+
+### 2. Barreiras implementadas
+
+| Barreira | Onde | Efeito |
+|---|---|---|
+| `APP_ENV` (`development`/`production`/`test`) coerente com `NODE_ENV` | `server/config.js` | Não sobe com `APP_ENV=production` sem `NODE_ENV=production` (e vice-versa). |
+| Referências dos projetos: `SUPABASE_DEV_PROJECT_REF` e `SUPABASE_PROD_PROJECT_REF` | `assertProjectAllowed()` em `server/database.js`, chamada em **todo** cliente Supabase (banco e Storage) | DEV apontando para o projeto de PROD (ou o contrário) é recusado **antes de qualquer leitura**. Testado: `[ambiente] Ambiente "development" apontando para o banco de PRODUÇÃO…`. |
+| Marcação no próprio banco: `state.meta.ambiente` | `initStore()` + `checkDatabaseEnvironment()` | Banco marcado para um ambiente nunca é aberto por outro. Produção só se marca sozinha se o banco estiver **vazio** (projeto novo). Banco com dados e sem marcação: só aviso; marcar é explícito (`npm run db:env`). |
+| Sem cópia de dados pessoais para PROD | `initStore()` e `initRadarStore()` | Na primeira execução, a linha nova recebe a cópia da base local **só fora de produção**. Em produção: `main` começa vazia; no Radar só os dados públicos (programas, prazos, fontes), sem inscrições, alertas e vínculos de agenda. |
+
+Testes: `tests/db-environments.test.js`.
+
+### 3. Ferramentas
+
+```bash
+npm run db:backup                         # backup SOMENTE LEITURA de estuvia_state → data/backups/ (fora do git)
+npm run db:env -- status                  # projeto, ambiente marcado, nº de usuários
+npm run db:env -- mark development --confirmo
+```
+
+`db:env mark` nunca troca uma marcação existente e usa a versão otimista: servidores já rodando com a versão anterior em memória falham na próxima gravação (conflito) e precisam ser reiniciados.
+
+**Backup feito em 11/11/2026:** `data/backups/supabase-pomtzhzoxwwnxztwwmft-2026-11-11T00-01-52-392Z.json` (linhas `main` v372, 7 usuários, e `radar` v18). Contém dados pessoais: não versionar, não enviar, guardar com cuidado. **Não inclui** os arquivos do Storage.
+
+### 4. O que precisa ser feito manualmente (painéis)
+
+Nada abaixo foi feito ainda: depende de acesso aos painéis do Supabase e da Vercel.
+
+1. **Backup do Storage do projeto atual** (documentos cifrados e imagens): Supabase → Storage → baixar os buckets `estuvia-documents`, `estuvia-community`, `estuvia-meta`, ou usar a CLI do Supabase. Os documentos só abrem com a `DOCUMENTS_KEY` do ambiente que os cifrou.
+2. **Criar o projeto de produção** no Supabase (região próxima dos usuários, ex.: São Paulo). Anotar a referência `<ref>`.
+3. No **SQL Editor do projeto novo**, aplicar `supabase/migrations/0001_estuvia_state.sql`.
+4. Em *Project Settings → API keys*, criar uma chave **secret** só para produção. Nunca reutilizar a de desenvolvimento.
+5. Na **Vercel → Settings → Environment Variables**, escopo **Production**:
+   - `NODE_ENV=production`, `APP_ENV=production`, `DB_PROVIDER=supabase`, `STORAGE_PROVIDER=supabase`
+   - `SUPABASE_URL=https://<ref-prod>.supabase.co`, `SUPABASE_SECRET_KEY=<secret de prod>`
+   - `SUPABASE_PROD_PROJECT_REF=<ref-prod>`, `SUPABASE_DEV_PROJECT_REF=pomtzhzoxwwnxztwwmft`
+   - **Novos** `JWT_SECRET` e `DOCUMENTS_KEY` (≥ 32 caracteres, diferentes dos de DEV; guardar a `DOCUMENTS_KEY` com backup), `ALLOWED_ORIGIN`, `ADMIN_EMAIL`/`ADMIN_PASSWORD`, `RESEND_API_KEY`/`EMAIL_FROM`, chaves de IA se usadas.
+   - Remover das variáveis de *Preview* qualquer credencial de produção (previews devem usar DEV ou JSON).
+6. **Deploy** de produção. Na primeira subida o servidor encontra o banco vazio, cria as linhas e marca `ambiente = production` (log: `Banco <ref> vazio marcado como "production"`).
+7. Conferir: `GET /api/health` em produção, criar uma conta de teste, gerar uma jornada e checar no Supabase de **produção** que a linha `main` mudou (e que a de DEV não mudou).
+8. **Só depois** de produção estar no projeto novo, no `.env` local:
+   - `APP_ENV=development`, `SUPABASE_DEV_PROJECT_REF=pomtzhzoxwwnxztwwmft`, `SUPABASE_PROD_PROJECT_REF=<ref-prod>`
+   - rodar `npm run db:env -- mark development --confirmo` (com o servidor local parado).
+   A partir daí, nenhum servidor de produção abre o banco de DEV, e o DEV se recusa a abrir o de PROD.
+
+**Dados existentes:** os 7 usuários do banco atual **não** foram copiados para produção. Migrar contas reais exige decisão e autorização (LGPD: finalidade, consentimento, aviso aos titulares). Se for decidido migrar, faça a partir do backup, de forma seletiva, e registre o procedimento.
+
+**Ordem importa:** marcar o banco atual como `development` antes de mover a produção derrubaria a produção atual na próxima reinicialização com o código novo (o servidor recusaria abrir o banco). Por isso o passo 8 vem por último.
+
+<a id="doc-26"></a>
+
+## Auditoria de lançamento — Estuvia
+
+**Data:** 9 de novembro de 2026
+
+**Escopo:** revisão estática do código, textos legais, configuração e documentação do repositório; conferência de fontes oficiais brasileiras e espanholas sobre o processo acadêmico.
+**Veredito:** **não recomendo abrir cadastro público nem permitir envio de documentos ainda.** A aplicação já tem bastante estrutura funcional e controles técnicos úteis, mas os avisos legais são explicitamente rascunhos, há divergências entre o que a interface promete e o que o servidor permite, o fluxo de exclusão/retensão precisa ser definido e não foi possível confirmar uma implantação real nem a região dos provedores.
+
+Esta revisão é um diagnóstico de produto e tecnologia, não um parecer jurídico, pentest, certificação LGPD/GDPR ou validação de um ambiente de produção. Um advogado com experiência em privacidade, consumidor e serviços educacionais/migratórios deve revisar os documentos finais.
+
+### 1. O que a plataforma faz hoje
+
+A Estuvia organiza a jornada para candidatura, preparação de documentos, visto e chegada. A candidatura, matrícula e pedidos consulares são feitos pelo próprio estudante nos sistemas oficiais; a Estuvia não os envia. Estados como candidatura, admissão e visto dependem de declaração do usuário, não de confirmação da universidade ou do consulado. Isso está refletido nos termos e no código e deve continuar claro na interface.
+
+A carteira aceita arquivos de passaporte, comprovantes e outros documentos; a lista inclui certidão de antecedentes e atestado médico. Os arquivos são cifrados com AES-256-GCM em repouso e a chave fica no servidor. Isso protege os arquivos armazenados, mas **não é criptografia ponta a ponta**: a aplicação precisa conseguir decifrá-los para entregar o arquivo ao usuário. A IA não recebe os arquivos segundo o código examinado; quando ativada, a pergunta e o contexto da jornada são enviados ao provedor configurado.
+
+O código contém proteção de senha com scrypt, sessão em cookie HttpOnly, controles de origem/CSRF, limitação de tentativas, cabeçalhos de segurança e armazenamento privado para documentos quando Supabase Storage é usado. São boas bases, mas não substituem configuração correta, revisão de acesso, gestão de chaves, backup e resposta a incidentes.
+
+### 2. Bloqueadores antes de lançamento público
+
+#### P0 — Política e termos não podem ir ao ar como estão
+
+`public/js/views/legal.js` apresenta a Política de Privacidade e os Termos como **“Rascunho”** e contém campos `[PREENCHER]` para controlador, CNPJ/endereço, contato, provedores, países, transferências internacionais, retenção, idade mínima, preço e foro. A tela de cadastro já recolhe aceitação, mas não há documentos completos para o usuário aceitar. O termo também traz uma limitação ampla de responsabilidade (“na máxima extensão permitida pela lei”); em relação de consumo, uma cláusula não pode eliminar direitos legais nem afastar automaticamente a responsabilidade por falha do serviço.
+
+Antes de liberar contas reais, fechar com advogado e publicar uma versão identificável e datada, com: identidade do controlador/operador, canais de suporte e privacidade, finalidades e bases legais por categoria, fornecedores e países, regras de retenção e eliminação, direitos e procedimento de atendimento, idade mínima, preço/condições (inclusive se gratuito) e explicação correta sobre o que a Estuvia faz e não faz. O Marco Civil e a LGPD exigem transparência; o CDC mantém regras próprias de responsabilidade e invalida certas cláusulas abusivas.
+
+#### P0 — Consentimento de documentos está inconsistente
+
+O modal em `public/js/components/documents/DocumentUpload.js` diz que “só você acessa”. A própria política esclarece que a chave de criptografia fica no servidor. Corrigir a promessa: informar que os arquivos são cifrados, que o servidor precisa decifrá-los para servi-los e quais acessos administrativos/técnicos são possíveis e auditados. Não chamar o recurso de “privado só para você” sem qualificação verificável.
+
+O fluxo registra versão e data do aceite, o que é um bom começo, mas o consentimento é genérico para “documentos”. Como a carteira aceita atestado médico, pode haver dado pessoal sensível de saúde sob a LGPD. O controlador precisa validar uma base legal específica para cada categoria e uma apresentação destacada e informada para dados sensíveis; um aceite genérico de upload não resolve automaticamente isso. Também não encontrei um fluxo de revogação do consentimento de documentos: o endpoint visto registra aceite, sem opção equivalente de revogar. A política promete essa revogação.
+
+**Decisão recomendada:** reduzir o risco retirando da nuvem os documentos cujo conteúdo não seja necessário, guardando somente checklist/estado e permitindo que o estudante mantenha os originais localmente. Se a carteira continuar, limitar categorias, explicar cada finalidade, implementar retirada do consentimento e exclusão, controlar acesso da equipe, registrar todo acesso privilegiado e formalizar backup, chave e retenção.
+
+#### P0 — Operadores e transferências internacionais sem identificação final
+
+O código pode usar Vercel, Supabase, Resend, Anthropic ou endpoint compatível com OpenAI; há também integrações opcionais de pesquisa, vídeo e preços de viagem. Ainda não há uma lista final de quais estarão ativos, que dados recebem, países de armazenamento/acesso, suboperadores e prazos de retenção. A política mantém esses campos em aberto.
+
+Faça um mapa de dados que cubra cada integração (incluindo conteúdo enviado ao Mentor e consultas de viagem/pesquisa), obtenha os contratos de operador/DPA, confirme regiões e suboperadores e escolha um mecanismo válido para transferências internacionais. A Resolução CD/ANPD nº 19/2024 prevê mecanismos como cláusulas-padrão contratuais e exige transparência sobre a transferência. Não basta escrever “adotamos salvaguardas” sem saber quais contratos e mecanismos realmente cobrem cada fornecedor.
+
+#### P0 — Definir exclusão, exportação e retenção de ponta a ponta
+
+O endpoint de exclusão remove o usuário e aciona remoção dos documentos, registros do Radar e conteúdo da comunidade. Há, porém, dados que podem permanecer:
+
+- eventos de auditoria são mantidos até o limite de 5.000 itens, sem prazo temporal de retenção definido no código;
+- métricas de uso guardam IDs de usuários e são podadas por janela de 120 dias, mas a exclusão não remove explicitamente esses IDs;
+- denúncias de usuários excluídos têm o identificador do autor removido, mas o texto livre da denúncia é mantido;
+- a exportação JSON exclui notas administrativas e exporta metadados dos arquivos, não o conteúdo binário desses arquivos.
+
+Defina por escrito o que é apagado, anonimizado ou retido e por qual base/prazo; implemente a mesma regra em contas, auditoria, métricas, comunidade, Radar, storage e backups. Remover apenas o identificador não basta se texto livre ainda puder identificar alguém. Garanta ao usuário acesso/baixar seus arquivos e explique claramente o escopo do export. A política precisa descrever exceções de retenção, inclusive registros legalmente obrigatórios.
+
+O Marco Civil prevê guarda segura de registros de acesso por seis meses para determinados provedores de aplicações constituídos como pessoa jurídica e que atuam de forma organizada, profissional e econômica. Os eventos de auditoria do Estuvia não demonstram, por si só, que essa obrigação está atendida: a retenção é por quantidade e os logs completos de acesso devem ser confirmados com a hospedagem/proxy e com assessoria jurídica.
+
+#### P0 — Canal de privacidade, idade e prova de aceitação
+
+A política diz que o serviço é para maiores de 18 anos, mas o formulário/API de cadastro não pede nem valida idade. Decida se menores serão excluídos e implemente uma barreira coerente; se forem aceitos, desenhe o fluxo de melhor interesse e representação/consentimento aplicável. A LGPD tem regra especial para crianças e adolescentes.
+
+A conta registra `consentAt`, mas não uma versão identificável dos Termos/Política aceitos. Guarde evento, data/hora, versão/hash do texto apresentado e mecanismo de aceitação. Isso melhora a prova e permite avisar sobre mudanças relevantes. Também publique um canal funcional para direitos e reclamações. A indicação de encarregado pode ter exceção para certos agentes de pequeno porte, mas isso depende de enquadramento e risco; mesmo quando dispensado, deve existir canal de comunicação. Como há carteira de documentos potencialmente sensíveis, não presuma que a exceção se aplica sem avaliação.
+
+### 3. Processo acadêmico e documental
+
+O fluxo atual serve como organizador e preparador; não é um processo oficial integrado. Requisitos por mestrado, calendário, documentos, homologação/tradução/apostila, visto e condições consulares podem mudar e variar conforme pessoa, programa e chamada. Cada item marcado como obrigatório/condicional deve levar a uma fonte oficial, data de verificação e indicação de quando a regra é individual ou precisa de confirmação humana.
+
+Há uma questão de calendário imediata. Na data desta auditoria, as datas gerais do DUA para 2026/27 já passaram, mas a UGR publicou em 5 de novembro um procedimento extraordinário para vagas remanescentes, com pedidos de 6 a 10 de novembro e somente para determinados mestrados. Para a próxima edição, 2027/28, não publique calendário como confirmado até existir chamada oficial. O Radar e o catálogo local ainda precisam de atualização bem-sucedida e evidência de cobertura/atualidade; a documentação de prontidão registra falha anterior de atualização e dados locais para 2026/27. O usuário deve ver “desatualizado/sem chamada oficial” em vez de datas inferidas.
+
+Antes de cada ciclo, valide de ponta a ponta: oferta e requisitos no catálogo oficial, fases e calendários do DUA, processo extraordinário da UGR, documentos para cada fase, mensagens de erro e links externos. Teste também a rota de visto/chegada sem apresentar estimativa como decisão oficial. A publicação oficial da UGR deixa claro que a candidatura de mestrado é online pelo DUA.
+
+### 4. Infraestrutura e operação
+
+O repositório tem `vercel.json` e `api/index.js`, então há um caminho de implantação serverless na Vercel. Também existe execução local em `server/index.js`. A configuração padrão do banco é JSON local; em serverless isso não é persistência confiável. A opção atual para produção é configurar banco e storage duráveis (por exemplo, Supabase), validar buckets privados, políticas, região e chaves de servidor. **Não há evidência neste repositório de que uma URL de produção esteja publicada, nem de que região, contratos, segredos, TLS, recuperação de senha, monitoramento e restauração tenham sido validados ao vivo.**
+
+`LANCAMENTO.md` ainda descreve JSON local como caminho principal e desaconselha Vercel; isso conflita com a integração Supabase/Vercel que hoje existe no código. Atualize o runbook para uma arquitetura única de lançamento. Antes de abrir ao público, validar em staging com credenciais reais: registro, recuperação de senha, envio/abertura/exclusão de arquivo, exportação e exclusão da conta, reinício/deploy, backup e restauração. Confirmar que `JWT_SECRET`, `DOCUMENTS_KEY`, credenciais Supabase e e-mail estão em secret manager e nunca no navegador/repositório. Definir MFA para conta administrativa, menor privilégio, revisão de acessos e procedimento de troca/restauração da chave.
+
+Os testes automatizados anteriormente registrados no projeto passaram (237/237 e verificação de sintaxe 190/190), mas usam provedores/fixtures locais e não comprovam um deploy real, acessibilidade, fluxo em navegador, região contratual, transferências ou segurança operacional.
+
+### 5. LGPD, GDPR e redução de risco jurídico
+
+Mantenha um registro das operações de tratamento (dados, finalidades, base legal, sistema, operadores, país, retenção e controles), documente o teste de legítimo interesse quando usado e prepare um Relatório de Impacto à Proteção de Dados. A LGPD permite que a ANPD determine o relatório; para uma plataforma que guarda documentos de identidade e pode receber dados de saúde, preparar o RIPD antes do lançamento é uma medida prudente de prestação de contas, não uma afirmação de que a lei exige automaticamente um relatório em todo caso.
+
+Crie um procedimento de incidente: canal de acionamento, responsável, contenção, preservação de evidências, avaliação de risco, contato com provedores, modelos de aviso e registro das decisões. Quando o incidente puder acarretar risco ou dano relevante, a regra da ANPD prevê comunicação à ANPD e aos titulares em três dias úteis, ressalvadas regras específicas.
+
+O GDPR pode ser aplicável dependendo de onde o controlador/processador está estabelecido e de a plataforma oferecer serviços a pessoas localizadas na UE ou monitorar o comportamento delas lá. O assunto ser “estudar na Espanha”, por si só, não determina a aplicação. Como a plataforma trata candidatura e chegada na Espanha, faça uma análise territorial com advogado antes de decidir que só a LGPD vale; se o GDPR for aplicável, revisar bases, direitos, contratos, dados de saúde e criminais, segurança e prazos europeus.
+
+Não há termo, CNPJ, cláusula ou seguro que impeça alguém de ajuizar uma ação ou elimine responsabilidade legal. O que reduz exposição é tratar menos dados, fazer promessas verdadeiras, manter informação oficial atualizada e rastreável, cumprir direitos e prazos, controlar acessos, corrigir falhas, documentar decisões e ter contratos/seguros adequados. Recomendo advogado de privacidade/consumidor para fechar a estrutura do negócio e revisar os textos, além de avaliar com corretor seguro cibernético e responsabilidade profissional/tecnológica. A estrutura societária pode organizar a atividade e o risco, mas não é imunidade pessoal automática.
+
+### 6. Plano de lançamento por ordem
+
+1. **Bloqueio legal:** completar e revisar Política/Termos, decidir idade mínima e preço, publicar contato e responsável, registrar versões aceitas.
+2. **Documentos:** corrigir a mensagem do consentimento, fazer análise de base legal para dados de saúde, implementar revogação/exclusão e decidir se a carteira deve guardar documentos sensíveis.
+3. **Mapa e fornecedores:** listar dados enviados e países de cada provedor, contratos de operador e mecanismo documentado de transferência.
+4. **Direitos e retenção:** alinhar exportar/excluir com o que permanece em logs, métricas, denúncias e backups; criar calendário de retenção e processo de solicitação.
+5. **Governança:** registro de tratamento, RIPD, canal de privacidade/encarregado conforme enquadramento e plano de incidentes.
+6. **Processo de Granada/Andaluzia:** atualizar a chamada corrente, distinguir fase regular e extraordinária, não afirmar datas 2027/28 antes da fonte oficial, revisar documentos e cobertura dos mestrados.
+7. **Produção:** selecionar host/DB/storage e região, configurar segredos e e-mail, backups/restauração, MFA/admin, monitoramento e smoke tests em staging.
+8. **Aprovação final:** advogado revisa documentação; responsável técnico verifica evidências de produção; então liberar um piloto limitado e monitorado. Só ampliar após observar o fluxo real e corrigir falhas.
+
+### 7. Fontes oficiais consultadas
+
+- [Lei Geral de Proteção de Dados — LGPD, texto no Planalto](https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm)
+- [Resolução CD/ANPD nº 19/2024 — transferências internacionais e cláusulas-padrão](https://www.gov.br/anpd/pt-br/acesso-a-informacao/institucional/atos-normativos/regulamentacoes_anpd/resolucao-cd-anpd-no-19-de-23-de-agosto-de-2024)
+- [ANPD — comunicação de incidente de segurança e prazo de três dias úteis](https://www.gov.br/anpd/pt-br/canais_atendimento/agente-de-tratamento/comunicado-de-incidente-de-seguranca-cis)
+- [Resolução CD/ANPD nº 2/2022 — agentes de pequeno porte e canal de atendimento](https://www.gov.br/anpd/pt-br/acesso-a-informacao/institucional/atos-normativos/regulamentacoes_anpd/resolucao-cd-anpd-no-2-de-27-de-janeiro-de-2022)
+- [Marco Civil da Internet — art. 15, guarda de registros de acesso](https://www.planalto.gov.br/ccivil_03/leis/l12965.htm)
+- [Código de Defesa do Consumidor — arts. 14 e 51](https://www.planalto.gov.br/ccivil_03/leis/l8078compilado.htm)
+- [GDPR — Regulamento (UE) 2016/679, especialmente arts. 3, 9, 10, 28, 32 e 33](https://eur-lex.europa.eu/eli/reg/2016/679/oj/eng/)
+- [Junta de Andalucía — calendário DUA de mestrados 2026/27 para títulos estrangeiros não homologados](https://www.juntadeandalucia.es/boja/2025/245/50)
+- [Universidad de Granada — chamada extraordinária 2026/27, solicitação de 6 a 10 de novembro](https://saap.ugr.es/informacion/noticias/procedimiento-extraordinario)
+- [UGR — pedido de admissão a mestrados via Distrito Único Andaluz](https://www.ugr.es/destacado/admision-estudios-master-curso-2026-2027)
+
 ---
 
 <a id="parte-5"></a>
@@ -2255,7 +2516,7 @@ Roles come only from the server-side `role` field: `admin` (only the `ADMIN_EMAI
 **Preparação:** `npm install && npm start`, janela anônima em `http://localhost:3000`. (Com `ANTHROPIC_API_KEY` o Mentor usa o Claude; sem ela, responde com a base verificada — apresente isso como resiliência.)
 
 1. **Problema (30 s).** Dezenas de sites, prazos e documentos; um erro custa meses.
-2. **Cadastro + onboarding (1 min).** 5 passos (origem, formação, idiomas, orçamento, destino). Escolha "Mestrado em Engenharia — exemplo A (exige B2)". Mostre o resumo: missões aplicáveis, idioma obrigatório.
+2. **Cadastro + onboarding (1 min).** 6 etapas (origem, formação, idiomas, orçamento, destino, documentos) com o resumo "Seu perfil até agora" se atualizando. No destino, escolha a UGR e, em "Já sei qual mestrado quero", um mestrado do Radar. Mostre a revisão e o resultado real: rodada inicial, missões não aplicáveis, progresso reconhecido.
 3. **Início (1 min).** Hero da jornada, progresso, **alertas inteligentes**, Agenda AI, prazos, finanças.
 4. **Minhas Jornadas → Rodadas (1 min).** Cards com capa e "Acessar Rodadas"; cards de rodada com estado e %; trilha F de financiamento.
 5. **Trilha (1 min).** Zigue-zague, "Você está aqui", bloqueios por dependência, botão "Continuar minha jornada".

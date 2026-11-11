@@ -7,6 +7,14 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const isProd = process.env.NODE_ENV === 'production';
 
+// Ambiente lógico do banco (separação DEV × PROD, ver docs/28-ambientes-dev-prod.md).
+// Padrão: production com NODE_ENV=production; development nos demais casos.
+const appEnv = process.env.APP_ENV || (isProd ? 'production' : 'development');
+if (!['development', 'production', 'test'].includes(appEnv)) throw new Error('APP_ENV deve ser development, production ou test.');
+if (isProd !== (appEnv === 'production')) {
+  throw new Error(`APP_ENV=${appEnv} com NODE_ENV=${process.env.NODE_ENV || '(vazio)'}: produção exige os dois iguais a "production".`);
+}
+
 // Em produção os arquivos da carteira exigem chave própria: derivá-la do JWT_SECRET faria uma troca
 // do segredo das sessões tornar todos os documentos ilegíveis.
 if (isProd && (process.env.DOCUMENTS_KEY || '').length < 32) {
@@ -41,6 +49,11 @@ export const config = {
   sessionHours: 8,
   dataFile: process.env.DATA_FILE || path.join(here, '..', 'data', 'db.json'),
   databaseProvider: process.env.DB_PROVIDER || 'json',
+  appEnv,
+  // Referências (subdomínio <ref>.supabase.co) dos projetos de cada ambiente: o servidor recusa subir
+  // se o ambiente atual apontar para o projeto do outro. Defina as duas em todos os ambientes.
+  supabaseProdRef: (process.env.SUPABASE_PROD_PROJECT_REF || '').trim(),
+  supabaseDevRef: (process.env.SUPABASE_DEV_PROJECT_REF || '').trim(),
   supabaseUrl: process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '',
   // Secret key fica só no servidor. A publishable key não pode gravar com segurança usando a autenticação própria do Estuvia.
   supabaseSecretKey: process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '',

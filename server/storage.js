@@ -7,7 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { config } from './config.js';
-import { usesSupabase } from './database.js';
+import { usesSupabase, assertProjectAllowed } from './database.js';
 
 const DOCS_BUCKET = process.env.SUPABASE_DOCS_BUCKET || 'estuvia-documents';
 const MEDIA_BUCKET = process.env.SUPABASE_MEDIA_BUCKET || 'estuvia-community';
@@ -22,6 +22,7 @@ let supabaseClient = null;
 async function client() {
   if (!usesSupabaseStorage()) return null;
   if (!config.supabaseUrl) throw new Error('SUPABASE_URL (ou NEXT_PUBLIC_SUPABASE_URL) não definido.');
+  assertProjectAllowed(); // DEV nunca toca o Storage de PROD (e vice-versa)
   if (!config.supabaseSecretKey) throw new Error('SUPABASE_SECRET_KEY não definido. Use a chave secret do projeto; nunca a publishable key.');
   clientPromise ??= import('@supabase/supabase-js').then(({ createClient }) => {
     supabaseClient = createClient(config.supabaseUrl, config.supabaseSecretKey, {

@@ -10,7 +10,9 @@
     "dev": "node --watch server/index.js",
     "test": "node scripts/test.mjs",
     "docs": "node scripts/build-docs.mjs",
-    "check": "node scripts/check-syntax.mjs"
+    "check": "node scripts/check-syntax.mjs",
+    "db:backup": "node scripts/db-backup.mjs",
+    "db:env": "node scripts/db-env.mjs"
   },
   "engines": {
     "node": ">=20"

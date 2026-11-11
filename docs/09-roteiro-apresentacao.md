@@ -3,7 +3,7 @@
 **Preparação:** `npm install && npm start`, janela anônima em `http://localhost:3000`. (Com `ANTHROPIC_API_KEY` o Mentor usa o Claude; sem ela, responde com a base verificada — apresente isso como resiliência.)
 
 1. **Problema (30 s).** Dezenas de sites, prazos e documentos; um erro custa meses.
-2. **Cadastro + onboarding (1 min).** 5 passos (origem, formação, idiomas, orçamento, destino). Escolha "Mestrado em Engenharia — exemplo A (exige B2)". Mostre o resumo: missões aplicáveis, idioma obrigatório.
+2. **Cadastro + onboarding (1 min).** 6 etapas (origem, formação, idiomas, orçamento, destino, documentos) com o resumo "Seu perfil até agora" se atualizando. No destino, escolha a UGR e, em "Já sei qual mestrado quero", um mestrado do Radar. Mostre a revisão e o resultado real: rodada inicial, missões não aplicáveis, progresso reconhecido.
 3. **Início (1 min).** Hero da jornada, progresso, **alertas inteligentes**, Agenda AI, prazos, finanças.
 4. **Minhas Jornadas → Rodadas (1 min).** Cards com capa e "Acessar Rodadas"; cards de rodada com estado e %; trilha F de financiamento.
 5. **Trilha (1 min).** Zigue-zague, "Você está aqui", bloqueios por dependência, botão "Continuar minha jornada".

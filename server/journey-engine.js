@@ -415,7 +415,7 @@ export function computeJourney(user, jr, now = new Date()) {
     .filter((m) => m.prazo && !['concluida', 'nao-aplicavel'].includes(m.status))
     .map((m) => ({ missao: m.id, label: m.label, titulo: m.titulo, ...m.prazo }));
   if (jr.inicioAulas) {
-    prazos.push({ missao: null, titulo: 'Início das aulas', rotulo: 'Início das aulas', data: jr.inicioAulas, origem: 'declarado', diasRestantes: daysUntil(jr.inicioAulas, now) });
+    prazos.push({ missao: null, titulo: 'Início das aulas', rotulo: jr.inicioAulasAproximado ? 'Início das aulas (mês previsto)' : 'Início das aulas', aproximado: Boolean(jr.inicioAulasAproximado), data: jr.inicioAulas, origem: 'declarado', diasRestantes: daysUntil(jr.inicioAulas, now) });
   }
   prazos.sort((a, b) => a.data.localeCompare(b.data));
 
@@ -444,6 +444,7 @@ export function computeJourney(user, jr, now = new Date()) {
       pais: ctx.university?.pais || 'Espanha',
       anoAcademico: jr.anoAcademico || null,
       inicioAulas: jr.inicioAulas || null,
+      inicioAulasAproximado: Boolean(jr.inicioAulasAproximado),
       duracaoMeses: ctx.duracaoMeses,
     },
     progresso,
@@ -482,7 +483,7 @@ export function eligibility(ctx) {
   if (!prog) return [];
   const items = [];
   items.push(p.formacao
-    ? { requisito: 'Titulação de acesso', status: 'declarado', texto: `Você declarou: ${p.formacao}. A universidade verifica a equivalência de nível e o direito de acesso à pós-graduação no Brasil.`, fonte: 'O1' }
+    ? { requisito: 'Titulação de acesso', status: 'declarado', texto: `Você declarou: ${p.formacao}. A universidade verifica a equivalência de nível e o direito de acesso à pós-graduação no país que emitiu o título.`, fonte: 'O1' }
     : { requisito: 'Titulação de acesso', status: 'falta-informar', texto: 'Informe sua graduação no perfil.', fonte: 'O1' });
   const req = prog.idioma || { status: 'verificar' };
   const lvl = LANG_LEVELS.indexOf(p.espanhol || 'nenhum');
@@ -496,7 +497,9 @@ export function eligibility(ctx) {
         ? { requisito: 'Idioma', status: 'declarado', texto: `Você declarou certificado ${p.certificadoEspanhol} ${p.certificadoNivel} (exigido: ${req.nivel} com certificado). Só a universidade valida o documento.`, fonte: req.fonte }
         : { requisito: 'Idioma', status: 'falta-comprovar', texto: `Exigido: ${req.nivel} com certificado. Você ainda não declarou certificado nesse nível.`, fonte: req.fonte });
     } else {
-      items.push(lvl >= need
+      items.push(p.espanhol === 'nao-sei'
+        ? { requisito: 'Idioma', status: 'falta-informar', texto: `Exigido: ${req.nivel}. Você ainda não sabe seu nível: um teste de nivelamento ajuda a planejar o preparo.`, fonte: req.fonte }
+        : lvl >= need
         ? { requisito: 'Idioma', status: 'declarado', texto: `Exigido: ${req.nivel}. Seu nível declarado: ${p.espanhol}. Confirme como o programa comprova o nível.`, fonte: req.fonte }
         : { requisito: 'Idioma', status: 'falta-comprovar', texto: `Exigido: ${req.nivel}. Seu nível declarado (${p.espanhol || 'nenhum'}) está abaixo.`, fonte: req.fonte });
     }

@@ -5,7 +5,7 @@
 import { h, mount, richText, toast } from '../ui.js';
 import { icon } from '../icons.js';
 import { api } from '../api.js';
-import { state, go, currentPath, invalidate } from '../app.js';
+import { state, go, currentPath, invalidate, isFocusPath } from '../app.js';
 import { renderResult } from './ResultCard.js';
 import { locale } from '../i18n.js';
 
@@ -406,7 +406,8 @@ export function mountMentorLauncher() {
   ensureStyles();
   const host = document.getElementById('assistant-root');
   if (!host) return;
-  const show = Boolean(state.me) && !['/assistente', '/mentor'].includes(currentPath());
+  // Não aparece no cadastro/login nem durante o onboarding (isFocusPath): o estudante fica no fluxo.
+  const show = Boolean(state.me) && !['/assistente', '/mentor'].includes(currentPath()) && !isFocusPath(currentPath());
   if (!show) { closeDrawer(); return mount(host); }
   if (host.querySelector('.mt-fab')) return;
   mount(host, h('button', { class: 'mt-fab', type: 'button', 'aria-label': 'Abrir Mentor Estuvia', onClick: () => openDrawer() }, icon('chat', { size: 22 }), h('span', {}, 'Mentor')));

@@ -8,9 +8,35 @@ let clientPromise = null;
 
 export const usesSupabase = () => config.databaseProvider === 'supabase';
 
+export const projectRef = (url) => { try { return new URL(url).hostname.split('.')[0]; } catch { return ''; } };
+
+/**
+ * Isolamento DEV × PROD (função pura, coberta por testes).
+ * 1) Pela URL: o ambiente não pode apontar para o projeto Supabase reservado ao outro.
+ * 2) Pela marcação gravada no próprio banco (state.meta.ambiente): banco marcado para um ambiente
+ *    nunca é aberto por outro. Banco sem marcação: produção só se marca sozinha se estiver VAZIA
+ *    (projeto novo); nos demais casos só avisa (marcar é um passo explícito: npm run db:env -- mark).
+ * Retorna { ok, erro?, aviso?, marcar? }.
+ */
+export function checkDatabaseEnvironment({ appEnv, ref, prodRef, devRef, marker, users = 0 }) {
+  if (appEnv !== 'production' && prodRef && ref === prodRef) return { ok: false, erro: `Ambiente "${appEnv}" apontando para o banco de PRODUÇÃO (${ref}). Use o projeto de desenvolvimento no .env.` };
+  if (appEnv === 'production' && devRef && ref === devRef) return { ok: false, erro: `Produção apontando para o banco de DESENVOLVIMENTO (${ref}). Configure o projeto de produção nas variáveis do servidor.` };
+  if (marker && marker !== appEnv) return { ok: false, erro: `O banco ${ref} está marcado como "${marker}" e este servidor roda como "${appEnv}". Nada foi lido nem gravado.` };
+  if (marker) return { ok: true };
+  if (appEnv === 'production' && users === 0) return { ok: true, marcar: 'production' };
+  return { ok: true, aviso: `Banco ${ref} sem marcação de ambiente. Depois de separar DEV e PROD, marque-o: npm run db:env -- mark ${appEnv}` };
+}
+
+/** Barreira por URL aplicada a TODO cliente Supabase (banco e Storage), antes de qualquer acesso. */
+export function assertProjectAllowed() {
+  const r = checkDatabaseEnvironment({ appEnv: config.appEnv, ref: projectRef(config.supabaseUrl), prodRef: config.supabaseProdRef, devRef: config.supabaseDevRef, marker: null, users: 1 });
+  if (!r.ok) throw new Error(`[ambiente] ${r.erro}`);
+}
+
 async function client() {
   if (!usesSupabase()) return null;
   if (!config.supabaseUrl) throw new Error('SUPABASE_URL (ou NEXT_PUBLIC_SUPABASE_URL) não definido.');
+  assertProjectAllowed();
   if (!config.supabaseSecretKey) throw new Error('SUPABASE_SECRET_KEY não definido. Use a chave secret do projeto; nunca a publishable key.');
   clientPromise ??= import('@supabase/supabase-js').then(({ createClient }) => createClient(config.supabaseUrl, config.supabaseSecretKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },

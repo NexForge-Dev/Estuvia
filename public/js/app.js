@@ -162,6 +162,7 @@ document.addEventListener('visibilitychange', () => {
 });
 
 export const go = (path) => { location.hash = `#${path}`; };
+export const isFocusPath = (path) => /^\/(entrar|cadastro|esqueci-senha|redefinir-senha\/[\w-]+|jornadas\/nova)$/.test(path);
 export const currentPath = () => location.hash.replace(/^#/, '').split('#')[0] || '/';
 export const currentAnchor = () => location.hash.split('#')[2] || null;
 
@@ -181,6 +182,8 @@ async function render() {
   // Landing pública ocupa a tela inteira (sem lateral do app): ver css/landing.css.
   document.body.classList.toggle('landing-mode', path === '/sobre' || (path === '/' && !state.me));
   document.body.classList.toggle('admin-mode', isAdminMode());
+  // Autenticação e onboarding: tela limpa, sem menu lateral, barra inferior nem Mentor (ver css/flow.css).
+  document.body.classList.toggle('focus-mode', isFocusPath(path));
   renderNav();
   if (!isAdminMode()) mountMentorLauncher();
   else document.getElementById('assistant-root')?.replaceChildren();

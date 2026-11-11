@@ -17,7 +17,7 @@ export function personalTips(user) {
     const req = program?.idioma;
     const sigla = program ? program.nome.split(' - ')[0] : 'seu mestrado';
     if (req?.status === 'requerido' && req.nivel && LEVELS.indexOf(p.espanhol) < LEVELS.indexOf(req.nivel)) {
-      tips.push({ icone: 'lang', texto: `${sigla} pede espanhol ${req.nivel} e você declarou ${p.espanhol || 'nenhum'}. Planeje preparo e prova com antecedência.`, tag: req.fonte === 'DEMO' ? 'pendente' : 'verificado' });
+      tips.push({ icone: 'lang', texto: p.espanhol === 'nao-sei' ? `${sigla} pede espanhol ${req.nivel}. Descubra seu nível com um teste de nivelamento para planejar preparo e prova.` : `${sigla} pede espanhol ${req.nivel} e você declarou ${p.espanhol || 'nenhum'}. Planeje preparo e prova com antecedência.`, tag: req.fonte === 'DEMO' ? 'pendente' : 'verificado' });
     }
     if (req?.status === 'verificar') {
       tips.push({ icone: 'lang', texto: `A exigência de idioma de ${sigla} ainda não está confirmada. Escreva para a coordenação.`, tag: 'pendente' });

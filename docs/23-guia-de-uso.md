@@ -6,8 +6,8 @@ Guia prático para o estudante usar a Estuvia hoje. O conteúdo do processo (DUA
 
 ## 1. Primeiros passos
 
-1. **Crie sua conta** (Criar conta) e responda o onboarding: nacionalidade, estado, formação, o que você já tem (passaporte, diploma, histórico).
-2. **Escolha destino e mestrado.** A Estuvia gera sua jornada em **rodadas** e **missões**.
+1. **Crie sua conta** (Criar conta) e responda o onboarding em 6 etapas: origem, formação, idiomas, orçamento, destino e documentos. O painel "Seu perfil até agora" mostra o que você já informou; o rascunho fica salvo se você recarregar a página.
+2. **Escolha o destino** (universidade, ano, início das aulas, duração e em que ponto você está). O mestrado é opcional nessa hora: se ainda não escolheu, a jornada começa com "Mestrado a definir" e você o define depois pelo Radar (Missão 1.3). Revise e toque em **Gerar minha jornada**: a Estuvia monta as **rodadas** e **missões**.
 3. No **Início**, toque em **Continuar missão**. É sempre o próximo passo recomendado.
 
 ## 2. Onde fica cada coisa

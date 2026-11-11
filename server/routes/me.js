@@ -8,6 +8,8 @@ import { purgeUserDocuments } from './documents.js';
 import { personalTips } from '../tips.js';
 import { programById } from '../content/catalog.js';
 import { DOCUMENTS, DOC_STATUS } from '../content/documents.js';
+import { REQUIREMENTS } from '../content/progression.js';
+import { countryCode, BR_UFS } from '../../public/js/data/geo.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -31,7 +33,9 @@ const reply = (res, user) => res.json({ user: publicUser(user), tips: personalTi
 
 router.get('/', (req, res) => reply(res, req.user));
 
-const LEVELS = ['nenhum', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'nativo'];
+// 'nao-sei' é uma resposta válida ("ainda não sei meu nível"), diferente de não responder.
+const LEVELS = ['nenhum', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'nativo', 'nao-sei'];
+const CERT_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 const text = (max) => z.string().trim().max(max).optional();
 const optionalEnum = (values) => z.enum(values).optional().or(z.literal(''));
 
@@ -56,11 +60,13 @@ const profileSchema = z.object({
   espanhol: z.enum(LEVELS).optional(),
   ingles: z.enum(LEVELS).optional(),
   certificadoEspanhol: z.enum(['nenhum', 'DELE', 'SIELE', 'outro']).optional(),
-  certificadoNivel: optionalEnum(LEVELS),
+  certificadoNivel: optionalEnum(CERT_LEVELS),
   // Situação atual (autodeclarada)
   situacaoCandidatura: z.enum(['nao-iniciada', 'preparando', 'enviada', 'admitido', 'matriculado']).optional(),
   situacaoVisto: z.enum(['nao-iniciado', 'preparando', 'solicitado', 'aprovado']).optional(),
   orcamentoDisponivel: z.number().min(0).max(10_000_000).nullable().optional(),
+  // "Ainda não sei" é explícito: sem ele, orçamento ausente não vira zero.
+  orcamentoSituacao: z.enum(['informado', 'nao-sei']).optional(),
   onboardingConcluido: z.boolean().optional(),
 }).strict();
 
@@ -68,6 +74,38 @@ router.put('/profile', async (req, res) => {
   const parsed = profileSchema.safeParse(req.body);
   if (!parsed.success) return bad(res, parsed);
   const user = await users.update(req.user.id, (u) => { u.profile = { ...u.profile, ...parsed.data }; });
+  reply(res, user);
+});
+
+// Conclusão do primeiro onboarding: o servidor confere o que é essencial antes de marcar o perfil como
+// concluído (o navegador chama depois de salvar perfil, requisitos e criar a jornada). Idempotente.
+const filled = (v) => typeof v === 'string' && v.trim().length > 0;
+export function onboardingGaps(u) {
+  const p = u.profile || {};
+  const r = u.requisitos || {};
+  const gaps = [];
+  if (!filled(p.nacionalidade)) gaps.push('nacionalidade');
+  if (!filled(p.paisResidencia)) gaps.push('país de residência');
+  else if (countryCode(p.paisResidencia) === 'BR' && !BR_UFS.includes(p.estado)) gaps.push('estado');
+  if (!filled(p.formacao)) gaps.push('formação');
+  if (!filled(p.instituicao)) gaps.push('instituição de origem');
+  if (!filled(p.area)) gaps.push('área de interesse');
+  if (!LEVELS.includes(p.espanhol)) gaps.push('nível de espanhol');
+  if (!LEVELS.includes(p.ingles)) gaps.push('nível de inglês');
+  if (!p.certificadoEspanhol) gaps.push('certificado de espanhol');
+  else if (p.certificadoEspanhol !== 'nenhum' && !CERT_LEVELS.includes(p.certificadoNivel)) gaps.push('nível do certificado');
+  if (p.orcamentoSituacao === 'informado' ? typeof p.orcamentoDisponivel !== 'number' : p.orcamentoSituacao !== 'nao-sei') gaps.push('orçamento');
+  for (const q of REQUIREMENTS.filter((x) => !x.somenteNaEspanha)) if (!r[q.id]) gaps.push(`documento: ${q.id}`);
+  if (!(u.journeys || []).length) gaps.push('jornada');
+  return gaps;
+}
+
+router.post('/onboarding/complete', async (req, res) => {
+  if (req.user.profile?.onboardingConcluido) return reply(res, req.user);
+  const gaps = onboardingGaps(req.user);
+  if (gaps.length) return res.status(422).json({ error: `Faltam informações para concluir: ${gaps.join(', ')}.`, faltam: gaps });
+  const user = await users.update(req.user.id, (u) => { u.profile = { ...u.profile, onboardingConcluido: true, onboardingConcluidoEm: new Date().toISOString() }; });
+  audit.log({ action: 'onboarding.completed', userId: req.user.id }).catch(() => {});
   reply(res, user);
 });
 

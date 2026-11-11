@@ -9,13 +9,15 @@ Base `/api`, JSON. Erros: `{ "error": "mensagem" }`. Escritas exigem o cabeçalh
 `POST /auth/register {nome,email,senha,aceite}` · `POST /auth/login` · `POST /auth/logout` · `POST /auth/logout-all` · `POST /auth/change-password {atual,nova}`
 
 ## Perfil e documentos
-`GET /me` · `PUT /me/profile` (campos estritos) · `PUT /me/choices {choices}` (≤6) · `PUT /me/documents {id: pendente|em-preparacao|pronto|enviado|correcao|nao-se-aplica}` · `GET /me/export` · `DELETE /me {senha}`
+`GET /me` · `PUT /me/profile` (campos estritos; `espanhol`/`ingles` aceitam `nao-sei`; `orcamentoSituacao: informado|nao-sei`) · `POST /me/onboarding/complete` (confere o essencial no servidor e só então marca `onboardingConcluido`; 422 com `faltam[]`; idempotente) · `PUT /me/choices {choices}` (≤6) · `PUT /me/documents {id: pendente|em-preparacao|pronto|enviado|correcao|nao-se-aplica}` · `GET /me/export` · `DELETE /me {senha}`
 
 ## Jornadas
 | Método | Rota | Descrição |
 |---|---|---|
 | GET | `/journeys` | Resumos (destino, progresso, rodada atual, próxima missão, próximo prazo) |
-| POST | `/journeys` | `{programaId, anoAcademico, inicioAulas?, duracaoMeses?}` (≤6, sem duplicar programa) |
+| GET | `/journeys/progress-stages` | Etapas de progresso anterior: `{id, rotulo, exigeDataEntrada, missoes}` (missões reconhecidas, acumuladas) |
+| POST | `/journeys` | `{universidadeId e/ou programaId, anoAcademico?, inicioAulas?, inicioAulasAproximado?, duracaoMeses?}`. Mestrado opcional: sem ele a jornada nasce "Mestrado a definir". Duplicidade: mesmo programa, ou mesma universidade + ano sem programa (409). ≤6 jornadas |
+| PUT | `/journeys/:jid/program` | `{programaId}` define/troca o mestrado (mesma universidade, sem repetir outra jornada); conclui o objetivo automático da Missão 1.3 |
 | GET/PUT/DELETE | `/journeys/:jid` | Jornada calculada / editar datas / excluir |
 | PUT | `/journeys/:jid/situacao` | `{campo: adjudicacao|matricula|visto, valor}` → `{journey, events}` |
 | POST/PUT/DELETE | `/journeys/:jid/contacts[/:cid]` | Contatos acadêmicos (exige `fonteUrl` https) |
@@ -31,7 +33,7 @@ Mutações devolvem `{ mission, journey, events }` com eventos `missao-concluida
 `GET /planner` (eventos, prazos, disponibilidade) · `POST /planner` · `PUT/DELETE /planner/events/:id` · `PUT /planner/availability` · `POST /planner/suggest {semana, journeyId?, missaoId?}` · `POST /planner/approve {itens}` · `POST /planner/replan {semana}`
 
 ## Financiamento
-`GET /finance?journeyId=` · `PUT /finance {custos?, cambio?, informouRecursos?, nenhumaBolsaAplicavel?}` · `POST/PUT/DELETE /finance/resources[/:id]` · `POST /finance/scholarships {catalogId | nome…}` · `PUT /finance/scholarships/:id {status?, prazo?, valorTotal?, tarefa?}` · `DELETE /finance/scholarships/:id`
+`GET /finance?journeyId=` (o `plano` traz `orcamentoDeclarado {situacao: informado|nao-sei|nao-informado, valor, diferenca}`: referência do onboarding, nunca somada aos recursos) · `PUT /finance {custos?, cambio?, informouRecursos?, nenhumaBolsaAplicavel?}` · `POST/PUT/DELETE /finance/resources[/:id]` · `POST /finance/scholarships {catalogId | nome…}` · `PUT /finance/scholarships/:id {status?, prazo?, valorTotal?, tarefa?}` · `DELETE /finance/scholarships/:id`
 
 ## Moradia e viagem
 `GET /living` · `POST/PUT/DELETE /living/housing[/:id]` (status `escolhida` é única) · `POST/PUT/DELETE /living/travel/routes[/:id]` · `PUT /living/travel/arrival`

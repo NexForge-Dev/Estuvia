@@ -13,10 +13,10 @@ Requirements: **Node.js 20+** (tested with 22).
 ```bash
 npm install
 npm start          # http://localhost:3000
-npm test           # 237 tests (journey, planner, finances, documents, security, Radar, Community, Achievements, Mentor…)
+npm test           # 252 tests (journey, planner, finances, documents, security, Radar, Community, Achievements, Mentor…)
 ```
 
-Create an account → onboarding (5 steps) → your first journey is generated. How to use it: [23 — User guide](docs/23-guia-de-uso.md).
+Create an account → onboarding (6 steps: origin, education, languages, budget, destination, documents) → review → your first journey is generated. Later journeys only ask for the destination. Details: [27 — Onboarding](docs/27-onboarding.md). How to use it: [23 — User guide](docs/23-guia-de-uso.md).
 
 **Free integrations (optional):** `YOUTUBE_API_KEY` lists videos/lessons in the Mentor chat and `TRAVELPAYOUTS_TOKEN` turns on flight prices and price alerts; both are free (see `.env.example` and doc 24). Web search (Canal UGR, GDELT, Wikipedia) needs no key.
 
@@ -99,6 +99,9 @@ tests/
 | [23 — User guide](docs/23-guia-de-uso.md) | How to use the platform today, step by step (for students) |
 | [24 — Real time, web search, flight prices and notes](docs/24-tempo-real-e-pesquisa.md) | Live updates (SSE), adaptive Radar checks, free web/video search in the Mentor, flight prices and price alerts, mission notes |
 | [25 — Production readiness](docs/25-production-readiness.md) | What the code actually does in production, required env vars, roles, backup/restore, verified vs. unverified items, launch blockers and legal questions |
+| [26 — Launch and LGPD audit](docs/26-auditoria-lancamento-lgpd.md) | Launch and data-protection audit |
+| [27 — Onboarding](docs/27-onboarding.md) | Field-by-field audit (what each answer feeds), the 6-step flow, validation, saving order, components (Select, Toasts) |
+| [28 — DEV × PROD environments](docs/28-ambientes-dev-prod.md) | Separate Supabase projects, isolation guards, backup, migrations and the manual steps to create production |
 | [11 — Opportunity Radar](docs/11-radar.md) | Monitoring of official sources |
 | [12 — Community](docs/12-comunidade.md) | Moderated community |
 | [01](docs/01-visao-produto.md), [02](docs/02-requisitos.md), [03](docs/03-arquitetura.md), [08](docs/08-manual-do-estudante.md) | Vision, requirements, architecture and manual for version 0.1 (historical context) |

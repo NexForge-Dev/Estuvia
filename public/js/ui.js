@@ -1,6 +1,7 @@
 // Utilitários de interface. Todo texto vindo do usuário/servidor entra no DOM via
 // textContent (nunca innerHTML), o que elimina XSS por construção.
 import { translateTree } from './i18n.js';
+import { icon } from './icons.js';
 
 export function h(tag, attrs = {}, ...children) {
   const el = document.createElement(tag);
@@ -78,12 +79,47 @@ export const tag = (key) => {
   return h('span', { class: `tag ${t.cls}` }, t.label);
 };
 
-export function toast(message, kind = 'info') {
+// Toasts: sucesso, erro, atenção e informação. Compatível com as chamadas antigas (toast(msg, 'ok'|'err'|'info')).
+// Erros ficam mais tempo e usam role="alert"; passar o mouse ou focar pausa o tempo; no máximo 4 na tela.
+const TOAST_KIND = {
+  ok: { cls: 'success', icon: 'check', titulo: 'Tudo certo' }, success: { cls: 'success', icon: 'check', titulo: 'Tudo certo' },
+  err: { cls: 'error', icon: 'alert', titulo: 'Algo deu errado' }, error: { cls: 'error', icon: 'alert', titulo: 'Algo deu errado' },
+  warn: { cls: 'warning', icon: 'alert', titulo: 'Atenção' }, warning: { cls: 'warning', icon: 'alert', titulo: 'Atenção' },
+  info: { cls: 'info', icon: 'help', titulo: null },
+};
+export function toast(message, kind = 'info', { title, duration } = {}) {
   const box = document.getElementById('toasts');
-  const el = h('div', { class: `toast toast-${kind}`, role: 'status' }, message);
+  if (!box) return null;
+  const k = TOAST_KIND[kind] || TOAST_KIND.info;
+  const ms = duration ?? (k.cls === 'error' ? 6500 : 4200);
+  const close = h('button', { type: 'button', class: 'toast-close', 'aria-label': 'Fechar aviso' }, icon('x', { size: 14 }));
+  const el = h('div', { class: `toast toast-${k.cls}`, role: k.cls === 'error' ? 'alert' : 'status' },
+    h('span', { class: 'toast-icon', 'aria-hidden': 'true' }, icon(k.icon, { size: 16 })),
+    h('div', { class: 'toast-body' }, title ? h('strong', { class: 'toast-title' }, title) : null, h('span', { class: 'toast-text' }, message)),
+    close,
+    h('span', { class: 'toast-timer', 'aria-hidden': 'true' }));
+  el.style.setProperty('--toast-ms', `${ms}ms`); // CSSOM: o CSP (style-src 'self') bloqueia atributos style=""
+  let left = ms;
+  let started = Date.now();
+  let timer = null;
+  const dismiss = () => {
+    clearTimeout(timer);
+    if (el.classList.contains('out')) return;
+    el.classList.add('out');
+    setTimeout(() => el.remove(), 220);
+  };
+  const run = () => { started = Date.now(); el.classList.remove('paused'); timer = setTimeout(dismiss, left); };
+  const pause = () => { clearTimeout(timer); left -= Date.now() - started; el.classList.add('paused'); };
+  close.addEventListener('click', dismiss);
+  el.addEventListener('mouseenter', pause);
+  el.addEventListener('mouseleave', run);
+  el.addEventListener('focusin', pause);
+  el.addEventListener('focusout', run);
+  while (box.children.length >= 4) box.firstElementChild.remove();
   box.append(el);
-  setTimeout(() => el.classList.add('out'), 3200);
-  setTimeout(() => el.remove(), 3700);
+  requestAnimationFrame(() => el.classList.add('in'));
+  run();
+  return { dismiss };
 }
 
 export function sourceLink(src) {

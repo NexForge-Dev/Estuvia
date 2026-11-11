@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { config } from './config.js';
-import { loadState, saveState, usesSupabase } from './database.js';
+import { loadState, saveState, usesSupabase, checkDatabaseEnvironment, projectRef, assertProjectAllowed } from './database.js';
 
 const EMPTY_COMMUNITY = () => ({ posts: [], comments: [], groups: [], reports: [], media: [] });
 const EMPTY = { users: [], audit: [], community: EMPTY_COMMUNITY(), analytics: { days: {} } };
@@ -37,10 +37,22 @@ const normalize = (value) => {
 export async function initStore() {
   if (!['json', 'supabase'].includes(config.databaseProvider)) throw new Error('DB_PROVIDER must be json or supabase.');
   if (!usesSupabase()) return;
-  const remote = await loadState('main', db);
-  db = normalize(remote.state);
+  const ref = projectRef(config.supabaseUrl);
+  assertProjectAllowed(); // barreira por URL (também aplicada em todo cliente Supabase: database.js e storage.js)
+  // Primeira execução copia a base JSON local para a linha nova; em produção, nunca (dados pessoais de DEV).
+  const remote = await loadState('main', config.appEnv === 'production' ? structuredClone(EMPTY) : db);
+  const state = normalize(remote.state);
+  const env = checkDatabaseEnvironment({ appEnv: config.appEnv, ref, prodRef: config.supabaseProdRef, devRef: config.supabaseDevRef, marker: state.meta?.ambiente || null, users: state.users.length });
+  if (!env.ok) throw new Error(`[store] ${env.erro}`);
+  db = state;
   remoteVersion = remote.version;
   lastWriteError = null;
+  if (env.aviso) console.warn(`[store] ${env.aviso}`);
+  if (env.marcar) {
+    db.meta = { ...(db.meta || {}), ambiente: env.marcar, marcadoEm: new Date().toISOString() };
+    await persist();
+    console.log(`[store] Banco ${ref} vazio marcado como "${env.marcar}".`);
+  }
 }
 
 // Última falha de gravação (null quando a última escrita deu certo): exposta em /api/health.

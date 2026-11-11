@@ -1,6 +1,8 @@
 // Internacionalização (PT/ES/EN). Traduz a interface por dicionário de strings,
 // preserva o texto original em cada nó para permitir trocar de idioma sem recarregar.
-import { icon } from './icons.js';
+import { Select } from './components/Select.js';
+import { FLOW_TRANSLATIONS } from './i18n-flow.js';
+import { h } from './ui.js';
 
 const STORAGE_KEY = 'estuvia:lang';
 
@@ -1544,7 +1546,8 @@ const PATTERNS = [
 ];
 
 const DICT = { es: {}, en: {} };
-for (const [pt, pair] of Object.entries(TRANSLATIONS)) {
+// O dicionário principal prevalece em caso de chave repetida.
+for (const [pt, pair] of Object.entries({ ...FLOW_TRANSLATIONS, ...TRANSLATIONS })) {
   if (pair[0] && pair[0] !== pt) DICT.es[pt] = pair[0];
   if (pair[1] && pair[1] !== pt) DICT.en[pt] = pair[1];
 }
@@ -1654,9 +1657,9 @@ function startObserver() {
 
 function syncSwitchers() {
   const label = current === 'en' ? 'Language' : 'Idioma';
-  for (const select of document.querySelectorAll('.lang-switch select')) {
-    select.value = current;
-    select.setAttribute('aria-label', label);
+  for (const sw of document.querySelectorAll('.lang-switch .ui-select')) {
+    sw.value = current;
+    sw.querySelector('.ui-select-trigger')?.setAttribute('aria-label', label);
   }
 }
 
@@ -1700,27 +1703,42 @@ export function setLanguage(code) {
   dispatchEvent(new CustomEvent('estuvia:languagechange', { detail: { language: code } }));
 }
 
+// Usa o Select da plataforma: a lista abre dentro da tela (alinha pela borda direita no topo da página)
+// e vira folha inferior no celular.
+// Bandeiras em SVG simplificado: emoji de bandeira não aparece no Windows (vira "BR", "ES"...).
+const FLAG_SHAPES = {
+  pt: [['rect', { width: 20, height: 14, fill: '#009c3b' }], ['path', { d: 'M10 1.6 18.4 7 10 12.4 1.6 7Z', fill: '#ffdf00' }], ['circle', { cx: 10, cy: 7, r: 3.1, fill: '#002776' }]],
+  es: [['rect', { width: 20, height: 14, fill: '#aa151b' }], ['rect', { y: 3.5, width: 20, height: 7, fill: '#f1bf00' }]],
+  en: [['rect', { width: 20, height: 14, fill: '#012169' }], ['path', { d: 'M0 0 20 14M20 0 0 14', stroke: '#fff', 'stroke-width': 2.4 }], ['path', { d: 'M0 0 20 14M20 0 0 14', stroke: '#c8102e', 'stroke-width': 1 }], ['path', { d: 'M10 0v14M0 7h20', stroke: '#fff', 'stroke-width': 4 }], ['path', { d: 'M10 0v14M0 7h20', stroke: '#c8102e', 'stroke-width': 2.2 }]],
+};
+function flag(code) {
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 20 14');
+  svg.setAttribute('width', '20');
+  svg.setAttribute('height', '14');
+  svg.setAttribute('class', 'lang-flag');
+  svg.setAttribute('aria-hidden', 'true');
+  for (const [tag, attrs] of FLAG_SHAPES[code] || []) {
+    const el = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+    svg.append(el);
+  }
+  return svg;
+}
 export function languageSwitcher({ compact = false, block = false } = {}) {
   const wrap = document.createElement('div');
   wrap.className = `lang-switch${compact ? ' lang-switch-sm' : ''}${block ? ' lang-switch-block' : ''}`;
   wrap.dataset.i18nSkip = '';
-
-  const glyph = document.createElement('span');
-  glyph.className = 'lang-ic';
-  glyph.append(icon('globe', { size: compact ? 15 : 16 }));
-
-  const select = document.createElement('select');
-  select.className = 'lang-select';
-  select.setAttribute('aria-label', current === 'en' ? 'Language' : 'Idioma');
-  for (const language of LANGUAGES) {
-    const option = document.createElement('option');
-    option.value = language.code;
-    option.textContent = language.label;
-    option.selected = language.code === current;
-    select.append(option);
-  }
-  select.addEventListener('change', () => setLanguage(select.value));
-
-  wrap.append(glyph, select);
+  const sel = Select({
+    value: current,
+    options: LANGUAGES.map((l) => ({ value: l.code, label: l.label })),
+    ariaLabel: current === 'en' ? 'Language' : 'Idioma',
+    searchable: false, compact: true, block, minWidth: 180,
+    renderValue: (o) => [flag(o.value), h('span', { class: 'lang-name' }, compact ? o.value.toUpperCase() : o.label)],
+    renderOption: (o) => [flag(o.value), h('span', {}, o.label)],
+    onChange: (v) => setLanguage(v),
+  });
+  wrap.append(sel);
   return wrap;
 }

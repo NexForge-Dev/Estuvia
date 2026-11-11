@@ -302,6 +302,9 @@ export function computeFinance(user, jr, now = new Date()) {
     recursos: res.todos, gruposRecursos: res.grupos, confirmados, previstos: res.previstos,
     falta, metaPct: totals.aDesembolsar ? Math.min(1, confirmados / totals.aDesembolsar) : 0,
     deficitVisto, deficitOrcamento: falta, deficit, viavel, informouRecursos,
+    // Estimativa declarada no onboarding/perfil: só referência para comparar com o custo estimado.
+    // Não entra em "recursos" (o consulado só aceita o que é comprovado) e ausência nunca vira zero.
+    orcamentoDeclarado: declaredBudget(user.profile, totals.aDesembolsar),
     partida, partidaOrigem: jr?.inicioAulas ? 'inicio-aulas' : fin.partida ? 'simulada' : 'setembro-estimado',
     mesesAteViagem, economiaMensal, caminhos, cenarios, cenariosSalvos: salvos,
     acompanhamento,
@@ -318,3 +321,9 @@ export function financialDeadlines(user) {
 }
 
 export { COST_FIELDS };
+
+export function declaredBudget(profile = {}, estimado = 0) {
+  if (profile.orcamentoSituacao === 'nao-sei') return { situacao: 'nao-sei', valor: null, diferenca: null };
+  if (typeof profile.orcamentoDisponivel !== 'number') return { situacao: 'nao-informado', valor: null, diferenca: null };
+  return { situacao: 'informado', valor: profile.orcamentoDisponivel, diferenca: estimado ? profile.orcamentoDisponivel - estimado : null };
+}

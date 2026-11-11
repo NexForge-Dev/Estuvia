@@ -26,15 +26,21 @@ export const MAX_JOURNEYS = 6;
 export const MAX_CONTACTS = 30;
 const missionId = z.string().regex(/^\d\.\d{1,2}$/);
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida.');
-const STAGES = PRIOR_STAGES.map(({ id, rotulo, exigeDataEntrada }) => ({ id, rotulo, exigeDataEntrada: Boolean(exigeDataEntrada) }));
+// missoes: quantas missões a etapa (somada às anteriores) registra como "declaradas por mim" — teto, sem contar as já concluídas.
+const STAGES = PRIOR_STAGES.map(({ id, rotulo, exigeDataEntrada }, i) => ({ id, rotulo, exigeDataEntrada: Boolean(exigeDataEntrada), missoes: PRIOR_STAGES.slice(0, i + 1).reduce((n, s) => n + s.missoes.length, 0) }));
 
 const journeyFields = z.object({
   programaId: z.string().max(120).refine((id) => Boolean(programById(id)), 'Programa desconhecido.').optional(),
   universidadeId: z.enum(UNIVERSITIES.map((u) => u.id)).optional(),
   anoAcademico: z.string().regex(/^20\d{2}\/\d{2}$/, 'Ano acadêmico inválido (ex.: 2027/28).').optional(),
   inicioAulas: date.optional().or(z.literal('')),
+  // true quando o estudante escolheu um período (ex.: "setembro de 2027") e não um dia exato: inicioAulas = dia 1 do mês.
+  inicioAulasAproximado: z.boolean().optional(),
   duracaoMeses: z.number().int().min(1).max(48).nullable().optional(),
 }).strict();
+
+// Jornada sem mestrado definido: no máximo uma por universidade e ano acadêmico (o mestrado é escolhido na Missão 1.3).
+const sameOpenDestination = (j, universidadeId, anoAcademico) => !j.programaId && j.universidadeId === universidadeId && (j.anoAcademico || null) === (anoAcademico || null);
 
 const summary = (user, jr) => {
   const j = computeJourney(user, jr);
@@ -85,30 +91,64 @@ router.put('/requirements', async (req, res) => {
   res.json({ respostas: user.requisitos, journeys: (user.journeys || []).map((jr) => summary(user, jr)) });
 });
 
+// Destino = universidade (+ ano). O mestrado é opcional: quando o estudante já sabe, entra junto;
+// senão a jornada nasce "Mestrado a definir" e a Missão 1.3 conclui quando ele definir (PUT /:jid/program).
 router.post('/', async (req, res) => {
-  const parsed = journeyFields.extend({ programaId: z.string().max(120).refine((id) => Boolean(programById(id)), 'Programa desconhecido.') }).safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Escolha um mestrado.' });
-  if ((req.user.journeys || []).length >= MAX_JOURNEYS) return res.status(409).json({ error: `Você pode ter até ${MAX_JOURNEYS} jornadas.` });
-  if ((req.user.journeys || []).some((j) => j.programaId === parsed.data.programaId)) return res.status(409).json({ error: 'Você já tem uma jornada para este mestrado.' });
-  const program = programById(parsed.data.programaId);
+  const parsed = journeyFields.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
+  const data = parsed.data;
+  const program = data.programaId ? programById(data.programaId) : null;
+  if (!program && !data.universidadeId) return res.status(400).json({ error: 'Escolha a universidade de destino.' });
+  if (program && data.universidadeId && data.universidadeId !== program.universidadeId) return res.status(400).json({ error: 'Este mestrado não pertence à universidade escolhida.' });
+  const universidadeId = program ? program.universidadeId : data.universidadeId;
+  const mine = req.user.journeys || [];
+  if (mine.length >= MAX_JOURNEYS) return res.status(409).json({ error: `Você pode ter até ${MAX_JOURNEYS} jornadas.` });
+  if (program && mine.some((j) => j.programaId === program.id)) return res.status(409).json({ error: 'Você já tem uma jornada para este mestrado.' });
+  if (!program && mine.some((j) => sameOpenDestination(j, universidadeId, data.anoAcademico))) return res.status(409).json({ error: 'Você já tem uma jornada para esta universidade neste ano acadêmico com o mestrado a definir.' });
   const jr = {
     id: newId(),
     criadaEm: new Date().toISOString(),
-    ...parsed.data,
-    universidadeId: program.universidadeId,
-    duracaoMeses: parsed.data.duracaoMeses ?? program.duracaoMeses,
+    ...data,
+    universidadeId,
+    duracaoMeses: data.duracaoMeses ?? program?.duracaoMeses ?? null,
     missions: {},
     dados: {},
     desbloqueios: [],
   };
+  if (!program) delete jr.programaId;
+  if (!jr.inicioAulas) { delete jr.inicioAulas; delete jr.inicioAulasAproximado; }
   const user = await users.update(req.user.id, (u) => {
     (u.journeys ??= []).push(jr);
-    if (!(u.choices || []).includes(jr.programaId)) u.choices = [...(u.choices || []), jr.programaId].slice(0, 6);
+    if (program && !(u.choices || []).includes(jr.programaId)) u.choices = [...(u.choices || []), jr.programaId].slice(0, 6);
     const saved = findJourney(u, jr.id);
     applyRequirements(u, saved);
     recordUnlocks(saved, computeJourney(u, saved));
   });
   res.status(201).json({ journey: view(user, findJourney(user, jr.id)), etapas: STAGES });
+});
+
+// Define (ou troca) o mestrado de uma jornada: precisa ser da mesma universidade e não repetir outra jornada.
+router.put('/:jid/program', async (req, res) => {
+  const parsed = z.object({ programaId: z.string().max(120) }).strict().safeParse(req.body);
+  const program = parsed.success ? programById(parsed.data.programaId) : null;
+  if (!program) return res.status(400).json({ error: 'Programa desconhecido.' });
+  const jr = findJourney(req.user, req.params.jid);
+  if (!jr) return res.status(404).json({ error: 'Jornada não encontrada.' });
+  if (jr.universidadeId && program.universidadeId !== jr.universidadeId) return res.status(400).json({ error: 'Este mestrado é de outra universidade. Crie uma nova jornada para ele.' });
+  if ((req.user.journeys || []).some((j) => j.id !== jr.id && j.programaId === program.id)) return res.status(409).json({ error: 'Você já tem uma jornada para este mestrado.' });
+  const novos = [];
+  const user = await users.update(req.user.id, (u) => {
+    const t = findJourney(u, req.params.jid);
+    t.programaId = program.id;
+    t.universidadeId = program.universidadeId;
+    if (!t.duracaoMeses && program.duracaoMeses) t.duracaoMeses = program.duracaoMeses;
+    if (!(u.choices || []).includes(program.id)) u.choices = [...(u.choices || []), program.id].slice(0, 6);
+    applyRequirements(u, t);
+    novos.push(...recordUnlocks(t, computeJourney(u, t)));
+  });
+  logUnlocks(req.user.id, req.params.jid, novos);
+  audit.log({ action: 'journey.program-set', userId: req.user.id, journeyId: req.params.jid, programaId: program.id }).catch(() => {});
+  res.json({ journey: view(user, findJourney(user, req.params.jid)) });
 });
 
 // Ao abrir, recalcula: se algo mudou em outro módulo (perfil, documentos, finanças), registra os novos desbloqueios.
