@@ -20,7 +20,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { config } from '../config.js';
-import { loadState, saveState, usesSupabase } from '../database.js';
+import { loadState, loadIfChanged, saveState, usesSupabase } from '../database.js';
 
 const COLLECTIONS = ['sources', 'snapshots', 'programs', 'opportunities', 'windows', 'events', 'availability', 'revisions', 'reviews', 'runs', 'subscriptions', 'alerts', 'agendaLinks'];
 const LIMITS = { runs: 1000, snapshots: 600, alerts: 20000, revisions: 20000 };
@@ -61,6 +61,16 @@ export async function initRadarStore() {
   db = normalize(remote.state);
   remoteVersion = remote.version;
   lastWriteError = null;
+}
+
+/** Recarrega a base do Radar se outra instância gravou (mesma lógica de syncStore em store.js). */
+export async function syncRadarStore() {
+  if (!usesSupabase() || remoteVersion === null) return;
+  await writing;
+  const remote = await loadIfChanged('radar', remoteVersion);
+  if (!remote) return;
+  db = normalize(remote.state);
+  remoteVersion = remote.version;
 }
 
 export const radarStoreHealth = () => ({ ok: !lastWriteError, erro: lastWriteError });

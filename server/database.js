@@ -67,6 +67,18 @@ export async function loadState(id, fallback) {
   throw new Error(`Supabase: ${error.message}`);
 }
 
+/**
+ * Devolve { state, version } só se a linha no Supabase estiver numa versão diferente de `knownVersion`
+ * (outra instância gravou); senão null. Uma consulta por chamada, sem trazer o estado quando nada mudou.
+ */
+export async function loadIfChanged(id, knownVersion) {
+  if (!usesSupabase()) return null;
+  const db = await client();
+  const { data, error } = await db.from(TABLE).select('state,version').eq('id', id).neq('version', knownVersion).maybeSingle();
+  if (error) throw new Error(`Supabase: ${error.message}`);
+  return data ? { state: data.state, version: Number(data.version) } : null;
+}
+
 /** Salva somente se a versão ainda for a que este processo carregou, evitando sobrescritas silenciosas. */
 export async function saveState(id, state, expectedVersion) {
   if (!usesSupabase()) return null;
@@ -79,6 +91,7 @@ export async function saveState(id, state, expectedVersion) {
     .select('version')
     .maybeSingle();
   if (error) throw new Error(`Supabase: ${error.message}`);
-  if (!data) throw new Error(`Conflito ao salvar ${id} no Supabase: a linha mudou em outra instância. Reinicie o servidor para recarregar a versão atual.`);
+  // A próxima requisição recarrega a versão atual (syncStore/syncRadarStore); quem chamou recebe o erro.
+  if (!data) throw new Error(`Conflito ao salvar ${id} no Supabase: a linha mudou em outra instância. Tente novamente.`);
   return Number(data.version);
 }

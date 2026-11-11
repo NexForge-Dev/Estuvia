@@ -24,8 +24,8 @@ import trackRoutes from './routes/track.js';
 import eventRoutes from './routes/events.js';
 import { ensureAdminAccount } from './admin-seed.js';
 import { initRadar } from './radar/service.js';
-import { storeHealth } from './store.js';
-import { radarStoreHealth } from './radar/db.js';
+import { storeHealth, syncStore } from './store.js';
+import { radarStoreHealth, syncRadarStore } from './radar/db.js';
 
 // O Express 4 não captura promessas rejeitadas: um erro em rota async derrubava o processo
 // inteiro (Node 22 encerra em unhandledRejection). Aqui toda rota async encaminha o erro ao
@@ -58,6 +58,13 @@ export function createApp() {
   const api = express.Router();
   api.use(requestMetrics, apiLimiter, csrfGuard);
   api.use((req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
+  // Várias instâncias (Vercel): traz o que outra instância gravou antes de atender. Se o Supabase
+  // falhar aqui, segue com a cópia em memória; gravações sobre dados velhos ainda são barradas pela versão.
+  api.use(async (req, res, next) => {
+    try { await Promise.all([syncStore(), syncRadarStore()]); }
+    catch (err) { console.error('[store] falha ao sincronizar com o Supabase:', err.message); }
+    next();
+  });
   // 503 quando a última gravação da base falhou (monitoramento externo deve alertar).
   api.get('/health', (req, res) => {
     const stores = { principal: storeHealth(), radar: radarStoreHealth() };

@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { config } from './config.js';
-import { loadState, saveState, usesSupabase, checkDatabaseEnvironment, projectRef, assertProjectAllowed } from './database.js';
+import { loadState, loadIfChanged, saveState, usesSupabase, checkDatabaseEnvironment, projectRef, assertProjectAllowed } from './database.js';
 
 const EMPTY_COMMUNITY = () => ({ posts: [], comments: [], groups: [], reports: [], media: [] });
 const EMPTY = { users: [], audit: [], community: EMPTY_COMMUNITY(), analytics: { days: {} } };
@@ -53,6 +53,20 @@ export async function initStore() {
     await persist();
     console.log(`[store] Banco ${ref} vazio marcado como "${env.marcar}".`);
   }
+}
+
+/**
+ * Na Vercel há várias instâncias, cada uma com sua cópia em memória. Antes de cada requisição /api,
+ * recarrega a base se outra instância gravou (ex.: conta criada lá → sem isto, esta responde 401).
+ * Espera as gravações pendentes desta instância para nunca trocar o estado no meio de uma escrita.
+ */
+export async function syncStore() {
+  if (!usesSupabase() || remoteVersion === null) return;
+  await writing;
+  const remote = await loadIfChanged('main', remoteVersion);
+  if (!remote) return;
+  db = normalize(remote.state);
+  remoteVersion = remote.version;
 }
 
 // Última falha de gravação (null quando a última escrita deu certo): exposta em /api/health.
