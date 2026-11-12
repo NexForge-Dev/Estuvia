@@ -514,6 +514,15 @@ input:disabled, select:disabled { opacity: .6; }
 .cmp tr:last-child td { border-bottom: 0; }
 .cmp tr.chosen td { background: var(--accent-soft); }
 .cmp .tag { margin-left: 6px; }
+/* Comparação das opções salvas (Missão 3.4): uma coluna por opção, textos quebram linha. */
+.cmp-choices th, .cmp-choices td { white-space: normal; vertical-align: top; }
+.cmp-choices td, .cmp-choices thead th:not(:first-child) { min-width: 220px; }
+.cmp-choices tbody th { position: sticky; left: 0; z-index: 1; min-width: 130px; text-transform: none; letter-spacing: 0; font-size: .8rem; }
+.cmp-choices thead th { text-transform: none; letter-spacing: 0; font-size: .85rem; color: var(--text); }
+.cmp-choices .cmp-cell { display: grid; gap: 6px; justify-items: start; }
+.cmp-choices .cmp-cell p { margin: 0; }
+.cmp-list { margin: 0; padding-left: 16px; }
+.cmp-pos { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 800; font-size: .75rem; }
 
 /* Checklist, documentos e banners de estado */
 .checklist { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }

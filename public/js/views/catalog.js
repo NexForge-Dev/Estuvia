@@ -4,6 +4,7 @@ import { icon } from '../icons.js';
 import { api } from '../api.js';
 import { state, setMe, go } from '../app.js';
 import { getCatalog, getSources } from '../data.js';
+import { ChoicesCompare } from '../components/ChoicesCompare.js';
 
 const STATUS_LABEL = { requerido: 'Requerido', 'nao-requerido': 'Não requerido', verificar: 'Verificar' };
 const IDIOMA = (i) => ({ requerido: `Espanhol ${i.nivel}${i.certificado ? ' com certificado' : ''}`, 'nao-requerido': 'Sem certificado exigido', verificar: 'A confirmar na ficha' }[i.status]);
@@ -76,6 +77,9 @@ export async function catalogView() {
             h('button', { class: 'icon-btn sm', type: 'button', disabled: i === 0, 'aria-label': 'Subir', onClick: () => move(i, -1) }, icon('back', { size: 12, cls: 'rot90' })),
             h('button', { class: 'icon-btn sm', type: 'button', disabled: i === choices.length - 1, 'aria-label': 'Descer', onClick: () => move(i, 1) }, icon('arrow', { size: 12, cls: 'rot90' })),
             h('button', { class: 'icon-btn sm', type: 'button', 'aria-label': 'Remover', onClick: () => save(choices.filter((c) => c !== id)) }, icon('x', { size: 12 })))))) : h('p', { class: 'muted' }, 'Nenhum programa ainda.')),
+      choices.length >= 2 ? h('section', { class: 'panel', id: 'comparar' },
+        h('h2', { class: 'panel-title' }, icon('scale', { size: 18 }), 'Comparar minhas opções lado a lado'),
+        ChoicesCompare()) : null,
       h('div', { class: 'filters' }, icon('filter', { size: 16 }),
         opt('universidade', 'Universidade', programs.map((p) => uni(p.universidadeId).sigla)),
         opt('cidade', 'Cidade', programs.map((p) => uni(p.universidadeId).cidade)),

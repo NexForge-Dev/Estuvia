@@ -281,13 +281,16 @@ export const ROUNDS = [
         id: '3.4', titulo: 'Selecionar meus mestrados',
         resumo: 'Lista de preferência pronta antes de preencher o portal, respeitando o limite do ciclo vigente.', objetivo: 'Opções e ordem definidas na plataforma e reproduzidas no DUA.',
         porque: 'A adjudicação considera a ordem de preferência indicada.',
-        comoExecutar: [{ titulo: 'Preferência real', texto: 'Coloque primeiro o que você mais quer. Confira os requisitos de cada opção.' }],
+        comoExecutar: [
+          { titulo: 'Preferência real', texto: 'Coloque primeiro o que você mais quer. Confira os requisitos de cada opção.' },
+          { titulo: 'Comparar lado a lado', texto: 'A comparação mostra, para cada opção, idioma, graduação aceita, peso da nota e critérios de seleção pela ficha do DUA. Ela não ordena por você: a ordem é sua.' },
+        ],
         objetivos: [
           { id: 'lista', texto: 'Montar minha lista em "Minhas opções"', tipo: 'auto', regra: 'temOpcoes' },
           { id: 'dua', texto: 'Reproduzir as opções e a ordem no DUA' },
         ],
         dependencias: ['3.3', '1.4'], prioridade: 'alta', tempoEstimado: '20 min', duracaoMin: 30, fontes: ['O2'], tag: 'verificado',
-        criterio: 'Mesma lista e ordem na plataforma e no DUA.', acoes: [{ tipo: 'interna', rota: '/mestrados', rotulo: 'Minhas opções' }],
+        criterio: 'Mesma lista e ordem na plataforma e no DUA.', acoes: [{ tipo: 'interna', rota: '/mestrados', rotulo: 'Minhas opções' }], ferramenta: 'comparar-opcoes',
       },
       {
         id: '3.5', titulo: 'Anexar a documentação',

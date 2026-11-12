@@ -523,6 +523,42 @@ export function eligibility(ctx) {
   return items;
 }
 
+// ---------- Comparação lado a lado das opções salvas (Missão 3.4) ----------
+// Reaproveita a elegibilidade da Missão 1.4 para cada opção. Nada aqui ordena as opções: a ordem é do estudante.
+const ATENCAO = new Set(['falta-comprovar', 'falta-informar', 'fora-da-lista', 'pref-baixa']);
+export function compareChoices(user) {
+  const profile = user.profile || {};
+  return (user.choices || []).map((id, i) => {
+    const prog = programById(id);
+    if (!prog) return { id, posicao: i + 1, indisponivel: true };
+    const uni = universityById(prog.universidadeId);
+    const items = eligibility({ profile, program: prog });
+    const pick = (re) => { const it = items.find((x) => re.test(x.requisito)); return it ? { status: it.status, texto: it.texto } : null; };
+    const pesoNota = prog.criterios?.length ? (prog.somenteNotaExpediente ? 100 : prog.criterios.filter((c) => usesGrade(c.descricao)).reduce((t, c) => t + (c.peso || 0), 0)) : null;
+    return {
+      id,
+      posicao: i + 1,
+      nome: prog.nome,
+      demo: Boolean(prog.demo),
+      universidade: uni ? { id: uni.id, sigla: uni.sigla, nome: uni.nome, cidade: uni.cidade } : null,
+      url: prog.url || null,
+      fichaDuaUrl: prog.fichaDuaUrl || null,
+      inicioCurso: prog.inicioCurso || null,
+      duracaoMeses: prog.duracaoMeses || null,
+      modalidade: prog.modalidade || null,
+      temFichaDua: Boolean(prog.criterios),
+      criterios: prog.criterios || null,
+      somenteNotaExpediente: prog.somenteNotaExpediente ?? null,
+      pesoNota,
+      idioma: pick(/^Idioma$/),
+      outrosIdiomas: items.filter((x) => /^Idioma: /.test(x.requisito)).map((x) => ({ requisito: x.requisito.replace(/^Idioma: /, ''), status: x.status, texto: x.texto })),
+      graduacao: pick(/^Graduação aceita/),
+      nota: pick(/^Nota média/),
+      pontosDeAtencao: items.filter((x) => ATENCAO.has(x.status)).length,
+    };
+  });
+}
+
 // Curso da graduação × titulações de acesso da ficha do DUA. Sugere a correspondência pelo nome do curso;
 // a comissão do máster é quem confere se o diploma corresponde à titulação espanhola.
 const PREF_TXT = { alta: 'preferência alta', media: 'preferência média', baixa: 'preferência baixa' };

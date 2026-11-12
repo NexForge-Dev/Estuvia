@@ -11,6 +11,7 @@ import { DOCUMENTS, DOC_STATUS } from '../content/documents.js';
 import { REQUIREMENTS } from '../content/progression.js';
 import { countryCode, BR_UFS } from '../../public/js/data/geo.js';
 import { duaGrade } from '../../public/js/data/grade.js';
+import { compareChoices } from '../journey-engine.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -122,6 +123,9 @@ router.post('/onboarding/complete', async (req, res) => {
   audit.log({ action: 'onboarding.completed', userId: req.user.id }).catch(() => {});
   reply(res, user);
 });
+
+// Comparação lado a lado das opções salvas (Missão 3.4), com a elegibilidade de cada uma para este perfil.
+router.get('/choices/compare', (req, res) => res.json({ opcoes: compareChoices(req.user) }));
 
 router.put('/choices', async (req, res) => {
   const parsed = z.object({ choices: z.array(z.string().max(60)).max(6, 'O DUA 2026/27 permite até 6 opções.') }).safeParse(req.body);

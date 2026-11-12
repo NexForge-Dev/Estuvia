@@ -8,6 +8,7 @@ import { locale } from '../i18n.js';
 import { GradeCalculator } from './GradeCalculator.js';
 
 const eur = (v) => `€ ${Math.round(v || 0).toLocaleString(locale())}`;
+import { ChoicesCompare } from './ChoicesCompare.js';
 const EL_STATUS = {
   declarado: ['Atende (declarado por você)', 'ok'],
   'falta-comprovar': ['Falta comprovar', 'warn'],
@@ -51,6 +52,10 @@ export function MissionTool(m, { journey, onChange }) {
         return h('li', { class: `elig-${tone}` }, h('div', {}, h('strong', {}, e.requisito), h('p', { class: 'small' }, e.texto)), h('span', { class: `chip-status t-${tone}` }, label));
       })),
       h('p', { class: 'hint' }, 'Nenhum destes estados significa que você é elegível ou será admitido: a decisão é da universidade.'));
+  }
+
+  if (t === 'comparar-opcoes') {
+    return wrap('Comparar minhas opções', 'scale', ChoicesCompare(), h('a', { class: 'btn btn-ghost btn-sm', href: '#/mestrados' }, 'Organizar a ordem em Minhas opções', icon('arrow', { size: 12 })));
   }
 
   if (t === 'nota-dua') {

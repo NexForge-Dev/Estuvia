@@ -128,8 +128,8 @@ export function MissionContent(m, ctx) {
       render: () => AssistantCard(m, ctx),
     },
     ferramenta: {
-      titulo: { elegibilidade: 'Verificar elegibilidade', consulado: 'Consulado responsável', 'email-consulado': 'E-mail ao consulado', 'contato-academico': 'Encontrar contato acadêmico', viagem: 'Planejamento de viagem', 'guia-cidade': 'Guia da cidade', catalogo: 'Catálogo de mestrados', documentos: 'Área de documentos', financeiro: 'Resumo financeiro', 'novo-lar': 'Meu novo lar', bolsas: 'Buscador de bolsas' }[def.ferramenta] || 'Ferramenta da missão',
-      desc: 'Ferramenta prática específica desta missão.', ic: { 'contato-academico': 'users', 'email-consulado': 'mail', consulado: 'passport', elegibilidade: 'scale', viagem: 'plane', 'guia-cidade': 'pin' }[def.ferramenta] || 'wand', cor: 'ciano',
+      titulo: { elegibilidade: 'Verificar elegibilidade', 'comparar-opcoes': 'Comparar minhas opções', consulado: 'Consulado responsável', 'email-consulado': 'E-mail ao consulado', 'contato-academico': 'Encontrar contato acadêmico', viagem: 'Planejamento de viagem', 'guia-cidade': 'Guia da cidade', catalogo: 'Catálogo de mestrados', documentos: 'Área de documentos', financeiro: 'Resumo financeiro', 'novo-lar': 'Meu novo lar', bolsas: 'Buscador de bolsas' }[def.ferramenta] || 'Ferramenta da missão',
+      desc: 'Ferramenta prática específica desta missão.', ic: { 'contato-academico': 'users', 'email-consulado': 'mail', consulado: 'passport', elegibilidade: 'scale', 'comparar-opcoes': 'scale', viagem: 'plane', 'guia-cidade': 'pin' }[def.ferramenta] || 'wand', cor: 'ciano',
       hide: () => !def.ferramenta || ['financeiro', 'novo-lar', 'bolsas', 'documentos'].includes(def.ferramenta) && m.tipo !== 'geral' && m.tipo !== 'documental' && m.tipo !== 'viagem' && m.tipo !== 'candidatura',
       dica: () => (def.ferramenta === 'contato-academico' ? `${(m.contatos || []).length} contato(s) registrado(s)` : 'Abrir ferramenta'),
       render: () => MissionTool(m, { journey, onChange: ctx.reload }) || h('p', { class: 'muted' }, 'Ferramenta indisponível.'),
