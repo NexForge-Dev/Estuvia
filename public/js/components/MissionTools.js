@@ -5,6 +5,7 @@ import { api } from '../api.js';
 import { state } from '../app.js';
 import { ConsulateResult } from './ResultCard.js';
 import { locale } from '../i18n.js';
+import { GradeCalculator } from './GradeCalculator.js';
 
 const eur = (v) => `€ ${Math.round(v || 0).toLocaleString(locale())}`;
 const EL_STATUS = {
@@ -46,6 +47,12 @@ export function MissionTool(m, { journey, onChange }) {
         return h('li', { class: `elig-${tone}` }, h('div', {}, h('strong', {}, e.requisito), h('p', { class: 'small' }, e.texto)), h('span', { class: `chip-status t-${tone}` }, label));
       })),
       h('p', { class: 'hint' }, 'Nenhum destes estados significa que você é elegível ou será admitido: a decisão é da universidade.'));
+  }
+
+  if (t === 'nota-dua') {
+    return wrap('Minha nota média no DUA', 'scale',
+      h('p', {}, 'Converta a média do seu histórico para a escala espanhola (5 a 10), com a fórmula oficial do Distrito Único Andaluz.'),
+      GradeCalculator({ onSaved: onChange }));
   }
 
   if (t === 'consulado' || t === 'email-consulado') {

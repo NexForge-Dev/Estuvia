@@ -10,6 +10,7 @@ import { programById } from '../content/catalog.js';
 import { DOCUMENTS, DOC_STATUS } from '../content/documents.js';
 import { REQUIREMENTS } from '../content/progression.js';
 import { countryCode, BR_UFS } from '../../public/js/data/geo.js';
+import { duaGrade } from '../../public/js/data/grade.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -56,6 +57,10 @@ const profileSchema = z.object({
   formacao: text(120),
   instituicao: text(120),
   area: text(80),
+  // Nota média da graduação na escala de origem (Missão 2.3). null apaga; os três andam juntos.
+  notaMedia: z.number().min(0).max(1000).nullable().optional(),
+  notaMaxima: z.number().positive().max(1000).nullable().optional(),
+  notaMinima: z.number().min(0).max(1000).nullable().optional(),
   // Idiomas
   espanhol: z.enum(LEVELS).optional(),
   ingles: z.enum(LEVELS).optional(),
@@ -73,6 +78,13 @@ const profileSchema = z.object({
 router.put('/profile', async (req, res) => {
   const parsed = profileSchema.safeParse(req.body);
   if (!parsed.success) return bad(res, parsed);
+  const merged = { ...req.user.profile, ...parsed.data };
+  const grade = [merged.notaMedia, merged.notaMaxima, merged.notaMinima];
+  if (grade.some((v) => v != null)) {
+    if (grade.some((v) => v == null)) return res.status(400).json({ error: 'Informe a média, a nota máxima e a mínima para aprovação juntas (ou apague as três).' });
+    const g = duaGrade({ nota: merged.notaMedia, max: merged.notaMaxima, min: merged.notaMinima });
+    if (!g.ok) return res.status(400).json({ error: g.erro });
+  }
   const user = await users.update(req.user.id, (u) => { u.profile = { ...u.profile, ...parsed.data }; });
   reply(res, user);
 });

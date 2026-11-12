@@ -9,6 +9,7 @@ import { insights } from './proactive.js';
 import { missionForMentor } from './tools/journey.js';
 import { pickJourney } from './tools/core.js';
 import { journeyOpportunity } from '../radar/service.js';
+import { profileGrade, fmtNota } from '../../public/js/data/grade.js';
 
 const SCREENS = { dashboard: 'Painel', jornadas: 'Minhas Jornadas', rodada: 'Rodada', missao: 'Missão', agenda: 'Agenda', radar: 'Radar de Oportunidades', financas: 'Planejamento financeiro', bolsas: 'Bolsas', documentos: 'Documentos', moradia: 'Moradia', 'pos-chegada': 'Pós-chegada' };
 const eur = (v) => `€${Math.round(v)}`;
@@ -20,6 +21,8 @@ export function buildContext(user, contexto = {}, now = new Date()) {
   const L = [];
   L.push(`Tela atual: ${SCREENS[contexto.tela] || contexto.tela || 'não informada'}.`);
   L.push(`Perfil: nacionalidade ${p.nacionalidade || 'não cadastrada'}; reside em ${p.paisResidencia || 'não cadastrado'}${p.estado ? `/${p.estado}` : ''}; formação ${p.formacao || 'não cadastrada'}${p.area ? ` (área ${p.area})` : ''}; espanhol ${p.espanhol || 'não informado'}${p.certificadoEspanhol && p.certificadoEspanhol !== 'nenhum' ? ` (certificado ${p.certificadoEspanhol} ${p.certificadoNivel || ''})` : ''}.`);
+  const nota = profileGrade(p);
+  if (nota.status === 'calculada') L.push(`Nota média: ${fmtNota(nota.entrada.nota)} (aprovação ${fmtNota(nota.entrada.min)}, máximo ${fmtNota(nota.entrada.max)}) = ${fmtNota(nota.valor, 2)} na escala espanhola pela fórmula do DUA (estimativa do estudante).`);
 
   const jr = pickJourney(user, contexto.journeyId);
   if (!jr) L.push('Jornada: o estudante ainda não criou nenhuma jornada.');

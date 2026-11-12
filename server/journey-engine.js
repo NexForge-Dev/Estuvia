@@ -11,6 +11,7 @@ import { consulateForState, consulateResult, CONSULATE_LIST_URL } from './conten
 import { computeFinance } from './finance-engine.js';
 import { ROUND_UNLOCK, PARALLEL_TRACKS, trackOf, EVIDENCE, PRIOR_STAGES, situacaoRank, complexityOf, riskOf, REQUIREMENTS } from './content/progression.js';
 import { todayMadrid, daysBetween } from './radar/dates.js';
+import { profileGrade, usesGrade, fmtNota } from '../public/js/data/grade.js';
 
 export const STATUS = {
   bloqueada: 'Bloqueada',
@@ -512,10 +513,24 @@ export function eligibility(ctx) {
   if (prog.criterios?.length) {
     const crit = prog.somenteNotaExpediente ? 'só pela nota média do histórico' : prog.criterios.map((c) => `${c.descricao} ${c.peso ?? '?'}%`).join(' · ');
     items.push({ requisito: 'Como a seleção é feita', status: 'informativo', texto: `Pela ficha do DUA: ${crit}. A plataforma não calcula sua pontuação: a avaliação é da comissão do máster.`, fonte: 'O30' });
+    const pesoNota = prog.somenteNotaExpediente ? 100 : prog.criterios.filter((c) => usesGrade(c.descricao)).reduce((t, c) => t + (c.peso || 0), 0);
+    if (pesoNota > 0) items.push(gradeItem(p, pesoNota));
   } else {
     items.push({ requisito: 'Critérios de seleção e documentos específicos', status: 'nao-confirmado', texto: 'Consulte a ficha oficial: a plataforma não avalia critérios de seleção.', fonte: 'O3' });
   }
   return items;
+}
+
+// Nota média na escala espanhola (fórmula do DUA, O1 art. 7). Só aparece quando a ficha usa a nota na seleção.
+function gradeItem(p, peso) {
+  const g = profileGrade(p);
+  const pesoTxt = peso >= 100 ? 'A seleção deste máster é só pela nota média' : `A nota média vale ${peso}% da seleção deste máster`;
+  const semEscala = `Sem o histórico com a média ou sem o certificado da escala, o DUA considera ${fmtNota(g.semEscala, 2)}.`;
+  if (g.status === 'calculada') {
+    const { nota, min, max } = g.entrada;
+    return { requisito: 'Nota média na escala espanhola', status: 'declarado', texto: `${pesoTxt}. A sua média ${fmtNota(nota)} (aprovação com ${fmtNota(min)}, máximo ${fmtNota(max)}) equivale a ${fmtNota(g.valor, 2)} pela fórmula do DUA. ${semEscala}`, fonte: 'O1' };
+  }
+  return { requisito: 'Nota média na escala espanhola', status: 'falta-informar', texto: `${pesoTxt}. Calcule a sua média na escala espanhola (Missão 2.3 ou Meu perfil). ${semEscala}`, fonte: 'O1' };
 }
 
 // ---------- Tipo da missão → composição de cards na tela "Conteúdo da Missão" ----------

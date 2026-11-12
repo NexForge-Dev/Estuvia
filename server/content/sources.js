@@ -14,8 +14,9 @@ export const SOURCES = [
     id: 'O1',
     orgao: 'Junta de Andalucía (BOJA)',
     titulo: 'Procedimento DUA 2026/27, fase 1, título estrangeiro',
+    // Art. 4 (documentos; sem escala vale a mínima aprovatória) e art. 7 (fórmula da nota média) conferidos em 12/11/2026.
     url: 'https://www.juntadeandalucia.es/boja/2025/245/50',
-    revisadoEm: '2026-10-24',
+    revisadoEm: '2026-11-12',
     tipo: 'oficial',
   },
   {

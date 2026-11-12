@@ -169,7 +169,7 @@ export const ROUNDS = [
           { id: 'pronto', texto: 'Registrar que a documentação está pronta' },
         ],
         prioridade: 'alta', tempoEstimado: '1–2 semanas (emissão)', duracaoMin: 45, documentos: ['historico'], fontes: ['O1'], tag: 'verificado', aguardavel: true,
-        criterio: 'Histórico oficial digitalizado e conferido.',
+        criterio: 'Histórico oficial digitalizado e conferido.', ferramenta: 'nota-dua',
       },
       {
         id: '2.4', titulo: 'Verificar documentos acadêmicos complementares',

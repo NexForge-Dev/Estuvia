@@ -931,3 +931,12 @@ html .panel.panel-fold { padding: 0; }
 .lang-switch-block .lang-select { flex: 1; }
 .sidebar-lang { padding: 0 8px; }
 .sidebar-lang:empty { display: none; }
+
+/* Minha nota no DUA (GradeCalculator) */
+.gc-quick { gap: 6px; margin-top: 6px; align-items: center; }
+.gc-quick .chip { padding: 4px 10px; font-size: .8rem; }
+.gc-result { padding: 12px 14px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border-2); }
+.gc-value { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.gc-value strong { font-size: 2rem; line-height: 1; color: var(--accent); }
+.gc-value span { color: var(--muted); font-size: .9rem; }
+.gc-error { color: var(--danger); font-size: .9rem; display: flex; gap: 6px; align-items: flex-start; }

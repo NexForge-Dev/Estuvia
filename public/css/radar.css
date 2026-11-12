@@ -218,3 +218,4 @@
 .rd-td-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .rd-admin-form { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); align-items: end; margin: 10px 0; }
 .rd-dev { border: 2px dashed var(--danger); }
+.rd-mygrade { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 8px; }

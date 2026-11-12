@@ -6,6 +6,7 @@ import { state, setMe, logout, invalidate } from '../app.js';
 import { Select } from '../components/Select.js';
 import { countries, countryCode, countryName, divisionsFor, PRIORITY_COUNTRIES } from '../data/geo.js';
 import { FORMACOES, AREAS, INSTITUTIONS } from '../data/academic.js';
+import { GradeCalculator } from '../components/GradeCalculator.js';
 
 const AVATARS = ['🎓', '🚀', '🌍', '📚', '🦉', '🌻', '⚡', '🧉', '🎒', '🐢'];
 const CORES = [['turquesa', 'Turquesa (Estuvia)'], ['azul', 'Azul'], ['verde', 'Verde'], ['roxo', 'Roxo'], ['laranja', 'Laranja'], ['rosa', 'Rosa']];
@@ -117,6 +118,9 @@ export function profileView() {
   return h('div', { class: 'stack-lg' },
     h('header', { class: 'page-head' }, h('div', {}, h('p', { class: 'eyebrow' }, 'Missão 1.1'), h('h1', {}, 'Meu perfil'), h('p', { class: 'muted' }, 'A plataforma é sua: personalize e mantenha seu perfil acadêmico atualizado, ele define quais missões se aplicam a você.'))),
     h('section', { class: 'panel' }, form),
+    h('section', { class: 'panel', id: 'nota' }, h('h2', { class: 'panel-title' }, icon('scale', { size: 18 }), 'Minha nota média no DUA'),
+      h('p', { class: 'muted small' }, 'Muitos másteres selecionam pela nota média do histórico. Veja quanto a sua média vale na escala espanhola.'),
+      GradeCalculator()),
     HavePanel(),
     h('section', { class: 'panel' }, h('h2', { class: 'panel-title' }, icon('shield', { size: 18 }), 'Segurança e privacidade'),
       h('div', { class: 'grid-2' }, pwd, h('div', { class: 'stack' },

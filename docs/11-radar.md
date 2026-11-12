@@ -76,6 +76,15 @@ Os dados chegam à interface em três lugares: painel **Como funciona a seleçã
 
 **Em produção (a Vercel não roda o agendador):** no painel do Radar, rode "Catálogo de másteres do DUA" uma vez (a UGR vai primeiro enquanto não tiver vínculo) e depois "Fichas dos másteres no DUA" até cobrir os ~111 programas (≈ 11 execuções de 10).
 
+#### Nota média na escala espanhola
+
+Muitos másteres selecionam só ou principalmente pela nota média. O procedimento oficial do DUA para título estrangeiro (fonte O1) converte a média com a fórmula do art. 7: **Ce = 5 + 5 × (Co − Cm) / (CM − Cm)** (Co = média de origem; Cm = mínima para aprovação; CM = máxima da escala). Pelo art. 4, sem o histórico com a média final ou sem o certificado da escala, vale a mínima aprovatória (5). A convocatória também aceita a declaração de equivalência do Ministério, que segue outra metodologia.
+
+- `public/js/data/grade.js` (módulo puro, usado no navegador e no servidor): `duaGrade`, `profileGrade`, `usesGrade` (critério do baremo que usa a nota) e `fmtNota`. A mínima para aprovação é sempre informada pelo estudante, porque muda de uma universidade para outra.
+- Perfil: `notaMedia`, `notaMaxima` e `notaMinima` (os três juntos; o servidor recusa média fora da escala).
+- Interface: calculadora em **Meu perfil** e na ferramenta da Missão 2.3; linha "Sua média na escala espanhola" no painel de seleção do Radar; item "Nota média na escala espanhola" na elegibilidade (missão 1.4), só quando o baremo da ficha usa a nota, com o peso do critério; contexto do Mentor.
+- O valor é uma estimativa do estudante: a nota oficial é calculada pela universidade.
+
 ### Regras de publicação
 
 - **Extração incerta** (mês ausente, intervalo invertido, rótulo sem candidatura) ou **ano inconsistente** (documento do curso 2027/2028 citando "enero de 2026") → fila de revisão; nada é publicado.

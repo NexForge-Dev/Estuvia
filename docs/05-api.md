@@ -9,7 +9,7 @@ Base `/api`, JSON. Erros: `{ "error": "mensagem" }`. Escritas exigem o cabeçalh
 `POST /auth/register {nome,email,senha,aceite}` · `POST /auth/login` · `POST /auth/logout` · `POST /auth/logout-all` · `POST /auth/change-password {atual,nova}`
 
 ## Perfil e documentos
-`GET /me` · `PUT /me/profile` (campos estritos; `espanhol`/`ingles` aceitam `nao-sei`; `orcamentoSituacao: informado|nao-sei`) · `POST /me/onboarding/complete` (confere o essencial no servidor e só então marca `onboardingConcluido`; 422 com `faltam[]`; idempotente) · `PUT /me/choices {choices}` (≤6) · `PUT /me/documents {id: pendente|em-preparacao|pronto|enviado|correcao|nao-se-aplica}` · `GET /me/export` · `DELETE /me {senha}`
+`GET /me` · `PUT /me/profile` (campos estritos; `espanhol`/`ingles` aceitam `nao-sei`; `orcamentoSituacao: informado|nao-sei`; `notaMedia`/`notaMaxima`/`notaMinima` andam juntos, `null` nos três apaga, e a média tem de ficar entre a mínima e a máxima) · `POST /me/onboarding/complete` (confere o essencial no servidor e só então marca `onboardingConcluido`; 422 com `faltam[]`; idempotente) · `PUT /me/choices {choices}` (≤6) · `PUT /me/documents {id: pendente|em-preparacao|pronto|enviado|correcao|nao-se-aplica}` · `GET /me/export` · `DELETE /me {senha}`
 
 ## Jornadas
 | Método | Rota | Descrição |

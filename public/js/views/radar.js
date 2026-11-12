@@ -6,6 +6,7 @@ import { icon } from '../icons.js';
 import { api } from '../api.js';
 import { state, go, invalidate, loadJourneys } from '../app.js';
 import { onLive } from '../live.js';
+import { profileGrade, usesGrade, fmtNota } from '../data/grade.js';
 
 const fmt = (iso) => (iso ? new Date(`${iso.slice(0, 10)}T12:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : '');
 const PREF_LABEL = { alta: 'Preferência alta', media: 'Preferência média', baixa: 'Preferência baixa' };
@@ -38,6 +39,7 @@ function admissionPanel(o) {
     a.somenteNotaExpediente && a.criterios.length <= 1
       ? h('p', {}, 'A seleção é feita só pela ', h('strong', {}, 'nota média do histórico'), '. Por isso a conversão correta da sua média faz diferença.')
       : h('ul', { class: 'rd-criteria' }, a.criterios.map((c) => h('li', { title: c.original }, h('span', {}, sentence(c.descricao)), bar(c.peso), h('strong', {}, c.peso != null ? `${c.peso}%` : '?')))),
+    myGrade(a),
     obrigatorios.length ? [h('h3', {}, 'Requisitos obrigatórios'), h('ul', { class: 'rd-reqs' }, obrigatorios.map((r) => h('li', { class: 'rd-req-obrigatorio' }, h('p', {}, sentence(r.texto)))))] : null,
     outros.length ? h('details', { class: 'rd-degrees' }, h('summary', {}, `Outras informações da ficha (${outros.length})`), h('ul', {}, outros.map((r) => h('li', {}, sentence(r.texto))))) : null,
     h('h3', {}, 'Graduações aceitas'),
@@ -51,6 +53,16 @@ function admissionPanel(o) {
     h('p', { class: 'small muted' }, 'Vagas e preço não constam desta ficha. Nenhuma destas informações garante admissão: a decisão é da comissão do máster.'),
     ext(a.url, 'Abrir a ficha no DUA'),
   );
+}
+
+// Quanto a média do estudante vale na escala espanhola, quando a ficha usa a nota na seleção.
+function myGrade(a) {
+  if (!a.somenteNotaExpediente && !a.criterios.some((c) => usesGrade(c.original) || usesGrade(c.descricao))) return null;
+  const g = profileGrade(state.me?.user?.profile);
+  return h('p', { class: 'rd-mygrade small' }, icon('scale', { size: 14 }), ' ',
+    g.status === 'calculada'
+      ? ['Sua média na escala espanhola: ', h('strong', {}, fmtNota(g.valor, 2)), ' (fórmula do DUA). ', h('a', { href: '#/perfil' }, 'Rever')]
+      : ['Você ainda não converteu sua média para a escala espanhola. ', h('a', { href: '#/perfil' }, 'Calcular minha nota')]);
 }
 
 const fmtDT = (iso) => (iso ? new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'nunca');
