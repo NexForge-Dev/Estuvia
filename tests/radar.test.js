@@ -236,3 +236,102 @@ test('critérios 11–14: jornada, missões, Agenda AI e assistente', async () =
   assert.match(ctx.texto, /Curso 2028\/2029: NÃO há calendário oficial confirmado/);
   assert.ok(service.findOfficialMatch({ link: target.programa.fichaUrl }).match);
 });
+
+// ---------- Ficha do máster no DUA (HTML oficial real, capturado em 12/11/2026) ----------
+
+const duaProgram = await import('../server/radar/connectors/dua-program.js');
+
+test('ficha DUA: critérios com peso, requisitos obrigatórios, idioma e graduações por preferência', () => {
+  const bio = duaProgram.parse(seed('dua-ficha-404508-biotecnologia.html', true));
+  assert.equal(bio.ok, true, JSON.stringify(bio.avisos));
+  assert.equal(bio.dados.codigoDua, '404508');
+  assert.equal(bio.dados.inicioCurso, '2026-10-01');
+  assert.deepEqual(bio.dados.baremo.map((c) => c.peso), [100]);
+  assert.equal(bio.dados.somenteNotaExpediente, true);
+  assert.deepEqual(bio.dados.idiomasExigidos.map((i) => [i.idioma, i.nivel, i.obrigatorio]), [['espanhol', 'B1', true]]);
+  assert.equal(bio.dados.titulacoes.filter((t) => t.preferencia === 'alta').length, 20);
+  assert.ok(bio.dados.titulacoes.some((t) => t.nome === 'GRADO EN BIOLOGÍA' && t.preferencia === 'alta'));
+
+  const arq = duaProgram.parse(seed('dua-ficha-404605-arqueologia.html', true));
+  assert.equal(arq.ok, true, JSON.stringify(arq.avisos));
+  assert.deepEqual(arq.dados.baremo.map((c) => [c.codigo, c.peso]), [['001', 40], ['002', 30], ['003', 20], ['008', 10]]);
+  assert.deepEqual(arq.dados.idiomasExigidos, [], 'pontuar idiomas (critério 008) não é exigir idioma');
+  assert.ok(arq.dados.requisitos.every((r) => !r.obrigatorio));
+  assert.deepEqual(arq.dados.titulacoesEquivalentes.map((t) => [t.preferencia, t.requisitos]), [['baixa', ['007']], ['baixa', ['007']]]);
+
+  const vazia = duaProgram.parse(seed('dua-ficha-vazia.html', true));
+  assert.equal(vazia.ok, false, 'código que o DUA não reconhece não vira ficha "sem requisitos"');
+});
+
+test('idioma exigido: nível mais próximo de cada idioma, sem falsos positivos', () => {
+  const lr = (texto, obrigatorio = true) => duaProgram.languageRequirements([{ codigo: '010', texto, obrigatorio }]).map((i) => `${i.idioma} ${i.nivel}`);
+  assert.deepEqual(lr('PARA LA ADMISIÓN EN EL MÁSTER SERÁ NECESARIO DOMINIO DE CHINO NIVEL B1 O JAPONÉS NIVEL A2'), ['chinês B1', 'japonês A2']);
+  assert.deepEqual(lr('JUSTIFICACION DEL IDIOMA INGLES'), ['inglês null']);
+  assert.deepEqual(lr('QUIENES SEAN EXTRANJEROS DE PAIS DE HABLA NO ESPAÑOLA NO TENDRÁN ACCESO SIN ACREDITAR CONOCIMIENTO DE ESPAÑOL (ACREDITACION B1)'), ['espanhol B1']);
+  assert.deepEqual(lr('TAMBIÉN PODRÁN ACCEDER QUIENES ESTÉN EN POSESIÓN DEL TÍTULO ESPAÑOL DE ARQUITECTO QUE ACREDITEN EXPERIENCIA'), []);
+  assert.deepEqual(lr('SE ASIGNARÁ PREFERENCIA ALTA SI SE ACREDITE COMO LENGUA B CHINO O JAPONÉS', false), [], 'regra de preferência não é exigência');
+  assert.deepEqual(lr('ESPECIALIDAD TRADUCCIÓN ÁRABE/ESPAÑOL. LENGUA C: NO ES NECESARIA UNA LENGUA C EN ESTA ESPECIALIDAD.', false), [], 'par de línguas e negação não são exigência');
+  assert.deepEqual(lr('PARA ALGUNAS MATERIAS SE PRECISAN CONOCIMIENTOS DE LENGUA ARABE QUE EL ALUMNADO DEBERA TENER EN CUENTA', false), [], 'aviso não é exigência');
+  assert.deepEqual(lr('CONOCIEMIENTO HABLADO Y ESCRITO DE IDIOMA ESPAÑOL'), ['espanhol null'], 'obrigatório sem nível: idioma entra, nível fica em aberto');
+});
+
+test('vínculo UGR ↔ DUA pela web do máster; ambíguo fica sem vínculo', () => {
+  const locals = [
+    { id: 'a', nome: 'Máster Universitario en Arqueología', webPropria: 'http://masteres.ugr.es/arqueologia' },
+    { id: 'b', nome: 'Máster Universitario en Estadística Aplicada', webPropria: null },
+    { id: 'c', nome: 'Máster Universitario en Abogacía y Procura', webPropria: 'http://masteres.ugr.es/abogacia' },
+  ];
+  const dua = [
+    { codigo: '1', nome: 'ARQUEOLOGÍA', webPropria: 'https://masteres.ugr.es/arqueologia/' },
+    { codigo: '2', nome: 'ESTADISTICA APLICADA (A DISTANCIA)', webPropria: null },
+    { codigo: '3', nome: 'ABOGACÍA Y PROCURA', webPropria: null },
+    { codigo: '4', nome: 'ABOGACÍA Y PROCURA (SEDE CIUDAD DE MELILLA)', webPropria: null },
+  ];
+  const pairs = pipeline.linkDuaPrograms(dua, locals);
+  assert.equal(pairs.get('a').codigo, '1');
+  assert.equal(pairs.get('b').codigo, '2');
+  assert.equal(pairs.has('c'), false, 'Granada e Melilla têm o mesmo nome: sem web, não escolhemos');
+});
+
+test('catálogo DUA vincula o código sem duplicar o máster; ficha DUA alimenta Radar, filtro e jornada', async () => {
+  const d = radarDb.data();
+  const prog = d.programs.find((p) => p.id === 'ugr-master-universitario-gestion-tecnologias-procesos-negocio');
+  const antes = d.programs.length;
+  const parsed = { ok: true, tipo: 'catalogo', universidadeId: 'ugr', anoAcademico: '2026/2027', avisos: [], programas: [
+    { id: 'dua-404508', codigo: '404508', universidadeId: 'ugr', nome: 'GESTIÓN Y TECNOLOGÍAS DE PROCESOS DE NEGOCIO', webPropria: prog.ficha?.webPropria || prog.webPropria, ramos: [], tipoTitulo: 'oficial', modalidade: null, ofertaCondicionada: false, fonteCatalogo: 'dua-catalogo' },
+  ] };
+  pipeline.ingest('dua-catalogo', { url: 'https://dua.example/cat', text: 'x', parsedOverride: parsed, snapshotKey: 'dua-catalogo:ugr' });
+  assert.equal(prog.duaCodigo, '404508');
+  assert.equal(d.programs.length, antes, 'nenhuma cópia dua-* do máster da UGR');
+
+  const r = pipeline.ingest('dua-fichas', { url: 'https://dua.example/ficha', text: seed('dua-ficha-404508-biotecnologia.html', true), programId: prog.id });
+  assert.equal(r.valido, true);
+  assert.equal(prog.fichaDua.idiomasExigidos[0].nivel, 'B1');
+
+  const req = await student('caio@exemplo.com');
+  const opp = (await req('GET', '/radar/opportunities?q=procesos%20negocio')).data.items[0];
+  assert.deepEqual(opp.programa.idiomasExigidos, [{ idioma: 'espanhol', nivel: 'B1', obrigatorio: true }]);
+  const det = (await req('GET', `/radar/opportunities/${opp.id}`)).data.opportunity;
+  assert.equal(det.admissao.codigoDua, '404508');
+  assert.match(det.admissao.url, /c_peticion=404508/);
+  assert.equal(det.requisitos.find((x) => x.tipo === 'idioma').status, 'verificado');
+  assert.ok(det.fontes.some((s) => s.id === 'dua-fichas'));
+
+  const a2 = (await req('GET', '/radar/opportunities?nivelIdioma=A2&q=procesos%20negocio')).data;
+  const b1 = (await req('GET', '/radar/opportunities?nivelIdioma=B1&q=procesos%20negocio')).data;
+  assert.equal(a2.total, 0, 'exige B1: fica fora para quem tem A2');
+  assert.equal(b1.total, 1);
+  const semFicha = (await req('GET', '/radar/opportunities?nivelIdioma=C2&q=desarrollo%20software')).data;
+  assert.equal(semFicha.total, 0, 'sem ficha DUA não presumimos que não exige');
+
+  const pj = service.programForJourney(prog.id);
+  assert.deepEqual(pj.idioma, { status: 'requerido', nivel: 'B1', certificado: false, fonte: 'O30', texto: prog.fichaDua.idiomasExigidos[0].texto });
+  assert.equal(pj.somenteNotaExpediente, true);
+
+  // Mudança na ficha vira histórico com resumo legível.
+  const alterada = seed('dua-ficha-404508-biotecnologia.html', true).replace('UN NIVEL DE ESPAÑOL B1', 'UN NIVEL DE ESPAÑOL B2');
+  pipeline.ingest('dua-fichas', { url: 'https://dua.example/ficha', text: alterada, programId: prog.id });
+  const rev = d.revisions.filter((x) => x.entidadeId === prog.id && x.campo === 'fichaDua.idiomasExigidos').at(-1);
+  assert.equal(rev?.anterior, 'espanhol B1');
+  assert.equal(rev?.novo, 'espanhol B2');
+});

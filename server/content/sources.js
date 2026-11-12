@@ -166,6 +166,8 @@ export const SOURCES = [
   { id: 'O27', orgao: 'Ministério da Saúde (gov.br)', titulo: 'Vacinação', url: 'https://www.gov.br/saude/pt-br/vacinacao', revisadoEm: '2026-10-27', tipo: 'oficial' },
   { id: 'O28', orgao: 'Ministerio de Inclusión, Seguridad Social y Migraciones', titulo: 'Guía para estudiantes extranjeros: meios econômicos e IPREM', url: 'https://www.inclusion.gob.es/documents/410169/6828741/Gu%C3%ADa%2BEstudiantes.pdf/b6a0c88d-c689-6ce4-9888-6f198b32f513?t=1752143214552', revisadoEm: '2026-11-09', tipo: 'oficial' },
   { id: 'O29', orgao: 'Boletín Oficial del Estado', titulo: 'Real Decreto-ley 3/2026: prorrogação dos Orçamentos Gerais do Estado', url: 'https://www.boe.es/eli/es/rdl/2026/02/03/3', revisadoEm: '2026-11-09', tipo: 'oficial' },
+  // A ficha de cada máster é coletada pelo Radar (fonte "dua-fichas"); esta é a entrada geral do catálogo.
+  { id: 'O30', orgao: 'Junta de Andalucía: Distrito Único Andaluz', titulo: 'Ficha do máster no DUA: critérios de seleção, requisitos e titulações de acesso', url: 'https://www.juntadeandalucia.es/economiaconocimientoempresasyuniversidad/sguit/?q=masteres&d=mo_catalogo_top.php', revisadoEm: '2026-11-12', tipo: 'oficial' },
   {
     id: 'DEMO',
     orgao: 'Plataforma (protótipo)',

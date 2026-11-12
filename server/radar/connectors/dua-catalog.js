@@ -39,7 +39,8 @@ function programFromRow(row) {
   const nome = htmlText(nameMarkup || masterCell).split('\n').map((s) => s.trim()).filter(Boolean)[0] || '';
   if (!nome) return null;
 
-  const webMatch = /(?:window\.open\s*\(\s*|href\s*=\s*["'])(https?:\/\/[^"'\s)]+)/i.exec(row);
+  // O botão "Visitar Web" usa onclick="window.open('http://…')": a URL vem entre aspas.
+  const webMatch = /(?:window\.open\s*\(\s*["']?|href\s*=\s*["'])(https?:\/\/[^"'\s)]+)/i.exec(row);
   const fichaUrl = `https://www.juntadeandalucia.es/economiaconocimientoempresasyuniversidad/sguit/?c_peticion=${encodeURIComponent(codigo)}&d=mo_catalogo_top.php&q=masteres`;
   return {
     id: `dua-${codigo}`,

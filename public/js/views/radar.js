@@ -8,6 +8,51 @@ import { state, go, invalidate, loadJourneys } from '../app.js';
 import { onLive } from '../live.js';
 
 const fmt = (iso) => (iso ? new Date(`${iso.slice(0, 10)}T12:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : '');
+const PREF_LABEL = { alta: 'Preferência alta', media: 'Preferência média', baixa: 'Preferência baixa' };
+// As fichas do DUA vêm em maiúsculas: exibimos em caixa de frase, preservando níveis e siglas.
+const SIGLAS = /\b([abc][12]|hsk|jlpt|dele|siele|toefl|ielts|ects|tfm|eso|ugr|dua|qecr|mcer|n[1-5])\b/gi;
+const sentence = (s) => String(s || '').toLowerCase().replace(/(^|[.:;!?]\s+)(\p{L})/gu, (m, a, b) => a + b.toUpperCase()).replace(SIGLAS, (x) => x.toUpperCase());
+
+/** Critérios de seleção, requisitos e graduações de acesso, pela ficha do máster no DUA. */
+function admissionPanel(o) {
+  const a = o.admissao;
+  const title = h('h2', {}, icon('scale', { size: 18 }), 'Como funciona a seleção');
+  if (!a) {
+    return h('section', { class: 'rd-panel', id: 'admissao' }, title,
+      h('p', { class: 'rd-nodata' }, icon('alert', { size: 16 }), 'Ainda não conferimos a ficha deste máster no Distrito Único Andaluz (critérios, pesos e graduações aceitas). Até lá, consulte a ficha oficial.'),
+      ext(o.programa.fichaUrl, 'Ficha oficial do máster'));
+  }
+  const bar = (peso) => {
+    const fill = h('span', { class: 'rd-bar-fill' });
+    fill.style.width = `${Math.max(0, Math.min(100, peso || 0))}%`; // CSSOM: a CSP não permite style=""
+    return h('span', { class: 'rd-bar', 'aria-hidden': 'true' }, fill);
+  };
+  const degreeList = (titulo, nomes) => (nomes.length
+    ? h('details', { class: 'rd-degrees' }, h('summary', {}, `${titulo} (${nomes.length})`), h('ul', {}, nomes.map((n) => h('li', {}, sentence(n)))))
+    : null);
+  const obrigatorios = a.requisitos.filter((r) => r.obrigatorio);
+  const outros = a.requisitos.filter((r) => !r.obrigatorio);
+  return h('section', { class: 'rd-panel', id: 'admissao' }, title,
+    h('p', { class: 'small muted' }, `Ficha oficial do Distrito Único Andaluz, conferida em ${fmtDT(a.verificadaEm)}.${a.inicioCurso ? ` Início do curso: ${fmt(a.inicioCurso)}.` : ''}`),
+    h('h3', {}, 'Critérios e pesos'),
+    a.somenteNotaExpediente && a.criterios.length <= 1
+      ? h('p', {}, 'A seleção é feita só pela ', h('strong', {}, 'nota média do histórico'), '. Por isso a conversão correta da sua média faz diferença.')
+      : h('ul', { class: 'rd-criteria' }, a.criterios.map((c) => h('li', { title: c.original }, h('span', {}, sentence(c.descricao)), bar(c.peso), h('strong', {}, c.peso != null ? `${c.peso}%` : '?')))),
+    obrigatorios.length ? [h('h3', {}, 'Requisitos obrigatórios'), h('ul', { class: 'rd-reqs' }, obrigatorios.map((r) => h('li', { class: 'rd-req-obrigatorio' }, h('p', {}, sentence(r.texto)))))] : null,
+    outros.length ? h('details', { class: 'rd-degrees' }, h('summary', {}, `Outras informações da ficha (${outros.length})`), h('ul', {}, outros.map((r) => h('li', {}, sentence(r.texto))))) : null,
+    h('h3', {}, 'Graduações aceitas'),
+    h('p', { class: 'small' }, 'A preferência define a ordem de prioridade na lista: quem tem graduação de preferência alta concorre antes. Diplomas estrangeiros são enquadrados pela área equivalente.',
+      a.equivalentes.length ? [' Esta ficha também aceita ', h('strong', {}, a.equivalentes.map((e) => `${sentence(e.nome).toLowerCase()} (${PREF_LABEL[e.preferencia]?.toLowerCase() || 'preferência não informada'})`).join('; ')), '.'] : null),
+    degreeList(PREF_LABEL.alta, a.titulacoes.alta),
+    degreeList(PREF_LABEL.media, a.titulacoes.media),
+    degreeList(PREF_LABEL.baixa, a.titulacoes.baixa),
+    degreeList('Admissão condicionada a requisito adicional', a.titulacoes.condicionadas.map((t) => t.nome)),
+    degreeList('Outras graduações com acesso', a.titulacoes.outras),
+    h('p', { class: 'small muted' }, 'Vagas e preço não constam desta ficha. Nenhuma destas informações garante admissão: a decisão é da comissão do máster.'),
+    ext(a.url, 'Abrir a ficha no DUA'),
+  );
+}
+
 const fmtDT = (iso) => (iso ? new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'nunca');
 const ext = (href, label, cls = 'btn btn-ghost btn-sm') => (href ? h('a', { class: cls, href, target: '_blank', rel: 'noopener noreferrer' }, label, icon('external', { size: 14 })) : null);
 const MODALIDADE = { presencial: 'Presencial', hibrida: 'Híbrida', online: 'Online' };
@@ -231,7 +276,7 @@ export async function radarView() {
         sel('area', 'Área acadêmica', opt(f.area, (v) => v, 'Todas')),
         sel('modalidade', 'Modalidade', opt(f.modalidade, (v) => MODALIDADE[v] || v, 'Todas'), unknown('modalidade') ? `${unknown('modalidade')} ainda sem ficha conferida` : null),
         sel('idioma', 'Idioma de ensino', opt(f.idioma), list.indisponiveis.idioma),
-        sel('nivelIdioma', 'Nível de idioma exigido', [h('option', { value: '' }, 'Qualquer'), ...['B1', 'B2', 'C1'].map((n) => h('option', { value: n }, n))], list.indisponiveis.nivelIdioma),
+        sel('nivelIdioma', 'Meu nível de espanhol', [h('option', { value: '' }, 'Qualquer'), ...['A2', 'B1', 'B2', 'C1', 'C2'].map((n) => h('option', { value: n }, n))], list.indisponiveis.nivelIdioma),
         h('label', { class: 'rd-field' }, h('span', {}, 'Preço máximo (€)'), h('input', { type: 'number', name: 'precoMax', min: '0', step: '100', value: filters.precoMax || '', inputmode: 'numeric' }), h('small', {}, list.indisponiveis.precoMax)),
       ),
       h('div', { class: 'rd-checks' },
@@ -438,6 +483,7 @@ export async function radarDetailView(id) {
         ),
       ),
 
+      admissionPanel(o),
       agendaPanel(o),
       missionsPanel(o),
 

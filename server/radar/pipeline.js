@@ -22,9 +22,13 @@ import * as duaCalendar from './connectors/dua-calendar.js';
 import * as duaCatalog from './connectors/dua-catalog.js';
 import * as ugrCatalog from './connectors/ugr-catalog.js';
 import * as ugrProgram from './connectors/ugr-program.js';
+import * as duaProgram from './connectors/dua-program.js';
 import { onPublished } from './notify.js';
 
-export const CONNECTORS = { 'dua-calendar': duaCalendar, 'dua-catalog': duaCatalog, 'ugr-catalog': ugrCatalog, 'ugr-program': ugrProgram };
+export const CONNECTORS = { 'dua-calendar': duaCalendar, 'dua-catalog': duaCatalog, 'ugr-catalog': ugrCatalog, 'ugr-program': ugrProgram, 'dua-program': duaProgram };
+
+/** Página pública do DUA que abre a ficha do máster (o modal é carregado pelo próprio portal). */
+export const duaSheetUrl = (codigo) => `https://www.juntadeandalucia.es/economiaconocimientoempresasyuniversidad/sguit/?c_peticion=${encodeURIComponent(codigo)}&d=mo_catalogo_top.php&q=masteres`;
 
 const nowIso = (now) => new Date(now).toISOString();
 const sourceById = (id) => data().sources.find((s) => s.id === id);
@@ -187,6 +191,33 @@ export function applyCalendar(parsed, { source, snapshot, force = false, por = '
   return { publicado: true, novoCiclo: isNewCycle, revisions, curso, procedimentoId: proc };
 }
 
+// ---------- Vínculo programa da universidade ↔ código DUA ----------
+// O catálogo próprio da universidade (ex.: UGR) e o catálogo do DUA listam os mesmos másteres com
+// nomes e códigos diferentes. O código DUA é o que abre a ficha com critérios e requisitos, então o
+// vínculo é feito pela web própria do máster (presente nos dois catálogos) e, na falta dela, pelo nome
+// normalizado. Só vínculos únicos nos dois sentidos são aceitos: na dúvida, o programa fica sem ficha DUA.
+
+const webKey = (u) => String(u || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/[?#].*$/, '').replace(/\/+$/, '');
+export const programNameKey = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase()
+  .replace(/\([^)]*\)/g, ' ')
+  .replace(/^MASTER UNIVERSITARIO\s+(EN|DE)?\s*(EL|LA|LOS|LAS)?\s+/, '')
+  .replace(/[^A-Z0-9]+/g, ' ').trim();
+
+export function linkDuaPrograms(duaPrograms, locals) {
+  const pairs = new Map(); // localId → programa DUA
+  for (const l of locals) {
+    const w = webKey(l.ficha?.webPropria || l.webPropria);
+    let cands = w ? duaPrograms.filter((x) => webKey(x.webPropria) === w) : [];
+    if (cands.length > 1) cands = cands.filter((x) => programNameKey(x.nome) === programNameKey(l.nome));
+    if (!cands.length) cands = duaPrograms.filter((x) => programNameKey(x.nome) === programNameKey(l.nome));
+    if (cands.length === 1) pairs.set(l.id, cands[0]);
+  }
+  const uses = new Map();
+  for (const x of pairs.values()) uses.set(x.codigo, (uses.get(x.codigo) || 0) + 1);
+  for (const [id, x] of pairs) if (uses.get(x.codigo) > 1) pairs.delete(id);
+  return pairs;
+}
+
 /** Catálogo da universidade → programas (nunca apaga: ausência vira revisão). */
 export function applyCatalog(parsed, { source, snapshot, por = 'atualizador', completo = true }) {
   const d = data();
@@ -195,7 +226,32 @@ export function applyCatalog(parsed, { source, snapshot, por = 'atualizador', co
   const seen = new Set();
   // Carga inicial do catálogo não gera 138 entradas de histórico: só novidades posteriores.
   const initial = !d.programs.some((x) => x.universidadeId === parsed.universidadeId && (x.catalogSourceId === source.id || x.sourceId === source.id));
-  for (const p of parsed.programas) {
+
+  // Catálogo do DUA para uma universidade que já tem catálogo próprio: serve para vincular o código DUA
+  // aos programas existentes, sem criar uma segunda cópia de cada máster.
+  let programas = parsed.programas;
+  if (source.conector === 'dua-catalog') {
+    const locals = d.programs.filter((x) => x.universidadeId === parsed.universidadeId && x.catalogSourceId !== source.id && x.sourceId !== source.id && !x.ausenteNoCatalogo);
+    programas = programas.map((p) => ({ ...p, duaCodigo: p.codigo }));
+    if (locals.length) {
+      const pairs = linkDuaPrograms(programas, locals);
+      for (const [localId, dua] of pairs) {
+        const l = d.programs.find((x) => x.id === localId);
+        if (l.duaCodigo && l.duaCodigo !== dua.codigo) revisions.push(revision({ entidade: 'Program', entidadeId: l.id, campo: 'duaCodigo', anterior: l.duaCodigo, novo: dua.codigo, evidencia: evidence, por }));
+        l.duaCodigo = dua.codigo;
+      }
+      const linked = new Set([...pairs.values()].map((x) => x.codigo));
+      const semVinculo = locals.filter((l) => !pairs.has(l.id));
+      if (semVinculo.length) {
+        openReview({ tipo: 'vinculo-dua', sourceId: source.id, snapshotId: snapshot?.id, impacto: 'baixo', chave: `vinculo-dua:${parsed.universidadeId}:${hash(semVinculo.map((l) => l.id))}`,
+          motivo: `${semVinculo.length} máster(es) de ${parsed.universidadeId.toUpperCase()} sem correspondência única no catálogo do DUA (ficha DUA não será coletada): ${semVinculo.slice(0, 12).map((l) => l.nome).join('; ')}${semVinculo.length > 12 ? '…' : ''}` });
+      }
+      programas = []; // a lista oficial da universidade continua sendo a do catálogo próprio
+      if (!linked.size) return { publicado: false, revisions };
+    }
+  }
+
+  for (const p of programas) {
     seen.add(p.id);
     const cur = d.programs.find((x) => x.id === p.id);
     if (!cur) {
@@ -236,6 +292,31 @@ export function applyProgramSheet(programId, parsed, { source, snapshot, por = '
   if (parsed.dados.anoAcademico && p.cursoCatalogo && parsed.dados.anoAcademico !== p.cursoCatalogo) {
     openReview({ tipo: 'ciclo-inconsistente', sourceId: source.id, snapshotId: snapshot?.id, motivo: `A ficha de "${p.nome}" é do curso ${parsed.dados.anoAcademico}, mas o catálogo é ${p.cursoCatalogo}.`, impacto: 'medio', chave: `ciclo:${p.id}:${parsed.dados.anoAcademico}` });
   }
+  return { publicado: true, revisions };
+}
+
+// Resumo legível de cada campo da ficha DUA para o histórico de alterações.
+const DUA_FIELDS = {
+  baremo: { impacto: 'medio', resumo: (v) => (v || []).map((c) => `${c.descricao} ${c.peso ?? '?'}%`).join(' · ') || 'Somente nota do expediente' },
+  idiomasExigidos: { impacto: 'medio', resumo: (v) => (v || []).map((i) => `${i.idioma} ${i.nivel || '(nível não informado)'}`).join(' · ') || 'Nenhum' },
+  requisitos: { impacto: 'medio', resumo: (v) => `${(v || []).length} requisito(s), ${(v || []).filter((r) => r.obrigatorio).length} obrigatório(s)` },
+  titulacoes: { impacto: 'baixo', resumo: (v) => `${(v || []).length} titulação(ões) com preferência` },
+  inicioCurso: { impacto: 'baixo', resumo: (v) => v || '-' },
+};
+
+/** Ficha do DUA de um programa → critérios de seleção, requisitos, idioma e titulações de acesso. */
+export function applyDuaSheet(programId, parsed, { source, snapshot, por = 'atualizador' }) {
+  const p = data().programs.find((x) => x.id === programId);
+  if (!p) return { publicado: false, revisions: [] };
+  const revisions = [];
+  const before = p.fichaDua;
+  if (before) {
+    for (const [campo, cfg] of Object.entries(DUA_FIELDS)) {
+      if (JSON.stringify(before[campo] ?? null) === JSON.stringify(parsed.dados[campo] ?? null)) continue;
+      revisions.push(revision({ entidade: 'Program', entidadeId: p.id, opportunityKey: `program:${p.id}`, campo: `fichaDua.${campo}`, anterior: cfg.resumo(before[campo]), novo: cfg.resumo(parsed.dados[campo]), evidencia: { sourceId: source.id, snapshotId: snapshot?.id || null, url: duaSheetUrl(p.duaCodigo), versao: snapshot?.versao || null }, impacto: cfg.impacto, por }));
+    }
+  }
+  p.fichaDua = { ...parsed.dados, verificadaEm: snapshot?.coletadoEm || new Date().toISOString(), snapshotId: snapshot?.id || null };
   return { publicado: true, revisions };
 }
 
@@ -294,6 +375,7 @@ function processParsed(source, parsed, ctx) {
   if (parsed.tipo === 'calendario') return applyCalendar(parsed, ctx);
   if (parsed.tipo === 'catalogo') return applyCatalog(parsed, ctx);
   if (parsed.tipo === 'ficha') return applyProgramSheet(ctx.programId, parsed, ctx);
+  if (parsed.tipo === 'ficha-dua') return applyDuaSheet(ctx.programId, parsed, ctx);
   return { publicado: false, revisions: [] };
 }
 
@@ -311,7 +393,8 @@ export function ingest(sourceId, { url, text, fetchedAt = new Date().toISOString
       : { publicado: false, revisions: [], semAlteracao: true, revisao: !valido };
   if (programId && valido) {
     const p = data().programs.find((x) => x.id === programId);
-    if (p?.ficha) p.ficha.verificadaEm = fetchedAt;
+    const campo = parsed.tipo === 'ficha-dua' ? 'fichaDua' : 'ficha';
+    if (p?.[campo]) p[campo].verificadaEm = fetchedAt;
   }
   return { ...result, changed, snapshot, valido };
 }
@@ -338,8 +421,23 @@ export async function runSource(sourceId, { fetchImpl, now = Date.now() } = {}) 
       .sort((a, b) => (a.ficha?.verificadaEm || '').localeCompare(b.ficha?.verificadaEm || ''))
       .slice(0, source.lote || 10)
       .map((p) => ({ url: p.fichaUrl, programId: p.id }))
+    : source.conector === 'dua-program'
+      ? data().programs.filter((p) => p.duaCodigo && !p.ausenteNoCatalogo)
+        .sort((a, b) => (a.fichaDua?.verificadaEm || '').localeCompare(b.fichaDua?.verificadaEm || ''))
+        .slice(0, source.lote || 8)
+        .map((p) => ({ url: source.url, method: 'POST', body: new URLSearchParams({ c_peticion: p.duaCodigo }), programId: p.id, snapshotKey: `${source.id}:${p.id}` }))
     : source.conector === 'dua-catalog'
-      ? duaCatalog.UNIVERSITIES.map((u) => ({
+      // Uma universidade custa 3 consultas (uma por fase) de ~1 MB. Em lotes, a coleta cabe no limite
+      // de uma função serverless; vão primeiro as nunca consultadas e, entre elas, as que têm catálogo
+      // próprio (o vínculo com o DUA é o que libera as fichas de critérios).
+      ? duaCatalog.UNIVERSITIES.map((u) => {
+        const own = data().programs.filter((p) => p.universidadeId === u.id && p.catalogSourceId && p.catalogSourceId !== source.id);
+        return { u, ultima: data().snapshots.filter((s) => s.sourceId === source.id && s.chave === `${source.id}:${u.id}`).at(-1)?.ultimaConfirmacao || '', semVinculo: own.length > 0 && !own.some((p) => p.duaCodigo) };
+      })
+        .sort((a, b) => Number(b.semVinculo) - Number(a.semVinculo) || a.ultima.localeCompare(b.ultima))
+        .slice(0, source.lote || duaCatalog.UNIVERSITIES.length)
+        .map(({ u }) => u)
+        .map((u) => ({
         url: new URL('mo_catalogo.php', source.url).href,
         snapshotKey: `${source.id}:${u.id}`,
         programId: null,
@@ -467,6 +565,7 @@ export function approveReview(review, por) {
   if (p?.kind === 'calendar' || p?.kind === 'calendario') result = applyCalendar(p.parsed, { source, snapshot, force: true, por });
   else if (p?.kind === 'catalogo') result = applyCatalog(p.parsed, { source, snapshot, por });
   else if (p?.kind === 'ficha' && p.programId) result = applyProgramSheet(p.programId, p.parsed, { source, snapshot, por });
+  else if (p?.kind === 'ficha-dua' && p.programId && p.parsed?.dados) result = applyDuaSheet(p.programId, p.parsed, { source, snapshot, por });
   review.status = 'aprovada';
   review.resolvidaEm = new Date().toISOString();
   review.por = por;

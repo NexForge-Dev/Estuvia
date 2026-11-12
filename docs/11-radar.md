@@ -52,10 +52,29 @@ Com `DB_PROVIDER=supabase`, o estado do Radar (`sources`, `snapshots`, `programs
 | Listado de másteres UGR | HTML público | 24 h | catálogo |
 | Fichas dos másteres UGR | HTML público, 12 por execução | 2 h (≈ todas por dia) | dados do programa |
 | BOJA | revisão manual (buscador bloqueado por robots.txt) | — | normativa (prioridade máxima) |
-| Catálogo DUA (`mo_catalogo.php`) | HTML público, consulta POST por universidade e fase | 24 h | oferta DUA |
+| Catálogo DUA (`mo_catalogo.php`) | HTML público, consulta POST por universidade e fase, 2 universidades por execução | 3 h (≈ todas a cada 15 h) | oferta DUA; vínculo do código DUA |
+| Fichas dos másteres no DUA (`mo_catalogo_ficha.php`) | HTML público, POST com o código DUA, 10 por execução | 2 h (≈ todas por dia) | critérios de seleção, requisitos, idioma exigido, graduações de acesso |
 | Portal DUA, SAAP UGR | revisão manual | — | canal / orientação |
 
-As frequências são metas configuráveis, não garantia de atualização instantânea. Falhas usam recuo exponencial (15 min → até a frequência da fonte). O catálogo DUA atualiza a listagem e os links oficiais das fichas; ainda não coleta automaticamente o conteúdo interno de cada ficha. A base local consultada nesta preparação contém apenas os 138 registros UGR: as últimas execuções do DUA falharam antes de publicar os catálogos das demais instituições. A execução seguinte, após esta correção, precisa ser conferida no painel do Radar.
+As frequências são metas configuráveis, não garantia de atualização instantânea. Falhas usam recuo exponencial (15 min → até a frequência da fonte). As execuções são dimensionadas para caber numa função serverless de 60 s (medido: catálogo ≈ 22 s por lote de 2 universidades; fichas ≈ 3,6 s cada).
+
+#### Ficha do máster no DUA (critérios e requisitos)
+
+A ficha que o portal do DUA abre no botão "Ver ficha" é a fonte mais completa e padronizada para as dez universidades públicas andaluzas. O conector `connectors/dua-program.js` extrai:
+
+- **Critérios e pesos** ("CRITERIOS Y BAREMO"): ex.: nota média 40 %, currículo 30 %, entrevista 20 %, idiomas 10 %. "Somente nota do expediente" quando a ficha diz que não há outros critérios.
+- **Requisitos adicionais**, com a marcação oficial de obrigatório (vermelho = "de obligado cumplimiento").
+- **Idioma exigido**, *derivado* do texto dos requisitos (idioma + nível do QECR mais próximo da menção). Sempre exibido com a frase oficial. Requisito não obrigatório só conta se o texto exigir algo ("se requerirá", "será necesario"); regras de preferência e menções como "título español" são ignoradas.
+- **Graduações de acesso** por preferência (alta/média/baixa), condicionadas a requisito e demais aceitas, inclusive as linhas genéricas "titulación equivalente a…", que costumam enquadrar o diploma estrangeiro.
+- Início e fim do curso, centro.
+
+Vagas e preço não constam da ficha. Ficha devolvida em branco (código inexistente) vai para revisão e nunca vira "sem requisitos".
+
+**Vínculo UGR ↔ DUA.** A UGR tem catálogo próprio (fonte principal da lista de másteres); o catálogo do DUA usa outros códigos. Ao coletar o catálogo DUA de uma universidade com catálogo próprio, o pipeline **não cria cópias** `dua-*`: grava `duaCodigo` no programa existente, casando pela web própria do máster (presente nos dois catálogos) e, na falta dela, pelo nome normalizado. Só vínculos únicos nos dois sentidos são aceitos; os demais vão para uma revisão `vinculo-dua`. Medido em 12/11/2026: 111 de 138 másteres UGR vinculados (os restantes são duplos, Erasmus Mundus, sedes de Ceuta/Melilla e títulos fora do DUA). Universidades sem catálogo próprio recebem os programas `dua-<código>` diretamente.
+
+Os dados chegam à interface em três lugares: painel **Como funciona a seleção** no detalhe do Radar; filtro **Meu nível de espanhol** (sem ficha DUA, o máster fica fora do filtro: não presumimos "não exige"); e `programForJourney` (`idioma` no formato do catálogo, `outrosIdiomas`, `criterios`), que alimenta a elegibilidade (missão 1.4), a aplicabilidade da missão 2.5 e as dicas.
+
+**Em produção (a Vercel não roda o agendador):** no painel do Radar, rode "Catálogo de másteres do DUA" uma vez (a UGR vai primeiro enquanto não tiver vínculo) e depois "Fichas dos másteres no DUA" até cobrir os ~111 programas (≈ 11 execuções de 10).
 
 ### Regras de publicação
 
@@ -78,7 +97,7 @@ Vagas ofertadas nunca significam vagas disponíveis, e a mudança de estado da o
 |---|---|
 | `sources` (SourceRegistry) | url, instituição, tipo, prioridade, método, frequência, última consulta, última verificação ok, estado, falhas seguidas |
 | `snapshots` (SourceSnapshot) | fonte, chave, versão, data da coleta, hash do conteúdo extraído, hash bruto, referência ao HTML salvo |
-| `programs` | programa oficial + `ficha` conferida |
+| `programs` | programa oficial + `ficha` conferida (UGR) + `duaCodigo` e `fichaDua` (critérios, requisitos, idioma, graduações) |
 | `opportunities` (Opportunity) | `programId--AAAA-AAAA`, universidade, tipo, ano acadêmico, procedimento, URL oficial, suspensão |
 | `windows` (AdmissionWindow) | `dua-masteres:2026/2027:F1`, abertura, encerramento, fuso, confirmação, texto original |
 | `events` (AdmissionEvent) | adjudicação, reclamação, confirmação/matrícula/reserva, resultas, taxa de título |
@@ -131,7 +150,8 @@ Ligados (verificados ponta a ponta em 24/10/2026):
 
 ## Limitações conhecidas
 
-- Idioma de ensino, nível exigido, preço e vagas **não constam** das fichas da UGR: os filtros correspondentes avisam isso em vez de inventar.
-- O catálogo do DUA e o BOJA ainda não têm coleta automática (formulário dinâmico / buscador bloqueado por robots.txt); entram por revisão manual.
+- Idioma **de ensino**, preço e vagas não constam das fichas (UGR nem DUA): os filtros correspondentes avisam isso em vez de inventar. O nível **exigido** vem da ficha DUA.
+- 27 másteres UGR sem vínculo único com o DUA ficam sem ficha de critérios (revisão `vinculo-dua`).
+- O BOJA não tem coleta automática (buscador bloqueado por robots.txt); entra por revisão manual.
 - Notificações apenas na plataforma (sem e-mail).
 - Bolsas: o indicador lê `server/content/scholarships.js`; hoje nenhuma tem edital aberto confirmado, então o número é 0.

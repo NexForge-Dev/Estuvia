@@ -504,7 +504,17 @@ export function eligibility(ctx) {
         : { requisito: 'Idioma', status: 'falta-comprovar', texto: `Exigido: ${req.nivel}. Seu nível declarado (${p.espanhol || 'nenhum'}) está abaixo.`, fonte: req.fonte });
     }
   }
-  items.push({ requisito: 'Critérios de seleção e documentos específicos', status: 'nao-confirmado', texto: 'Consulte a ficha oficial: a plataforma não avalia critérios de seleção.', fonte: 'O3' });
+  // Outros idiomas exigidos pela ficha do DUA (ex.: inglês B1). O perfil só registra o espanhol.
+  for (const o of prog.outrosIdiomas || []) {
+    const nome = o.idioma.replace(/^./, (c) => c.toUpperCase());
+    items.push({ requisito: `Idioma: ${o.idioma}`, status: 'falta-comprovar', texto: `Exigido: ${nome} ${o.nivel || '(nível não informado na ficha)'}${o.obrigatorio ? ', obrigatório' : ''}. Separe um certificado ou documento que comprove o nível.`, fonte: o.fonte });
+  }
+  if (prog.criterios?.length) {
+    const crit = prog.somenteNotaExpediente ? 'só pela nota média do histórico' : prog.criterios.map((c) => `${c.descricao} ${c.peso ?? '?'}%`).join(' · ');
+    items.push({ requisito: 'Como a seleção é feita', status: 'informativo', texto: `Pela ficha do DUA: ${crit}. A plataforma não calcula sua pontuação: a avaliação é da comissão do máster.`, fonte: 'O30' });
+  } else {
+    items.push({ requisito: 'Critérios de seleção e documentos específicos', status: 'nao-confirmado', texto: 'Consulte a ficha oficial: a plataforma não avalia critérios de seleção.', fonte: 'O3' });
+  }
   return items;
 }
 

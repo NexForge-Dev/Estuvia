@@ -74,8 +74,27 @@ export const SOURCE_SEED = [
     autoridade: ['oferta-dua'],
     metodo: 'html-publico',
     conector: 'dua-catalog',
-    frequenciaHoras: 24,
-    nota: 'Consulta pública da listagem por universidade e fase; o conteúdo interno das fichas ainda não é coletado automaticamente.',
+    // 2 universidades por execução (6 consultas): as 10 são reconferidas a cada ~15 h.
+    frequenciaHoras: 3,
+    lote: 2,
+    nota: 'Consulta pública da listagem por universidade e fase. Para universidades com catálogo próprio (UGR), serve para vincular o código DUA de cada máster, que abre a ficha de critérios.',
+  },
+  {
+    id: 'dua-fichas',
+    titulo: 'Fichas dos másteres no DUA (critérios, requisitos e titulações de acesso)',
+    instituicao: 'Junta de Andalucía: Distrito Único Andaluz',
+    rotuloPublico: 'Ficha do máster: Distrito Único Andaluz',
+    url: 'https://www.juntadeandalucia.es/economiaconocimientoempresasyuniversidad/sguit/mo_catalogo_ficha.php',
+    tipo: 'programa',
+    prioridade: 1,
+    autoridade: ['criterios-admissao'],
+    metodo: 'html-publico',
+    conector: 'dua-program',
+    // 10 fichas por execução (~36 s medidos, cabe numa função de 60 s), a cada 2 h: as ~110 fichas
+    // vinculadas da UGR são reconferidas a cada ~1 dia.
+    frequenciaHoras: 2,
+    lote: 10,
+    nota: 'Mesma ficha que o portal do DUA abre no botão "Ver ficha" (POST público com o código DUA). Vagas e preço não constam dela.',
   },
   {
     id: 'dua-portal',

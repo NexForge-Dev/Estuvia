@@ -7,7 +7,7 @@ import { opportunityState, upcoming, STATES, STALE_AFTER_HOURS } from './status.
 import { APPLICATION_CHANNEL, UNIVERSITY_INFO } from './registry.js';
 import { EVENT_TYPES, tick } from './notify.js';
 import { parseAcademicYear, todayMadrid, daysBetween } from './dates.js';
-import { bootstrap, ensureSources } from './pipeline.js';
+import { bootstrap, ensureSources, duaSheetUrl } from './pipeline.js';
 
 let scholarships = [];
 export async function initRadar() {
@@ -76,6 +76,59 @@ export function compatibility(profile, program) {
   return 'baixa';
 }
 
+// ---------- Ficha do DUA: critérios, requisitos e idioma ----------
+
+export const NIVEIS_QECR = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+
+// Critérios mais comuns nas fichas, em português; o texto original sempre acompanha.
+const CRITERIOS_PT = [
+  [/NOTA MEDIA|EXPEDIENTE/, 'Nota média do histórico'],
+  [/CURRICUL/, 'Currículo'],
+  [/ENTREVISTA/, 'Entrevista'],
+  [/CONOCIMIENTO DE IDIOMAS|IDIOMA/, 'Conhecimento de idiomas'],
+  [/EXPERIENCIA PROFESIONAL|EXPERIENCIA LABORAL|EXPERIENCIA/, 'Experiência profissional'],
+  [/CARTA DE MOTIVACION/, 'Carta de motivação'],
+  [/MOTIVACION/, 'Motivação'],
+  [/CARTA.* RECOMENDACION|RECOMENDACION/, 'Cartas de recomendação'],
+  [/ADECUACION|AFINIDAD|PERFIL/, 'Adequação da formação ao máster'],
+  [/INVESTIGA|PUBLICACION/, 'Experiência em pesquisa'],
+  [/FORMACION COMPLEMENTARIA|OTROS MERITOS|MERITOS/, 'Outros méritos'],
+];
+const upperNorm = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+// Só rótulos curtos são traduzidos: uma descrição longa mistura vários méritos e perderia sentido.
+export const criterioPt = (desc) => (String(desc || '').length <= 45 && CRITERIOS_PT.find(([re]) => re.test(upperNorm(desc)))?.[1])
+  || String(desc || '').toLowerCase().replace(/^./, (c) => c.toUpperCase());
+
+/** Exigência de espanhol segundo a ficha do DUA. null = ficha ainda não coletada (não presumir nada). */
+export function spanishRequirement(p) {
+  const f = p?.fichaDua;
+  if (!f) return null;
+  const es = (f.idiomasExigidos || []).find((i) => i.idioma === 'espanhol');
+  return es ? { exige: true, nivel: es.nivel, obrigatorio: es.obrigatorio, estrangeiros: es.estrangeiros, texto: es.texto } : { exige: false };
+}
+
+const langLabel = (i) => `${i.idioma.replace(/^./, (c) => c.toUpperCase())} ${i.nivel || '(nível não informado na ficha)'}`;
+
+function admissionFromDua(p) {
+  const f = p?.fichaDua;
+  if (!f) return null;
+  const pref = (k) => f.titulacoes.filter((t) => t.preferencia === k).map((t) => t.nome);
+  return {
+    url: duaSheetUrl(p.duaCodigo),
+    codigoDua: p.duaCodigo,
+    verificadaEm: f.verificadaEm,
+    inicioCurso: f.inicioCurso,
+    fimCurso: f.fimCurso,
+    centro: f.centro,
+    somenteNotaExpediente: f.somenteNotaExpediente,
+    criterios: f.baremo.map((c) => ({ descricao: criterioPt(c.descricao), original: c.descricao, peso: c.peso })),
+    requisitos: f.requisitos,
+    idiomas: f.idiomasExigidos,
+    titulacoes: { alta: pref('alta'), media: pref('media'), baixa: pref('baixa'), condicionadas: f.condicionadas, outras: f.restoComAcesso },
+    equivalentes: f.titulacoesEquivalentes || [],
+  };
+}
+
 // ---------- Card / detalhe ----------
 
 const pendingCalendarChange = (opp) => data().reviews.some((r) => r.status === 'aberta' && ['alteracao-critica', 'conflito'].includes(r.tipo)
@@ -120,6 +173,10 @@ function card(opp, { user = null, now = Date.now() } = {}) {
       creditos: p.ficha?.creditos ?? null, modalidade: p.ficha?.modalidade ?? null, idiomaEnsino: p.ficha?.idiomaEnsino ?? null,
       duracaoEstimadaAnos: p.ficha?.duracaoEstimadaAnos ?? null, fichaVerificada: Boolean(p.ficha), fichaVerificadaEm: p.ficha?.verificadaEm || null,
       cursoFicha: p.ficha?.anoAcademico || null,
+      // Da ficha do DUA (null enquanto não coletada: "não informado", nunca "não exige").
+      idiomasExigidos: p.fichaDua ? p.fichaDua.idiomasExigidos.map(({ idioma, nivel, obrigatorio }) => ({ idioma, nivel, obrigatorio })) : null,
+      criteriosVerificados: Boolean(p.fichaDua),
+      inicioCurso: p.fichaDua?.inicioCurso || null,
     },
     estado: state.estado,
     estadoLabel: meta.label,
@@ -163,7 +220,16 @@ export function listOpportunities(query = {}, { user = null, now = Date.now() } 
   if (query.area) items = items.filter((c) => c.programa.ramos.includes(query.area));
   if (query.modalidade) items = items.filter((c) => c.programa.modalidade === query.modalidade);
   if (query.idioma) items = items.filter((c) => c.programa.idiomaEnsino === query.idioma);
-  if (query.nivelIdioma) items = items.filter(() => false); // nível exigido ainda não consta de nenhuma fonte coletada
+  if (query.nivelIdioma) {
+    // "Meu nível de espanhol": ficam os másteres cuja ficha do DUA exige até esse nível ou não exige.
+    // Sem ficha DUA coletada, ou exigência sem nível no texto, o máster fica de fora (não presumimos).
+    const max = NIVEIS_QECR.indexOf(String(query.nivelIdioma).toUpperCase());
+    items = items.filter((c) => {
+      if (!c.programa.idiomasExigidos || max < 0) return false;
+      const es = c.programa.idiomasExigidos.find((i) => i.idioma === 'espanhol');
+      return !es || (es.nivel && NIVEIS_QECR.indexOf(es.nivel) <= max);
+    });
+  }
   if (query.precoMax) items = items.filter(() => false); // preço não consta das fichas coletadas
   if (query.situacao) items = items.filter((c) => c.estado === query.situacao);
   if (query.bolsas === 'sim') items = items.filter(() => openScholarships().length > 0);
@@ -190,7 +256,10 @@ export function listOpportunities(query = {}, { user = null, now = Date.now() } 
       situacao: count((c) => c.estado),
     },
     indisponiveis: {
-      nivelIdioma: 'O nível de idioma exigido ainda não é coletado automaticamente: confira na ficha de cada máster.',
+      nivelIdioma: (() => {
+        const sem = all.filter((c) => !c.programa.idiomasExigidos).length;
+        return `Mostra os másteres cuja ficha do DUA exige até esse nível de espanhol (ou não exige).${sem ? ` ${sem} ainda sem ficha conferida ficam fora.` : ''}`;
+      })(),
       precoMax: 'O preço não consta das fichas oficiais coletadas.',
       idioma: 'A ficha da UGR não informa o idioma de ensino; só filtramos programas com essa informação verificada.',
     },
@@ -228,7 +297,22 @@ export function opportunityDetail(id, { user = null, now = Date.now() } = {}) {
   const c = card(opp, { user, now });
   const { windows, events } = cycleData(opp);
   const p = d.programs.find((x) => x.id === opp.programId);
-  const sources = [...new Set([...windows.map((w) => w.sourceId), 'ugr-catalogo', p?.ficha ? 'ugr-fichas' : null].filter(Boolean))].map(sourceById).filter(Boolean);
+  const sources = [...new Set([...windows.map((w) => w.sourceId), 'ugr-catalogo', p?.ficha ? 'ugr-fichas' : null, p?.fichaDua ? 'dua-fichas' : null].filter(Boolean))].map(sourceById).filter(Boolean);
+  const admissao = admissionFromDua(p);
+  const reqAcademico = admissao
+    ? { tipo: 'academico', status: 'verificado', fonte: 'Ficha do máster: Distrito Único Andaluz', url: admissao.url,
+      texto: [
+        admissao.somenteNotaExpediente ? 'Seleção só pela nota média do histórico.' : `Seleção: ${admissao.criterios.map((c) => `${c.descricao} ${c.peso ?? '?'}%`).join(' · ')}.`,
+        `Graduações com preferência: ${admissao.titulacoes.alta.length} alta, ${admissao.titulacoes.media.length} média, ${admissao.titulacoes.baixa.length} baixa.`,
+        admissao.equivalentes.length ? `Título equivalente (caso comum do diploma estrangeiro): preferência ${admissao.equivalentes.map((e) => e.preferencia).filter(Boolean).join('/') || 'não informada'}.` : 'Diploma estrangeiro: a universidade enquadra sua graduação na lista por equivalência de área.',
+      ].join(' ') }
+    : { tipo: 'academico', texto: 'Título universitário que dê acesso a estudos de pós-graduação no país emissor. Requisitos específicos (área de formação, critérios de seleção) constam da ficha oficial do máster.', fonte: 'Ficha oficial: UGR', url: p?.fichaUrl, status: 'consultar-ficha' };
+  const reqIdioma = admissao
+    ? { tipo: 'idioma', status: 'verificado', fonte: 'Ficha do máster: Distrito Único Andaluz', url: admissao.url,
+      texto: admissao.idiomas.length
+        ? `${admissao.idiomas.map((i) => `${langLabel(i)}${i.obrigatorio ? ', obrigatório' : ''}${i.estrangeiros ? ' para quem não é nativo' : ''}`).join('; ')}. Texto oficial: “${admissao.idiomas.map((i) => i.texto).join('” / “')}”`
+        : 'A ficha do DUA não traz exigência de idioma. As aulas costumam ser em espanhol: confirme o idioma de ensino na web do máster.' }
+    : { tipo: 'idioma', texto: c.programa.idiomaEnsino ? `Idioma de ensino: ${c.programa.idiomaEnsino}.` : 'Idioma de ensino e nível exigido não constam da ficha coletada. Não presuma: confirme na web do máster ou com a coordenação.', fonte: 'Ficha oficial: UGR', url: c.programa.webPropria || p?.fichaUrl, status: c.programa.idiomaEnsino ? 'verificado' : 'nao-informado' };
   const cycleKey = `${opp.procedimentoId}:${opp.anoAcademico}`;
   const history = d.revisions
     .filter((r) => r.opportunityKey === cycleKey || r.opportunityKey === `program:${opp.programId}` || r.entidadeId === opp.programId || r.entidadeId === opp.id)
@@ -242,9 +326,10 @@ export function opportunityDetail(id, { user = null, now = Date.now() } = {}) {
       estado: c.fases.find((f) => f.fase === w.fase)?.estado,
       eventos: events.filter((e) => e.fase === w.fase).sort((a, b) => a.ordem - b.ordem).map((e) => ({ tipo: e.tipo, rotulo: e.rotulo, inicio: e.inicio, fim: e.fim, texto: e.textoOriginal })),
     })),
+    admissao,
     requisitos: [
-      { tipo: 'academico', texto: 'Título universitário que dê acesso a estudos de pós-graduação no país emissor. Requisitos específicos (área de formação, critérios de seleção) constam da ficha oficial do máster.', fonte: 'Ficha oficial: UGR', url: p?.fichaUrl, status: 'consultar-ficha' },
-      { tipo: 'idioma', texto: c.programa.idiomaEnsino ? `Idioma de ensino: ${c.programa.idiomaEnsino}.` : 'Idioma de ensino e nível exigido não constam da ficha coletada. Não presuma: confirme na web do máster ou com a coordenação.', fonte: 'Ficha oficial: UGR', url: c.programa.webPropria || p?.fichaUrl, status: c.programa.idiomaEnsino ? 'verificado' : 'nao-informado' },
+      reqAcademico,
+      reqIdioma,
       { tipo: 'procedimento', texto: 'Estudantes com título estrangeiro podem concorrer na Fase 1 (exclusiva para estrangeiros) e nas fases seguintes, quando houver vagas.', fonte: 'Distrito Único Andaluz', url: sourceById('dua-calendario')?.url, status: windows.length ? 'verificado' : 'referencia' },
     ],
     documentos: ['Passaporte válido', 'Diploma (ou documento aceito na convocatória)', 'Histórico acadêmico oficial', 'Certificado de idioma, se o máster exigir', 'Documentos específicos pedidos pela ficha (currículo, cartas…)'],
@@ -440,12 +525,34 @@ export function programForJourney(id) {
     url: p.fichaUrl,
     demo: false,
     radar: true,
-    idioma: { status: 'verificar', fonte: 'O10' },
+    idioma: journeyLanguage(p),
+    outrosIdiomas: (p.fichaDua?.idiomasExigidos || []).filter((i) => i.idioma !== 'espanhol').map(({ idioma, nivel, obrigatorio, texto }) => ({ idioma, nivel, obrigatorio, texto, fonte: 'O30' })),
+    criterios: p.fichaDua ? p.fichaDua.baremo.map((c) => ({ descricao: criterioPt(c.descricao), peso: c.peso })) : null,
+    somenteNotaExpediente: p.fichaDua?.somenteNotaExpediente ?? null,
+    inicioCurso: p.fichaDua?.inicioCurso || null,
+    fichaDuaUrl: p.duaCodigo ? duaSheetUrl(p.duaCodigo) : null,
     requisitos: [
       { tipo: 'acesso', descricao: 'Título universitário que dê acesso à pós-graduação no país emissor', status: 'requerido', fonte: 'O1' },
-      { tipo: 'idioma', descricao: 'Exigência de idioma não informada na ficha coletada, confirme com a coordenação', status: 'verificar', fonte: 'O10' },
+      journeyLanguageRequirement(p),
     ],
   };
+}
+
+// Formato de catalog.js: { status: 'requerido'|'nao-requerido'|'verificar', nivel?, certificado?, fonte }.
+function journeyLanguage(p) {
+  const es = spanishRequirement(p);
+  if (!es) return { status: 'verificar', fonte: 'O10' };
+  if (!es.exige) return { status: 'nao-requerido', fonte: 'O30' };
+  // "Acreditar"/"justificar" = comprovar com documento; sem esses verbos a ficha só cita o nível.
+  const certificado = /ACREDIT|CERTIFIC|JUSTIFIC/.test(upperNorm(es.texto));
+  return es.nivel ? { status: 'requerido', nivel: es.nivel, certificado, fonte: 'O30', texto: es.texto } : { status: 'verificar', fonte: 'O30', texto: es.texto };
+}
+
+function journeyLanguageRequirement(p) {
+  const req = journeyLanguage(p);
+  if (req.status === 'requerido') return { tipo: 'idioma', descricao: `Espanhol ${req.nivel}${req.certificado ? ' comprovado' : ''} (ficha do DUA)`, status: 'requerido', fonte: 'O30' };
+  if (req.status === 'nao-requerido') return { tipo: 'idioma', descricao: 'A ficha do DUA não exige comprovação de espanhol', status: 'nao-requerido', fonte: 'O30' };
+  return { tipo: 'idioma', descricao: req.texto ? 'A ficha do DUA cita espanhol sem informar o nível: confirme com a coordenação' : 'Exigência de idioma não informada na ficha coletada, confirme com a coordenação', status: 'verificar', fonte: req.fonte };
 }
 
 export const radarPrograms = () => data().programs.filter((p) => !p.ausenteNoCatalogo).map((p) => programForJourney(p.id));

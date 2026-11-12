@@ -13,6 +13,7 @@ const EL_STATUS = {
   'falta-informar': ['Falta informar', 'warn'],
   'nao-confirmado': ['Não confirmado', 'pending'],
   'nao-exigido': ['Não exigido (pela regra cadastrada)', 'muted'],
+  informativo: ['Regra oficial', 'muted'],
 };
 
 async function copy(text) {
