@@ -56,6 +56,8 @@ const profileSchema = z.object({
   // Formação (o destino fica em cada jornada: routes/journey.js)
   formacao: text(120),
   instituicao: text(120),
+  // Curso da graduação (texto livre). A Missão 1.4 compara com as graduações da ficha do DUA.
+  graduacao: text(120),
   area: text(80),
   // Nota média da graduação na escala de origem (Missão 2.3). null apaga; os três andam juntos.
   notaMedia: z.number().min(0).max(1000).nullable().optional(),

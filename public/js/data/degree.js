@@ -1,0 +1,131 @@
+// Graduação do estudante × titulações de acesso da ficha do máster no DUA (Missão 1.4).
+// Módulo puro (frontend + servidor), sem API externa.
+//
+// A ficha do DUA lista as titulações espanholas com preferência (alta, média, baixa), as de admissão
+// condicionada e, às vezes, "resto de titulaciones". Quem tem título estrangeiro indica a titulação espanhola
+// equivalente e a comissão do máster confere. Aqui só sugerimos a correspondência pelo NOME do curso:
+// nunca afirmamos que o diploma será aceito.
+
+export const norm = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/\s+/g, ' ').trim();
+
+// "GRADO EN BIOLOGÍA" → "BIOLOGIA". Títulos antigos (licenciado, diplomado) usam o mesmo nome do curso.
+const PREFIXO = /^(GRADO|GRADUADO\/?A?|GRADUADA|LICENCIADO\/?A?|LICENCIATURA|DIPLOMADO\/?A?|DIPLOMATURA|DOBLE GRADO)( (O|Y) GRADUAD[OA])? EN /;
+export const core = (nome) => norm(nome).replace(PREFIXO, '').replace(/[.,;:]+$/, '');
+
+// Curso brasileiro (texto livre, normalizado) → nomes espanhóis equivalentes (núcleo, sem "GRADO EN").
+// Vence o trecho casado mais longo ("Educação Física" não cai em "Física"); no empate, a primeira da lista.
+const EQUIVALENCIAS = [
+  [/ENGENHARIA (DE )?COMPUTACAO|CIENCIA(S)? DA COMPUTACAO|SISTEMAS DE INFORMACAO|ANALISE E DESENVOLVIMENTO|ENGENHARIA DE SOFTWARE|INFORMATICA|COMPUTACAO/, ['INGENIERIA INFORMATICA', 'INFORMATICA', 'INGENIERIA DEL SOFTWARE', 'INGENIERIA DE COMPUTADORES', 'INGENIERIA EN INFORMATICA', 'INGENIERIA DE TECNOLOGIAS DE LA INFORMACION', 'INGENIERO EN INFORMATICA', 'INGENIERO TECNICO EN INFORMATICA', 'SISTEMAS DE INFORMACION']],
+  [/CIENCIA DE DADOS|INTELIGENCIA ARTIFICIAL/, ['CIENCIA DE DATOS', 'INTELIGENCIA ARTIFICIAL', 'INGENIERIA DE DATOS', 'INGENIERIA INFORMATICA']],
+  [/ENGENHARIA CIVIL/, ['INGENIERIA CIVIL', 'INGENIERO DE CAMINOS, CANALES Y PUERTOS', 'INGENIERO TECNICO DE OBRAS PUBLICAS']],
+  [/ENGENHARIA ELETRICA/, ['INGENIERIA ELECTRICA', 'INGENIERO INDUSTRIAL', 'INGENIERO TECNICO INDUSTRIAL, ESPECIALIDAD EN ELECTRICIDAD']],
+  [/ENGENHARIA ELETRONICA|ENGENHARIA DE CONTROLE|MECATRONICA/, ['INGENIERIA ELECTRONICA INDUSTRIAL', 'INGENIERIA ELECTRONICA', 'INGENIERIA EN ELECTRONICA INDUSTRIAL', 'INGENIERIA MECATRONICA', 'INGENIERIA ROBOTICA']],
+  [/ENGENHARIA MECANICA/, ['INGENIERIA MECANICA', 'INGENIERO INDUSTRIAL', 'INGENIERO TECNICO INDUSTRIAL, ESPECIALIDAD EN MECANICA']],
+  [/ENGENHARIA QUIMICA/, ['INGENIERIA QUIMICA', 'INGENIERIA QUIMICA INDUSTRIAL', 'INGENIERO QUIMICO']],
+  [/ENGENHARIA DE PRODUCAO/, ['INGENIERIA DE ORGANIZACION INDUSTRIAL', 'INGENIERIA EN ORGANIZACION INDUSTRIAL', 'INGENIERIA EN TECNOLOGIAS INDUSTRIALES', 'INGENIERO EN ORGANIZACION INDUSTRIAL']],
+  [/ENGENHARIA AMBIENTAL|ENGENHARIA SANITARIA/, ['INGENIERIA AMBIENTAL']],
+  [/ENGENHARIA (DE )?TELECOMUNICAC/, ['INGENIERIA DE TECNOLOGIAS DE TELECOMUNICACION', 'INGENIERIA DE SISTEMAS DE TELECOMUNICACION', 'INGENIERIA TELEMATICA', 'INGENIERO DE TELECOMUNICACION']],
+  [/AGRONOM|ENGENHARIA AGRICOLA/, ['INGENIERIA AGRONOMICA', 'INGENIERIA AGRICOLA', 'INGENIERIA AGRARIA', 'INGENIERO AGRONOMO', 'INGENIERIA Y CIENCIA AGRONOMICA']],
+  [/ENGENHARIA DE ALIMENTOS|CIENCIA E TECNOLOGIA DE ALIMENTOS|TECNOLOGIA DE ALIMENTOS/, ['CIENCIA Y TECNOLOGIA DE LOS ALIMENTOS', 'INGENIERIA ALIMENTARIA', 'CIENCIAS DE LA ALIMENTACION']],
+  [/ENGENHARIA FLORESTAL/, ['INGENIERIA FORESTAL', 'INGENIERIA FORESTAL Y DEL MEDIO NATURAL', 'INGENIERO DE MONTES']],
+  [/ENGENHARIA BIOMEDICA/, ['INGENIERIA BIOMEDICA']],
+  [/ARQUITETURA|URBANISMO/, ['ARQUITECTURA', 'FUNDAMENTOS DE ARQUITECTURA', 'ARQUITECTO']],
+  [/BIOMEDICINA/, ['BIOMEDICINA', 'CIENCIAS BIOMEDICAS']],
+  [/BIOTECNOLOGIA/, ['BIOTECNOLOGIA']],
+  [/BIOQUIMICA/, ['BIOQUIMICA']],
+  [/CIENCIAS BIOLOGICAS|BIOLOGIA/, ['BIOLOGIA']],
+  [/CIENCIAS AMBIENTAIS|GESTAO AMBIENTAL/, ['CIENCIAS AMBIENTALES']],
+  [/OCEANOGRAFIA/, ['CIENCIAS DEL MAR']],
+  [/FISICA/, ['FISICA']],
+  [/QUIMICA/, ['QUIMICA']],
+  [/MATEMATICA/, ['MATEMATICAS']],
+  [/ESTATISTICA/, ['ESTADISTICA', 'MATEMATICAS Y ESTADISTICA']],
+  [/GEOLOGIA/, ['GEOLOGIA']],
+  [/MEDICINA VETERINARIA|VETERINARIA/, ['VETERINARIA']],
+  [/MEDICINA/, ['MEDICINA']],
+  [/ENFERMAGEM/, ['ENFERMERIA']],
+  [/FARMACIA/, ['FARMACIA']],
+  [/ODONTOLOGIA/, ['ODONTOLOGIA']],
+  [/FISIOTERAPIA/, ['FISIOTERAPIA']],
+  [/NUTRICAO/, ['NUTRICION HUMANA Y DIETETICA']],
+  [/PSICOLOGIA/, ['PSICOLOGIA']],
+  [/FONOAUDIOLOGIA/, ['LOGOPEDIA']],
+  [/TERAPIA OCUPACIONAL/, ['TERAPIA OCUPACIONAL']],
+  [/EDUCACAO FISICA|CIENCIAS DO ESPORTE|ESPORTE/, ['CIENCIAS DE LA ACTIVIDAD FISICA Y DEL DEPORTE']],
+  [/SAUDE PUBLICA|SAUDE COLETIVA/, ['SALUD PUBLICA']],
+  [/DIREITO/, ['DERECHO']],
+  [/RELACOES INTERNACIONAIS/, ['RELACIONES INTERNACIONALES', 'ESTUDIOS INTERNACIONALES']],
+  [/CIENCIA(S)? POLITICA/, ['CIENCIA POLITICA Y DE LA ADMINISTRACION', 'CIENCIA POLITICA Y GESTION PUBLICA', 'CIENCIAS POLITICAS Y DE LA ADMINISTRACION', 'CIENCIA POLITICA']],
+  [/ADMINISTRACAO PUBLICA|GESTAO PUBLICA/, ['GESTION Y ADMINISTRACION PUBLICA', 'CIENCIA POLITICA Y DE LA ADMINISTRACION']],
+  [/CIENCIAS CONTABEIS|CONTABILIDADE|FINANCAS/, ['FINANZAS Y CONTABILIDAD', 'ADMINISTRACION Y DIRECCION DE EMPRESAS']],
+  [/ADMINISTRACAO|GESTAO DE EMPRESAS|NEGOCIOS/, ['ADMINISTRACION Y DIRECCION DE EMPRESAS', 'CIENCIAS EMPRESARIALES']],
+  [/CIENCIAS ECONOMICAS|ECONOMIA/, ['ECONOMIA']],
+  [/MARKETING|PUBLICIDADE|PROPAGANDA/, ['MARKETING E INVESTIGACION DE MERCADOS', 'PUBLICIDAD Y RELACIONES PUBLICAS', 'MARKETING']],
+  [/JORNALISMO/, ['PERIODISMO']],
+  [/RADIALISMO|RADIO E (TV|TELEVISAO)|CINEMA|AUDIOVISUAL/, ['COMUNICACION AUDIOVISUAL']],
+  [/RELACOES PUBLICAS/, ['PUBLICIDAD Y RELACIONES PUBLICAS']],
+  [/COMUNICACAO SOCIAL|COMUNICACAO/, ['COMUNICACION', 'PERIODISMO', 'COMUNICACION AUDIOVISUAL', 'PUBLICIDAD Y RELACIONES PUBLICAS']],
+  [/TURISMO|HOTELARIA/, ['TURISMO']],
+  [/SERVICO SOCIAL/, ['TRABAJO SOCIAL']],
+  [/SOCIOLOGIA|CIENCIAS SOCIAIS/, ['SOCIOLOGIA']],
+  [/ANTROPOLOGIA/, ['ANTROPOLOGIA SOCIAL Y CULTURAL', 'ANTROPOLOGIA SOCIAL']],
+  [/BIBLIOTECONOMIA|ARQUIVOLOGIA|CIENCIA DA INFORMACAO/, ['INFORMACION Y DOCUMENTACION']],
+  [/PEDAGOGIA/, ['PEDAGOGIA', 'EDUCACION PRIMARIA', 'EDUCACION INFANTIL', 'EDUCACION SOCIAL']],
+  [/EDUCACAO/, ['PEDAGOGIA', 'EDUCACION PRIMARIA', 'EDUCACION INFANTIL', 'EDUCACION SOCIAL']],
+  [/GEOGRAFIA/, ['GEOGRAFIA', 'GEOGRAFIA Y GESTION DEL TERRITORIO', 'GEOGRAFIA Y ORDENACION DEL TERRITORIO']],
+  [/ARQUEOLOGIA/, ['ARQUEOLOGIA']],
+  [/HISTORIA DA ARTE/, ['HISTORIA DEL ARTE']],
+  [/HISTORIA/, ['HISTORIA']],
+  [/FILOSOFIA/, ['FILOSOFIA']],
+  [/TEOLOGIA|CIENCIAS DA RELIGIAO/, ['TEOLOGIA', 'CIENCIAS RELIGIOSAS']],
+  [/TRADUCAO|TRADUTOR|INTERPRETE/, ['TRADUCCION E INTERPRETACION']],
+  [/LETRAS.*(ESPANHOL|HISPAN)/, ['ESTUDIOS HISPANICOS', 'FILOLOGIA HISPANICA', 'LENGUA Y LITERATURA ESPANOLAS', 'LITERATURAS COMPARADAS']],
+  [/LETRAS.*INGLES/, ['ESTUDIOS INGLESES', 'FILOLOGIA INGLESA', 'LENGUAS MODERNAS Y SUS LITERATURAS']],
+  [/LETRAS|LINGUISTICA|LITERATURA/, ['FILOLOGIA HISPANICA', 'ESTUDIOS HISPANICOS', 'LINGUISTICA Y LENGUAS APLICADAS', 'LENGUAS MODERNAS Y SUS LITERATURAS', 'LITERATURAS COMPARADAS']],
+  [/BELAS ARTES|ARTES VISUAIS|ARTES PLASTICAS/, ['BELLAS ARTES']],
+  [/DESIGN/, ['DISENO', 'DISENO DE PRODUCTOS', 'INGENIERIA EN DISENO INDUSTRIAL Y DESARROLLO DEL PRODUCTO', 'INGENIERIA DEL DISENO INDUSTRIAL Y DESARROLLO DE PRODUCTOS']],
+  [/MUSICA/, ['MUSICA', 'HISTORIA Y CIENCIAS DE LA MUSICA', 'MUSICOLOGIA']],
+  [/CONSERVACAO|RESTAURO|RESTAURACAO|MUSEOLOGIA/, ['CONSERVACION Y RESTAURACION DE BIENES CULTURALES', 'CONSERVACION Y RESTAURACION DEL PATRIMONIO CULTURAL']],
+];
+
+/** Nomes espanhóis prováveis para o curso informado (texto livre em português). */
+export function spanishNames(curso) {
+  const c = norm(curso);
+  if (!c) return [];
+  let hit = null; let len = 0;
+  for (const e of EQUIVALENCIAS) {
+    const m = e[0].exec(c);
+    if (m && m[0].length > len) { hit = e; len = m[0].length; }
+  }
+  // Sem correspondência no dicionário: cursos com o mesmo nome nas duas línguas (ex.: "Biologia") ainda casam.
+  return hit ? hit[1] : [c.replace(/^(BACHARELADO|LICENCIATURA|GRADUACAO|CURSO) (EM |DE )?/, '')];
+}
+
+const RANK = { alta: 0, media: 1, baixa: 2 };
+
+/**
+ * Procura o curso na ficha do DUA. Devolve
+ *   { tipo: 'lista', preferencia, nomes: [...] } quando alguma titulação com preferência corresponde;
+ *   { tipo: 'condicionada', nomes, requisitos } quando só aparece com admissão condicionada;
+ *   { tipo: 'resto', nomes } quando só aparece em "resto de titulaciones";
+ *   { tipo: 'fora' } quando não aparece. Correspondência exata do núcleo vence a parcial.
+ */
+export function matchDegree(curso, ficha) {
+  const alvos = spanishNames(curso);
+  if (!alvos.length) return { tipo: 'sem-curso' };
+  const lista = ficha?.titulacoes || [];
+  const exato = (nome) => alvos.includes(core(nome)) || alvos.includes(norm(nome));
+  const parcial = (nome) => alvos.some((a) => new RegExp(`(^| )${a.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}( |$)`).test(core(nome)));
+  for (const teste of [exato, parcial]) {
+    const achadas = lista.filter((t) => t.preferencia && teste(t.nome));
+    if (achadas.length) {
+      const melhor = achadas.reduce((a, b) => (RANK[b.preferencia] < RANK[a.preferencia] ? b : a));
+      return { tipo: 'lista', preferencia: melhor.preferencia, exata: teste === exato, nomes: achadas.filter((t) => t.preferencia === melhor.preferencia).map((t) => t.nome) };
+    }
+    const cond = (ficha?.condicionadas || []).filter((t) => teste(t.nome));
+    if (cond.length) return { tipo: 'condicionada', exata: teste === exato, nomes: cond.map((t) => t.nome), requisitos: [...new Set(cond.flatMap((t) => t.requisitos || []))] };
+    const resto = (ficha?.restoComAcesso || []).filter((n) => teste(n));
+    if (resto.length) return { tipo: 'resto', exata: teste === exato, nomes: resto };
+  }
+  return { tipo: 'fora' };
+}

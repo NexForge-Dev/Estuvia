@@ -90,13 +90,16 @@ export const ROUNDS = [
         resumo: 'Compare os requisitos do mestrado com o seu perfil, sem presumir.',
         objetivo: 'Saber o que você já atende, o que falta e o que precisa de confirmação.',
         porque: 'A plataforma não marca ninguém como elegível sem evidência suficiente. A decisão é da universidade.',
-        comoExecutar: [{ titulo: 'Leitura do resultado', texto: '"Atende (declarado)", "falta comprovar" ou "não confirmado". Nenhum desses estados garante admissão.' }],
+        comoExecutar: [
+          { titulo: 'Leitura do resultado', texto: '"Atende (declarado)", "falta comprovar" ou "não confirmado". Nenhum desses estados garante admissão.' },
+          { titulo: 'Graduação aceita', texto: 'Informe o curso da sua graduação no perfil: comparamos com as graduações que a ficha do DUA aceita (preferência alta, média ou baixa). A comissão do máster é quem confere a equivalência do seu diploma.' },
+        ],
         objetivos: [
           { id: 'acesso', texto: 'Conferir o requisito de titulação de acesso' },
           { id: 'idioma', texto: 'Conferir o requisito de idioma do programa' },
           { id: 'criterios', texto: 'Conferir critérios de seleção e documentos específicos' },
         ],
-        dependencias: ['1.3'], prioridade: 'alta', tempoEstimado: '30 min', duracaoMin: 30, fontes: ['O1', 'O3'], tag: 'pendente',
+        dependencias: ['1.3'], prioridade: 'alta', tempoEstimado: '30 min', duracaoMin: 30, fontes: ['O1', 'O3', 'O30'], tag: 'pendente',
         criterio: 'Elegibilidade preliminar conferida com base em evidências.', ferramenta: 'elegibilidade',
       },
       {

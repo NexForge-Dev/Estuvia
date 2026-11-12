@@ -15,6 +15,10 @@ const EL_STATUS = {
   'nao-confirmado': ['Não confirmado', 'pending'],
   'nao-exigido': ['Não exigido (pela regra cadastrada)', 'muted'],
   informativo: ['Regra oficial', 'muted'],
+  'pref-alta': ['Na lista: preferência alta', 'ok'],
+  'pref-media': ['Na lista: preferência média', 'ok'],
+  'pref-baixa': ['Na lista: preferência baixa', 'warn'],
+  'fora-da-lista': ['Fora da lista', 'warn'],
 };
 
 async function copy(text) {

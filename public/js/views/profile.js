@@ -76,6 +76,7 @@ export function profileView() {
       divisionHost,
       field('Formação acadêmica', Select({ name: 'formacao', value: p.formacao || '', options: FORMACOES.map((f) => ({ value: f.value, label: f.value })), searchable: false, placeholder: 'Selecione', ariaLabel: 'Formação acadêmica' })),
       field('Instituição de origem', suggest('instituicao', p.instituicao, INSTITUTIONS.map((i) => i.value), { maxlength: 120, placeholder: 'Busque pela sigla ou escreva o nome' })),
+      field('Curso da graduação', suggest('graduacao', p.graduacao, Object.values(AREAS).flat(), { maxlength: 120, placeholder: 'Ex.: Biologia' }), 'Usado na Missão 1.4 para comparar com as graduações aceitas pelo máster.'),
       field('Área de interesse', suggest('area', p.area, Object.values(AREAS).flat(), { maxlength: 80, placeholder: 'Ex.: Engenharia Civil' })),
       field('Espanhol', Select({ name: 'espanhol', value: p.espanhol || '', options: NIVEIS, searchable: false, placeholder: 'Selecione', ariaLabel: 'Nível de espanhol' })),
       field('Certificado de espanhol', Select({ name: 'certificadoEspanhol', value: p.certificadoEspanhol || '', options: [['nenhum', 'Não tenho certificação'], ['DELE', 'DELE'], ['SIELE', 'SIELE'], ['outro', 'Outro']], searchable: false, placeholder: 'Selecione', ariaLabel: 'Certificado de espanhol' })),

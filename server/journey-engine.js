@@ -12,6 +12,7 @@ import { computeFinance } from './finance-engine.js';
 import { ROUND_UNLOCK, PARALLEL_TRACKS, trackOf, EVIDENCE, PRIOR_STAGES, situacaoRank, complexityOf, riskOf, REQUIREMENTS } from './content/progression.js';
 import { todayMadrid, daysBetween } from './radar/dates.js';
 import { profileGrade, usesGrade, fmtNota } from '../public/js/data/grade.js';
+import { matchDegree } from '../public/js/data/degree.js';
 
 export const STATUS = {
   bloqueada: 'Bloqueada',
@@ -486,6 +487,7 @@ export function eligibility(ctx) {
   items.push(p.formacao
     ? { requisito: 'Titulação de acesso', status: 'declarado', texto: `Você declarou: ${p.formacao}. A universidade verifica a equivalência de nível e o direito de acesso à pós-graduação no país que emitiu o título.`, fonte: 'O1' }
     : { requisito: 'Titulação de acesso', status: 'falta-informar', texto: 'Informe sua graduação no perfil.', fonte: 'O1' });
+  if (prog.titulacoes) items.push(degreeItem(p, prog.titulacoes));
   const req = prog.idioma || { status: 'verificar' };
   const lvl = LANG_LEVELS.indexOf(p.espanhol || 'nenhum');
   if (req.status === 'nao-requerido') items.push({ requisito: 'Idioma', status: 'nao-exigido', texto: 'O programa não exige certificado de idioma (confirme na ficha).', fonte: req.fonte });
@@ -519,6 +521,34 @@ export function eligibility(ctx) {
     items.push({ requisito: 'Critérios de seleção e documentos específicos', status: 'nao-confirmado', texto: 'Consulte a ficha oficial: a plataforma não avalia critérios de seleção.', fonte: 'O3' });
   }
   return items;
+}
+
+// Curso da graduação × titulações de acesso da ficha do DUA. Sugere a correspondência pelo nome do curso;
+// a comissão do máster é quem confere se o diploma corresponde à titulação espanhola.
+const PREF_TXT = { alta: 'preferência alta', media: 'preferência média', baixa: 'preferência baixa' };
+const titleCase = (s) => String(s).toLowerCase().replace(/(^|\s)(\p{L})/gu, (m, a, b) => a + b.toUpperCase()).replace(/\b(En|De|Del|Y|E|La|Las|Los|O)\b/g, (w) => w.toLowerCase());
+const nomesTxt = (nomes) => nomes.slice(0, 3).map(titleCase).join('; ') + (nomes.length > 3 ? ` e mais ${nomes.length - 3}` : '');
+function degreeItem(p, ficha) {
+  const requisito = 'Graduação aceita pelo máster';
+  const curso = (p.graduacao || '').trim();
+  const prioridade = 'A ficha do DUA ordena as graduações por preferência: quem vem de uma graduação de preferência mais alta é ordenado antes na lista de admissão.';
+  if (!curso) return { requisito, status: 'falta-informar', texto: `Informe o curso da sua graduação no perfil para compararmos com a lista de graduações da ficha do DUA. ${prioridade}`, fonte: 'O30' };
+  if (!ficha.titulacoes?.length && !ficha.condicionadas?.length && !ficha.restoComAcesso?.length) return { requisito, status: 'nao-confirmado', texto: 'A ficha do DUA deste máster não trouxe a lista de graduações aceitas. Confira na ficha oficial.', fonte: 'O30' };
+  const m = matchDegree(curso, ficha);
+  const confere = 'Com diploma estrangeiro, você indica a titulação espanhola equivalente e a comissão do máster confere.';
+  const parecida = m.exata ? '' : ' (nome parecido, não idêntico: confira se é o mesmo curso)';
+  const equiv = ficha.equivalentes?.length ? ` A ficha também aceita "${titleCase(ficha.equivalentes[0].nome)}" (${PREF_TXT[ficha.equivalentes[0].preferencia] || 'sem preferência informada'}).` : '';
+  if (m.tipo === 'lista') {
+    const status = m.preferencia === 'baixa' ? 'pref-baixa' : `pref-${m.preferencia}`;
+    return { requisito, status, preferencia: m.preferencia, texto: `Sua graduação (${curso}) corresponde a ${nomesTxt(m.nomes)}${parecida}, com ${PREF_TXT[m.preferencia]} na ficha do DUA. ${m.preferencia === 'baixa' ? 'Você tem acesso, mas candidatos de graduações com preferência mais alta são ordenados antes. ' : ''}${confere}`, fonte: 'O30' };
+  }
+  if (m.tipo === 'condicionada') {
+    return { requisito, status: 'falta-comprovar', texto: `Sua graduação (${curso}) corresponde a ${nomesTxt(m.nomes)}${parecida}, que a ficha do DUA aceita com admissão condicionada${m.requisitos.length ? ` ao requisito ${m.requisitos.join(', ')}` : ''}. Leia a condição na ficha. ${confere}`, fonte: 'O30' };
+  }
+  if (m.tipo === 'resto') {
+    return { requisito, status: 'pref-baixa', texto: `Sua graduação (${curso}) aparece entre as outras graduações com acesso da ficha do DUA, sem preferência: candidatos das graduações listadas com preferência são ordenados antes. ${confere}`, fonte: 'O30' };
+  }
+  return { requisito, status: 'fora-da-lista', texto: `Não encontramos "${curso}" na lista de graduações da ficha do DUA.${equiv} A busca é pelo nome do curso: compare com a lista completa no Radar e, se não houver correspondência, pergunte à coordenação do máster antes de se candidatar (Missão 3.8). ${prioridade}`, fonte: 'O30' };
 }
 
 // Nota média na escala espanhola (fórmula do DUA, O1 art. 7). Só aparece quando a ficha usa a nota na seleção.

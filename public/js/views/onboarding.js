@@ -66,7 +66,7 @@ export async function onboardingView() {
     return {
       v: 1, step: 0, docIndex: 0,
       nacionalidade: nat ? countryName(nat) : (p.nacionalidade || ''), paisResidencia: p.paisResidencia || '', estado: p.estado || '',
-      formacao: p.formacao || '', instituicao: p.instituicao || '', instituicaoManual: !instKnown, area: p.area || '', areaManual: !areaKnown,
+      formacao: p.formacao || '', instituicao: p.instituicao || '', instituicaoManual: !instKnown, graduacao: p.graduacao || '', area: p.area || '', areaManual: !areaKnown,
       espanhol: p.espanhol || '', certificadoEspanhol: p.certificadoEspanhol || '', certificadoNivel: p.certificadoNivel || '', ingles: p.ingles || '',
       orcamentoSituacao: p.orcamentoSituacao || (typeof p.orcamentoDisponivel === 'number' ? 'informado' : ''), orcamentoDisponivel: p.orcamentoDisponivel ?? null,
       universidadeId: '', programaId: '', programaNome: '', anoAcademico: '', inicioPeriodo: '', duracaoOpcao: '', duracaoMeses: null,
@@ -245,6 +245,11 @@ export async function onboardingView() {
       const back = h('button', { type: 'button', class: 'ob-linkbtn', onClick: () => set({ [key]: '', [flag]: false }) }, 'Voltar para a lista');
       return h('div', { class: 'ob-manual' }, el, back);
     };
+    const graduacaoInput = () => {
+      const el = h('input', { type: 'text', class: 'ob-input', id: 'ob-graduacao', maxlength: 120, placeholder: 'Ex.: Biologia, Direito, Engenharia Civil', value: draft.graduacao || '', autocomplete: 'off', dataset: { fk: 'graduacao' } });
+      el.addEventListener('input', () => set({ graduacao: el.value.replace(/^\s+/, '') }, false));
+      return el;
+    };
     return [
       group('Formação acadêmica', h('div', { class: 'ob-chips cols-2' }, FORMACOES.map((f) => chip(f.value, { selected: draft.formacao === f.value, hint: f.hint, fk: `formacao-${f.value}`, onClick: () => set({ formacao: f.value }) }))),
         { id: 'ob-formacao', hint: draft.formacao && !FORMACOES.some((f) => f.value === draft.formacao) ? `Valor atual no seu perfil: "${draft.formacao}". Escolha uma opção para padronizar.` : null }),
@@ -253,6 +258,8 @@ export async function onboardingView() {
           ? manual('instituicao', 'instituicaoManual', 'Nome da sua universidade ou faculdade', 120)
           : sel('instituicao', instOpts, { searchable: true, placeholder: 'Busque pelo nome ou sigla', searchPlaceholder: 'Ex.: UFBA, USP, PUC…', onChange: (v) => (v === OUTRO ? set({ instituicao: '', instituicaoManual: true }) : set({ instituicao: v })) }),
         { id: draft.instituicaoManual ? 'ob-instituicao-manual' : 'ob-instituicao', hint: draft.instituicaoManual ? 'Escreva o nome completo, como aparece no diploma.' : 'Onde você fez (ou faz) a graduação.' }),
+        fieldBox('Curso da graduação (opcional)', graduacaoInput(),
+          { id: 'ob-graduacao', hint: 'Como está no diploma. A Missão 1.4 compara com as graduações que cada máster aceita.' }),
         fieldBox('Área de interesse do mestrado', draft.areaManual
           ? manual('area', 'areaManual', 'Ex.: Gestão Cultural', 80)
           : sel('area', areaOpts, { searchable: true, placeholder: 'Escolha a área', searchPlaceholder: 'Buscar área…', onChange: (v) => (v === OUTRO ? set({ area: '', areaManual: true }) : set({ area: v })) }),
@@ -588,7 +595,7 @@ export async function onboardingView() {
         current = 'perfil';
         const profile = {
           nacionalidade: draft.nacionalidade.trim(), paisResidencia: draft.paisResidencia.trim(), estado: divisions() ? draft.estado : '',
-          formacao: draft.formacao.trim(), instituicao: draft.instituicao.trim(), area: draft.area.trim(),
+          formacao: draft.formacao.trim(), instituicao: draft.instituicao.trim(), graduacao: (draft.graduacao || '').trim(), area: draft.area.trim(),
           espanhol: draft.espanhol, certificadoEspanhol: draft.certificadoEspanhol, certificadoNivel: draft.certificadoEspanhol === 'nenhum' ? '' : draft.certificadoNivel, ingles: draft.ingles,
           orcamentoSituacao: draft.orcamentoSituacao, orcamentoDisponivel: draft.orcamentoSituacao === 'informado' ? draft.orcamentoDisponivel : null,
         };

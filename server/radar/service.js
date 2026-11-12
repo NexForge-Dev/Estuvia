@@ -529,6 +529,8 @@ export function programForJourney(id) {
     outrosIdiomas: (p.fichaDua?.idiomasExigidos || []).filter((i) => i.idioma !== 'espanhol').map(({ idioma, nivel, obrigatorio, texto }) => ({ idioma, nivel, obrigatorio, texto, fonte: 'O30' })),
     criterios: p.fichaDua ? p.fichaDua.baremo.map((c) => ({ descricao: criterioPt(c.descricao), peso: c.peso })) : null,
     somenteNotaExpediente: p.fichaDua?.somenteNotaExpediente ?? null,
+    // Graduações de acesso pela ficha do DUA (Missão 1.4 compara com o curso do perfil).
+    titulacoes: p.fichaDua ? { titulacoes: p.fichaDua.titulacoes || [], condicionadas: p.fichaDua.condicionadas || [], restoComAcesso: p.fichaDua.restoComAcesso || [], equivalentes: p.fichaDua.titulacoesEquivalentes || [] } : null,
     inicioCurso: p.fichaDua?.inicioCurso || null,
     fichaDuaUrl: p.duaCodigo ? duaSheetUrl(p.duaCodigo) : null,
     requisitos: [
