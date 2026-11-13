@@ -99,9 +99,10 @@ function lotes(fonte, pags) {
 
 async function upload(coleta) {
   const { robots, paginas } = coleta;
-  const base = (process.env.ESTUVIA_URL || '').replace(/\/+$/, '');
-  const email = process.env.ESTUVIA_ADMIN_EMAIL;
-  const senha = process.env.ESTUVIA_ADMIN_PASSWORD;
+  // trim: um espaço ou TAB sobrando no arquivo .env (comum ao colar) faria o login falhar.
+  const base = (process.env.ESTUVIA_URL || '').trim().replace(/\/+$/, '');
+  const email = (process.env.ESTUVIA_ADMIN_EMAIL || '').trim();
+  const senha = (process.env.ESTUVIA_ADMIN_PASSWORD || '').replace(/[\r\n]+$/, '');
   if (!base || !email || !senha) throw new Error('Defina ESTUVIA_URL, ESTUVIA_ADMIN_EMAIL e ESTUVIA_ADMIN_PASSWORD.');
   let cookie = '';
   const call = async (method, url, body) => {
