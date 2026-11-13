@@ -53,7 +53,7 @@ const nextMonday = () => { const d = new Date(); d.setUTCDate(d.getUTCDate() + (
 
 async function student(nome, email) {
   const c = client();
-  assert.equal((await c('POST', '/auth/register', { nome, email, senha: 'segura123', aceite: true })).status, 201);
+  assert.equal((await c('POST', '/auth/register', { nome, email, senha: 'segura123', aceite: true, maiorIdade: true })).status, 201);
   await c('PUT', '/me/profile', PROFILE);
   const me = (await c('GET', '/me')).data.user;
   return { c, uid: me.id };

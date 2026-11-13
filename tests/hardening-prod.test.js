@@ -56,7 +56,7 @@ test('produção: senha curta do admin não cria a conta', async () => {
 
 test('produção: MODERATOR_EMAILS e RADAR_ADMIN_EMAILS não concedem papel a quem se cadastra', async () => {
   const mod = client();
-  const r = await mod('POST', '/auth/register', { nome: 'Mod Falso', email: 'mod@exemplo.com', senha: 'segura123', aceite: true });
+  const r = await mod('POST', '/auth/register', { nome: 'Mod Falso', email: 'mod@exemplo.com', senha: 'segura123', aceite: true, maiorIdade: true });
   assert.equal(r.status, 201);
   assert.match(r.setCookie, /HttpOnly/i);
   assert.match(r.setCookie, /Secure/i);
@@ -64,6 +64,6 @@ test('produção: MODERATOR_EMAILS e RADAR_ADMIN_EMAILS não concedem papel a qu
   assert.equal(r.data.user.moderador, false);
 
   const radar = client();
-  await radar('POST', '/auth/register', { nome: 'Radar Falso', email: 'radar@exemplo.com', senha: 'segura123', aceite: true });
+  await radar('POST', '/auth/register', { nome: 'Radar Falso', email: 'radar@exemplo.com', senha: 'segura123', aceite: true, maiorIdade: true });
   assert.equal((await radar('GET', '/radar/admin')).status, 403);
 });

@@ -145,7 +145,7 @@ function client() {
 
 test('2/7/14/15: API recupera a jornada, recalcula a cada alteração e guarda entre sessões', async () => {
   const c = client();
-  await c('POST', '/auth/register', { nome: 'Lia Costa', email: 'lia@exemplo.com', senha: 'segura123', aceite: true });
+  await c('POST', '/auth/register', { nome: 'Lia Costa', email: 'lia@exemplo.com', senha: 'segura123', aceite: true, maiorIdade: true });
   const jid = (await c('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2027/28' })).data.journey.id;
   let f = (await c('GET', `/finance?journeyId=${jid}`)).data;
   assert.equal(f.plano.destino.universidade.sigla, 'UGR');

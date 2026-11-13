@@ -45,7 +45,7 @@ let jid;
 const say = (mensagem) => req('POST', '/mentor/message', { mensagem, contexto: { journeyId: jid } });
 
 test('setup', async () => {
-  const r = await req('POST', '/auth/register', { nome: 'Bia Lima', email: 'bia@viagem.dev', senha: 'segura123', aceite: true });
+  const r = await req('POST', '/auth/register', { nome: 'Bia Lima', email: 'bia@viagem.dev', senha: 'segura123', aceite: true, maiorIdade: true });
   uid = r.data.user.id;
   await req('PUT', '/me/profile', { estado: 'PE', paisResidencia: 'Brasil' });
   jid = (await req('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2027/28', inicioAulas: '2027-09-20' })).data.journey.id;

@@ -47,13 +47,13 @@ function client() {
 }
 
 test('o e-mail do ADMIN_EMAIL é reservado: cadastro com ele é recusado', async () => {
-  const r = await client()('POST', '/auth/register', { nome: 'Intruso', email: 'Chefe@Exemplo.com', senha: 'segura123', aceite: true });
+  const r = await client()('POST', '/auth/register', { nome: 'Intruso', email: 'Chefe@Exemplo.com', senha: 'segura123', aceite: true, maiorIdade: true });
   assert.equal(r.status, 409);
 });
 
 test('papel vem só do servidor: e-mail parecido com o da equipe não dá acesso ao painel', async () => {
   const c = client();
-  assert.equal((await c('POST', '/auth/register', { nome: 'Bia', email: 'bia@exemplo.com', senha: 'segura123', aceite: true })).status, 201);
+  assert.equal((await c('POST', '/auth/register', { nome: 'Bia', email: 'bia@exemplo.com', senha: 'segura123', aceite: true, maiorIdade: true })).status, 201);
   const me = await c('GET', '/me');
   assert.equal(me.data.user.admin, false);
   assert.equal((await c('GET', '/admin/overview')).status, 403);
@@ -62,7 +62,7 @@ test('papel vem só do servidor: e-mail parecido com o da equipe não dá acesso
 
 test('falha ao gravar a base vira erro 500 (nunca "salvo"), o servidor segue de pé e /health avisa', async () => {
   const c = client();
-  assert.equal((await c('POST', '/auth/register', { nome: 'Caio', email: 'caio@exemplo.com', senha: 'segura123', aceite: true })).status, 201);
+  assert.equal((await c('POST', '/auth/register', { nome: 'Caio', email: 'caio@exemplo.com', senha: 'segura123', aceite: true, maiorIdade: true })).status, 201);
   await flush();
   // Um diretório no lugar do arquivo faz o rename atômico falhar.
   fs.rmSync(process.env.DATA_FILE);

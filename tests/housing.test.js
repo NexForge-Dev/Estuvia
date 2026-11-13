@@ -66,7 +66,7 @@ function client() {
 
 test('3/5/6/10/11/16/18: fluxo completo pela API', async () => {
   const c = client();
-  await c('POST', '/auth/register', { nome: 'Nina Reis', email: 'nina@exemplo.com', senha: 'segura123', aceite: true });
+  await c('POST', '/auth/register', { nome: 'Nina Reis', email: 'nina@exemplo.com', senha: 'segura123', aceite: true, maiorIdade: true });
   await c('PUT', '/me/profile', { nacionalidade: 'Brasileira', paisResidencia: 'Brasil', estado: 'BA', formacao: 'Letras', espanhol: 'B2', onboardingConcluido: true });
   const jid = (await c('POST', '/journeys', { programaId: 'ugr-demo-arq', anoAcademico: '2027/28' })).data.journey.id;
 

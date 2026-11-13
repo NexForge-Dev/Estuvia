@@ -94,7 +94,7 @@ test('perfil: salva a nota, exige os três campos juntos, recusa incoerência e 
     if (set) cookie = set.split(';')[0];
     return { status: res.status, data: await res.json() };
   };
-  assert.equal((await req('POST', '/auth/register', { nome: 'Ana Nota', email: 'ana-nota@exemplo.com', senha: 'segura123', aceite: true })).status, 201);
+  assert.equal((await req('POST', '/auth/register', { nome: 'Ana Nota', email: 'ana-nota@exemplo.com', senha: 'segura123', aceite: true, maiorIdade: true })).status, 201);
   const ok = await req('PUT', '/me/profile', { notaMedia: 8.2, notaMaxima: 10, notaMinima: 6 });
   assert.equal(ok.status, 200);
   assert.equal(ok.data.user.profile.notaMedia, 8.2);

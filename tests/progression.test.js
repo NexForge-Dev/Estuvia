@@ -78,7 +78,7 @@ test('acesso: manual é público; conteúdo da jornada e catálogo exigem conta'
 
 test('1–3: usuário novo começa na Rodada 1; rodadas futuras bloqueadas e sem conteúdo detalhado', async () => {
   req = client();
-  assert.equal((await req('POST', '/auth/register', { nome: 'Ana Souza', email: 'ana@exemplo.com', senha: 'segura123', aceite: true })).status, 201);
+  assert.equal((await req('POST', '/auth/register', { nome: 'Ana Souza', email: 'ana@exemplo.com', senha: 'segura123', aceite: true, maiorIdade: true })).status, 201);
   await req('PUT', '/me/profile', PROFILE);
   const r = await req('POST', '/journeys', { programaId: 'ugr-demo-arq', anoAcademico: '2027/28' });
   assert.equal(r.status, 201);
@@ -215,7 +215,7 @@ test('chegada só pode ser registrada depois do visto aprovado', async () => {
 
 test('11: estudante que já está na Espanha registra o progresso anterior e chega à TIE', async () => {
   const c = client();
-  await c('POST', '/auth/register', { nome: 'Bruno Lima', email: 'bruno@exemplo.com', senha: 'segura123', aceite: true });
+  await c('POST', '/auth/register', { nome: 'Bruno Lima', email: 'bruno@exemplo.com', senha: 'segura123', aceite: true, maiorIdade: true });
   await c('PUT', '/me/profile', PROFILE);
   const j0 = (await c('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2026/27' })).data;
   assert.ok(j0.etapas.some((e) => e.id === 'na-espanha'));
@@ -267,7 +267,7 @@ test('complexidade adaptativa e risco separados por missão', async () => {
 
 test('requisito já atendido: passaporte e documentos sem burocracia, com histórico próprio e reversível', async () => {
   const c = client();
-  await c('POST', '/auth/register', { nome: 'Carla Dias', email: 'carla@exemplo.com', senha: 'segura123', aceite: true });
+  await c('POST', '/auth/register', { nome: 'Carla Dias', email: 'carla@exemplo.com', senha: 'segura123', aceite: true, maiorIdade: true });
   await c('PUT', '/me/profile', PROFILE);
   const q = (await c('GET', '/journeys/requirements')).data;
   assert.ok(q.perguntas.some((p) => p.id === 'passaporte'));

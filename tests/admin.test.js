@@ -56,7 +56,7 @@ test('conta admin do .env entra e é marcada como admin', async () => {
 });
 
 test('estudante comum não acessa o painel', async () => {
-  const r = await aluno('POST', '/auth/register', { nome: 'Ana Souza', email: 'ana@exemplo.com', senha: 'segura123', aceite: true });
+  const r = await aluno('POST', '/auth/register', { nome: 'Ana Souza', email: 'ana@exemplo.com', senha: 'segura123', aceite: true, maiorIdade: true });
   assert.equal(r.status, 201);
   alunoId = r.data.user.id;
   assert.equal(r.data.user.admin, false);
@@ -188,7 +188,7 @@ test('status do sistema e logs: só o admin vê; serviços com estado e métrica
 });
 test('papéis: o admin concede moderação/Radar; a sessão cai; ninguém vira admin por aqui', async () => {
   const mod = client();
-  const r = await mod('POST', '/auth/register', { nome: 'Rui Mod', email: 'rui@exemplo.com', senha: 'segura123', aceite: true });
+  const r = await mod('POST', '/auth/register', { nome: 'Rui Mod', email: 'rui@exemplo.com', senha: 'segura123', aceite: true, maiorIdade: true });
   const id = r.data.user.id;
   assert.equal(r.data.user.moderador, false);
   assert.equal((await admin('GET', '/me')).data.user.moderador, true, 'o admin também modera');

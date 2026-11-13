@@ -51,7 +51,7 @@ let n = 0;
 async function student() {
   const c = client();
   n += 1;
-  assert.equal((await c('POST', '/auth/register', { nome: `Aluna ${n}`, email: `onb${n}@exemplo.com`, senha: 'segura123', aceite: true })).status, 201);
+  assert.equal((await c('POST', '/auth/register', { nome: `Aluna ${n}`, email: `onb${n}@exemplo.com`, senha: 'segura123', aceite: true, maiorIdade: true })).status, 201);
   return c;
 }
 const find = (j, id) => j.rodadas.flatMap((r) => r.missoes).find((m) => m.id === id);

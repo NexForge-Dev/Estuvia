@@ -53,7 +53,7 @@ let uid;
 let jid;
 
 test('setup', async () => {
-  const r = await req('POST', '/auth/register', { nome: 'Lia Souza', email: 'lia@live.dev', senha: 'segura123', aceite: true });
+  const r = await req('POST', '/auth/register', { nome: 'Lia Souza', email: 'lia@live.dev', senha: 'segura123', aceite: true, maiorIdade: true });
   uid = r.data.user.id;
   await req('PUT', '/me/profile', { estado: 'SP', paisResidencia: 'Brasil' });
   jid = (await req('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2027/28', inicioAulas: '2027-09-20' })).data.journey.id;

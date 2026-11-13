@@ -43,7 +43,7 @@ let uid;
 let jid;
 
 test('setup', async () => {
-  uid = (await req('POST', '/auth/register', { nome: 'Davi Melo', email: 'davi@missoes.dev', senha: 'segura123', aceite: true })).data.user.id;
+  uid = (await req('POST', '/auth/register', { nome: 'Davi Melo', email: 'davi@missoes.dev', senha: 'segura123', aceite: true, maiorIdade: true })).data.user.id;
   await req('PUT', '/me/profile', { paisResidencia: 'Brasil', estado: 'SP' });
   jid = (await req('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2027/28', duracaoMeses: 12 })).data.journey.id;
   await req('POST', '/documents/consent', { aceito: true, versao: '2026-11-13' });

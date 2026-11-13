@@ -84,7 +84,7 @@ test('catálogo: 17 categorias com todos os itens da lista, sem documentos dupli
 
 test('setup: estudante de 12 meses, morando em SP, mestrado sem certificado de idioma', async () => {
   req = client();
-  const r = await req('POST', '/auth/register', { nome: 'Lia Rocha', email: 'lia@carteira.dev', senha: 'segura123', aceite: true });
+  const r = await req('POST', '/auth/register', { nome: 'Lia Rocha', email: 'lia@carteira.dev', senha: 'segura123', aceite: true, maiorIdade: true });
   uid = r.data.user.id;
   await req('PUT', '/me/profile', { nacionalidade: 'Brasileira', paisResidencia: 'Brasil', estado: 'SP' });
   jid = (await req('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2027/28', duracaoMeses: 12 })).data.journey.id;
@@ -298,7 +298,7 @@ test('revisão editorial: a equipe atualiza aviso, data e fontes sem mexer nas t
 
 test('dados da versão anterior continuam valendo (status, registros e arquivos sem "papel")', async () => {
   const old = client();
-  const r = await old('POST', '/auth/register', { nome: 'Rui Alves', email: 'rui@carteira.dev', senha: 'segura123', aceite: true });
+  const r = await old('POST', '/auth/register', { nome: 'Rui Alves', email: 'rui@carteira.dev', senha: 'segura123', aceite: true, maiorIdade: true });
   const id = r.data.user.id;
   await users.update(id, (u) => {
     u.documents = { passaporte: 'enviado', diploma: 'pronto', 'escala-notas': 'em-preparacao', seguro: 'correcao' };

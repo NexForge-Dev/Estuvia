@@ -2,7 +2,7 @@
 // empresa e o texto inteiro precisa de revisão jurídica antes do lançamento comercial.
 import { h } from '../ui.js';
 
-const UPDATED = '29/10/2026';
+const UPDATED = '29/10/2026'; // mude junto com LEGAL_VERSION em server/content/legal.js
 
 function legalPage(title, intro, sections) {
   return h('article', { class: 'auth card legal stack' },

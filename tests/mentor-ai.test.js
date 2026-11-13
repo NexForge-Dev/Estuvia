@@ -93,7 +93,7 @@ const say = (who, mensagem, contexto = {}) => who.req('POST', '/mentor/message',
 
 test('setup: duas contas (A com jornada, B sem jornada)', async () => {
   A.req = client();
-  const ra = await A.req('POST', '/auth/register', { nome: 'Ana Souza', email: 'ana@mentor-ai.dev', senha: 'segura123', aceite: true });
+  const ra = await A.req('POST', '/auth/register', { nome: 'Ana Souza', email: 'ana@mentor-ai.dev', senha: 'segura123', aceite: true, maiorIdade: true });
   assert.equal(ra.status, 201);
   A.id = ra.data.user.id;
   await A.req('PUT', '/me/profile', { nacionalidade: 'Brasileira', paisResidencia: 'Brasil', estado: 'BA', formacao: 'Computação', espanhol: 'B1', onboardingConcluido: true });
@@ -101,7 +101,7 @@ test('setup: duas contas (A com jornada, B sem jornada)', async () => {
   assert.equal(j.status, 201);
   A.jid = j.data.journey.id;
   B.req = client();
-  const rb = await B.req('POST', '/auth/register', { nome: 'Bruno Lima', email: 'bruno@mentor-ai.dev', senha: 'segura123', aceite: true });
+  const rb = await B.req('POST', '/auth/register', { nome: 'Bruno Lima', email: 'bruno@mentor-ai.dev', senha: 'segura123', aceite: true, maiorIdade: true });
   assert.equal(rb.status, 201);
   B.id = rb.data.user.id;
 });

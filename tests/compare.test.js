@@ -53,7 +53,7 @@ test('GET /me/choices/compare devolve as opções salvas do usuário logado', as
     return { status: res.status, data: await res.json() };
   };
   assert.equal((await req('GET', '/me/choices/compare')).status, 401);
-  assert.equal((await req('POST', '/auth/register', { nome: 'Bia Compara', email: 'bia-compara@exemplo.com', senha: 'segura123', aceite: true })).status, 201);
+  assert.equal((await req('POST', '/auth/register', { nome: 'Bia Compara', email: 'bia-compara@exemplo.com', senha: 'segura123', aceite: true, maiorIdade: true })).status, 201);
   assert.deepEqual((await req('GET', '/me/choices/compare')).data.opcoes, []);
   assert.equal((await req('PUT', '/me/choices', { choices: ['ugr-demo-arq', 'uma-demo-tur'] })).status, 200);
   const r = await req('GET', '/me/choices/compare');

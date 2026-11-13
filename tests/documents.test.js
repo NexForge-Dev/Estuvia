@@ -55,9 +55,11 @@ const doc = async (id) => (await req('GET', `/documents/${id}?journeyId=${jid}`)
 
 test('setup: estudante com jornada (mestrado sem exigência de idioma, 18 meses)', async () => {
   req = client();
-  const r = await req('POST', '/auth/register', { nome: 'Bia Lima', email: 'bia@docs.dev', senha: 'segura123', aceite: true });
+  const r = await req('POST', '/auth/register', { nome: 'Bia Lima', email: 'bia@docs.dev', senha: 'segura123', aceite: true, maiorIdade: true });
   assert.equal(r.status, 201);
   uid = r.data.user.id;
+  assert.ok(users.findById(uid).termsVersion, 'o cadastro grava a versão dos Termos aceitos');
+  assert.ok(users.findById(uid).ageConfirmedAt, 'e a confirmação de maioridade');
   await req('PUT', '/me/profile', { nacionalidade: 'Brasileira', paisResidencia: 'Brasil', estado: 'PB', onboardingConcluido: true });
   const j = await req('POST', '/journeys', { programaId: 'ugr-demo-arq', anoAcademico: '2027/28' });
   assert.equal(j.status, 201);
@@ -224,7 +226,7 @@ test('arquivos: consentimento, cifrados em disco, só o dono baixa por link assi
   assert.equal(dl.headers.get('x-content-type-options'), 'nosniff');
   // Outro estudante não acessa.
   const other = client();
-  await other('POST', '/auth/register', { nome: 'Caio Reis', email: 'caio@docs.dev', senha: 'segura123', aceite: true });
+  await other('POST', '/auth/register', { nome: 'Caio Reis', email: 'caio@docs.dev', senha: 'segura123', aceite: true, maiorIdade: true });
   assert.equal((await other('GET', f.url.replace('/api', ''))).status, 404, 'o link de um não abre na conta de outro');
   assert.equal((await client()('GET', f.url.replace('/api', ''))).status, 401, 'sem sessão não abre');
   // Nova versão na mesma série.
@@ -269,7 +271,7 @@ test('minha pasta: lista tudo, aceita etapa futura e "Outro documento" com nome'
   assert.equal(del.data.documento, null);
   // Outro estudante não vê a pasta.
   const other = client();
-  await other('POST', '/auth/register', { nome: 'Dani Souza', email: 'dani@docs.dev', senha: 'segura123', aceite: true });
+  await other('POST', '/auth/register', { nome: 'Dani Souza', email: 'dani@docs.dev', senha: 'segura123', aceite: true, maiorIdade: true });
   assert.equal((await other('GET', '/documents/files')).data.arquivos.length, 0);
 });
 

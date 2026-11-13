@@ -143,13 +143,18 @@ export function registerView() {
   const aceite = h('input', { type: 'checkbox', name: 'aceite', id: 'auth-aceite' });
   const aceiteErr = h('small', { class: 'field-error', hidden: true }, 'Para criar a conta, aceite os Termos e a Política de Privacidade.');
   aceite.addEventListener('change', () => { aceiteErr.hidden = true; });
+  const maior = h('input', { type: 'checkbox', name: 'maiorIdade', id: 'auth-maior' });
+  const maiorErr = h('small', { class: 'field-error', hidden: true }, 'A Estuvia é só para maiores de 18 anos.');
+  maior.addEventListener('change', () => { maiorErr.hidden = true; });
   const btn = submitButton('Criar conta e começar');
   const form = h('form', { class: 'auth-form', novalidate: true },
     nome, email, senha,
     h('div', { class: 'auth-consent' },
       h('label', { class: 'check', for: 'auth-aceite' }, aceite,
         h('span', {}, 'Li e aceito os ', h('a', { href: '#/termos', target: '_blank', rel: 'noopener' }, 'Termos de Uso'), ' e a ', h('a', { href: '#/privacidade', target: '_blank', rel: 'noopener' }, 'Política de Privacidade'), '. A Estuvia orienta, mas não substitui os sistemas oficiais.')),
-      aceiteErr),
+      aceiteErr,
+      h('label', { class: 'check', for: 'auth-maior' }, maior, h('span', {}, 'Tenho 18 anos ou mais.')),
+      maiorErr),
     err, btn);
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -157,10 +162,11 @@ export function registerView() {
     const n = nome.input.value.trim();
     const ok = [n.length >= 2 || (nome.setError('Informe como quer ser chamado(a), com pelo menos 2 letras.'), false), checkEmail(email), checkPassword(senha, { strong: true })];
     if (!aceite.checked) { aceiteErr.hidden = false; ok.push(false); }
-    if (ok.includes(false)) return (form.querySelector('[aria-invalid="true"]') || aceite).focus();
+    if (!maior.checked) { maiorErr.hidden = false; ok.push(false); }
+    if (ok.includes(false)) return (form.querySelector('[aria-invalid="true"]') || (aceite.checked ? maior : aceite)).focus();
     await busy(btn, async () => {
       try {
-        await api.post('/auth/register', { nome: n, email: email.input.value.trim(), senha: senha.input.value, aceite: true });
+        await api.post('/auth/register', { nome: n, email: email.input.value.trim(), senha: senha.input.value, aceite: true, maiorIdade: true });
         await refreshMe();
         toast('Conta criada. Agora vamos montar a sua jornada.', 'ok');
         go('/jornadas/nova');

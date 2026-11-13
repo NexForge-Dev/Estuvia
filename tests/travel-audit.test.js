@@ -103,8 +103,8 @@ const session = () => {
 test('API: um estudante não lê nem altera moradia, cotação, recurso ou bolsa de outro', async () => {
   const ana = session();
   const bob = session();
-  await ana('POST', '/auth/register', { nome: 'Ana Souza', email: 'ana@audit.dev', senha: 'segura123', aceite: true });
-  await bob('POST', '/auth/register', { nome: 'Bob Lima', email: 'bob@audit.dev', senha: 'segura123', aceite: true });
+  await ana('POST', '/auth/register', { nome: 'Ana Souza', email: 'ana@audit.dev', senha: 'segura123', aceite: true, maiorIdade: true });
+  await bob('POST', '/auth/register', { nome: 'Bob Lima', email: 'bob@audit.dev', senha: 'segura123', aceite: true, maiorIdade: true });
   const h = (await ana('POST', '/living/housing', { nome: 'Quarto da Ana', tipo: 'quarto', aluguel: 300 })).data.criado;
   const q = (await ana('POST', '/travel/quotes', { rota: 'REC → MAD', voo: 700 })).data.cotacoes[0].id;
   const r = (await ana('POST', '/finance/resources', { tipo: 'poupanca', descricao: 'Poupança', valor: 5000, moeda: 'EUR', status: 'disponivel' })).data.plano.recursos[0].id;
@@ -135,7 +135,7 @@ test('API: um estudante não lê nem altera moradia, cotação, recurso ou bolsa
 
 test('API: selecionar a moradia atualiza o orçamento (inclui a taxa de agência)', async () => {
   const cy = session();
-  await cy('POST', '/auth/register', { nome: 'Cy Rocha', email: 'cy@audit.dev', senha: 'segura123', aceite: true });
+  await cy('POST', '/auth/register', { nome: 'Cy Rocha', email: 'cy@audit.dev', senha: 'segura123', aceite: true, maiorIdade: true });
   await cy('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2027/28' });
   const antes = (await cy('GET', '/finance')).data.plano;
   const h = (await cy('POST', '/living/housing', { nome: 'Piso', tipo: 'quarto', aluguel: 410, contasIncluidas: true, caucao: 410, taxaAgencia: 200 })).data.criado;
@@ -149,14 +149,14 @@ test('API: selecionar a moradia atualiza o orçamento (inclui a taxa de agência
 
 test('API: /living/travel/routes respeita o mesmo limite de cotações', async () => {
   const di = session();
-  await di('POST', '/auth/register', { nome: 'Di Melo', email: 'di@audit.dev', senha: 'segura123', aceite: true });
+  await di('POST', '/auth/register', { nome: 'Di Melo', email: 'di@audit.dev', senha: 'segura123', aceite: true, maiorIdade: true });
   for (let i = 0; i < 20; i += 1) assert.equal((await di('POST', '/living/travel/routes', { rota: `Rota ${i}`, voo: 500 })).status, 201);
   assert.equal((await di('POST', '/living/travel/routes', { rota: 'Rota 21', voo: 500 })).status, 409);
 });
 
 test('API: bolsas salvas têm limite', async () => {
   const ed = session();
-  await ed('POST', '/auth/register', { nome: 'Ed Reis', email: 'ed@audit.dev', senha: 'segura123', aceite: true });
+  await ed('POST', '/auth/register', { nome: 'Ed Reis', email: 'ed@audit.dev', senha: 'segura123', aceite: true, maiorIdade: true });
   for (let i = 0; i < 50; i += 1) assert.equal((await ed('POST', '/finance/scholarships', { nome: `Bolsa ${i}` })).status, 201);
   assert.equal((await ed('POST', '/finance/scholarships', { nome: 'Bolsa 51' })).status, 409);
 });

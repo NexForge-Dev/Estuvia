@@ -76,7 +76,7 @@ test('PDF: /OpenAction dentro de fluxo de objetos comprimido é encontrado', () 
 
 test('envio recusa PDF com ação escondida em fluxo comprimido; etiqueta GCM truncada não abre o arquivo', async () => {
   const req = client();
-  const reg = await req('POST', '/auth/register', { nome: 'Dora Cifra', email: 'dora@cifra.dev', senha: 'segura123', aceite: true });
+  const reg = await req('POST', '/auth/register', { nome: 'Dora Cifra', email: 'dora@cifra.dev', senha: 'segura123', aceite: true, maiorIdade: true });
   assert.equal(reg.status, 201);
   assert.equal((await req('POST', '/documents/consent', { aceito: true, versao: CONSENT_VERSION })).status, 200);
   const evil = objStm('1 0 << /Type /Catalog /OpenAction << /S /JavaScript /JS (app.alert(1)) >> >>');

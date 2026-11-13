@@ -59,7 +59,7 @@ function client() {
 
 async function account(nome, email) {
   const req = client();
-  const r = await req('POST', '/auth/register', { nome, email, senha: 'segura123', aceite: true });
+  const r = await req('POST', '/auth/register', { nome, email, senha: 'segura123', aceite: true, maiorIdade: true });
   assert.equal(r.status, 201);
   // Contas "antigas" para não acionar o sinal de conta recém-criada publicando links.
   await users.update(r.data.user.id, (u) => { u.createdAt = '2026-01-01T00:00:00.000Z'; });

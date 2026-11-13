@@ -14,6 +14,7 @@ await page.fill('input[name=nome]', acc.nome);
 await page.fill('input[name=email]', acc.email);
 await page.fill('input[name=senha]', acc.senha);
 await page.check('input[name=aceite]');
+await page.check('input[name=maiorIdade]');
 await shot(page, 'signup-filled');
 await page.click('button[type=submit]');
 await page.waitForTimeout(2000);

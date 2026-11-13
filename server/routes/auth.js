@@ -5,6 +5,7 @@ import { users, audit, newId } from '../store.js';
 import { hashPassword, verifyPassword, issueSession, clearSession, requireAuth, authLimiter, DUMMY_HASH, clientInfo } from '../security.js';
 import { publicUser } from './me.js';
 import { config } from '../config.js';
+import { LEGAL_VERSION, MIN_AGE } from '../content/legal.js';
 import { sendEmail } from '../email.js';
 
 const router = Router();
@@ -21,6 +22,7 @@ const registerSchema = z.object({
   email: z.email('E-mail inválido.').max(120),
   senha: password,
   aceite: z.literal(true, { error: 'É preciso aceitar os termos e a política de privacidade.' }),
+  maiorIdade: z.literal(true, { error: `A Estuvia é só para maiores de ${MIN_AGE} anos.` }),
 });
 
 const loginSchema = z.object({
@@ -49,6 +51,8 @@ router.post('/register', authLimiter, async (req, res) => {
     createdAt: now,
     updatedAt: now,
     consentAt: now,
+    termsVersion: LEGAL_VERSION,
+    ageConfirmedAt: now,
     profile: { nome, apelido: nome.split(' ')[0], avatar: '🎓', cor: 'turquesa', tema: 'escuro' },
     journeys: [],
     planner: [],

@@ -62,7 +62,7 @@ function client() {
 }
 async function student(email, extra = {}) {
   const req = client();
-  const r = await req('POST', '/auth/register', { nome: 'Ana Souza', email, senha: 'segura123', aceite: true, ...extra });
+  const r = await req('POST', '/auth/register', { nome: 'Ana Souza', email, senha: 'segura123', aceite: true, maiorIdade: true, ...extra });
   assert.equal(r.status, 201, JSON.stringify(r.data));
   return req;
 }

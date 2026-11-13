@@ -74,7 +74,7 @@ test('registro guarda a primeira data e a celebração vista', () => {
 
 test('vaga e visto registrados na situação da jornada liberam conquistas', async () => {
   const req = client();
-  assert.equal((await req('POST', '/auth/register', { nome: 'Ana Souza', email: 'ana@exemplo.com', senha: 'segura123', aceite: true })).status, 201);
+  assert.equal((await req('POST', '/auth/register', { nome: 'Ana Souza', email: 'ana@exemplo.com', senha: 'segura123', aceite: true, maiorIdade: true })).status, 201);
 
   let r = await req('GET', '/achievements');
   assert.equal(r.status, 200);

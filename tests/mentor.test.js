@@ -59,7 +59,7 @@ const plannerCount = () => (users.findById(uid).planner || []).length;
 
 test('setup: estudante com perfil e jornada', async () => {
   req = client();
-  const r = await req('POST', '/auth/register', { nome: 'Ana Souza', email: 'ana@mentor.dev', senha: 'segura123', aceite: true });
+  const r = await req('POST', '/auth/register', { nome: 'Ana Souza', email: 'ana@mentor.dev', senha: 'segura123', aceite: true, maiorIdade: true });
   assert.equal(r.status, 201);
   uid = r.data.user.id;
   await req('PUT', '/me/profile', { nacionalidade: 'Brasileira', paisResidencia: 'Brasil', estado: 'BA', formacao: 'Ciência da Computação', area: 'Computação', espanhol: 'B1', onboardingConcluido: true });

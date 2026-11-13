@@ -58,7 +58,7 @@ function client() {
 
 test('recuperação de senha: resposta neutra, token de uso único, sessões encerradas', async () => {
   const ana = client();
-  assert.equal((await ana('POST', '/auth/register', { nome: 'Ana Reset', email: 'ana@reset.dev', senha: 'antiga123', aceite: true })).status, 201);
+  assert.equal((await ana('POST', '/auth/register', { nome: 'Ana Reset', email: 'ana@reset.dev', senha: 'antiga123', aceite: true, maiorIdade: true })).status, 201);
 
   // E-mail inexistente: mesma resposta, nada enviado.
   const ghost = await client()('POST', '/auth/forgot-password', { email: 'ninguem@reset.dev' });
@@ -93,7 +93,7 @@ test('recuperação de senha: resposta neutra, token de uso único, sessões enc
 });
 
 test('token expirado é recusado', async () => {
-  assert.equal((await client()('POST', '/auth/register', { nome: 'Bia Reset', email: 'bia@reset.dev', senha: 'antiga123', aceite: true })).status, 201);
+  assert.equal((await client()('POST', '/auth/register', { nome: 'Bia Reset', email: 'bia@reset.dev', senha: 'antiga123', aceite: true, maiorIdade: true })).status, 201);
   const before = sent.length;
   assert.equal((await client()('POST', '/auth/forgot-password', { email: 'bia@reset.dev' })).status, 200);
   const token = sent[before].text.match(/#\/redefinir-senha\/([\w-]+)/)[1];

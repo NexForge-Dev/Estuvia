@@ -43,7 +43,7 @@ function client() {
   };
 }
 
-const USER = { nome: 'Maria Silva', email: 'maria@exemplo.com', senha: 'segura123', aceite: true };
+const USER = { nome: 'Maria Silva', email: 'maria@exemplo.com', senha: 'segura123', aceite: true, maiorIdade: true };
 const nextMonday = () => { const d = new Date(); d.setUTCDate(d.getUTCDate() + ((8 - d.getUTCDay()) % 7 || 7)); return d.toISOString().slice(0, 10); };
 const flat = (j) => j.rodadas.flatMap((r) => r.missoes);
 const find = (j, id) => flat(j).find((m) => m.id === id);
@@ -66,6 +66,7 @@ test('cadastro rejeita duplicado, senha fraca e falta de aceite; login com erro 
   assert.equal((await c('POST', '/auth/register', USER)).status, 409);
   assert.equal((await c('POST', '/auth/register', { ...USER, email: 'x@y.com', senha: 'curta' })).status, 400);
   assert.equal((await c('POST', '/auth/register', { ...USER, email: 'z@y.com', aceite: false })).status, 400);
+  assert.equal((await c('POST', '/auth/register', { ...USER, email: 'w@y.com', maiorIdade: undefined })).status, 400, 'sem confirmar 18+ não cria conta');
   const wrong = await c('POST', '/auth/login', { email: USER.email, senha: 'errada999' });
   const ghost = await c('POST', '/auth/login', { email: 'ninguem@x.com', senha: 'errada999' });
   assert.equal(wrong.status, 401);

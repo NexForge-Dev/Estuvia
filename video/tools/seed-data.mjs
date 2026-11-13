@@ -65,7 +65,7 @@ for (const au of autores) {
   const b = api(p2);
   const email = `${au.nome.split(' ')[0].toLowerCase()}.demo@estuvia.test`;
   const senha = crypto.randomBytes(12).toString('base64url') + '7a';
-  await tryDo('conta ' + email, () => b.post('/auth/register', { nome: au.nome.replace(' (demo)', ''), email, senha, aceite: true }));
+  await tryDo('conta ' + email, () => b.post('/auth/register', { nome: au.nome.replace(' (demo)', ''), email, senha, aceite: true, maiorIdade: true }));
   await tryDo('post ' + au.nome, () => b.post('/community/posts', { tipo: 'publicacao', categoria: au.categoria, natureza: au.natureza, texto: au.texto, local: { universidadeId: 'ugr', cidade: 'Granada', pais: 'Espanha' } }));
   await ctx.close();
 }
