@@ -31,6 +31,8 @@ const AGENDADO = args.includes('--agendado');
 const ESTADO = opt('estado');
 const UNIVERSIDADES = opt('universidades') ? new Set(opt('universidades').split(',').map((u) => u.trim().toLowerCase()).filter(Boolean)) : null;
 const HOSTS = (opt('hosts') || 'www.juntadeandalucia.es').split(',').map((h) => h.trim().toLowerCase()).filter(Boolean);
+const TENTATIVAS = 3;
+const ESPERA_S = [5, 20];
 const MAX_LOTE_BYTES = 3_000_000; // abaixo do limite de 4,5 MB por requisição da Vercel (e de 4 MB da rota)
 
 async function collect() {
@@ -121,10 +123,23 @@ async function upload(coleta) {
     const ls = lotes(fonte, paginas[fonte] || []);
     for (const [i, lote] of ls.entries()) {
       const t0 = Date.now();
-      const r = await call('POST', '/radar/admin/import', { fonte, robots, paginas: lote });
+      // Repetir é seguro: o servidor reprocessa as mesmas páginas do zero (sem duplicar snapshots nem revisões).
+      // Só conta como importado com "persistido: true" (banco confirmado). 5xx e falha de rede: tenta de novo.
+      let r = null;
+      for (let tentativa = 1; tentativa <= TENTATIVAS; tentativa++) {
+        try { r = await call('POST', '/radar/admin/import', { fonte, robots, paginas: lote }); }
+        catch (e) { r = { status: 0, data: { error: `rede: ${e.message}` } }; }
+        if (r.status === 200 && r.data.persistido === true) break;
+        if (r.status >= 400 && r.status < 500) break; // erro do pedido (dados, login): repetir não resolve
+        if (tentativa < TENTATIVAS) {
+          console.log(`importação ${fonte} ${i + 1}/${ls.length}: tentativa ${tentativa} falhou (HTTP ${r.status}: ${r.data.error || 'sem confirmação de gravação'}); nova tentativa em ${ESPERA_S[tentativa - 1]} s`);
+          await new Promise((ok) => setTimeout(ok, ESPERA_S[tentativa - 1] * 1000));
+        }
+      }
       const run = r.data.run || {};
-      console.log(`importação ${fonte} ${i + 1}/${ls.length}: HTTP ${r.status} · ${run.resultado || r.data.error} · ${run.itens ?? 0} página(s) · ${run.mudancas ?? 0} mudança(s)${run.erro ? ` · ${run.erro}` : ''} · ${Math.round((Date.now() - t0) / 1000)} s`);
-      if (r.status >= 400) throw new Error('Importação interrompida.');
+      const ok = r.status === 200 && r.data.persistido === true;
+      console.log(`importação ${fonte} ${i + 1}/${ls.length}: HTTP ${r.status} · ${ok ? 'gravado' : 'NÃO GRAVADO'} · ${run.resultado || r.data.error} · ${run.itens ?? 0} página(s) · ${run.mudancas ?? 0} mudança(s)${run.id ? ` · execução ${run.id}` : ''}${run.erro ? ` · ${run.erro}` : ''} · ${Math.round((Date.now() - t0) / 1000)} s`);
+      if (!ok) throw new Error(`Importação de ${fonte} não confirmada no banco (lote ${i + 1}/${ls.length}). Nada foi dado como importado; rode de novo.`);
     }
   }
 }
@@ -134,4 +149,7 @@ const coleta = arquivo ? JSON.parse(fs.readFileSync(arquivo, 'utf8')) : await co
 const salvar = opt('salvar');
 if (salvar) { fs.writeFileSync(salvar, JSON.stringify(coleta)); console.log(`coleta salva em ${salvar}`); }
 else if (!Object.values(coleta.paginas).some((l) => l.length)) console.log('nada novo para enviar.');
-else await upload(coleta);
+else {
+  try { await upload(coleta); }
+  catch (e) { console.error(`${new Date().toISOString()} ERRO: ${e.message}`); process.exitCode = 1; }
+}

@@ -14,7 +14,9 @@ import { broadcast } from '../events.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { data, save, newId, hash, radarFile } from './db.js';
+import { data, save, newId, hash, reloadRadarStore } from './db.js';
+import { putEvidence } from '../storage.js';
+import { applyCollectedField, mergeCollected, isOverridden } from './overrides.js';
 import { politeFetch, FetchError } from './http.js';
 import { SOURCE_SEED, UNIVERSITY_INFO, COLLECTION_HOSTS } from './registry.js';
 import { nextAcademicYear } from './dates.js';
@@ -50,16 +52,21 @@ const pickRuntime = ({ estado, ultimaConsulta, ultimaVerificacaoOk, falhasSeguid
 
 // ---------- Snapshots ----------
 
-function storeRaw(sourceId, versao, text) {
-  try {
-    const dir = path.join(path.dirname(radarFile()), 'radar-snapshots');
-    fs.mkdirSync(dir, { recursive: true });
-    const file = path.join(dir, `${sourceId}-v${versao}.html`);
-    fs.writeFileSync(file, text);
-    return path.relative(path.dirname(radarFile()), file);
-  } catch {
-    return null;
+// Evidências (HTML original e conteúdo extraído) desta execução, gravadas no Storage ANTES do banco (flushEvidence):
+// um snapshot só é salvo depois que a evidência que ele cita está guardada de forma durável.
+const pendingEvidence = new Map(); // chave (hash.ext) → texto
+const EVIDENCE_PARALLEL = 16;
+
+/** Grava no Storage as evidências pendentes. Lança erro se alguma falhar (elas continuam pendentes). */
+export async function flushEvidence() {
+  const items = [...pendingEvidence];
+  for (let i = 0; i < items.length; i += EVIDENCE_PARALLEL) {
+    await Promise.all(items.slice(i, i + EVIDENCE_PARALLEL).map(async ([key, text]) => {
+      await putEvidence(key, text);
+      pendingEvidence.delete(key);
+    }));
   }
+  return items.length;
 }
 
 function recordSnapshot(source, { url, text, parsed, fetchedAt, chave = source.id }) {
@@ -71,11 +78,13 @@ function recordSnapshot(source, { url, text, parsed, fetchedAt, chave = source.i
     return { snapshot: previous, changed: false };
   }
   const versao = (previous?.versao || 0) + 1;
+  const hashBruto = hash(String(text ?? ''));
+  const evidencia = { html: `${hashBruto}.html`, conteudo: `${contentHash}.json` };
+  pendingEvidence.set(evidencia.html, String(text ?? ''));
+  pendingEvidence.set(evidencia.conteudo, JSON.stringify(parsed));
   const snapshot = {
     id: newId(), sourceId: source.id, chave, url, versao, coletadoEm: fetchedAt, ultimaConfirmacao: fetchedAt,
-    hash: contentHash, hashBruto: hash(text), tamanho: text.length,
-    referencia: storeRaw(chave.replace(/[^\w-]/g, '_').slice(0, 80), versao, text),
-    conteudo: parsed,
+    hash: contentHash, hashBruto, tamanho: String(text ?? '').length, evidencia,
   };
   d.snapshots.push(snapshot);
   return { snapshot, changed: true };
@@ -93,15 +102,37 @@ export function openReview({ tipo, sourceId, snapshotId, motivo, proposta, impac
   return review;
 }
 
-function revision({ entidade, entidadeId, opportunityKey, campo, anterior, novo, evidencia, validacao = 'publicada', impacto = 'baixo', por = 'atualizador' }) {
-  const r = { id: newId(), entidade, entidadeId, opportunityKey, campo, anterior: anterior ?? null, novo: novo ?? null, evidencia, em: new Date().toISOString(), validacao, impacto, por };
+// Revisão = mudança real. Valor anterior igual ao novo (inclusive com chaves em outra ordem) não é registrado.
+function revision({ entidade, entidadeId, opportunityKey, campo, anterior, novo, evidencia, validacao = 'publicada', impacto = 'baixo', por = 'atualizador', nota }) {
+  if (sameJson(anterior, novo)) return null;
+  const r = { id: newId(), entidade, entidadeId, opportunityKey, campo, anterior: anterior ?? null, novo: novo ?? null, evidencia, em: new Date().toISOString(), validacao, impacto, por, ...(nota ? { nota } : {}) };
   data().revisions.push(r);
   return r;
+}
+const pushRev = (list, r) => { if (r) list.push(r); };
+
+// Valor que a FONTE publica para um campo (com correção do admin, é o guardado em overrides; sem, o próprio campo).
+const fonteDe = (entity, campo) => (isOverridden(entity, campo) ? entity.overrides[campo].valorFonte : entity?.[campo]);
+
+/**
+ * Aplica campos coletados respeitando as correções do admin e registra o histórico: mudança publicada, ou
+ * "fonte divergente" quando o campo está corrigido (o valor efetivo continua o do admin; só o da fonte muda).
+ */
+function collectFields(entity, valores, campos, list, base) {
+  for (const campo of campos) {
+    // Só campos que a fonte enviou: um catálogo que não traz o campo (ex.: o da UGR não traz duaCodigo) não o apaga.
+    if (!Object.hasOwn(valores, campo)) continue;
+    const antes = fonteDe(entity, campo);
+    const r = applyCollectedField(entity, campo, valores[campo]);
+    if (r.protegido ? r.mudouNaFonte : r.mudou) {
+      pushRev(list, revision({ ...base, campo, anterior: antes, novo: valores[campo], ...(r.protegido ? { validacao: 'fonte-divergente', nota: 'Campo corrigido pelo admin: o valor efetivo foi mantido; só o valor da fonte mudou.' } : {}) }));
+    }
+  }
 }
 
 // ---------- Aplicadores por tipo de conteúdo ----------
 
-const sameDates = (a, b) => a && b && a.abertura === b.abertura && a.encerramento === b.encerramento;
+const sameDates = (a, b) => a && b && fonteDe(a, 'abertura') === b.abertura && fonteDe(a, 'encerramento') === b.encerramento;
 
 /** Calendário DUA → AdmissionWindow + AdmissionEvent. */
 export function applyCalendar(parsed, { source, snapshot, force = false, por = 'atualizador' }) {
@@ -157,18 +188,19 @@ export function applyCalendar(parsed, { source, snapshot, force = false, por = '
   // Publicação: janelas
   for (const w of desiredWindows) {
     const cur = d.windows.find((x) => x.id === w.id);
-    for (const campo of ['abertura', 'encerramento', 'confirmacao']) {
-      if (cur?.[campo] !== w[campo]) {
-        revisions.push(revision({
-          entidade: 'AdmissionWindow', entidadeId: w.id, opportunityKey: `${proc}:${curso}`, campo, anterior: cur?.[campo], novo: w[campo],
-          evidencia: evidence(w.textoOriginal), impacto: 'alto', validacao: force ? 'aprovada' : 'publicada', por,
-        }));
-      }
+    const base = { entidade: 'AdmissionWindow', entidadeId: w.id, opportunityKey: `${proc}:${curso}`, evidencia: evidence(w.textoOriginal), impacto: 'alto', validacao: force ? 'aprovada' : 'publicada', por };
+    if (!cur) {
+      for (const campo of ['abertura', 'encerramento', 'confirmacao']) pushRev(revisions, revision({ ...base, campo, anterior: null, novo: w[campo] }));
+      d.windows.push(w);
+      continue;
     }
-    if (cur) Object.assign(cur, w);
-    else d.windows.push(w);
+    collectFields(cur, w, ['abertura', 'encerramento', 'confirmacao'], revisions, base);
+    mergeCollected(cur, w);
+    delete cur.ausenteNaFonte;
   }
-  d.windows = d.windows.filter((w) => !(w.procedimentoId === proc && w.anoAcademico === curso && !desiredWindows.some((x) => x.id === w.id)));
+  // Janela que a fonte deixou de listar: sai, exceto se tiver correção do admin (fica, marcada como ausente na fonte).
+  for (const w of d.windows) if (w.procedimentoId === proc && w.anoAcademico === curso && !desiredWindows.some((x) => x.id === w.id) && w.overrides) w.ausenteNaFonte = true;
+  d.windows = d.windows.filter((w) => !(w.procedimentoId === proc && w.anoAcademico === curso && !desiredWindows.some((x) => x.id === w.id) && !w.overrides));
 
   // Publicação: eventos (id estável por fase + ordem de aparição do tipo)
   const desiredEvents = parsed.fases.flatMap((f) => {
@@ -180,13 +212,13 @@ export function applyCalendar(parsed, { source, snapshot, force = false, por = '
   });
   for (const e of desiredEvents) {
     const cur = d.events.find((x) => x.id === e.id);
-    if (cur && (cur.inicio !== e.inicio || cur.fim !== e.fim)) {
-      revisions.push(revision({ entidade: 'AdmissionEvent', entidadeId: e.id, opportunityKey: `${proc}:${curso}`, campo: 'datas', anterior: `${cur.inicio || ''}→${cur.fim || ''}`, novo: `${e.inicio || ''}→${e.fim || ''}`, evidencia: evidence(e.textoOriginal), impacto: 'medio', por }));
-    }
-    if (cur) Object.assign(cur, e);
-    else d.events.push(e);
+    if (!cur) { d.events.push(e); continue; }
+    collectFields(cur, e, ['inicio', 'fim', 'rotulo'], revisions, { entidade: 'AdmissionEvent', entidadeId: e.id, opportunityKey: `${proc}:${curso}`, evidencia: evidence(e.textoOriginal), impacto: 'medio', por });
+    mergeCollected(cur, e);
+    delete cur.ausenteNaFonte;
   }
-  d.events = d.events.filter((e) => !(e.procedimentoId === proc && e.anoAcademico === curso && !desiredEvents.some((x) => x.id === e.id)));
+  for (const e of d.events) if (e.procedimentoId === proc && e.anoAcademico === curso && !desiredEvents.some((x) => x.id === e.id) && e.overrides) e.ausenteNaFonte = true;
+  d.events = d.events.filter((e) => !(e.procedimentoId === proc && e.anoAcademico === curso && !desiredEvents.some((x) => x.id === e.id) && !e.overrides));
 
   ensureOpportunitiesForCycle(curso);
   return { publicado: true, novoCiclo: isNewCycle, revisions, curso, procedimentoId: proc };
@@ -219,6 +251,70 @@ export function linkDuaPrograms(duaPrograms, locals) {
   return pairs;
 }
 
+// ---------- Reconciliação de identificadores ----------
+// Os identificadores dependem da fonte (UGR: slug da página; DUA: código). Renomear um mestrado ou trocar o
+// código cria um identificador novo. Antes de criar um programa "novo", procura o mesmo mestrado entre os da
+// mesma universidade e do mesmo catálogo que NÃO aparecem mais. Evidência forte (mesmo site oficial, mesmo
+// código da universidade ou mesmo nome normalizado) e única → é o mesmo: mantém o identificador antigo.
+// Só nome parecido, ou mais de um candidato → cria o novo e abre revisão (o admin decide). Nunca toca contas.
+
+export const programByIdOrAlias = (id) => data().programs.find((x) => x.id === id) || data().programs.find((x) => (x.aliases || []).includes(id)) || null;
+
+const nameTokens = (s) => new Set(programNameKey(s).split(' ').filter((t) => t.length > 2));
+function nameSimilarity(a, b) {
+  const A = nameTokens(a); const B = nameTokens(b);
+  if (!A.size || !B.size) return 0;
+  let inter = 0;
+  for (const t of A) if (B.has(t)) inter += 1;
+  return inter / (A.size + B.size - inter);
+}
+
+export function reconcileProgram(p, { universidadeId, source, presentes, reivindicados = new Set() }) {
+  const d = data();
+  const candidatos = d.programs.filter((x) => x.universidadeId === universidadeId
+    && (x.catalogSourceId === source.id || (!x.catalogSourceId && x.sourceId === source.id))
+    && !x.aliasDe && !presentes.has(x.id) && !(x.aliases || []).some((a) => presentes.has(a))
+    && !reivindicados.has(x.id) && !(x.reconciliacaoRecusada || []).includes(p.id));
+  const fortes = [];
+  const fracos = [];
+  for (const x of candidatos) {
+    const evidencias = [];
+    if (p.webPropria && webKey(p.webPropria) && webKey(fonteDe(x, 'webPropria')) === webKey(p.webPropria)) evidencias.push('mesmo site oficial');
+    // O código só é evidência quando não é o próprio identificador que mudou (no DUA, o código É o identificador).
+    if (p.codigo && fonteDe(x, 'codigo') === p.codigo && source.conector !== 'dua-catalog') evidencias.push('mesmo código da universidade');
+    if (programNameKey(p.nome) && programNameKey(fonteDe(x, 'nome')) === programNameKey(p.nome)) evidencias.push('mesmo nome');
+    if (evidencias.length) fortes.push({ ...x, evidencias });
+    else if (nameSimilarity(p.nome, fonteDe(x, 'nome')) >= 0.5) fracos.push({ ...x, evidencias: [] });
+  }
+  if (fortes.length === 1) return { tipo: 'mesmo', programa: d.programs.find((x) => x.id === fortes[0].id), evidencias: fortes[0].evidencias };
+  if (fortes.length > 1 || fracos.length) return { tipo: 'ambiguo', candidatos: (fortes.length ? fortes : fracos).map(({ id, nome, evidencias }) => ({ id, nome, evidencias })) };
+  return { tipo: 'novo' };
+}
+
+/** Une um programa novo a um antigo (decisão do admin). O antigo mantém o identificador; o novo vira apelido. */
+export function mergePrograms(antigoId, novoId, por) {
+  const d = data();
+  const antigo = d.programs.find((x) => x.id === antigoId);
+  const novo = d.programs.find((x) => x.id === novoId);
+  if (!antigo || !novo || antigo === novo) throw Object.assign(new Error('Programas inválidos para a reconciliação.'), { status: 400 });
+  // Só os dados de catálogo do novo: ficha, ficha DUA, apelidos e correções do antigo não são substituídos.
+  const CAMPOS = ['nome', 'codigo', 'webPropria', 'duaCodigo', 'modalidade', 'cursoCatalogo', 'ofertaCondicionada', 'fichaUrl', 'ramos', 'tipoTitulo', 'catalogSourceId'];
+  const valores = Object.fromEntries(CAMPOS.filter((c) => Object.hasOwn(novo, c) && novo[c] !== undefined).map((c) => [c, novo[c]]));
+  const revisions = [];
+  collectFields(antigo, valores, ['nome', 'codigo', 'webPropria', 'duaCodigo', 'modalidade'], revisions, { entidade: 'Program', entidadeId: antigo.id, evidencia: { nota: `Reconciliação aprovada: ${novoId} → ${antigoId}` }, impacto: 'medio', validacao: 'aprovada', por });
+  mergeCollected(antigo, valores);
+  if (novo.fichaDua && !antigo.fichaDua) antigo.fichaDua = novo.fichaDua;
+  if (novo.ficha && !antigo.ficha) antigo.ficha = novo.ficha;
+  antigo.ausenteNoCatalogo = Boolean(novo.ausenteNoCatalogo);
+  antigo.aliases = [...new Set([...(antigo.aliases || []), novoId, ...(novo.aliases || [])])];
+  // O novo continua existindo (quem já o referencia segue funcionando), mas fica oculto e aponta para o antigo.
+  novo.aliasDe = antigoId;
+  novo.mescladoEm = new Date().toISOString();
+  novo.ausenteNoCatalogo = true;
+  pushRev(revisions, revision({ entidade: 'Program', entidadeId: antigoId, opportunityKey: `program:${antigoId}`, campo: 'identificacao', anterior: antigoId, novo: novoId, evidencia: { nota: 'Decisão administrativa' }, impacto: 'medio', validacao: 'reconciliada', por, nota: `${novoId} passa a ser apelido de ${antigoId}. Contas, jornadas e opções não foram alteradas.` }));
+  return { revisions };
+}
+
 /** Catálogo da universidade → programas (nunca apaga: ausência vira revisão). */
 export function applyCatalog(parsed, { source, snapshot, por = 'atualizador', completo = true }) {
   const d = data();
@@ -238,8 +334,9 @@ export function applyCatalog(parsed, { source, snapshot, por = 'atualizador', co
       const pairs = linkDuaPrograms(programas, locals);
       for (const [localId, dua] of pairs) {
         const l = d.programs.find((x) => x.id === localId);
-        if (l.duaCodigo && l.duaCodigo !== dua.codigo) revisions.push(revision({ entidade: 'Program', entidadeId: l.id, campo: 'duaCodigo', anterior: l.duaCodigo, novo: dua.codigo, evidencia: evidence, por }));
-        l.duaCodigo = dua.codigo;
+        // Primeiro vínculo não vira histórico; troca de código vira (e não sobrescreve um código corrigido pelo admin).
+        if (fonteDe(l, 'duaCodigo') || isOverridden(l, 'duaCodigo')) collectFields(l, { duaCodigo: dua.codigo }, ['duaCodigo'], revisions, { entidade: 'Program', entidadeId: l.id, evidencia: evidence, por });
+        else applyCollectedField(l, 'duaCodigo', dua.codigo);
       }
       const linked = new Set([...pairs.values()].map((x) => x.codigo));
       const semVinculo = locals.filter((l) => !pairs.has(l.id));
@@ -252,21 +349,43 @@ export function applyCatalog(parsed, { source, snapshot, por = 'atualizador', co
     }
   }
 
+  const presentes = new Set(programas.map((p) => p.id));
+  const reivindicados = new Set(); // programas antigos já reconhecidos nesta coleta (um antigo não absorve dois novos)
+  const updateFrom = (cur, p) => {
+    const { id: _novoId, ...valores } = p;
+    collectFields(cur, valores, ['nome', 'codigo', 'webPropria', 'cursoCatalogo', 'ofertaCondicionada', 'modalidade', 'duaCodigo'], revisions, { entidade: 'Program', entidadeId: cur.id, evidencia: evidence, por });
+    mergeCollected(cur, valores);
+    cur.verificadoEm = snapshot?.coletadoEm || cur.verificadoEm;
+    cur.catalogSourceId = source.id;
+    cur.ausenteNoCatalogo = false;
+  };
   for (const p of programas) {
-    seen.add(p.id);
-    const cur = d.programs.find((x) => x.id === p.id);
-    if (!cur) {
-      d.programs.push({ ...p, verificadoEm: snapshot?.coletadoEm || new Date().toISOString(), sourceId: source.id, catalogSourceId: source.id, ficha: null });
-      if (!initial) revisions.push(revision({ entidade: 'Program', entidadeId: p.id, campo: 'catalogo', anterior: null, novo: p.nome, evidencia: evidence, por }));
+    const cur = programByIdOrAlias(p.id);
+    if (cur) { seen.add(cur.id); updateFrom(cur, p); continue; }
+    // Programa "novo": antes de criar, procura o mesmo mestrado entre os que sumiram do catálogo (renomeação, código novo).
+    const rec = initial ? { tipo: 'novo' } : reconcileProgram(p, { universidadeId: parsed.universidadeId, source, presentes, reivindicados });
+    if (rec.tipo === 'mesmo') {
+      const antigo = rec.programa;
+      reivindicados.add(antigo.id);
+      seen.add(antigo.id);
+      antigo.aliases = [...new Set([...(antigo.aliases || []), p.id])];
+      pushRev(revisions, revision({ entidade: 'Program', entidadeId: antigo.id, opportunityKey: `program:${antigo.id}`, campo: 'identificacao', anterior: antigo.id, novo: p.id, evidencia: { ...evidence, criterios: rec.evidencias }, impacto: 'medio', validacao: 'reconciliada', por, nota: `Mesmo mestrado (${rec.evidencias.join(', ')}): mantido o identificador ${antigo.id}; ${p.id} vira apelido. Jornadas, opções e oportunidades preservadas.` }));
+      updateFrom(antigo, p);
       continue;
     }
-    for (const campo of ['nome', 'codigo', 'webPropria', 'cursoCatalogo', 'ofertaCondicionada', 'modalidade']) {
-      if (cur[campo] !== p[campo]) revisions.push(revision({ entidade: 'Program', entidadeId: p.id, campo, anterior: cur[campo], novo: p[campo], evidencia: evidence, por }));
+    seen.add(p.id);
+    d.programs.push({ ...p, verificadoEm: snapshot?.coletadoEm || new Date().toISOString(), sourceId: source.id, catalogSourceId: source.id, ficha: null });
+    if (!initial) pushRev(revisions, revision({ entidade: 'Program', entidadeId: p.id, campo: 'catalogo', anterior: null, novo: p.nome, evidencia: evidence, por }));
+    if (rec.tipo === 'ambiguo') {
+      openReview({
+        tipo: 'possivel-renomeacao', sourceId: source.id, snapshotId: snapshot?.id, impacto: 'medio', chave: `reconciliacao:${p.id}:${rec.candidatos.map((c) => c.id).sort().join(',')}`,
+        motivo: `"${p.nome}" (${p.id}) apareceu no catálogo e pode ser o mesmo mestrado que ${rec.candidatos.map((c) => `"${c.nome}" (${c.id})`).join(' ou ')}, que sumiu. Evidências: ${rec.candidatos.map((c) => `${c.id}: ${c.evidencias.join(', ') || 'nome parecido'}`).join('; ')}. Aprovar mantém o identificador antigo (jornadas e opções preservadas); rejeitar mantém os dois.`,
+        proposta: { kind: 'reconciliacao', novoId: p.id, candidatos: rec.candidatos.map((c) => c.id), antigoId: rec.candidatos.length === 1 ? rec.candidatos[0].id : null },
+      });
     }
-    Object.assign(cur, p, { verificadoEm: snapshot?.coletadoEm || cur.verificadoEm, catalogSourceId: source.id, ausenteNoCatalogo: false });
   }
   if (completo) {
-    for (const p of d.programs.filter((x) => x.universidadeId === parsed.universidadeId && (x.catalogSourceId === source.id || (!x.catalogSourceId && x.sourceId === source.id)) && !seen.has(x.id) && !x.ausenteNoCatalogo)) {
+    for (const p of d.programs.filter((x) => x.universidadeId === parsed.universidadeId && (x.catalogSourceId === source.id || (!x.catalogSourceId && x.sourceId === source.id)) && !seen.has(x.id) && !x.ausenteNoCatalogo && !x.aliasDe)) {
       p.ausenteNoCatalogo = true;
       openReview({ tipo: 'programa-ausente', sourceId: source.id, snapshotId: snapshot?.id, motivo: `"${p.nome}" não aparece mais no listado oficial ${parsed.anoAcademico}. Confirmar se foi descontinuado ou renomeado.`, impacto: 'medio', chave: `ausente:${p.id}:${parsed.anoAcademico}` });
     }
@@ -286,7 +405,7 @@ export function applyProgramSheet(programId, parsed, { source, snapshot, por = '
   const before = p.ficha || {};
   for (const [campo, novo] of Object.entries(parsed.dados)) {
     if (before[campo] !== undefined && before[campo] !== novo) {
-      revisions.push(revision({ entidade: 'Program', entidadeId: p.id, opportunityKey: `program:${p.id}`, campo: `ficha.${campo}`, anterior: before[campo], novo, evidencia: { sourceId: source.id, snapshotId: snapshot?.id || null, url: p.fichaUrl, versao: snapshot?.versao || null }, impacto: ['modalidade', 'idiomaEnsino', 'creditos'].includes(campo) ? 'medio' : 'baixo', por }));
+      pushRev(revisions, revision({ entidade: 'Program', entidadeId: p.id, opportunityKey: `program:${p.id}`, campo: `ficha.${campo}`, anterior: before[campo], novo, evidencia: { sourceId: source.id, snapshotId: snapshot?.id || null, url: p.fichaUrl, versao: snapshot?.versao || null }, impacto: ['modalidade', 'idiomaEnsino', 'creditos'].includes(campo) ? 'medio' : 'baixo', por }));
     }
   }
   p.ficha = { ...parsed.dados, verificadaEm: snapshot?.coletadoEm || new Date().toISOString(), snapshotId: snapshot?.id || null };
@@ -314,7 +433,7 @@ export function applyDuaSheet(programId, parsed, { source, snapshot, por = 'atua
   if (before) {
     for (const [campo, cfg] of Object.entries(DUA_FIELDS)) {
       if (sameJson(before[campo], parsed.dados[campo])) continue; // sem depender da ordem das chaves (jsonb)
-      revisions.push(revision({ entidade: 'Program', entidadeId: p.id, opportunityKey: `program:${p.id}`, campo: `fichaDua.${campo}`, anterior: cfg.resumo(before[campo]), novo: cfg.resumo(parsed.dados[campo]), evidencia: { sourceId: source.id, snapshotId: snapshot?.id || null, url: duaSheetUrl(p.duaCodigo), versao: snapshot?.versao || null }, impacto: cfg.impacto, por }));
+      pushRev(revisions, revision({ entidade: 'Program', entidadeId: p.id, opportunityKey: `program:${p.id}`, campo: `fichaDua.${campo}`, anterior: cfg.resumo(before[campo]), novo: cfg.resumo(parsed.dados[campo]), evidencia: { sourceId: source.id, snapshotId: snapshot?.id || null, url: duaSheetUrl(p.duaCodigo), versao: snapshot?.versao || null }, impacto: cfg.impacto, por }));
     }
   }
   p.fichaDua = { ...parsed.dados, verificadaEm: snapshot?.coletadoEm || new Date().toISOString(), snapshotId: snapshot?.id || null };
@@ -327,6 +446,7 @@ export function ensureOpportunitiesForCycle(curso, universidadeId = null) {
   const d = data();
   for (const p of d.programs) {
     if (universidadeId && p.universidadeId !== universidadeId) continue;
+    if (p.aliasDe) continue; // unido a outro programa: as oportunidades são as do programa original
     const uni = UNIVERSITY_INFO[p.universidadeId];
     if (!uni) continue;
     const id = opportunityId(p.id, curso);
@@ -404,19 +524,28 @@ export function ingest(sourceId, { url, text, fetchedAt = new Date().toISOString
  * Coleta uma fonte. Opções para importação (radar/replay.js): lote (quantos alvos; padrão o da fonte),
  * onlyTargets (filtra os alvos que têm página) e replay (páginas já baixadas: sem espera entre requisições).
  */
-export async function runSource(sourceId, { fetchImpl, now = Date.now(), origem = null, lote = null, onlyTargets = null, replay = false } = {}) {
+// Uma execução por vez nesta instância (todas as fontes): duas coletas simultâneas mexeriam nos mesmos programas e
+// uma recarga depois de falha descartaria a outra pela metade. Entre instâncias, a versão por linha do banco
+// recusa gravações sobre dados velhos (conflito → recarga → repetir é seguro).
+let runChain = Promise.resolve();
+export function runSource(sourceId, opts = {}) {
+  const next = runChain.then(() => runSourceUnlocked(sourceId, opts));
+  runChain = next.catch(() => {});
+  return next;
+}
+
+async function runSourceUnlocked(sourceId, { fetchImpl, now = Date.now(), origem = null, lote = null, onlyTargets = null, replay = false } = {}) {
   ensureSources();
   const source = sourceById(sourceId);
-  if (!source) throw new Error(`Fonte desconhecida: ${sourceId}`);
-  const run = { id: newId(), sourceId, inicio: nowIso(now), fim: null, resultado: null, mudancas: 0, erro: null, itens: 0, ...(origem ? { origem } : {}) };
+  if (!source) throw Object.assign(new Error(`Fonte desconhecida: ${sourceId}`), { status: 404 });
+  const t0 = Date.now();
+  const run = { id: newId(), sourceId, inicio: nowIso(now), fim: null, resultado: null, mudancas: 0, erro: null, itens: 0, alvos: 0, persistido: false, ...(origem ? { origem } : {}) };
   data().runs.push(run);
 
   if (source.metodo !== 'html-publico' || !source.ativa || source.indisponivelManual) {
     run.resultado = 'ignorada';
     run.erro = source.metodo !== 'html-publico' ? 'Fonte de revisão manual.' : 'Fonte desativada ou marcada como indisponível.';
-    run.fim = new Date().toISOString();
-    await save();
-    return run;
+    return persistRun(run, t0);
   }
 
   const latestDuaCycle = data().windows.filter((w) => w.procedimentoId === 'dua-masteres').map((w) => w.anoAcademico).sort().at(-1) || null;
@@ -455,13 +584,12 @@ export async function runSource(sourceId, { fetchImpl, now = Date.now(), origem 
       }))
     : [{ url: source.url, programId: null }];
   const selected = onlyTargets ? targets.filter(onlyTargets) : targets;
+  run.alvos = selected.length;
   if (onlyTargets && !selected.length) {
     // Importação sem nenhuma página de um alvo desta fonte: não conta como verificação nem como falha.
     run.resultado = 'ignorada';
     run.erro = 'Nenhuma das páginas enviadas corresponde a um alvo atual desta fonte.';
-    run.fim = new Date().toISOString();
-    await save();
-    return run;
+    return persistRun(run, t0);
   }
 
   const allRevisions = [];
@@ -557,13 +685,39 @@ export async function runSource(sourceId, { fetchImpl, now = Date.now(), origem 
     run.resultado ??= allRevisions.length ? 'alterado' : 'sem-alteracao';
   }
   run.mudancas = allRevisions.length;
-  run.fim = new Date().toISOString();
+  const saved = await persistRun(run, t0);
+  // Avisos aos estudantes só depois de gravado: nada de alerta sobre uma mudança que o banco não tem.
   if (allRevisions.length) {
-    onPublished(allRevisions);
+    const alertas = onPublished(allRevisions);
+    if (alertas?.length) await save();
     broadcast('radar-atualizado', { fonte: source.rotuloPublico || source.titulo, mudancas: allRevisions.length });
   }
-  await save();
-  return run;
+  return saved;
+}
+
+/**
+ * Grava as evidências (Storage) e depois o banco. Só então a execução conta como persistida.
+ * Em qualquer falha: descarta o que ficou só na memória (recarrega do banco), registra a execução com erro e lança
+ * (HTTP 503 nas rotas). Repetir a mesma coleta/importação depois é seguro: as páginas são reprocessadas do zero.
+ */
+async function persistRun(run, t0) {
+  run.fim = new Date().toISOString();
+  run.duracaoMs = Date.now() - t0;
+  try {
+    run.evidencias = await flushEvidence();
+    run.persistido = true;
+    await save();
+    return run;
+  } catch (err) {
+    const etapa = run.persistido ? 'banco' : 'evidências';
+    console.error(`[radar] execução ${run.id} (${run.sourceId}) NÃO gravada (${etapa}): ${err.message}`);
+    pendingEvidence.clear();
+    try { await reloadRadarStore(); } catch (e) { console.error('[radar] falha ao recarregar depois do erro:', e.message); }
+    const falha = { ...run, resultado: 'erro', persistido: false, erro: `Falha ao gravar (${etapa}): ${err.message}`.slice(0, 500) };
+    data().runs.push(falha);
+    await save().catch(() => {}); // registro da falha: melhor esforço
+    throw Object.assign(new Error(`A execução de ${run.sourceId} não foi gravada: ${err.message}`), { status: 503, run: falha, cause: err });
+  }
 }
 
 /** Fontes com verificação vencida. */
@@ -584,6 +738,11 @@ export function approveReview(review, por) {
   else if (p?.kind === 'catalogo') result = applyCatalog(p.parsed, { source, snapshot, por });
   else if (p?.kind === 'ficha' && p.programId) result = applyProgramSheet(p.programId, p.parsed, { source, snapshot, por });
   else if (p?.kind === 'ficha-dua' && p.programId && p.parsed?.dados) result = applyDuaSheet(p.programId, p.parsed, { source, snapshot, por });
+  else if (p?.kind === 'reconciliacao') {
+    const antigoId = review.decisaoAntigoId || p.antigoId;
+    if (!antigoId || !p.candidatos.includes(antigoId)) throw Object.assign(new Error('Escolha qual programa antigo é o mesmo mestrado.'), { status: 400 });
+    result = mergePrograms(antigoId, p.novoId, por);
+  }
   review.status = 'aprovada';
   review.resolvidaEm = new Date().toISOString();
   review.por = por;
@@ -618,6 +777,7 @@ export async function bootstrap() {
     src.estado = 'ok';
     src.proximaVerificacao = null; // o agendador verifica de novo assim que puder
   }
+  await flushEvidence();
   await save();
   return true;
 }

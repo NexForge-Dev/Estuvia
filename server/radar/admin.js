@@ -1,13 +1,27 @@
 // Operações do painel administrativo do Radar: auditoria, revisão e correção.
-// Toda correção manual gera OpportunityRevision (validacao: 'corrigida') e reavalia os alertas.
+// Toda correção manual vira uma correção protegida (overrides.js: as coletas não a sobrescrevem), gera
+// OpportunityRevision (validacao: 'corrigida') e reavalia os alertas. Toda gravação é confirmada (commit()).
 
-import { data, save, newId } from './db.js';
+import { data, save, newId, reloadRadarStore } from './db.js';
+import { EDITABLE, setOverride, clearOverride, listOverrides, isOverridden } from './overrides.js';
+import { sameJson } from '../json-equal.js';
 import { approveReview, applyCalendar, runSource, openReview, ensureOpportunitiesForCycle } from './pipeline.js';
 import { correctionAlerts, onPublished, tick } from './notify.js';
 import { parseAcademicYear } from './dates.js';
 import { STALE_AFTER_HOURS } from './status.js';
 
 const err = (status, message) => Object.assign(new Error(message), { status });
+
+// Grava e confirma. Se o banco recusar, descarta a alteração da memória (recarrega) e responde 503: o painel
+// nunca mostra "salvo" para algo que não foi gravado, e a memória não fica com dados que o banco não tem.
+async function commit() {
+  try {
+    await save();
+  } catch (e) {
+    await reloadRadarStore().catch((x) => console.error('[radar] falha ao recarregar depois do erro:', x.message));
+    throw err(503, `Não foi gravado (o banco recusou): ${e.message}`);
+  }
+}
 
 export function overview(now = Date.now()) {
   const d = data();
@@ -22,6 +36,7 @@ export function overview(now = Date.now()) {
     programasSemFicha: d.programs.filter((p) => !p.ficha).length,
     totais: { programas: d.programs.length, oportunidades: d.opportunities.length, janelas: d.windows.length, eventos: d.events.length, assinaturas: d.subscriptions.length, alertas: d.alerts.length, historico: d.revisions.length },
     historico: d.revisions.slice(-80).reverse(),
+    correcoes: listOverrides(d),
     demo: d.windows.some((w) => w.demo),
   };
 }
@@ -31,7 +46,7 @@ export async function addSource(input) {
   if (d.sources.some((s) => s.id === input.id)) throw err(409, 'Já existe uma fonte com este identificador.');
   const source = { ...input, metodo: 'revisao-manual', conector: null, estado: 'manual', ativa: true, falhasSeguidas: 0, ultimaConsulta: null, ultimaVerificacaoOk: null, criadaManualmente: true };
   d.sources.push(source);
-  await save();
+  await commit();
   return source;
 }
 
@@ -41,27 +56,35 @@ export async function setSourceAvailability(id, indisponivel, motivo) {
   s.indisponivelManual = Boolean(indisponivel);
   s.motivoIndisponivel = indisponivel ? motivo || 'Marcada manualmente como indisponível.' : null;
   if (indisponivel) s.estado = 'falhando';
-  await save();
+  await commit();
   return s;
 }
 
 export const runNow = (id, opts) => runSource(id, opts);
 
-export async function resolveReview(id, decisao, por, nota) {
+export async function resolveReview(id, decisao, por, nota, { antigoId = null } = {}) {
   const r = data().reviews.find((x) => x.id === id);
   if (!r) throw err(404, 'Revisão não encontrada.');
   if (r.status !== 'aberta') throw err(409, 'Esta revisão já foi resolvida.');
   let result = null;
   if (decisao === 'aprovar') {
     if (!r.proposta) throw err(400, 'Esta revisão não tem alteração a aplicar: use "Corrigir" ou "Descartar".');
+    if (r.proposta.kind === 'reconciliacao') r.decisaoAntigoId = antigoId || r.proposta.antigoId;
     result = approveReview(r, por);
   } else {
     r.status = 'rejeitada';
     r.resolvidaEm = new Date().toISOString();
     r.por = por;
+    // "Não é o mesmo mestrado": a próxima coleta não volta a sugerir este par.
+    if (r.proposta?.kind === 'reconciliacao') {
+      for (const cid of r.proposta.candidatos) {
+        const c = data().programs.find((x) => x.id === cid);
+        if (c) c.reconciliacaoRecusada = [...new Set([...(c.reconciliacaoRecusada || []), r.proposta.novoId])];
+      }
+    }
   }
   r.nota = nota || null;
-  await save();
+  await commit();
   return { review: r, revisoes: result?.revisions?.length || 0 };
 }
 
@@ -99,36 +122,92 @@ export async function registerCalendar({ sourceId, anoAcademico, procedimentoId 
     onPublished(result.revisions);
   }
   ensureOpportunitiesForCycle(curso.rotulo);
-  await save();
+  await commit();
   return result;
 }
 
 /** Correção pontual de um campo (janela, evento ou programa). */
-export async function correct({ entidade, id, campo, valor, motivo, url }, por) {
-  const d = data();
-  const coll = { AdmissionWindow: d.windows, AdmissionEvent: d.events, Program: d.programs, Opportunity: d.opportunities }[entidade];
+const COLLECTION = (d) => ({ AdmissionWindow: d.windows, AdmissionEvent: d.events, Program: d.programs, Opportunity: d.opportunities });
+const opportunityKeyOf = (entidade, target) => (target.procedimentoId ? `${target.procedimentoId}:${target.anoAcademico}` : entidade === 'Program' ? `program:${target.id}` : entidade === 'Opportunity' ? target.id : null);
+
+function findTarget(entidade, id) {
+  const coll = COLLECTION(data())[entidade];
   if (!coll) throw err(400, 'Entidade inválida.');
   const target = coll.find((x) => x.id === id);
   if (!target) throw err(404, 'Registro não encontrado.');
-  const editable = { AdmissionWindow: ['abertura', 'encerramento', 'confirmacao'], AdmissionEvent: ['inicio', 'fim', 'rotulo'], Program: ['nome', 'webPropria'], Opportunity: ['suspensao'] }[entidade];
-  if (!editable.includes(campo)) throw err(400, `Campo não editável: ${campo}.`);
-  if (['abertura', 'encerramento', 'inicio', 'fim'].includes(campo) && !/^\d{4}-\d{2}-\d{2}$/.test(valor)) throw err(400, 'Data no formato AAAA-MM-DD.');
+  return target;
+}
+
+/**
+ * Correção manual protegida: o valor do admin passa a valer e as coletas seguintes não o sobrescrevem
+ * (só atualizam o "valor da fonte", visível no painel). Exige motivo e URL de evidência.
+ */
+export async function correct({ entidade, id, campo, valor, motivo, url }, por) {
+  const target = findTarget(entidade, id);
+  if (!EDITABLE[entidade].includes(campo)) throw err(400, `Campo não editável: ${campo}. Editáveis: ${EDITABLE[entidade].join(', ')}.`);
+  if (['abertura', 'encerramento', 'inicio', 'fim'].includes(campo) && valor !== null && !/^\d{4}-\d{2}-\d{2}$/.test(valor)) throw err(400, 'Data no formato AAAA-MM-DD.');
   if (!motivo || !url) throw err(400, 'Informe o motivo e a URL da evidência oficial.');
-  const anterior = target[campo];
-  target[campo] = campo === 'suspensao' ? (valor ? { motivo: String(valor), em: new Date().toISOString(), url } : null) : valor;
-  const key = target.procedimentoId ? `${target.procedimentoId}:${target.anoAcademico}` : entidade === 'Program' ? `program:${target.id}` : null;
-  const rev = { id: newId(), entidade, entidadeId: id, opportunityKey: key, campo, anterior: anterior ?? null, novo: target[campo] ?? null, evidencia: { url, nota: motivo }, em: new Date().toISOString(), validacao: 'corrigida', impacto: 'alto', por, ...(target.demo ? { demo: true } : {}) };
-  d.revisions.push(rev);
+  const em = new Date().toISOString();
+  const efetivo = campo === 'suspensao' ? (valor ? { motivo: String(valor), em, url } : null) : valor;
+  const { anterior, valorFonte } = setOverride(target, campo, efetivo, { por, motivo, url, em });
+  const rev = { id: newId(), entidade, entidadeId: id, opportunityKey: opportunityKeyOf(entidade, target), campo, anterior: anterior ?? null, novo: target[campo] ?? null, valorFonte: valorFonte ?? null, evidencia: { url, nota: motivo }, em, validacao: 'corrigida', impacto: 'alto', por, ...(target.demo ? { demo: true } : {}) };
+  data().revisions.push(rev);
   const alerts = correctionAlerts([rev]);
   tick();
-  await save();
+  await commit();
+  return { revisao: rev, alertasReavaliados: alerts.length, protegido: true };
+}
+
+/** Remove uma correção manual: o campo volta ao valor mais recente da fonte. Fica registrado no histórico. */
+export async function clearCorrection({ entidade, id, campo, motivo }, por) {
+  const target = findTarget(entidade, id);
+  if (!isOverridden(target, campo)) throw err(404, 'Este campo não tem correção manual.');
+  const r = clearOverride(target, campo);
+  const rev = { id: newId(), entidade, entidadeId: id, opportunityKey: opportunityKeyOf(entidade, target), campo, anterior: r.anterior, novo: r.restaurado, evidencia: { nota: motivo || 'Correção manual removida: volta o valor da fonte.', url: r.override.url }, em: new Date().toISOString(), validacao: 'correcao-removida', impacto: 'medio', por };
+  data().revisions.push(rev);
+  const alerts = correctionAlerts([rev]);
+  tick();
+  await commit();
   return { revisao: rev, alertasReavaliados: alerts.length };
+}
+
+/** Correções vigentes (valor do admin × valor atual da fonte). */
+export const corrections = () => listOverrides(data());
+
+/** Histórico completo de uma entidade (todas as revisões, inclusive invalidadas, mais antigas primeiro). */
+export function entityHistory(entidade, id) {
+  const d = data();
+  const target = COLLECTION(d)[entidade]?.find((x) => x.id === id) || null;
+  const ids = new Set([id, ...(target?.aliases || [])]);
+  return {
+    entidade, id, existe: Boolean(target), rotulo: target?.nome || target?.titulo || target?.rotulo || id,
+    correcoes: Object.entries(target?.overrides || {}).map(([campo, o]) => ({ campo, ...o })),
+    revisoes: d.revisions.filter((r) => r.entidade === entidade && ids.has(r.entidadeId)).sort((a, b) => String(a.em).localeCompare(String(b.em))),
+  };
+}
+
+/** Revisões que registram "mudança" sem mudança (antes = depois), ainda não invalidadas. Só leitura. */
+export const suspectRevisions = () => data().revisions.filter((r) => !r.invalidada && sameJson(r.anterior, r.novo));
+
+/**
+ * Marca uma revisão como inválida (ex.: alteração registrada por engano). Nada é apagado: a revisão continua no
+ * histórico, com quem invalidou, quando e por quê.
+ */
+export async function invalidateRevision(id, motivo, por) {
+  const r = data().revisions.find((x) => x.id === id);
+  if (!r) throw err(404, 'Revisão não encontrada.');
+  if (r.invalidada) throw err(409, 'Esta revisão já está invalidada.');
+  if (!motivo || motivo.length < 10) throw err(400, 'Explique por que a revisão é inválida.');
+  r.invalidada = { em: new Date().toISOString(), por, motivo, validacaoAnterior: r.validacao };
+  r.validacao = 'invalidada';
+  await commit();
+  return { revisao: r };
 }
 
 /** Recalcula alertas de calendário (após correções/republicação). */
 export async function republish() {
   const created = tick();
-  await save();
+  await commit();
   return { alertas: created.length };
 }
 
@@ -147,7 +226,7 @@ export async function simulateDev({ anoAcademico, abertura, encerramento }, por)
   for (const r of result.revisions) r.demo = true;
   const alerts = onPublished(result.revisions);
   tick();
-  await save();
+  await commit();
   return { alertas: alerts.length };
 }
 
@@ -159,7 +238,7 @@ export async function clearDemo() {
   d.revisions = d.revisions.filter((r) => !r.demo);
   d.alerts = d.alerts.filter((a) => !a.demo);
   for (const o of d.opportunities) delete o.demo;
-  await save();
+  await commit();
   return { ciclos: [...demoCycles] };
 }
 
@@ -184,6 +263,6 @@ export async function importCommunityFeed() {
     });
     if (data().reviews.length > before) n += 1;
   }
-  await save();
+  await commit();
   return { importados: n, total: feed.length };
 }

@@ -6,6 +6,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import zlib from 'node:zlib';
 import { config } from './config.js';
 import { usesSupabase, assertProjectAllowed } from './database.js';
 
@@ -153,4 +154,48 @@ export async function writeMeta(name, value) {
     return;
   }
   await upload(META_BUCKET, name, snapshot, 'application/json', true);
+}
+
+// ---------- Evidências do Radar (HTML original e conteúdo extraído de cada snapshot) ----------
+// Endereçadas pelo hash do conteúdo: gravar de novo a mesma página é idempotente e nada é sobrescrito com outro
+// conteúdo. Comprimidas (gzip). Ficam no bucket privado de metadados (sem bucket novo) ou, sem Supabase, em disco.
+// Não são apagadas pela retenção do Radar (docs/11-radar.md).
+
+
+const EVIDENCE_PREFIX = 'radar-evidencias';
+const evidenceDir = () => process.env.RADAR_EVIDENCE_DIR || path.join(path.dirname(config.dataFile), EVIDENCE_PREFIX);
+const evidenceName = (key) => {
+  if (!/^[a-f0-9]{64}\.(html|json)$/.test(key)) throw new Error(`Chave de evidência inválida: ${key}`);
+  return `${key}.gz`;
+};
+export const evidenceRef = (key) => `${usesSupabaseStorage() ? `supabase:${META_BUCKET}` : 'local'}/${EVIDENCE_PREFIX}/${key}.gz`;
+
+/** Grava uma evidência (texto). Devolve a referência durável. Lança erro se não conseguir gravar. */
+export async function putEvidence(key, text) {
+  const name = evidenceName(key);
+  const gz = zlib.gzipSync(Buffer.from(String(text), 'utf8'));
+  if (!usesSupabaseStorage()) {
+    const dir = evidenceDir();
+    await fs.promises.mkdir(dir, { recursive: true });
+    const file = path.join(dir, name);
+    if (!fs.existsSync(file)) {
+      const tmp = `${file}.${process.pid}.tmp`;
+      await fs.promises.writeFile(tmp, gz);
+      await fs.promises.rename(tmp, file);
+    }
+    return evidenceRef(key);
+  }
+  await upload(META_BUCKET, `${EVIDENCE_PREFIX}/${name}`, gz, 'application/gzip', true);
+  return evidenceRef(key);
+}
+
+/** Lê uma evidência gravada (texto) ou null se não existir. */
+export async function getEvidence(key) {
+  const name = evidenceName(key);
+  try {
+    const gz = usesSupabaseStorage() ? await download(META_BUCKET, `${EVIDENCE_PREFIX}/${name}`) : await fs.promises.readFile(path.join(evidenceDir(), name));
+    return zlib.gunzipSync(gz).toString('utf8');
+  } catch {
+    return null;
+  }
 }

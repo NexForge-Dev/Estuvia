@@ -5,9 +5,12 @@ import { z } from 'zod';
 import { requireAuth } from '../security.js';
 import { audit } from '../store.js';
 import { importCollected } from '../radar/replay.js';
+import { data as radarData } from '../radar/db.js';
+import { getEvidence } from '../storage.js';
 import { config } from '../config.js';
 import {
   overview, addSource, setSourceAvailability, runNow, resolveReview, registerCalendar, correct, republish, simulateDev, clearDemo, importCommunityFeed,
+  clearCorrection, corrections, entityHistory, invalidateRevision, suspectRevisions,
 } from '../radar/admin.js';
 
 const router = Router();
@@ -20,8 +23,9 @@ router.use(requireAuth, (req, res, next) => {
   next();
 });
 
+// Erros com status (ex.: 503 = o banco recusou a gravação) chegam ao painel/importador com a execução registrada.
 const send = (res, fn) => Promise.resolve().then(fn).then((body) => res.json(body)).catch((err) => {
-  if (err.status) return res.status(err.status).json({ error: err.message });
+  if (err.status) return res.status(err.status).json({ error: err.message, ...(err.run ? { run: err.run } : {}) });
   throw err;
 });
 const bad = (res, parsed) => res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
@@ -50,8 +54,9 @@ router.post('/import', (req, res) => {
   if (!parsed.success) return bad(res, parsed);
   return send(res, async () => {
     const run = await importCollected(parsed.data.fonte, { paginas: parsed.data.paginas, robots: parsed.data.robots || {} });
-    audit.log({ action: 'radar.import', userId: req.user.id, fonte: parsed.data.fonte, paginas: parsed.data.paginas.length, resultado: run.resultado }).catch(() => {});
-    return { run };
+    audit.log({ action: 'radar.import', userId: req.user.id, fonte: parsed.data.fonte, paginas: parsed.data.paginas.length, resultado: run.resultado, runId: run.id }).catch(() => {});
+    // Só chega aqui com o banco confirmado (persistRun); senão a rota responde 503 e o importador repete.
+    return { run, persistido: run.persistido === true };
   });
 });
 
@@ -80,9 +85,9 @@ router.put('/sources/:id/availability', (req, res) => {
 });
 
 router.post('/reviews/:id', (req, res) => {
-  const parsed = z.object({ decisao: z.enum(['aprovar', 'rejeitar']), nota: z.string().max(300).optional() }).strict().safeParse(req.body);
+  const parsed = z.object({ decisao: z.enum(['aprovar', 'rejeitar']), nota: z.string().max(300).optional(), antigoId: z.string().max(200).optional() }).strict().safeParse(req.body);
   if (!parsed.success) return bad(res, parsed);
-  return send(res, () => resolveReview(req.params.id, parsed.data.decisao, who(req), parsed.data.nota));
+  return send(res, () => resolveReview(req.params.id, parsed.data.decisao, who(req), parsed.data.nota, { antigoId: parsed.data.antigoId || null }));
 });
 
 router.post('/calendars', (req, res) => {
@@ -108,6 +113,44 @@ router.post('/corrections', (req, res) => {
   }).strict().safeParse(req.body);
   if (!parsed.success) return bad(res, parsed);
   return send(res, () => correct(parsed.data, who(req)));
+});
+
+// Correções manuais protegidas: listar, remover (volta o valor da fonte), histórico de uma entidade.
+router.get('/corrections', (req, res) => res.json({ correcoes: corrections() }));
+router.delete('/corrections', (req, res) => {
+  const parsed = z.object({
+    entidade: z.enum(['AdmissionWindow', 'AdmissionEvent', 'Program', 'Opportunity']),
+    id: z.string().max(200),
+    campo: z.string().max(40),
+    motivo: z.string().trim().max(300).optional(),
+  }).strict().safeParse(req.body);
+  if (!parsed.success) return bad(res, parsed);
+  return send(res, () => clearCorrection(parsed.data, who(req)));
+});
+router.get('/history', (req, res) => {
+  const parsed = z.object({ entidade: z.enum(['AdmissionWindow', 'AdmissionEvent', 'Program', 'Opportunity']), id: z.string().max(200) }).safeParse(req.query);
+  if (!parsed.success) return bad(res, parsed);
+  res.json(entityHistory(parsed.data.entidade, parsed.data.id));
+});
+router.get('/revisions/suspeitas', (req, res) => res.json({ revisoes: suspectRevisions() }));
+router.post('/revisions/:id/invalidate', (req, res) => {
+  const parsed = z.object({ motivo: z.string().trim().min(10, 'Explique por que a revisão é inválida.').max(300) }).strict().safeParse(req.body);
+  if (!parsed.success) return bad(res, parsed);
+  return send(res, () => invalidateRevision(req.params.id, parsed.data.motivo, who(req)));
+});
+// Evidência de um snapshot: o HTML original (texto puro, nunca renderizado) ou o conteúdo extraído (JSON).
+router.get('/snapshots/:id/evidencia', async (req, res) => {
+  const snap = radarData().snapshots.find((s) => s.id === req.params.id);
+  if (!snap) return res.status(404).json({ error: 'Snapshot não encontrado.' });
+  const tipo = req.query.tipo === 'conteudo' ? 'conteudo' : 'html';
+  const key = snap.evidencia?.[tipo];
+  if (!key) return res.status(410).json({ error: 'Snapshot anterior ao armazenamento durável: a evidência original não foi guardada.' });
+  const texto = await getEvidence(key);
+  if (texto === null) return res.status(404).json({ error: 'Evidência não encontrada no armazenamento.', chave: key });
+  res.setHeader('Content-Type', tipo === 'conteudo' ? 'application/json; charset=utf-8' : 'text/plain; charset=utf-8');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Content-Disposition', `inline; filename="${snap.sourceId}-v${snap.versao}.${tipo === 'conteudo' ? 'json' : 'html.txt'}"`);
+  res.send(texto);
 });
 
 router.post('/republish', (req, res) => send(res, () => republish()));

@@ -210,7 +210,9 @@ export function listOpportunities(query = {}, { user = null, now = Date.now(), s
   const d = data();
   const cycles = [...new Set(d.opportunities.map((o) => o.anoAcademico))].sort();
   const ano = longYear(query.ano) || cycles.at(-1) || null;
-  let items = d.opportunities.filter((o) => !ano || o.anoAcademico === ano).map((o) => card(o, { user, now }));
+  // Programas unidos a outro (apelidos) não aparecem duplicados: as oportunidades valem pelo programa original.
+  const unidos = new Set(d.programs.filter((p) => p.aliasDe).map((p) => p.id));
+  let items = d.opportunities.filter((o) => (!ano || o.anoAcademico === ano) && !unidos.has(o.programId)).map((o) => card(o, { user, now }));
   const all = items;
 
   const q = norm(query.q);
@@ -566,11 +568,21 @@ export const exportUser = (userId) => {
 // ---------- Contratos para jornada, Agenda e assistente ----------
 
 /** Programa do Radar no formato de catalog.programById (para criar jornadas). */
+// Programas unidos (reconciliação de identificadores): quem guardou o identificador antigo ou o novo continua
+// recebendo o mestrado certo. As contas não são alteradas; a resolução acontece aqui, na leitura.
+const canonicalProgram = (id) => {
+  const d = data();
+  let p = d.programs.find((x) => x.id === id) || d.programs.find((x) => (x.aliases || []).includes(id)) || null;
+  if (p?.aliasDe) p = d.programs.find((x) => x.id === p.aliasDe) || p;
+  return p;
+};
+
 export function programForJourney(id) {
-  const p = data().programs.find((x) => x.id === id);
+  const p = canonicalProgram(id);
   if (!p) return null;
   return {
-    id: p.id,
+    id, // o identificador que a jornada/opção guardou (comparações por id continuam batendo)
+    ...(p.id !== id ? { idCanonico: p.id } : {}),
     universidadeId: p.universidadeId,
     nome: p.nome,
     area: p.ramos?.[0] || null,
