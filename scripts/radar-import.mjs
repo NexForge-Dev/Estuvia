@@ -10,6 +10,12 @@
 //   npm run radar:import -- --fontes dua-catalogo,dua-fichas     (padrão: dua-calendario,boja,dua-catalogo,dua-fichas)
 //   npm run radar:import -- --salvar coleta.json                 (só coleta e salva; não envia)
 //   npm run radar:import -- --arquivo coleta.json                (envia uma coleta salva)
+//   npm run radar:import -- --agendado --estado <pasta>          (modo do Agendador de Tarefas: ver abaixo)
+//
+// Modo agendado: a base local fica em <pasta> (não é apagada) e cada execução coleta só as fontes VENCIDAS
+// dos hosts bloqueados (--hosts, padrão www.juntadeandalucia.es), no lote e na frequência de cada fonte
+// (server/radar/registry.js). Rodando de hora em hora: ~16 consultas ao DUA por vez; as fichas inteiras se
+// renovam em menos de 2 dias. Use uma conta com o papel "Equipe do Radar", não a do admin.
 // A conta precisa ser admin ou ter o papel "Equipe do Radar". A coleta respeita robots.txt e espera 4 s
 // entre requisições ao mesmo site (as ~400 fichas do DUA levam cerca de 30 min).
 
@@ -20,11 +26,16 @@ import path from 'node:path';
 const args = process.argv.slice(2);
 const opt = (name) => { const i = args.indexOf(`--${name}`); return i >= 0 ? args[i + 1] : null; };
 const FONTES = (opt('fontes') || 'dua-calendario,boja,dua-catalogo,dua-fichas').split(',').map((s) => s.trim()).filter(Boolean);
+const AGENDADO = args.includes('--agendado');
+const ESTADO = opt('estado');
+const HOSTS = (opt('hosts') || 'www.juntadeandalucia.es').split(',').map((h) => h.trim().toLowerCase()).filter(Boolean);
 const MAX_LOTE_BYTES = 3_000_000; // abaixo do limite de 4,5 MB por requisição da Vercel (e de 4 MB da rota)
 
 async function collect() {
   // Base temporária e isolada: nada daqui toca o banco de desenvolvimento nem o de produção.
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'estuvia-radar-import-'));
+  if (AGENDADO && !ESTADO) throw new Error('--agendado exige --estado <pasta> (a base local que guarda o que já foi coletado).');
+  const tmp = ESTADO ? path.resolve(ESTADO) : fs.mkdtempSync(path.join(os.tmpdir(), 'estuvia-radar-import-'));
+  fs.mkdirSync(tmp, { recursive: true });
   Object.assign(process.env, {
     DB_PROVIDER: 'json', STORAGE_PROVIDER: 'local', RADAR_SCHEDULER: 'off', RADAR_IMPORT_ONLY_HOSTS: '',
     DATA_FILE: path.join(tmp, 'db.json'), RADAR_DATA_FILE: path.join(tmp, 'radar.json'),
@@ -33,7 +44,7 @@ async function collect() {
   const { initStore } = await import('../server/store.js');
   const { initRadarStore, flushRadar } = await import('../server/radar/db.js');
   const { initRadar } = await import('../server/radar/service.js');
-  const { runSource } = await import('../server/radar/pipeline.js');
+  const { runSource, dueSources } = await import('../server/radar/pipeline.js');
   const { decode } = await import('../server/radar/http.js');
   await initStore(); await initRadarStore(); await initRadar();
 
@@ -56,15 +67,18 @@ async function collect() {
     }
     return new Response(buf, { status: res.status, headers: res.headers });
   };
-  for (const fonte of FONTES) {
+  const hostOf = (s) => { try { return new URL(s.url).hostname.toLowerCase(); } catch { return ''; } };
+  const fontes = AGENDADO ? dueSources().filter((s) => HOSTS.includes(hostOf(s))).map((s) => s.id) : FONTES;
+  if (AGENDADO) console.log(`${new Date().toISOString()} fontes vencidas: ${fontes.join(', ') || 'nenhuma'}`);
+  for (const fonte of fontes) {
     atual = fonte;
     const t0 = Date.now();
-    const run = await runSource(fonte, { fetchImpl: recorder, lote: Infinity });
+    const run = await runSource(fonte, { fetchImpl: recorder, lote: AGENDADO ? null : Infinity });
     console.log(`coleta ${fonte}: ${run.resultado} · ${run.itens} página(s) · ${(paginas[fonte] || []).length} gravada(s)${run.erro ? ` · ${run.erro}` : ''} · ${Math.round((Date.now() - t0) / 1000)} s`);
   }
   await flushRadar();
-  fs.rmSync(tmp, { recursive: true, force: true });
-  return { robots, paginas };
+  if (!ESTADO) fs.rmSync(tmp, { recursive: true, force: true });
+  return { robots, paginas, fontes };
 }
 
 // Agrupa as páginas em lotes. No catálogo do DUA, as fases de uma universidade vão sempre juntas.
@@ -83,7 +97,8 @@ function lotes(fonte, pags) {
   return out;
 }
 
-async function upload({ robots, paginas }) {
+async function upload(coleta) {
+  const { robots, paginas } = coleta;
   const base = (process.env.ESTUVIA_URL || '').replace(/\/+$/, '');
   const email = process.env.ESTUVIA_ADMIN_EMAIL;
   const senha = process.env.ESTUVIA_ADMIN_PASSWORD;
@@ -96,7 +111,7 @@ async function upload({ robots, paginas }) {
   };
   const login = await call('POST', '/auth/login', { email, senha });
   if (login.status !== 200) throw new Error(`Login recusado (${login.status}): ${login.data.error || ''}`);
-  for (const fonte of FONTES) {
+  for (const fonte of (coleta.fontes || FONTES)) {
     const ls = lotes(fonte, paginas[fonte] || []);
     for (const [i, lote] of ls.entries()) {
       const t0 = Date.now();
@@ -112,4 +127,5 @@ const arquivo = opt('arquivo');
 const coleta = arquivo ? JSON.parse(fs.readFileSync(arquivo, 'utf8')) : await collect();
 const salvar = opt('salvar');
 if (salvar) { fs.writeFileSync(salvar, JSON.stringify(coleta)); console.log(`coleta salva em ${salvar}`); }
+else if (!Object.values(coleta.paginas).some((l) => l.length)) console.log('nada novo para enviar.');
 else await upload(coleta);

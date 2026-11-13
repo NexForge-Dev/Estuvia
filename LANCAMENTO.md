@@ -51,7 +51,9 @@ Na Vercel não há processo contínuo, então o atualizador do Radar roda por **
 ESTUVIA_URL=https://estuvia-pi.vercel.app ESTUVIA_ADMIN_EMAIL=... ESTUVIA_ADMIN_PASSWORD=... npm run radar:import
 ```
 
-O script coleta com o mesmo pipeline do servidor, numa base temporária, respeitando `robots.txt` e 4 s entre requisições (cerca de 30 min, quase tudo nas ~400 fichas). Depois envia só as páginas públicas para `POST /api/radar/admin/import`, onde elas passam pelo pipeline normal: revisões, histórico e validação são os mesmos de uma coleta direta, e a data registrada é a da coleta. Rode-o pelo menos uma vez por semana durante o período de candidaturas. Opções: `--fontes dua-catalogo,dua-fichas`, `--salvar arquivo.json` (só coleta) e `--arquivo arquivo.json` (envia uma coleta salva).
+O script coleta com o mesmo pipeline do servidor, numa base temporária, respeitando `robots.txt` e 4 s entre requisições (cerca de 30 min, quase tudo nas ~400 fichas). Depois envia só as páginas públicas para `POST /api/radar/admin/import`, onde elas passam pelo pipeline normal: revisões, histórico e validação são os mesmos de uma coleta direta, e a data registrada é a da coleta. Opções: `--fontes dua-catalogo,dua-fichas`, `--salvar arquivo.json` (só coleta) e `--arquivo arquivo.json` (envia uma coleta salva).
+
+**Coleta automática (Agendador de Tarefas do Windows).** A tarefa *Estuvia Radar (DUA)* roda `%LOCALAPPDATA%\Estuvia\radar-coletor.cmd` de hora em hora, com `--agendado --estado %LOCALAPPDATA%\Estuvia\radar-coletor`. Nesse modo, a base local é mantida entre as execuções e cada vez só as fontes **vencidas** são coletadas, no lote e na frequência definidos em `server/radar/registry.js` (cerca de 16 consultas ao DUA por hora; todas as fichas se renovam em menos de 2 dias). Só roda com o PC ligado e com sua sessão aberta, e uma execução perdida roda quando o PC volta. As credenciais ficam em `%LOCALAPPDATA%\Estuvia\radar-coletor.env` e devem ser de uma conta com o papel **Equipe do Radar**, não a do admin. O log fica em `%LOCALAPPDATA%\Estuvia\radar-coletor.log`.
 
 ## 5. Antes de abrir ao público (não técnico)
 
