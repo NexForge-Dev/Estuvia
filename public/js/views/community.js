@@ -37,7 +37,8 @@ function Header(meta, secao) {
       h('span', { class: 'eyebrow' }, 'Comunidade'),
       h('h1', {}, 'Descubra, confira e transforme em ação'),
       h('p', { class: 'muted' }, 'Oportunidades, dúvidas e experiências de quem está no mesmo caminho. Cada publicação mostra o quanto é confiável, e você leva o que importa para a sua jornada e a sua agenda.')),
-    h('nav', { class: 'cm-tabs', 'aria-label': 'Seções da comunidade' },
+    // A conta admin só usa a moderação (as outras abas são do estudante e o app a levaria de volta ao painel).
+    state.me?.user?.admin ? null : h('nav', { class: 'cm-tabs', 'aria-label': 'Seções da comunidade' },
       tab('', 'Feed', 'home', !secao || secao === 'post' || secao === 'missao'),
       tab('/grupos', 'Grupos', 'users', secao === 'grupos' || secao === 'grupo'),
       tab('/radar', 'Verificadas', 'shield', secao === 'radar'),

@@ -138,8 +138,10 @@ export async function checkAchievements() {
   try { (await import('./achievements.js')).checkAchievements?.(); } catch { /* módulo opcional */ }
 }
 
-// A conta de administrador só enxerga o painel admin (nada de jornada, agenda, finanças…).
+// A conta de administrador só enxerga o painel admin (nada de jornada, agenda, finanças…),
+// mais o painel do Radar e a moderação da comunidade, que o servidor já libera para ela.
 const isAdminMode = () => !!state.me?.user?.admin;
+const ADMIN_PATHS = /^\/(admin(\/|$)|radar\/admin$|comunidade\/(moderacao|post\/[\w.-]+)$)/;
 
 // Uso por módulo (painel admin): avisa o servidor a cada tela aberta e quanto tempo ficou na anterior.
 let lastView = null;
@@ -175,7 +177,7 @@ async function render() {
   if (!route) return mount(main, emptyState('Página não encontrada', 'O endereço que você abriu não existe.', h('a', { href: '#/', class: 'btn' }, 'Ir para o início')));
   if (route.auth && !state.me) return go('/entrar');
   if (route.guestOnly && state.me) return go('/');
-  if (isAdminMode() && !/^\/admin(\/|$)/.test(path)) return go('/admin');
+  if (isAdminMode() && !ADMIN_PATHS.test(path)) return go('/admin');
   await loadPrivateContent();
   const params = path.match(route.path).slice(1);
   state.route = { path, params };
@@ -256,6 +258,8 @@ const NAV_ADMIN = [
   { href: '/admin/eventos', label: 'Eventos', icon: 'clock' },
   { href: '/admin/status', label: 'Status', icon: 'pulse' },
   { href: '/admin/logs', label: 'Logs', icon: 'terminal' },
+  { href: '/radar/admin', label: 'Radar', icon: 'globe' },
+  { href: '/comunidade/moderacao', label: 'Moderação', icon: 'scale' },
 ];
 
 function renderNav() {
