@@ -8,6 +8,7 @@ import { APPLICATION_CHANNEL, UNIVERSITY_INFO } from './registry.js';
 import { EVENT_TYPES, tick } from './notify.js';
 import { parseAcademicYear, todayMadrid, daysBetween } from './dates.js';
 import { bootstrap, ensureSources, duaSheetUrl } from './pipeline.js';
+import { matchDegree } from '../../public/js/data/degree.js';
 
 let scholarships = [];
 export async function initRadar() {
@@ -205,7 +206,7 @@ function card(opp, { user = null, now = Date.now() } = {}) {
 
 const FILTERS = ['q', 'pais', 'cidade', 'universidade', 'area', 'ano', 'idioma', 'nivelIdioma', 'modalidade', 'precoMax', 'situacao', 'bolsas', 'compativel', 'acompanhando'];
 
-export function listOpportunities(query = {}, { user = null, now = Date.now() } = {}) {
+export function listOpportunities(query = {}, { user = null, now = Date.now(), semLimite = false } = {}) {
   const d = data();
   const cycles = [...new Set(d.opportunities.map((o) => o.anoAcademico))].sort();
   const ano = longYear(query.ano) || cycles.at(-1) || null;
@@ -243,7 +244,8 @@ export function listOpportunities(query = {}, { user = null, now = Date.now() } 
     || a.programa.nome.localeCompare(b.programa.nome, 'es'));
 
   const count = (fn) => Object.entries(all.reduce((acc, c) => { for (const k of [].concat(fn(c))) acc[k ?? 'nao-informado'] = (acc[k ?? 'nao-informado'] || 0) + 1; return acc; }, {})).map(([valor, n]) => ({ valor, n }));
-  const limit = Math.min(Number(query.limit) || 24, 100);
+  // A API pública devolve no máximo 100 por página; o catálogo interno (programCatalog) pede todos.
+  const limit = semLimite ? Infinity : Math.min(Number(query.limit) || 24, 100);
   const offset = Math.max(Number(query.offset) || 0, 0);
   return {
     anoAcademico: ano,
@@ -267,6 +269,59 @@ export function listOpportunities(query = {}, { user = null, now = Date.now() } 
     estados: Object.entries(STATES).map(([id, s]) => ({ id, ...s })),
     indicadores: indicators(all, user),
   };
+}
+
+// ---------- Catálogo completo (tela Mestrados) ----------
+
+// Resumo da exigência de espanhol para a lista: null = ficha do DUA ainda não coletada (não presumir).
+const spanishSummary = (p) => {
+  const es = spanishRequirement(p);
+  return es === null ? null : es.exige ? { exige: true, nivel: es.nivel || null } : { exige: false };
+};
+
+/**
+ * Todos os mestrados oficiais do ciclo mais recente, num formato compacto (sem calendário por item, que pesa):
+ * a tela Mestrados mostra a oferta inteira por universidade, com filtros no navegador.
+ * Com o curso de graduação no perfil, informa se cada ficha do DUA o aceita (mesma regra da Missão 1.4).
+ */
+export function programCatalog({ user = null, now = Date.now() } = {}) {
+  const list = listOpportunities({}, { user, now, semLimite: true });
+  const all = list.items;
+  const curso = user?.profile?.graduacao || '';
+  const d = data();
+  const byId = new Map(d.programs.map((p) => [p.id, p]));
+  const programas = all.map((c) => {
+    const p = byId.get(c.programId) || {};
+    const grad = curso && p.fichaDua ? matchDegree(curso, p.fichaDua) : null;
+    return {
+      id: c.programId,
+      oportunidadeId: c.id,
+      anoAcademico: c.anoAcademico,
+      estado: c.estado,
+      estadoLabel: c.estadoLabel,
+      nome: c.programa.nome,
+      universidadeId: c.universidade.id,
+      ramos: c.programa.ramos,
+      modalidade: c.programa.modalidade || null,
+      creditos: c.programa.creditos,
+      codigoDua: p.duaCodigo || null,
+      espanhol: spanishSummary(p),
+      criterios: p.fichaDua ? (p.fichaDua.baremo || []).map((x) => ({ descricao: criterioPt(x.descricao), peso: x.peso ?? null })) : null,
+      requisitos: p.fichaDua ? (p.fichaDua.requisitos || []).length : null,
+      fichaDuaUrl: p.duaCodigo ? duaSheetUrl(p.duaCodigo) : null,
+      fichaVerificadaEm: p.fichaDua?.verificadaEm || null,
+      webPropria: c.programa.webPropria || null,
+      graduacao: grad ? { tipo: grad.tipo, preferencia: grad.preferencia || null } : null,
+      naJornada: c.naJornada,
+    };
+  }).sort((a, b) => a.nome.localeCompare(b.nome, 'es'));
+  const count = new Map();
+  for (const p of programas) count.set(p.universidadeId, (count.get(p.universidadeId) || 0) + 1);
+  const universidades = Object.values(UNIVERSITY_INFO)
+    .map((u) => ({ id: u.id, sigla: u.sigla, nome: u.nome, cidade: u.cidade, logo: u.logo || null, total: count.get(u.id) || 0 }))
+    .sort((a, b) => b.total - a.total || a.nome.localeCompare(b.nome, 'es'));
+  const verificadas = d.sources.filter((s) => ['dua-catalogo', 'dua-fichas', 'ugr-catalogo'].includes(s.id)).map((s) => ({ id: s.id, titulo: s.rotuloPublico || s.titulo, verificadaEm: s.ultimaVerificacaoOk || null }));
+  return { anoAcademico: list.anoAcademico, total: programas.length, comGraduacao: Boolean(curso), universidades, programas, fontes: verificadas };
 }
 
 // "Aberta" só com edital verificável: status editorial + prazo vigente (AAAA-MM-DD) + link do edital.

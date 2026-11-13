@@ -128,7 +128,8 @@ router.post('/onboarding/complete', async (req, res) => {
 router.get('/choices/compare', (req, res) => res.json({ opcoes: compareChoices(req.user) }));
 
 router.put('/choices', async (req, res) => {
-  const parsed = z.object({ choices: z.array(z.string().max(60)).max(6, 'O DUA 2026/27 permite até 6 opções.') }).safeParse(req.body);
+  // IDs dos mestrados do Radar passam de 60 caracteres (mesmo limite de 120 da criação de jornada).
+  const parsed = z.object({ choices: z.array(z.string().max(120)).max(6, 'O DUA 2026/27 permite até 6 opções.') }).safeParse(req.body);
   if (!parsed.success) return bad(res, parsed);
   const unique = [...new Set(parsed.data.choices)];
   if (unique.some((id) => !programById(id))) return res.status(400).json({ error: 'Programa desconhecido.' });

@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { users } from '../store.js';
 import { requireAuth } from '../security.js';
 import {
-  listOpportunities, opportunityDetail, subscribe, unsubscribe, myRadar, markAlertsRead, addToAgenda, confirmAgendaChange,
+  listOpportunities, programCatalog, opportunityDetail, subscribe, unsubscribe, myRadar, markAlertsRead, addToAgenda, confirmAgendaChange,
 } from '../radar/service.js';
 import { EVENT_TYPES } from '../radar/notify.js';
 
@@ -41,6 +41,9 @@ const listQuery = z.object({
   limit: z.coerce.number().int().min(1).max(100).optional(),
   offset: z.coerce.number().int().min(0).max(5000).optional(),
 });
+
+// Catálogo completo para a tela Mestrados (todos os programas do ciclo mais recente, formato compacto).
+router.get('/programs', optionalUser, (req, res) => res.json(programCatalog({ user: req.user || null })));
 
 router.get('/opportunities', optionalUser, (req, res) => {
   const parsed = listQuery.safeParse(req.query);

@@ -821,6 +821,34 @@ button.ck:hover:not(:disabled) { border-color: var(--accent); }
 .house-dl dd { margin: 0; font-weight: 700; font-size: .88rem; }
 .house-dl .big { color: var(--accent); font-size: 1.05rem; }
 .program-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+/* Mestrados (catalog.js): catálogo completo por universidade */
+.mest-unis { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.mest-uni { width: 100%; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); color: inherit; text-align: left; cursor: pointer; }
+.mest-uni:hover:not(:disabled) { border-color: var(--border-2); }
+.mest-uni.is-on { border-color: var(--accent); background: var(--accent-soft); }
+.mest-uni:disabled { opacity: .55; cursor: default; }
+.mest-uni[data-university="us"] .uni-directory-logo { background: #65001b; }
+.mest-uni[data-university="uhu"] .uni-directory-logo { background: #263b59; }
+.mest-uni-sigla { width: 48px; height: 42px; flex: none; display: grid; place-items: center; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); font-weight: 900; font-size: .72rem; }
+.mest-uni-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.mest-uni-text small { color: var(--muted); font-size: .72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mest-uni-count { font-weight: 900; font-size: .9rem; color: var(--accent); white-space: nowrap; }
+.mest-filters { display: grid; gap: 10px; }
+.mest-search-row { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+.mest-search { flex: 1; min-width: 0; }
+.mest-check { display: inline-flex; align-items: center; gap: 6px; font-size: .85rem; color: var(--text); }
+.mest-count { margin: 0; color: var(--muted); }
+.mest-count strong { color: var(--text); }
+.mest-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.mest-tag { font-size: .72rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); }
+.mest-tag-state { color: var(--muted); }
+.mest-grad { margin: 0; font-size: .82rem; font-weight: 700; padding: 6px 10px; border-radius: 10px; }
+.mest-grad.is-ok { background: var(--ok-soft); color: var(--ok); }
+.mest-grad.is-warn { background: var(--warn-soft); color: var(--warn); }
+.mest-grad.is-bad { background: var(--danger-soft); color: var(--danger); }
+.mest-more { justify-self: center; }
+.mest-card .pc-body, .mest-card .facts dd { text-align: left; }
+.mest-card .facts { grid-template-columns: 86px 1fr; }
 .program-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; display: flex; flex-direction: column; transition: transform .2s, border-color .2s; }
 .program-card:hover { transform: translateY(-3px); border-color: var(--border-2); }
 .pc-media { position: relative; aspect-ratio: 16 / 6; }
