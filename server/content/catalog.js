@@ -15,6 +15,8 @@ export const UNIVERSITIES = [
   { id: 'ujaen', sigla: 'UJA', nome: 'Universidad de Jaén', cidade: 'Jaén', pais: 'Espanha', capa: '/img/cities/andaluzia.svg', logo: '/img/universities/ujaen.png', url: 'https://www.ujaen.es' },
   { id: 'ual', sigla: 'UAL', nome: 'Universidad de Almería', cidade: 'Almería', pais: 'Espanha', capa: '/img/cities/andaluzia.svg', logo: '/img/universities/ual.png', url: 'https://www.ual.es' },
   { id: 'upo', sigla: 'UPO', nome: 'Universidad Pablo de Olavide', cidade: 'Sevilla', pais: 'Espanha', capa: '/img/cities/sevilla.svg', logo: '/img/universities/upo.png', url: 'https://www.upo.es' },
+  // Sede em Sevilla; os mestrados acontecem também nas sedes de Baeza, La Rábida (Huelva) e Málaga: confira na ficha.
+  { id: 'unia', sigla: 'UNIA', nome: 'Universidad Internacional de Andalucía', cidade: 'Sevilla', pais: 'Espanha', capa: '/img/cities/sevilla.svg', url: 'https://www.unia.es' },
 ];
 
 const acesso = { tipo: 'acesso', descricao: 'Título universitário que dê acesso à pós-graduação no país emissor', status: 'requerido', fonte: 'O1' };

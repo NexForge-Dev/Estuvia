@@ -96,7 +96,8 @@ export function parse(html) {
   const src = String(html || '');
   const avisos = [];
   const cab = /<p class="[^"]*bg-warning[^"]*">([\s\S]*?)<\/p>/i.exec(src);
-  const head = /^(\d+)\s*-\s*(.*?)\s*(?:\(([^()]*)\))?\s*$/.exec(text(cab?.[1] || ''));
+  // Código numérico, ou com letra na frente na UNIA (ex.: "A04601 - ACTIVIDAD FÍSICA PARA LA SALUD (INTERNACIONAL DE ANDALUCIA)").
+  const head = /^([A-Z]{0,2}\d+)\s*-\s*(.*?)\s*(?:\(([^()]*)\))?\s*$/i.exec(text(cab?.[1] || ''));
   const codigoDua = head?.[1] || null;
   const titulo = head?.[2] || '';
   if (!cab || !codigoDua) avisos.push({ tipo: 'extracao-incerta', motivo: 'A ficha do DUA não tem o cabeçalho com código e nome do máster.' });

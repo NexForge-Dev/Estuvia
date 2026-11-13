@@ -11,6 +11,7 @@
 //   npm run radar:import -- --salvar coleta.json                 (só coleta e salva; não envia)
 //   npm run radar:import -- --arquivo coleta.json                (envia uma coleta salva)
 //   npm run radar:import -- --agendado --estado <pasta>          (modo do Agendador de Tarefas: ver abaixo)
+//   npm run radar:import -- --universidades unia,uhu              (só o catálogo e as fichas dessas universidades)
 //
 // Modo agendado: a base local fica em <pasta> (não é apagada) e cada execução coleta só as fontes VENCIDAS
 // dos hosts bloqueados (--hosts, padrão www.juntadeandalucia.es), no lote e na frequência de cada fonte
@@ -28,6 +29,7 @@ const opt = (name) => { const i = args.indexOf(`--${name}`); return i >= 0 ? arg
 const FONTES = (opt('fontes') || 'dua-calendario,boja,dua-catalogo,dua-fichas').split(',').map((s) => s.trim()).filter(Boolean);
 const AGENDADO = args.includes('--agendado');
 const ESTADO = opt('estado');
+const UNIVERSIDADES = opt('universidades') ? new Set(opt('universidades').split(',').map((u) => u.trim().toLowerCase()).filter(Boolean)) : null;
 const HOSTS = (opt('hosts') || 'www.juntadeandalucia.es').split(',').map((h) => h.trim().toLowerCase()).filter(Boolean);
 const MAX_LOTE_BYTES = 3_000_000; // abaixo do limite de 4,5 MB por requisição da Vercel (e de 4 MB da rota)
 
@@ -45,6 +47,9 @@ async function collect() {
   const { initRadarStore, flushRadar } = await import('../server/radar/db.js');
   const { initRadar } = await import('../server/radar/service.js');
   const { runSource, dueSources } = await import('../server/radar/pipeline.js');
+  const { data: radarData } = await import('../server/radar/db.js');
+  // --universidades: alvos do catálogo pela universidade consultada; fichas pela universidade do programa.
+  const daUniversidade = UNIVERSIDADES && ((t) => UNIVERSIDADES.has(t.parseContext?.universidadeId || radarData().programs.find((p) => p.id === t.programId)?.universidadeId || ''));
   const { decode } = await import('../server/radar/http.js');
   await initStore(); await initRadarStore(); await initRadar();
 
@@ -73,7 +78,7 @@ async function collect() {
   for (const fonte of fontes) {
     atual = fonte;
     const t0 = Date.now();
-    const run = await runSource(fonte, { fetchImpl: recorder, lote: AGENDADO ? null : Infinity });
+    const run = await runSource(fonte, { fetchImpl: recorder, lote: AGENDADO ? null : Infinity, ...(daUniversidade ? { onlyTargets: daUniversidade } : {}) });
     console.log(`coleta ${fonte}: ${run.resultado} · ${run.itens} página(s) · ${(paginas[fonte] || []).length} gravada(s)${run.erro ? ` · ${run.erro}` : ''} · ${Math.round((Date.now() - t0) / 1000)} s`);
   }
   await flushRadar();
