@@ -202,7 +202,7 @@ test('arquivos: consentimento, cifrados em disco, só o dono baixa por link assi
   assert.equal(noConsent.status, 428);
   assert.equal(noConsent.data.codigo, 'consentimento');
   assert.equal((await req('POST', '/documents/consent', { aceito: true, versao: 'antiga' })).status, 400);
-  const ok = await req('POST', '/documents/consent', { aceito: true, versao: '2026-10-27' });
+  const ok = await req('POST', '/documents/consent', { aceito: true, versao: '2026-11-13' });
   assert.equal(ok.status, 200);
   assert.ok(ok.data.consentimento.em);
   const up = await req('POST', `/documents/historico/files?journeyId=${jid}`, PDF, { 'Content-Type': 'application/pdf', 'X-File-Name': encodeURIComponent('histórico ../../x.pdf') });
@@ -271,6 +271,22 @@ test('minha pasta: lista tudo, aceita etapa futura e "Outro documento" com nome'
   const other = client();
   await other('POST', '/auth/register', { nome: 'Dani Souza', email: 'dani@docs.dev', senha: 'segura123', aceite: true });
   assert.equal((await other('GET', '/documents/files')).data.arquivos.length, 0);
+});
+
+test('LGPD: revogar o consentimento apaga os arquivos e exige novo aceite; os registros continuam', async () => {
+  assert.ok((users.findById(uid).docFiles || []).length > 0);
+  assert.equal((await req('DELETE', '/documents/consent', {})).status, 400, 'exige confirmação');
+  const r = await req('DELETE', '/documents/consent', { confirmar: 'REVOGAR' });
+  assert.equal(r.status, 200);
+  assert.ok(r.data.excluidos > 0);
+  const u = users.findById(uid);
+  assert.equal(u.docConsent, null);
+  assert.equal((u.docFiles || []).length, 0);
+  assert.ok(u.docRecords.passaporte, 'o status do documento não é arquivo e continua');
+  const again = await req('POST', '/documents/pessoal/files', PDF, { 'Content-Type': 'application/pdf' });
+  assert.equal(again.status, 428, 'sem consentimento, novo envio é recusado');
+  assert.equal((await req('POST', '/documents/consent', { aceito: true, versao: '2026-11-13' })).status, 200);
+  assert.equal((await req('POST', `/documents/historico/files?journeyId=${jid}`, PDF, { 'Content-Type': 'application/pdf' })).status, 201);
 });
 
 test('LGPD: exportação sem chaves e exclusão apaga os arquivos', async () => {

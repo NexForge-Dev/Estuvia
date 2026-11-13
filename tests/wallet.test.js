@@ -88,7 +88,7 @@ test('setup: estudante de 12 meses, morando em SP, mestrado sem certificado de i
   uid = r.data.user.id;
   await req('PUT', '/me/profile', { nacionalidade: 'Brasileira', paisResidencia: 'Brasil', estado: 'SP' });
   jid = (await req('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2027/28', duracaoMeses: 12 })).data.journey.id;
-  await req('POST', '/documents/consent', { aceito: true, versao: '2026-10-27' });
+  await req('POST', '/documents/consent', { aceito: true, versao: '2026-11-13' });
 });
 
 // ---------- Personalização ----------

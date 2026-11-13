@@ -10,7 +10,7 @@ import { fmtDate, fmtSize } from './shared.js';
 export const ACCEPT = '.pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp';
 const MAX = 10 * 1024 * 1024;
 const TYPES = /^(application\/pdf|image\/(png|jpeg|webp))$/;
-export const CONSENT_VERSION = '2026-10-27';
+export const CONSENT_VERSION = '2026-11-13';
 
 // ---------------------------------------------------------------------------
 // Consentimento (uma vez): explica o tratamento antes do primeiro arquivo.
@@ -29,10 +29,11 @@ export function ensureConsent() {
       h('div', { class: 'du-consent-card' },
         h('h2', { id: 'du-consent-title' }, icon('lock', { size: 18 }), ' Antes de guardar seus arquivos'),
         h('ul', {},
-          h('li', {}, 'Os arquivos ficam cifrados na sua conta e só você acessa, com login e por links que expiram.'),
+          h('li', {}, 'Os arquivos ficam cifrados no servidor e só abrem pela sua conta, com login e por links que expiram.'),
+          h('li', {}, 'A chave da cifra fica no servidor da Estuvia, que decifra o arquivo para entregá-lo a você. Não é criptografia ponta a ponta. A equipe não abre seus arquivos pelo painel.'),
           h('li', {}, 'A Estuvia não analisa nem valida o conteúdo: "pronto" é a sua organização.'),
           h('li', {}, 'Seus documentos não são enviados para inteligência artificial nem usados para treinar modelos.'),
-          h('li', {}, 'Você pode baixar ou excluir tudo quando quiser. Ao excluir a conta, os arquivos são apagados.'),
+          h('li', {}, 'Você pode baixar ou excluir tudo quando quiser e revogar este consentimento em Documentos → Privacidade. Ao revogar ou excluir a conta, os arquivos são apagados.'),
           h('li', {}, 'Não envie senhas, PIN, CVV ou códigos de acesso.')),
         h('label', { class: 'dp-check', for: 'du-consent' }, chk, h('span', {}, 'Li e concordo com o tratamento dos meus documentos.')),
         h('div', { class: 'row wrap' }, ok, h('button', { type: 'button', class: 'btn btn-ghost', onClick: () => close(false) }, 'Agora não'))));
@@ -158,7 +159,7 @@ export function DocumentUpload(doc, { onChange, onDelete, missao }) {
     f.anteriores.length ? h('li', { class: 'du-versions' }, h('details', {}, h('summary', {}, `Versões anteriores (${f.anteriores.length})`), h('ul', { class: 'du-list' }, f.anteriores.map((o) => fileRow(o, { old: true }))))) : null,
   ]));
   return h('div', { class: 'du' }, input, doc.arquivos.length ? list : null, stage, drop,
-    h('p', { class: 'du-note' }, icon('lock', { size: 12 }), 'Cifrado no servidor. Só você acessa pela sua conta.'));
+    h('p', { class: 'du-note' }, icon('lock', { size: 12 }), 'Cifrado no servidor. Abre só pela sua conta.'));
 }
 
 // ---------------------------------------------------------------------------

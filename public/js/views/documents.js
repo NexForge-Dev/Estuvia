@@ -53,7 +53,7 @@ export async function documentsView(docId) {
       search(), resultsHost,
       categories(),
       h('div', { class: 'cw-more' }, situation(), folder, privacy()),
-      h('p', { class: 'dc-footnote' }, icon('lock', { size: 12 }), ' Cifrado na sua conta. Só você vê.'));
+      h('p', { class: 'dc-footnote' }, icon('lock', { size: 12 }), ' Cifrado no servidor. Abre só pela sua conta.'));
   }
 
   // ---------- Topo: título + 3 números ----------
@@ -199,10 +199,11 @@ export async function documentsView(docId) {
     const versoes = h('input', { type: 'checkbox', checked: d.prefs?.versoes !== false });
     versoes.addEventListener('change', async () => { try { await api.put('/documents/prefs', { versoes: versoes.checked }); toast('Preferência salva.', 'ok'); } catch (e) { toast(e.message, 'err'); } });
     const confirm = h('input', { type: 'text', placeholder: 'Digite EXCLUIR', 'aria-label': 'Confirmação', class: 'cw-confirm' });
+    const revoke = h('input', { type: 'text', placeholder: 'Digite REVOGAR', 'aria-label': 'Confirmação da revogação', class: 'cw-confirm' });
     return h('details', { class: 'cw-line cw-card' },
       h('summary', {}, icon('lock', { size: 15 }), 'Privacidade'),
       h('ul', { class: 'cw-privacy' },
-        h('li', {}, 'Cifrado e visível só para você.'),
+        h('li', {}, 'Cifrado no servidor; abre só pela sua conta (a chave fica no servidor, não é ponta a ponta).'),
         h('li', {}, 'Não vai para inteligência artificial.'),
         h('li', {}, 'Nunca guarde senhas ou códigos aqui.')),
       h('label', { class: 'dp-check' }, versoes, h('span', {}, 'Guardar versões antigas')),
@@ -210,7 +211,13 @@ export async function documentsView(docId) {
         h('div', { class: 'row wrap' }, confirm, h('button', { type: 'button', class: 'btn btn-danger btn-sm', onClick: async () => {
           if (confirm.value.trim() !== 'EXCLUIR') return toast('Digite EXCLUIR para confirmar.', 'err');
           try { const r = await api.del('/documents/files', { confirmar: 'EXCLUIR' }); toast(`${r.excluidos} arquivo(s) excluído(s).`, 'ok'); refresh(); folder.reload?.(); } catch (e) { toast(e.message, 'err'); }
-        } }, 'Excluir'))));
+        } }, 'Excluir'))),
+      h('div', { class: 'cw-danger' }, h('strong', {}, 'Revogar o consentimento dos documentos'),
+        h('p', { class: 'cw-note' }, 'Apaga todos os arquivos guardados. O status de cada documento continua. Para enviar arquivos de novo, você aceita outra vez.'),
+        h('div', { class: 'row wrap' }, revoke, h('button', { type: 'button', class: 'btn btn-danger btn-sm', onClick: async () => {
+          if (revoke.value.trim() !== 'REVOGAR') return toast('Digite REVOGAR para confirmar.', 'err');
+          try { const r = await api.del('/documents/consent', { confirmar: 'REVOGAR' }); toast(`Consentimento revogado. ${r.excluidos} arquivo(s) excluído(s).`, 'ok'); refresh(); folder.reload?.(); } catch (e) { toast(e.message, 'err'); }
+        } }, 'Revogar'))));
   }
 
   try { await load(); } catch (e) { return h('div', { class: 'empty' }, h('h2', {}, 'Não foi possível abrir seus documentos'), h('p', { class: 'muted' }, e.message)); }

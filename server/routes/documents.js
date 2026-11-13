@@ -23,7 +23,7 @@ const MAX_BYTES = 10 * 1024 * 1024;
 const MAX_FILES = 80;
 const MAX_TOTAL = 200 * 1024 * 1024;
 const LINK_TTL_S = 15 * 60;
-export const CONSENT_VERSION = '2026-10-27';
+export const CONSENT_VERSION = '2026-11-13';
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida.');
 const pickJourney = (user, id) => (user.journeys || []).find((j) => j.id === id) || (user.journeys || [])[0] || null;
 const now = () => new Date().toISOString();
@@ -147,6 +147,18 @@ router.post('/consent', async (req, res) => {
   const user = await users.update(req.user.id, (u) => { u.docConsent = { versao: CONSENT_VERSION, em: now() }; });
   audit.log({ action: 'documents.consent', userId: req.user.id, versao: CONSENT_VERSION }).catch(() => {});
   res.json({ consentimento: user.docConsent });
+});
+
+// Revogação (LGPD art. 8º, § 5º): apaga todos os arquivos e o aceite. Novos envios pedem o consentimento de novo.
+// Os registros da carteira (status, datas) não são arquivos e continuam.
+router.delete('/consent', async (req, res) => {
+  const parsed = z.object({ confirmar: z.literal('REVOGAR') }).strict().safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'Digite REVOGAR para confirmar.' });
+  const n = (req.user.docFiles || []).length;
+  await purgeUserDocuments(req.user.id);
+  await users.update(req.user.id, (u) => { u.docFiles = []; u.docConsent = null; });
+  audit.log({ action: 'documents.consent.revoked', userId: req.user.id, n }).catch(() => {});
+  res.json({ excluidos: n, consentimento: null });
 });
 
 router.put('/prefs', async (req, res) => {

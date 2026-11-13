@@ -31,7 +31,7 @@ const FAQ = [
   ['E se eu não tiver dinheiro guardado?', 'Você começa do mesmo jeito. A trilha "Como vou financiar meus estudos?" roda desde a Rodada 1: mostra quanto o projeto custa, quanto o visto exige comprovar, bolsas e caminhos alternativos. Sem promessas: só números com fonte.'],
   ['As informações são confiáveis?', 'Cada regra tem um selo: verificada em norma ou página oficial (com data de revisão), prática de quem já passou, estimativa com premissas explícitas ou pendente de confirmação. A Central de fontes reúne tudo.'],
   ['O Mentor pode errar?', 'O Mentor responde com base na sua jornada e nas fontes da plataforma, cita de onde tirou cada informação e nunca executa uma ação sem a sua confirmação. Para decisões oficiais, confirme sempre na fonte indicada.'],
-  ['Meus documentos ficam seguros?', 'Os arquivos da Minha pasta ficam cifrados na sua conta e só você acessa. Guardar um documento na Estuvia não é validação oficial: universidade e consulado conferem os originais.'],
+  ['Meus documentos ficam seguros?', 'Os arquivos da Minha pasta ficam cifrados no servidor e só abrem pela sua conta, com links que expiram. Guardar um documento na Estuvia não é validação oficial: universidade e consulado conferem os originais.'],
 ];
 
 // Etapa declarada → rodada em que a jornada começa (mesma ordem de content/rounds.js).
