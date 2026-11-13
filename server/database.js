@@ -67,6 +67,26 @@ export async function rpc(name, args) {
   return data;
 }
 
+let pageOverride = null;
+/** Apenas para testes: substitui a leitura paginada (ex.: PGlite com o mesmo SELECT). */
+export function setPageReaderForTests(fn) { pageOverride = fn; }
+
+/**
+ * Lê uma página de uma tabela de entidades, em ordem de inserção (ins_seq > afterInsSeq).
+ * A carga inicial lê assim, em consultas pequenas: juntar tudo numa única chamada a estuvia_changes
+ * estourou o tempo-limite de consulta do Supabase quando o Radar passou de ~10 MB (13/11/2026).
+ * Devolve null quando não há leitor paginado (testes que só simulam as funções SQL).
+ */
+export async function readEntityPage(table, afterInsSeq, limit) {
+  if (pageOverride) return pageOverride(table, afterInsSeq, limit);
+  if (rpcOverride) return null;
+  const db = await client();
+  if (!db) throw new Error('Supabase não configurado.');
+  const { data, error } = await db.from(table).select('id,version,seq,ins_seq,data').gt('ins_seq', afterInsSeq).order('ins_seq', { ascending: true }).limit(limit);
+  if (error) throw new Error(`Supabase (${table}): ${error.message}`);
+  return data;
+}
+
 let legacyOverride = null;
 /** Apenas para testes. */
 export function setLegacyReaderForTests(fn) { legacyOverride = fn; }

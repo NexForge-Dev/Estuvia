@@ -38,6 +38,11 @@ const rpcFor = (pg) => async (name, args) => {
     throw err;
   }
 };
+// Mesmo SELECT paginado de database.readEntityPage (o Supabase faz isso pela API REST).
+const pageFor = (pg) => async (table, after, limit) => {
+  if (!/^[a-z_]+$/.test(table)) throw new Error('tabela inválida');
+  return (await pg.query(`select id, version, seq, ins_seq, data from public.${table} where ins_seq > $1 order by ins_seq limit $2`, [after, limit])).rows;
+};
 const legacyFor = (pg) => async (id) => (await pg.query('select state from public.estuvia_state where id = $1', [id])).rows[0]?.state ?? null;
 
 const database = await import('../server/database.js');
@@ -67,6 +72,7 @@ let B;
 before(async () => {
   pg = await newDatabase();
   database.setRpcForTests(rpcFor(pg));
+  database.setPageReaderForTests(pageFor(pg));
   database.setLegacyReaderForTests(legacyFor(pg));
   await pg.query(`insert into public.estuvia_state (id, state) values ('main', $1::jsonb)`, [JSON.stringify(LEGACY_MAIN)]);
   A = await newInstance();
@@ -183,15 +189,55 @@ test('Radar: importa para as tabelas radar_* e descarta inscrições de usuário
   assert.ok(radar.radarStoreHealth().ok);
 });
 
+test('carga paginada (várias páginas por tabela) traz exatamente o mesmo que a carga de uma vez', async () => {
+  for (let i = 0; i < 7; i++) await A.users.create({ id: `pag${i}`, email: `pag${i}@exemplo.test`, passwordHash: 'h', tokenVersion: 0, profile: { apelido: `P${i}` } });
+  process.env.ENTITY_PAGE_ROWS = '2';
+  try {
+    const paged = await newInstance();
+    await paged.initStore();
+    database.setPageReaderForTests(null);
+    database.setRpcForTests(rpcFor(pg));
+    const once = await newInstance(); // sem leitor paginado: estuvia_changes com tudo
+    await once.initStore();
+    database.setPageReaderForTests(pageFor(pg));
+    assert.deepEqual(paged.users.all().map((u) => u.id), once.users.all().map((u) => u.id), 'mesma ordem');
+    assert.equal(stable(paged.users.all()), stable(once.users.all()));
+    assert.ok(paged.users.findById('pag6'));
+    // Depois da carga paginada, o sync incremental continua funcionando.
+    await A.users.update('pag6', (u) => { u.profile.apelido = 'Mudou'; });
+    await paged.syncStore();
+    assert.equal(paged.users.findById('pag6').profile.apelido, 'Mudou');
+
+    // Sync que estoura o tempo-limite (mudanças demais de uma vez): recarrega em páginas, inclusive exclusões.
+    await A.users.update('pag5', (u) => { u.profile.apelido = 'Grande'; });
+    await A.users.remove('pag4');
+    const normal = rpcFor(pg);
+    database.setRpcForTests(async (name, args) => {
+      if (name === 'estuvia_changes' && args.p_since !== Number.MAX_SAFE_INTEGER) throw new Error('Supabase: canceling statement due to statement timeout');
+      return normal(name, args);
+    });
+    await paged.syncStore();
+    database.setRpcForTests(normal);
+    assert.equal(paged.users.findById('pag5').profile.apelido, 'Grande');
+    assert.equal(paged.users.findById('pag4'), null, 'exclusão feita em outra instância também chega');
+    await paged.syncStore(); // e o sync incremental volta a funcionar depois
+  } finally {
+    delete process.env.ENTITY_PAGE_ROWS;
+    database.setRpcForTests(rpcFor(pg));
+  }
+});
+
 test('barreira DEV × PROD: banco marcado como produção não é aberto (nem importado) em desenvolvimento', async () => {
   const pg2 = await newDatabase();
   database.setRpcForTests(rpcFor(pg2));
+  database.setPageReaderForTests(pageFor(pg2));
   database.setLegacyReaderForTests(legacyFor(pg2));
   await pg2.query(`insert into public.estuvia_state (id, state) values ('main', $1::jsonb)`, [JSON.stringify({ ...LEGACY_MAIN, meta: { ambiente: 'production' } })]);
   const D = await newInstance();
   await assert.rejects(D.initStore(), /marcado como "production"/);
   assert.equal((await pg2.query('select count(*)::int as n from public.users')).rows[0].n, 0, 'nada importado');
   database.setRpcForTests(rpcFor(pg));
+  database.setPageReaderForTests(pageFor(pg));
   database.setLegacyReaderForTests(legacyFor(pg));
 });
 

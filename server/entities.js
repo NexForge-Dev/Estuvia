@@ -6,7 +6,11 @@
 // só o que mudou (inserções, atualizações, exclusões) numa transação, com versão otimista por linha.
 // A sincronização traz o que outras instâncias gravaram (estuvia_changes, por txid/xmin).
 
-import { rpc } from './database.js';
+import { rpc, readEntityPage } from './database.js';
+
+// ~1 a 5 MB por página no Radar (programas com ficha do DUA, snapshots). ENTITY_PAGE_ROWS só para testes.
+const pageRows = () => Number(process.env.ENTITY_PAGE_ROWS) || 200;
+const FAR_FUTURE = Number.MAX_SAFE_INTEGER; // p_since além de qualquer txid: estuvia_changes devolve só o cursor
 
 // ---------------------------------------------------------------- conversões para colunas tipadas
 
@@ -132,11 +136,43 @@ export function createEntityStore(collections, { label }) {
     return applied;
   }
 
-  /** Carga inicial: traz todas as linhas. Devolve o número de linhas carregadas. */
-  async function load() {
+  /**
+   * Carga inicial: traz todas as linhas. Devolve o número de linhas carregadas.
+   * Primeiro pega só o cursor (estuvia_changes com p_since no futuro não devolve linhas), depois lê cada tabela
+   * em páginas. O que for gravado durante a leitura volta no próximo sync (txid >= cursor); reaplicar é inofensivo.
+   */
+  async function load({ replace = false } = {}) {
+    const head = await rpc('estuvia_changes', { p_since: FAR_FUTURE, p_tables: tables });
+    const rows = {};
+    let n = 0;
+    for (const t of tables) {
+      rows[t] = [];
+      for (let after = -1; ;) {
+        const page = await readEntityPage(t, after, pageRows());
+        if (page === null) return loadAllAtOnce();
+        rows[t].push(...page);
+        n += page.length;
+        if (page.length < pageRows()) break;
+        after = Number(page.at(-1).ins_seq);
+      }
+    }
+    // Recarga (replace): o que a memória conhece e o banco não tem mais foi excluído por outra instância.
+    const deleted = [];
+    if (replace) {
+      for (const t of tables) {
+        const ids = new Set(rows[t].map((r) => r.id));
+        for (const id of saved.get(t).keys()) if (!ids.has(id)) deleted.push({ t, id, seq: head.seq });
+      }
+    }
+    applyIncoming({ seq: head.seq, rows, deleted });
+    return n;
+  }
+
+  // Sem leitor paginado (testes que só simulam as funções SQL): tudo numa chamada, como antes.
+  async function loadAllAtOnce() {
     const changes = await rpc('estuvia_changes', { p_since: 0, p_tables: tables });
     let n = 0;
-    for (const rows of Object.values(changes.rows || {})) n += rows.length;
+    for (const r of Object.values(changes.rows || {})) n += r.length;
     applyIncoming(changes);
     return n;
   }
@@ -144,7 +180,15 @@ export function createEntityStore(collections, { label }) {
   /** Traz o que outras instâncias gravaram desde a última leitura. Devolve quantas mudanças aplicou. */
   async function sync() {
     if (cursor === null) return 0;
-    return applyIncoming(await rpc('estuvia_changes', { p_since: cursor, p_tables: tables }));
+    try {
+      return applyIncoming(await rpc('estuvia_changes', { p_since: cursor, p_tables: tables }));
+    } catch (err) {
+      // Mudanças demais desde a última leitura (ex.: importação de todas as fichas do DUA) estouram o tempo-limite
+      // de uma consulta só. Sem isto o cursor não avança e a instância fica presa com dados velhos.
+      if (!/statement timeout/i.test(err.message)) throw err;
+      console.warn(`[${label}] mudanças demais para sincronizar de uma vez; recarregando em páginas.`);
+      return load({ replace: true });
+    }
   }
 
   function diff() {
