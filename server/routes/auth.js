@@ -32,6 +32,22 @@ const loginSchema = z.object({
 
 const firstError = (result) => result.error.issues[0]?.message || 'Dados inválidos.';
 
+// Bloqueio por conta: o limite por IP (authLimiter) é contado em cada instância da Vercel e não segura
+// quem troca de IP. Este fica no registro do estudante (persistido), então vale para todas as instâncias.
+const LOCK_FAILS = 10;
+const LOCK_WINDOW_MS = 15 * 60 * 1000;
+const LOCK_MS = 15 * 60 * 1000;
+const lockedUntil = (u) => (u?.loginLock?.ate && Date.parse(u.loginLock.ate) > Date.now() ? Date.parse(u.loginLock.ate) : 0);
+async function registerFailure(user) {
+  const now = Date.now();
+  await users.touch(user.id, (u) => {
+    const f = u.loginFalhas && now - Date.parse(u.loginFalhas.desde) < LOCK_WINDOW_MS ? u.loginFalhas : { n: 0, desde: new Date(now).toISOString() };
+    f.n += 1;
+    if (f.n >= LOCK_FAILS) { u.loginLock = { ate: new Date(now + LOCK_MS).toISOString() }; delete u.loginFalhas; }
+    else u.loginFalhas = f;
+  });
+}
+
 router.post('/register', authLimiter, async (req, res) => {
   const parsed = registerSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: firstError(parsed) });
@@ -71,11 +87,19 @@ router.post('/login', authLimiter, async (req, res) => {
   const { email, senha } = parsed.data;
 
   const user = users.findByEmail(email);
+  const until = lockedUntil(user);
+  if (until) {
+    await audit.log({ action: 'login-locked', userId: user.id, ...clientInfo(req) });
+    const min = Math.max(1, Math.ceil((until - Date.now()) / 60000));
+    return res.status(429).json({ error: `Muitas tentativas erradas nesta conta. Tente de novo em ${min} min ou use "Esqueci minha senha".` });
+  }
   const ok = await verifyPassword(senha, user ? user.passwordHash : DUMMY_HASH);
   if (!user || !ok) {
     await audit.log({ action: 'login-failed', email: email.toLowerCase(), ...clientInfo(req) });
+    if (user) await registerFailure(user);
     return res.status(401).json({ error: 'E-mail ou senha incorretos.' });
   }
+  if (user.loginFalhas || user.loginLock) await users.touch(user.id, (u) => { delete u.loginFalhas; delete u.loginLock; });
   if (user.blocked) {
     await audit.log({ action: 'login-blocked', userId: user.id, ...clientInfo(req) });
     return res.status(403).json({ error: 'Sua conta está suspensa. Fale com a equipe Estuvia.' });
@@ -153,7 +177,7 @@ router.post('/reset-password', authLimiter, async (req, res) => {
     return res.status(400).json({ error: 'Este link é inválido ou expirou. Peça um novo em "Esqueci minha senha".' });
   }
   const passwordHash = await hashPassword(parsed.data.senha);
-  await users.update(user.id, (u) => { u.passwordHash = passwordHash; u.tokenVersion += 1; delete u.passwordReset; });
+  await users.update(user.id, (u) => { u.passwordHash = passwordHash; u.tokenVersion += 1; delete u.passwordReset; delete u.loginFalhas; delete u.loginLock; });
   await audit.log({ action: 'password-reset', userId: user.id, ...clientInfo(req) });
   clearSession(res);
   res.json({ ok: true });
