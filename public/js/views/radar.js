@@ -132,7 +132,7 @@ async function toggleFollow(c, btn, onChange) {
   } catch (e) { toast(e.message, 'err'); } finally { btn.disabled = false; }
 }
 
-async function addToJourney(c) {
+export async function addToJourney(c) {
   const jr = (state.journeys || []).find?.((j) => j.destino?.programa?.id === c.programId);
   if (c.naJornada || jr) return toast('Este mestrado já está nas suas jornadas.');
   const cicloPublicado = shortYear(c.anoAcademico);

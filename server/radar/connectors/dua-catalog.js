@@ -29,7 +29,8 @@ function modalityFromName(name) {
 function programFromRow(row) {
   const cells = [...row.matchAll(/<td\b[^>]*>([\s\S]*?)<\/td>/gi)].map((m) => m[1]);
   const codigo = htmlText(cells[0] || '').trim();
-  if (!/^\d{4,8}$/.test(codigo) || cells.length < 3) return null;
+  // Códigos do DUA: só números na maioria das universidades; a UNIA usa uma letra na frente (ex.: A04601).
+  if (!/^[A-Z]{0,2}\d{4,8}$/i.test(codigo) || cells.length < 3) return null;
   const universidadLabel = htmlText(cells[1] || '').trim();
   const universidadeId = universityByName.get(norm(universidadLabel));
   if (!universidadeId) return null;
