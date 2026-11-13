@@ -53,6 +53,9 @@ export function createApp() {
   if (config.isProd) app.set('trust proxy', 1);
 
   app.use(securityHeaders);
+  // Importação do Radar (páginas oficiais coletadas em outra máquina): corpo maior só nesta rota.
+  // A Vercel aceita até 4,5 MB por requisição; o importador envia lotes menores que isso.
+  app.use('/api/radar/admin/import', express.json({ limit: '4mb' }));
   app.use(express.json({ limit: '50kb' }));
   app.use(cookieParser());
 

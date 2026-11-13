@@ -3,6 +3,8 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth } from '../security.js';
+import { audit } from '../store.js';
+import { importCollected } from '../radar/replay.js';
 import { config } from '../config.js';
 import {
   overview, addSource, setSourceAvailability, runNow, resolveReview, registerCalendar, correct, republish, simulateDev, clearDemo, importCommunityFeed,
@@ -27,6 +29,31 @@ const who = (req) => req.user.email;
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data no formato AAAA-MM-DD.');
 
 router.get('/', (req, res) => res.json({ ...overview(), ambiente: config.isProd ? 'producao' : 'desenvolvimento' }));
+
+// Importação de páginas oficiais coletadas em outra máquina (npm run radar:import), para fontes que
+// recusam conexões deste servidor. As páginas passam pelo pipeline normal (radar/replay.js).
+const importSchema = z.object({
+  fonte: z.string().regex(/^[a-z0-9-]{2,60}$/),
+  robots: z.record(z.string().url().max(200), z.string().max(200_000)).optional(),
+  paginas: z.array(z.object({
+    url: z.string().url().max(600),
+    method: z.enum(['GET', 'POST']),
+    body: z.string().max(4000).nullable().optional(),
+    status: z.number().int().min(200).max(399),
+    location: z.string().max(600).optional(),
+    text: z.string().max(3_000_000),
+    coletadoEm: z.string().datetime(),
+  }).strict()).min(1).max(400),
+}).strict();
+router.post('/import', (req, res) => {
+  const parsed = importSchema.safeParse(req.body);
+  if (!parsed.success) return bad(res, parsed);
+  return send(res, async () => {
+    const run = await importCollected(parsed.data.fonte, { paginas: parsed.data.paginas, robots: parsed.data.robots || {} });
+    audit.log({ action: 'radar.import', userId: req.user.id, fonte: parsed.data.fonte, paginas: parsed.data.paginas.length, resultado: run.resultado }).catch(() => {});
+    return { run };
+  });
+});
 
 router.post('/sources', (req, res) => {
   const parsed = z.object({

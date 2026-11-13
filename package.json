@@ -13,7 +13,8 @@
     "check": "node scripts/check-syntax.mjs",
     "db:backup": "node scripts/db-backup.mjs",
     "db:env": "node scripts/db-env.mjs",
-    "storage:backup": "node scripts/storage-backup.mjs"
+    "storage:backup": "node scripts/storage-backup.mjs",
+    "radar:import": "node scripts/radar-import.mjs"
   },
   "engines": {
     "node": ">=20"

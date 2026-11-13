@@ -23,6 +23,7 @@ Runbook curto para colocar a Estuvia no ar. A arquitetura de produção é **Ver
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Conta do painel `#/admin` (senha ≥ 12, letras e números) |
 | `RESEND_API_KEY`, `EMAIL_FROM` | Recuperação de senha. Sem elas, "Esqueci a senha" responde 503 |
 | `MENTOR_PROVIDER=anthropic`, `ANTHROPIC_API_KEY`, `AI_DAILY_TOKENS_PER_USER` | Opcional: Mentor com IA. Sem elas, Modo Guiado |
+| `RADAR_IMPORT_ONLY_HOSTS=www.juntadeandalucia.es` | Fontes do DUA só por importação (ver seção 4) |
 | `CRON_SECRET` | 16+ caracteres. Liga a coleta agendada do Radar (`/api/cron/radar`); o Vercel Cron envia o segredo sozinho |
 | `YOUTUBE_API_KEY`, `TRAVELPAYOUTS_TOKEN` | Opcional e gratuito: vídeos e preços de passagens |
 
@@ -44,10 +45,13 @@ Na Vercel não há processo contínuo, então o atualizador do Radar roda por **
 - **GitHub Actions** (`.github/workflows/radar-cron.yml`): a cada 2 horas, para manter os prazos frescos. Crie os segredos do repositório `ESTUVIA_CRON_URL` (ex.: `https://app.estuvia.com/api/cron/radar`) e `CRON_SECRET` (o mesmo valor da Vercel). Sem eles, o job não faz nada. Em repositório privado, consome cerca de 360 minutos de Actions por mês.
 - **Painel admin → Status** avisa se a coleta agendada parou (mais de 26 h sem rodar).
 
-**Carga inicial** (uma vez, logo após o primeiro deploy), em **Painel admin → Radar** (`#/radar/admin`):
+**DUA (Junta de Andalucía): só por importação.** O site da Junta recusa conexões dos servidores da Vercel (o `robots.txt` falha de lá). Por isso, em produção, `RADAR_IMPORT_ONLY_HOSTS=www.juntadeandalucia.es` tira do agendador as fontes desse site (calendário, BOJA, catálogo e fichas do DUA), e elas são atualizadas a partir de um computador comum:
 
-1. Rode **"Catálogo de másteres do DUA"** (também cria os programas das outras universidades andaluzas).
-2. Rode **"Fichas dos másteres no DUA"** cerca de 11 vezes (10 mestrados por vez, ~36 s cada). Depois disso, a coleta agendada mantém tudo atualizado.
+```bash
+ESTUVIA_URL=https://estuvia-pi.vercel.app ESTUVIA_ADMIN_EMAIL=... ESTUVIA_ADMIN_PASSWORD=... npm run radar:import
+```
+
+O script coleta com o mesmo pipeline do servidor, numa base temporária, respeitando `robots.txt` e 4 s entre requisições (cerca de 30 min, quase tudo nas ~400 fichas). Depois envia só as páginas públicas para `POST /api/radar/admin/import`, onde elas passam pelo pipeline normal: revisões, histórico e validação são os mesmos de uma coleta direta, e a data registrada é a da coleta. Rode-o pelo menos uma vez por semana durante o período de candidaturas. Opções: `--fontes dua-catalogo,dua-fichas`, `--salvar arquivo.json` (só coleta) e `--arquivo arquivo.json` (envia uma coleta salva).
 
 ## 5. Antes de abrir ao público (não técnico)
 

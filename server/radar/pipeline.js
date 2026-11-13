@@ -399,7 +399,11 @@ export function ingest(sourceId, { url, text, fetchedAt = new Date().toISOString
   return { ...result, changed, snapshot, valido };
 }
 
-export async function runSource(sourceId, { fetchImpl, now = Date.now(), origem = null } = {}) {
+/**
+ * Coleta uma fonte. Opções para importação (radar/replay.js): lote (quantos alvos; padrão o da fonte),
+ * onlyTargets (filtra os alvos que têm página) e replay (páginas já baixadas: sem espera entre requisições).
+ */
+export async function runSource(sourceId, { fetchImpl, now = Date.now(), origem = null, lote = null, onlyTargets = null, replay = false } = {}) {
   ensureSources();
   const source = sourceById(sourceId);
   if (!source) throw new Error(`Fonte desconhecida: ${sourceId}`);
@@ -419,12 +423,12 @@ export async function runSource(sourceId, { fetchImpl, now = Date.now(), origem 
   const targets = source.conector === 'ugr-program'
     ? data().programs.filter((p) => p.fichaUrl && !p.ausenteNoCatalogo)
       .sort((a, b) => (a.ficha?.verificadaEm || '').localeCompare(b.ficha?.verificadaEm || ''))
-      .slice(0, source.lote || 10)
+      .slice(0, lote ?? (source.lote || 10))
       .map((p) => ({ url: p.fichaUrl, programId: p.id }))
     : source.conector === 'dua-program'
       ? data().programs.filter((p) => p.duaCodigo && !p.ausenteNoCatalogo)
         .sort((a, b) => (a.fichaDua?.verificadaEm || '').localeCompare(b.fichaDua?.verificadaEm || ''))
-        .slice(0, source.lote || 8)
+        .slice(0, lote ?? (source.lote || 8))
         .map((p) => ({ url: source.url, method: 'POST', body: new URLSearchParams({ c_peticion: p.duaCodigo }), programId: p.id, snapshotKey: `${source.id}:${p.id}` }))
     : source.conector === 'dua-catalog'
       // Uma universidade custa 3 consultas (uma por fase) de ~1 MB. Em lotes, a coleta cabe no limite
@@ -435,7 +439,7 @@ export async function runSource(sourceId, { fetchImpl, now = Date.now(), origem 
         return { u, ultima: data().snapshots.filter((s) => s.sourceId === source.id && s.chave === `${source.id}:${u.id}`).at(-1)?.ultimaConfirmacao || '', semVinculo: own.length > 0 && !own.some((p) => p.duaCodigo) };
       })
         .sort((a, b) => Number(b.semVinculo) - Number(a.semVinculo) || a.ultima.localeCompare(b.ultima))
-        .slice(0, source.lote || duaCatalog.UNIVERSITIES.length)
+        .slice(0, lote ?? (source.lote || duaCatalog.UNIVERSITIES.length))
         .map(({ u }) => u)
         .map((u) => ({
         url: new URL('mo_catalogo.php', source.url).href,
@@ -449,12 +453,21 @@ export async function runSource(sourceId, { fetchImpl, now = Date.now(), origem 
         })),
       }))
     : [{ url: source.url, programId: null }];
+  const selected = onlyTargets ? targets.filter(onlyTargets) : targets;
+  if (onlyTargets && !selected.length) {
+    // Importação sem nenhuma página de um alvo desta fonte: não conta como verificação nem como falha.
+    run.resultado = 'ignorada';
+    run.erro = 'Nenhuma das páginas enviadas corresponde a um alvo atual desta fonte.';
+    run.fim = new Date().toISOString();
+    await save();
+    return run;
+  }
 
   const allRevisions = [];
   let failed = null;
   let verified = 0; // páginas cujo conteúdo foi confirmado (extração válida ou 304 sobre extração válida)
   source.validadores ??= {};
-  for (const t of targets) {
+  for (const t of selected) {
     try {
       const targetKey = t.snapshotKey || t.url;
       if (t.queries) {
@@ -462,7 +475,7 @@ export async function runSource(sourceId, { fetchImpl, now = Date.now(), origem 
         let targetFailure = null;
         for (const query of t.queries) {
           try {
-            const page = await politeFetch(t.url, { fetchImpl, allowedHosts: COLLECTION_HOSTS, method: query.method, body: query.body });
+            const page = await politeFetch(t.url, { fetchImpl, allowedHosts: COLLECTION_HOSTS, method: query.method, body: query.body, replay });
             const parsed = duaCatalog.parse(page.text, t.parseContext);
             pages.push({ page, parsed });
             run.itens += 1;
@@ -488,7 +501,7 @@ export async function runSource(sourceId, { fetchImpl, now = Date.now(), origem 
         if (!complete && !targetFailure) failed ||= new Error(`Uma ou mais respostas do catálogo DUA de ${t.parseContext.universidadeId} não puderam ser confirmadas.`);
         continue;
       }
-      const page = await politeFetch(t.url, { fetchImpl, validadores: t.method === 'POST' ? null : source.validadores[targetKey], allowedHosts: COLLECTION_HOSTS, method: t.method || 'GET', body: t.body });
+      const page = await politeFetch(t.url, { fetchImpl, validadores: t.method === 'POST' || replay ? null : source.validadores[targetKey], allowedHosts: COLLECTION_HOSTS, method: t.method || 'GET', body: t.body, replay });
       if (page.naoModificada) {
         // 304: a página não mudou desde a última coleta. Só há validadores guardados quando aquela
         // coleta foi extraída com sucesso, então isto conta como verificação bem-sucedida.
@@ -553,7 +566,11 @@ export async function runSource(sourceId, { fetchImpl, now = Date.now(), origem 
 }
 
 /** Fontes com verificação vencida. */
-export const dueSources = (now = Date.now()) => data().sources.filter((s) => s.metodo === 'html-publico' && s.ativa && !s.indisponivelManual && (!s.proximaVerificacao || Date.parse(s.proximaVerificacao) <= now));
+// RADAR_IMPORT_ONLY_HOSTS: hosts que este servidor não alcança (ex.: a Junta de Andalucía bloqueia IPs da Vercel).
+// As fontes deles só são atualizadas por importação (npm run radar:import); o agendador não as tenta.
+const importOnlyHosts = () => (process.env.RADAR_IMPORT_ONLY_HOSTS || '').split(',').map((h) => h.trim().toLowerCase()).filter(Boolean);
+export const importOnly = (s) => { try { return importOnlyHosts().includes(new URL(s.url).hostname.toLowerCase()); } catch { return false; } };
+export const dueSources = (now = Date.now()) => data().sources.filter((s) => s.metodo === 'html-publico' && s.ativa && !s.indisponivelManual && !importOnly(s) && (!s.proximaVerificacao || Date.parse(s.proximaVerificacao) <= now));
 
 // ---------- Aprovação de revisões ----------
 

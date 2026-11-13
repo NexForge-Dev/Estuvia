@@ -27,7 +27,7 @@ async function throttle(host) {
   lastHit.set(host, Date.now());
 }
 
-function decode(buffer, contentType) {
+export function decode(buffer, contentType) {
   let charset = /charset=([\w-]+)/i.exec(contentType || '')?.[1];
   if (!charset) {
     const head = new TextDecoder('latin1').decode(buffer.slice(0, 2048));
@@ -116,7 +116,9 @@ function checkTarget(u, allowedHosts) {
  * Com "validadores" (ETag / Last-Modified da coleta anterior) faz uma requisição condicional:
  * se a página não mudou, o servidor responde 304 e devolvemos { naoModificada: true } sem baixar o conteúdo.
  */
-export async function politeFetch(url, { fetchImpl = fetch, validadores = null, allowedHosts = null, maxBytes = MAX_BYTES, method = 'GET', body = null } = {}) {
+// replay: páginas já coletadas por outra máquina (importação, ver radar/replay.js). Sem espera entre
+// requisições (nada sai para a rede) e com a data real da coleta, que vem no cabeçalho x-estuvia-coletado-em.
+export async function politeFetch(url, { fetchImpl = fetch, validadores = null, allowedHosts = null, maxBytes = MAX_BYTES, method = 'GET', body = null, replay = false } = {}) {
   let u = new URL(url);
   const verb = String(method || 'GET').toUpperCase();
   if (!['GET', 'POST'].includes(verb)) throw new FetchError(`Método ${verb} não permitido.`, { blocked: true });
@@ -131,7 +133,7 @@ export async function politeFetch(url, { fetchImpl = fetch, validadores = null, 
     const robots = await robotsFor(u.origin, fetchImpl);
     if (robots === null) throw new FetchError(`robots.txt de ${u.host} inacessível: coleta adiada (RFC 9309).`);
     if (!robotsAllows(robots, u.href)) throw new FetchError('robots.txt não permite a coleta desta página.', { blocked: true });
-    await throttle(u.host);
+    if (!replay) await throttle(u.host);
     try {
       res = await fetchImpl(u.href, {
         method: verb,
@@ -162,7 +164,8 @@ export async function politeFetch(url, { fetchImpl = fetch, validadores = null, 
   if (!res.ok) throw new FetchError(`HTTP ${res.status}`, { status: res.status });
   const contentType = res.headers.get('content-type') || '';
   const text = decode(await readLimited(res, maxBytes), contentType);
-  return { url: u.href, status: res.status, text, contentType, fetchedAt: new Date().toISOString(), etag, lastModified };
+  const collectedAt = replay ? Date.parse(res.headers.get('x-estuvia-coletado-em') || '') : NaN;
+  return { url: u.href, status: res.status, text, contentType, fetchedAt: Number.isFinite(collectedAt) ? new Date(collectedAt).toISOString() : new Date().toISOString(), etag, lastModified };
 }
 
 // ---------- HTML → texto (sem dependências) ----------
