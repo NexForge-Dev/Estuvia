@@ -1,6 +1,6 @@
 # Estuvia — Documentação completa
 
-> Documento único gerado por `node scripts/build-docs.mjs` a partir do `README.md` e de `docs/*.md` em 2026-11-11. Para alterar, edite os arquivos de origem e gere de novo.
+> Documento único gerado por `node scripts/build-docs.mjs` a partir do `README.md` e de `docs/*.md` em 2026-11-13. Para alterar, edite os arquivos de origem e gere de novo.
 
 ## Índice
 
@@ -34,6 +34,7 @@
   - [04 — Segurança e privacidade](#doc-04)
   - [25 — Production readiness (audit of 2026-11-09)](#doc-25)
   - [28 — Ambientes DEV × PROD](#doc-28)
+  - [29 — Banco de dados (tabelas por entidade)](#doc-29)
   - [Auditoria de lançamento — Estuvia](#doc-26)
 - [Parte 5 — Apresentação e próximos passos](#parte-5)
   - [09 — Roteiro de apresentação (≈10 min)](#doc-09)
@@ -1710,7 +1711,7 @@ public/css/radar.css
 tests/radar.test.js
 ```
 
-Com `DB_PROVIDER=supabase`, o estado do Radar (`sources`, `snapshots`, `programs`, `opportunities`, `windows`, `events` etc.) é persistido na linha `radar` de `public.estuvia_state`. Os snapshots HTML brutos continuam em `data/radar-snapshots/`.
+Com `DB_PROVIDER=supabase`, o estado do Radar (`sources`, `snapshots`, `programs`, `opportunities`, `windows`, `events` etc.) é persistido nas tabelas `radar_*` (uma por coleção; ver `docs/29-banco-de-dados.md`). Os snapshots HTML brutos continuam em `data/radar-snapshots/`.
 
 #### Fontes monitoradas
 
@@ -1720,10 +1721,38 @@ Com `DB_PROVIDER=supabase`, o estado do Radar (`sources`, `snapshots`, `programs
 | Listado de másteres UGR | HTML público | 24 h | catálogo |
 | Fichas dos másteres UGR | HTML público, 12 por execução | 2 h (≈ todas por dia) | dados do programa |
 | BOJA | revisão manual (buscador bloqueado por robots.txt) | — | normativa (prioridade máxima) |
-| Catálogo DUA (`mo_catalogo.php`) | HTML público, consulta POST por universidade e fase | 24 h | oferta DUA |
+| Catálogo DUA (`mo_catalogo.php`) | HTML público, consulta POST por universidade e fase, 2 universidades por execução | 3 h (≈ todas a cada 15 h) | oferta DUA; vínculo do código DUA |
+| Fichas dos másteres no DUA (`mo_catalogo_ficha.php`) | HTML público, POST com o código DUA, 10 por execução | 2 h (≈ todas por dia) | critérios de seleção, requisitos, idioma exigido, graduações de acesso |
 | Portal DUA, SAAP UGR | revisão manual | — | canal / orientação |
 
-As frequências são metas configuráveis, não garantia de atualização instantânea. Falhas usam recuo exponencial (15 min → até a frequência da fonte). O catálogo DUA atualiza a listagem e os links oficiais das fichas; ainda não coleta automaticamente o conteúdo interno de cada ficha. A base local consultada nesta preparação contém apenas os 138 registros UGR: as últimas execuções do DUA falharam antes de publicar os catálogos das demais instituições. A execução seguinte, após esta correção, precisa ser conferida no painel do Radar.
+As frequências são metas configuráveis, não garantia de atualização instantânea. Falhas usam recuo exponencial (15 min → até a frequência da fonte). As execuções são dimensionadas para caber numa função serverless de 60 s (medido: catálogo ≈ 22 s por lote de 2 universidades; fichas ≈ 3,6 s cada).
+
+##### Ficha do máster no DUA (critérios e requisitos)
+
+A ficha que o portal do DUA abre no botão "Ver ficha" é a fonte mais completa e padronizada para as dez universidades públicas andaluzas. O conector `connectors/dua-program.js` extrai:
+
+- **Critérios e pesos** ("CRITERIOS Y BAREMO"): ex.: nota média 40 %, currículo 30 %, entrevista 20 %, idiomas 10 %. "Somente nota do expediente" quando a ficha diz que não há outros critérios.
+- **Requisitos adicionais**, com a marcação oficial de obrigatório (vermelho = "de obligado cumplimiento").
+- **Idioma exigido**, *derivado* do texto dos requisitos (idioma + nível do QECR mais próximo da menção). Sempre exibido com a frase oficial. Requisito não obrigatório só conta se o texto exigir algo ("se requerirá", "será necesario"); regras de preferência e menções como "título español" são ignoradas.
+- **Graduações de acesso** por preferência (alta/média/baixa), condicionadas a requisito e demais aceitas, inclusive as linhas genéricas "titulación equivalente a…", que costumam enquadrar o diploma estrangeiro.
+- Início e fim do curso, centro.
+
+Vagas e preço não constam da ficha. Ficha devolvida em branco (código inexistente) vai para revisão e nunca vira "sem requisitos".
+
+**Vínculo UGR ↔ DUA.** A UGR tem catálogo próprio (fonte principal da lista de másteres); o catálogo do DUA usa outros códigos. Ao coletar o catálogo DUA de uma universidade com catálogo próprio, o pipeline **não cria cópias** `dua-*`: grava `duaCodigo` no programa existente, casando pela web própria do máster (presente nos dois catálogos) e, na falta dela, pelo nome normalizado. Só vínculos únicos nos dois sentidos são aceitos; os demais vão para uma revisão `vinculo-dua`. Medido em 12/11/2026: 111 de 138 másteres UGR vinculados (os restantes são duplos, Erasmus Mundus, sedes de Ceuta/Melilla e títulos fora do DUA). Universidades sem catálogo próprio recebem os programas `dua-<código>` diretamente.
+
+Os dados chegam à interface em três lugares: painel **Como funciona a seleção** no detalhe do Radar; filtro **Meu nível de espanhol** (sem ficha DUA, o máster fica fora do filtro: não presumimos "não exige"); e `programForJourney` (`idioma` no formato do catálogo, `outrosIdiomas`, `criterios`), que alimenta a elegibilidade (missão 1.4), a aplicabilidade da missão 2.5 e as dicas.
+
+**Em produção (a Vercel não roda o agendador):** no painel do Radar, rode "Catálogo de másteres do DUA" uma vez (a UGR vai primeiro enquanto não tiver vínculo) e depois "Fichas dos másteres no DUA" até cobrir os ~111 programas (≈ 11 execuções de 10).
+
+##### Nota média na escala espanhola
+
+Muitos másteres selecionam só ou principalmente pela nota média. O procedimento oficial do DUA para título estrangeiro (fonte O1) converte a média com a fórmula do art. 7: **Ce = 5 + 5 × (Co − Cm) / (CM − Cm)** (Co = média de origem; Cm = mínima para aprovação; CM = máxima da escala). Pelo art. 4, sem o histórico com a média final ou sem o certificado da escala, vale a mínima aprovatória (5). A convocatória também aceita a declaração de equivalência do Ministério, que segue outra metodologia.
+
+- `public/js/data/grade.js` (módulo puro, usado no navegador e no servidor): `duaGrade`, `profileGrade`, `usesGrade` (critério do baremo que usa a nota) e `fmtNota`. A mínima para aprovação é sempre informada pelo estudante, porque muda de uma universidade para outra.
+- Perfil: `notaMedia`, `notaMaxima` e `notaMinima` (os três juntos; o servidor recusa média fora da escala).
+- Interface: calculadora em **Meu perfil** e na ferramenta da Missão 2.3; linha "Sua média na escala espanhola" no painel de seleção do Radar; item "Nota média na escala espanhola" na elegibilidade (missão 1.4), só quando o baremo da ficha usa a nota, com o peso do critério; contexto do Mentor.
+- O valor é uma estimativa do estudante: a nota oficial é calculada pela universidade.
 
 #### Regras de publicação
 
@@ -1746,7 +1775,7 @@ Vagas ofertadas nunca significam vagas disponíveis, e a mudança de estado da o
 |---|---|
 | `sources` (SourceRegistry) | url, instituição, tipo, prioridade, método, frequência, última consulta, última verificação ok, estado, falhas seguidas |
 | `snapshots` (SourceSnapshot) | fonte, chave, versão, data da coleta, hash do conteúdo extraído, hash bruto, referência ao HTML salvo |
-| `programs` | programa oficial + `ficha` conferida |
+| `programs` | programa oficial + `ficha` conferida (UGR) + `duaCodigo` e `fichaDua` (critérios, requisitos, idioma, graduações) |
 | `opportunities` (Opportunity) | `programId--AAAA-AAAA`, universidade, tipo, ano acadêmico, procedimento, URL oficial, suspensão |
 | `windows` (AdmissionWindow) | `dua-masteres:2026/2027:F1`, abertura, encerramento, fuso, confirmação, texto original |
 | `events` (AdmissionEvent) | adjudicação, reclamação, confirmação/matrícula/reserva, resultas, taxa de título |
@@ -1799,8 +1828,9 @@ Ligados (verificados ponta a ponta em 24/10/2026):
 
 ### Limitações conhecidas
 
-- Idioma de ensino, nível exigido, preço e vagas **não constam** das fichas da UGR: os filtros correspondentes avisam isso em vez de inventar.
-- O catálogo do DUA e o BOJA ainda não têm coleta automática (formulário dinâmico / buscador bloqueado por robots.txt); entram por revisão manual.
+- Idioma **de ensino**, preço e vagas não constam das fichas (UGR nem DUA): os filtros correspondentes avisam isso em vez de inventar. O nível **exigido** vem da ficha DUA.
+- 27 másteres UGR sem vínculo único com o DUA ficam sem ficha de critérios (revisão `vinculo-dua`).
+- O BOJA não tem coleta automática (buscador bloqueado por robots.txt); entra por revisão manual.
 - Notificações apenas na plataforma (sem e-mail).
 - Bolsas: o indicador lê `server/content/scholarships.js`; hoje nenhuma tem edital aberto confirmado, então o número é 0.
 
@@ -2067,10 +2097,10 @@ Express (server/app.js)
 
 ### Modelo de dados (como está gravado hoje)
 
-O adaptador Supabase preserva o formato atual do MVP em duas linhas da tabela `estuvia_state`: `main` contém usuários, comunidade, auditoria e analytics; `radar` contém fontes, programas, oportunidades, janelas e alertas. Cada gravação usa uma versão esperada para detectar concorrência e evitar sobrescrita silenciosa. A estrutura normalizada continua sendo uma etapa futura.
+No Supabase, cada entidade tem a sua tabela (`users`, `community_*`, `audit_log`, `analytics`, `estuvia_meta`, `radar_*`; migration `0002_entidades.sql`). O servidor continua trabalhando com as coleções em memória e `server/entities.js` grava só as linhas que mudaram, numa transação, com versão otimista por linha; antes de cada requisição traz o que outras instâncias gravaram. Detalhes em `docs/29-banco-de-dados.md`.
 
 ```jsonc
-// data/db.json ou public.estuvia_state (id = "main")
+// data/db.json ou as tabelas de entidades no Supabase (docs/29-banco-de-dados.md)
 {
   "users": [{
     "id": "uuid",
@@ -2142,7 +2172,7 @@ Base `/api`, JSON. Erros: `{ "error": "mensagem" }`. Escritas exigem o cabeçalh
 `POST /auth/register {nome,email,senha,aceite}` · `POST /auth/login` · `POST /auth/logout` · `POST /auth/logout-all` · `POST /auth/change-password {atual,nova}`
 
 ### Perfil e documentos
-`GET /me` · `PUT /me/profile` (campos estritos; `espanhol`/`ingles` aceitam `nao-sei`; `orcamentoSituacao: informado|nao-sei`) · `POST /me/onboarding/complete` (confere o essencial no servidor e só então marca `onboardingConcluido`; 422 com `faltam[]`; idempotente) · `PUT /me/choices {choices}` (≤6) · `PUT /me/documents {id: pendente|em-preparacao|pronto|enviado|correcao|nao-se-aplica}` · `GET /me/export` · `DELETE /me {senha}`
+`GET /me` · `PUT /me/profile` (campos estritos; `espanhol`/`ingles` aceitam `nao-sei`; `orcamentoSituacao: informado|nao-sei`; `notaMedia`/`notaMaxima`/`notaMinima` andam juntos, `null` nos três apaga, e a média tem de ficar entre a mínima e a máxima) · `POST /me/onboarding/complete` (confere o essencial no servidor e só então marca `onboardingConcluido`; 422 com `faltam[]`; idempotente) · `PUT /me/choices {choices}` (≤6) · `PUT /me/documents {id: pendente|em-preparacao|pronto|enviado|correcao|nao-se-aplica}` · `GET /me/export` · `DELETE /me {senha}`
 
 ### Jornadas
 | Método | Rota | Descrição |
@@ -2333,16 +2363,18 @@ Roles come only from the server-side `role` field: `admin` (only the `ADMIN_EMAI
 
 ## 28 — Ambientes DEV × PROD
 
-**Situação em 11/11/2026:** produção **ainda não está separada**. O `.env` local usa `DB_PROVIDER=supabase` apontando para o projeto `pomtzhzoxwwnxztwwmft`, e a linha `main` desse projeto recebia gravações durante a auditoria (versão 372 → 374 em minutos). Não foi possível verificar daqui quais variáveis a Vercel usa (não há Vercel CLI nesta máquina), mas tudo indica que desenvolvimento e o ambiente publicado compartilham o mesmo banco.
+**Situação em 13/11/2026:** produção **separada**. A Vercel usa o projeto `trdpcjvyfieumxakhwop` (eu-west-1), marcado como `production`, já com uma tabela por entidade. O projeto antigo `pomtzhzoxwwnxztwwmft` não existe mais (só restou o backup do banco de 11/11, sem o Storage). O desenvolvimento local usa `DB_PROVIDER=json`. As seções abaixo registram como a separação foi feita; o passo a passo de lançamento está em `LANCAMENTO.md`.
+
+_Situação anterior (11/11/2026, mantida como histórico):_ produção **ainda não está separada**. O `.env` local usa `DB_PROVIDER=supabase` apontando para o projeto `pomtzhzoxwwnxztwwmft`, e a linha `main` desse projeto recebia gravações durante a auditoria (versão 372 → 374 em minutos). Não foi possível verificar daqui quais variáveis a Vercel usa (não há Vercel CLI nesta máquina), mas tudo indica que desenvolvimento e o ambiente publicado compartilham o mesmo banco.
 
 Decisão: o projeto atual (`pomtzhzoxwwnxztwwmft`) passa a ser **só de desenvolvimento**. Produção ganha um projeto Supabase **novo e vazio**.
 
 ### 1. Arquitetura de persistência
 
 - `server/store.js` (usuários, auditoria, comunidade, uso) e `server/radar/db.js` (Radar): estado JSON em memória, gravado inteiro a cada escrita.
-- `DB_PROVIDER=json`: arquivos em `data/` (`db.json`, `radar.json`). `DB_PROVIDER=supabase`: tabela `estuvia_state`, uma linha por domínio (`main`, `radar`), com controle otimista de versão (`server/database.js`).
+- `DB_PROVIDER=json`: arquivos em `data/` (`db.json`, `radar.json`). `DB_PROVIDER=supabase`: uma tabela por entidade, com versão otimista por linha (`supabase/migrations/0002_entidades.sql`, `server/entities.js`; ver `docs/29-banco-de-dados.md`). A marcação de ambiente fica em `estuvia_meta`.
 - Arquivos (documentos cifrados, imagens da comunidade, regras editoriais): disco local ou Supabase Storage (buckets privados `estuvia-documents`, `estuvia-community`, `estuvia-meta`, criados pelo servidor).
-- Autenticação é própria (JWT em cookie), não usa Supabase Auth. O banco só é acessado pelo servidor com a chave **secret**; RLS ligada e nenhum acesso para `anon`/`authenticated` (`supabase/migrations/0001_estuvia_state.sql`).
+- Autenticação é própria (JWT em cookie), não usa Supabase Auth. O banco só é acessado pelo servidor com a chave **secret**; RLS ligada e nenhum acesso para `anon`/`authenticated` (`supabase/migrations/`).
 - `npm test` sempre roda com JSON em pasta temporária e sem `.env` (`scripts/test.mjs`): os testes nunca tocam um banco real.
 
 ### 2. Barreiras implementadas
@@ -2359,7 +2391,7 @@ Testes: `tests/db-environments.test.js`.
 ### 3. Ferramentas
 
 ```bash
-npm run db:backup                         # backup SOMENTE LEITURA de estuvia_state → data/backups/ (fora do git)
+npm run db:backup                         # backup SOMENTE LEITURA de todas as tabelas → data/backups/ (fora do git)
 npm run db:env -- status                  # projeto, ambiente marcado, nº de usuários
 npm run db:env -- mark development --confirmo
 ```
@@ -2374,7 +2406,7 @@ Nada abaixo foi feito ainda: depende de acesso aos painéis do Supabase e da Ver
 
 1. **Backup do Storage do projeto atual** (documentos cifrados e imagens): Supabase → Storage → baixar os buckets `estuvia-documents`, `estuvia-community`, `estuvia-meta`, ou usar a CLI do Supabase. Os documentos só abrem com a `DOCUMENTS_KEY` do ambiente que os cifrou.
 2. **Criar o projeto de produção** no Supabase (região próxima dos usuários, ex.: São Paulo). Anotar a referência `<ref>`.
-3. No **SQL Editor do projeto novo**, aplicar `supabase/migrations/0001_estuvia_state.sql`.
+3. No **SQL Editor do projeto novo**, aplicar, em ordem, `supabase/migrations/0001_estuvia_state.sql` e `0002_entidades.sql`.
 4. Em *Project Settings → API keys*, criar uma chave **secret** só para produção. Nunca reutilizar a de desenvolvimento.
 5. Na **Vercel → Settings → Environment Variables**, escopo **Production**:
    - `NODE_ENV=production`, `APP_ENV=production`, `DB_PROVIDER=supabase`, `STORAGE_PROVIDER=supabase`
@@ -2392,6 +2424,89 @@ Nada abaixo foi feito ainda: depende de acesso aos painéis do Supabase e da Ver
 **Dados existentes:** os 7 usuários do banco atual **não** foram copiados para produção. Migrar contas reais exige decisão e autorização (LGPD: finalidade, consentimento, aviso aos titulares). Se for decidido migrar, faça a partir do backup, de forma seletiva, e registre o procedimento.
 
 **Ordem importa:** marcar o banco atual como `development` antes de mover a produção derrubaria a produção atual na próxima reinicialização com o código novo (o servidor recusaria abrir o banco). Por isso o passo 8 vem por último.
+
+<a id="doc-29"></a>
+
+## 29 — Banco de dados (tabelas por entidade)
+
+Com `DB_PROVIDER=supabase`, cada entidade do Estuvia tem a sua tabela no Supabase
+(`supabase/migrations/0002_entidades.sql`). Com `DB_PROVIDER=json` (desenvolvimento e testes), nada muda:
+continuam os arquivos `data/db.json` e `data/radar.json`.
+
+### Modelo
+
+Toda tabela tem as mesmas colunas de controle, mais colunas tipadas da própria entidade:
+
+| Coluna | Para quê |
+| --- | --- |
+| `id` | chave primária (o `id` do objeto no app) |
+| colunas tipadas | campos consultados, filtrados ou únicos (e-mail, dono, datas, status) |
+| `data` (jsonb) | o objeto completo, exatamente como o servidor usa (fonte de verdade) |
+| `version` | versão otimista da linha; gravação sobre versão velha é recusada |
+| `seq`, `txid`, `ins_seq` | ordem das mudanças, leitura incremental entre instâncias e ordem de inserção |
+| `updated_at` | última gravação (preenchido pelo banco) |
+
+Esse modelo é **híbrido** de propósito: estruturas que só o próprio app lê (jornadas, finanças, viagem,
+moradia, documentos do usuário) ficam no `data` do usuário, sem precisar remodelar dezenas de estruturas.
+O que precisa de integridade ou consulta virou coluna.
+
+#### Tabelas
+
+| Tabela | Entidade | Colunas tipadas principais |
+| --- | --- | --- |
+| `users` | estudante / admin | `email` (único), `role`, `blocked`, `token_version`, `onboarding_concluido`, `created_at`, `consent_at`, `last_seen_at` |
+| `community_posts` | post da comunidade | `autor_id` → users, `grupo_id`, `tipo`, `categoria`, `estado_moderacao`, `criado_em` |
+| `community_comments` | comentário | `post_id` → posts, `autor_id` → users |
+| `community_groups` | grupo | `nome`, `tipo`, `universidade_id`, `oficial` |
+| `community_reports` | denúncia | `alvo`, `alvo_id`, `autor_id` → users (vira null), `status` |
+| `community_media` | imagem enviada | `owner_id` → users, `post_id`, `mime`, `tamanho` |
+| `audit_log` | registro de segurança | `at`, `action`, `user_id` (sem chave estrangeira: sobrevive à exclusão da conta) |
+| `analytics` | uso dos módulos | `id = day:AAAA-MM-DD` com `dia`, ou uma linha por contador avulso (ex.: `ai`) |
+| `estuvia_meta` | metadados do banco | linha `main` com `ambiente` (marcação DEV × PROD) |
+| `radar_sources` | fonte monitorada | `titulo`, `instituicao`, `url`, `metodo`, `estado`, `ativa`, `ultima_consulta` |
+| `radar_snapshots` | coleta de uma fonte | `source_id`, `chave`, `versao`, `hash`, `coletado_em` |
+| `radar_programs` | programa (máster) | `universidade_id`, `nome`, `codigo`, `tipo_titulo`, `verificado_em` |
+| `radar_opportunities` | programa × ano | `program_id`, `universidade_id`, `ano_academico`, `procedimento_id` |
+| `radar_windows` | janela de candidatura | `procedimento_id`, `ano_academico`, `fase`, `abertura`, `encerramento` |
+| `radar_events` | evento do calendário | `procedimento_id`, `fase`, `tipo`, `inicio`, `fim` |
+| `radar_availability` | vagas | `opportunity_id` |
+| `radar_revisions` | histórico campo a campo | `entidade`, `entidade_id`, `campo`, `em` |
+| `radar_reviews` | fila de revisão | `tipo`, `source_id`, `status` |
+| `radar_runs` | execução do atualizador | `source_id`, `inicio`, `fim`, `resultado` |
+| `radar_subscriptions` | inscrição do estudante | `user_id` → users, `opportunity_id`, `ativa` |
+| `radar_alerts` | alerta enviado | `user_id` → users, `subscription_id`, `opportunity_id` |
+| `radar_agenda_links` | vínculo agenda × prazo oficial | `user_id` → users, `planner_event_id`, `opportunity_id` |
+| `estuvia_deleted` | exclusões | `tbl`, `row_id` (para as outras instâncias removerem da memória) |
+
+As chaves estrangeiras com `on delete cascade` são uma rede de segurança: a exclusão de conta
+(`DELETE /api/me`) já apaga posts, comentários, imagens, inscrições e alertas antes do usuário.
+
+### Como o servidor usa
+
+O código das rotas não mudou: continua usando `users`, `community`, `audit`, `analytics` (`server/store.js`)
+e `data()`/`save()` do Radar (`server/radar/db.js`), com as coleções em memória.
+
+- **Gravar** (`server/entities.js`): a cada gravação, cada item é comparado (JSON com chaves ordenadas) com a
+  última versão salva; só inserções, atualizações e exclusões reais vão para `estuvia_apply`, numa transação.
+  Conflito de versão desfaz o lote inteiro no banco **e na memória**, e quem chamou recebe erro.
+- **Sincronizar**: antes de cada requisição `/api`, `estuvia_changes` devolve o que outras instâncias
+  gravaram desde a última leitura (por `txid` + xmin do snapshot, para não perder transações que
+  confirmaram atrasadas). Resolve o caso da Vercel, com várias instâncias em paralelo.
+- **Subir**: a primeira instância com as tabelas vazias importa o conteúdo de `estuvia_state` (só leitura;
+  a linha antiga fica como cópia de segurança). Sem linha antiga, em desenvolvimento copia a base JSON local.
+  A barreira DEV × PROD é conferida antes de qualquer gravação.
+
+### Aplicar num projeto
+
+1. `npm run db:backup` (cópia somente leitura de tudo).
+2. SQL Editor do projeto: colar e rodar `supabase/migrations/0002_entidades.sql` (idempotente, não apaga nada).
+3. Publicar o código. Sem a `0002`, o servidor recusa subir e diz qual arquivo aplicar.
+
+### Testes
+
+`tests/entities-supabase.test.js` roda as funções SQL num Postgres real em memória (PGlite) e simula duas
+instâncias: importação, ida e volta idêntica, conta criada numa instância visível na outra, conflito de versão,
+e-mail duplicado, exclusões, ordem das listas, Radar e a barreira DEV × PROD.
 
 <a id="doc-26"></a>
 

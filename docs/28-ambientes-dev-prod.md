@@ -1,6 +1,8 @@
 # 28 — Ambientes DEV × PROD
 
-**Situação em 11/11/2026:** produção **ainda não está separada**. O `.env` local usa `DB_PROVIDER=supabase` apontando para o projeto `pomtzhzoxwwnxztwwmft`, e a linha `main` desse projeto recebia gravações durante a auditoria (versão 372 → 374 em minutos). Não foi possível verificar daqui quais variáveis a Vercel usa (não há Vercel CLI nesta máquina), mas tudo indica que desenvolvimento e o ambiente publicado compartilham o mesmo banco.
+**Situação em 13/11/2026:** produção **separada**. A Vercel usa o projeto `trdpcjvyfieumxakhwop` (eu-west-1), marcado como `production`, já com uma tabela por entidade. O projeto antigo `pomtzhzoxwwnxztwwmft` não existe mais (só restou o backup do banco de 11/11, sem o Storage). O desenvolvimento local usa `DB_PROVIDER=json`. As seções abaixo registram como a separação foi feita; o passo a passo de lançamento está em `LANCAMENTO.md`.
+
+_Situação anterior (11/11/2026, mantida como histórico):_ produção **ainda não está separada**. O `.env` local usa `DB_PROVIDER=supabase` apontando para o projeto `pomtzhzoxwwnxztwwmft`, e a linha `main` desse projeto recebia gravações durante a auditoria (versão 372 → 374 em minutos). Não foi possível verificar daqui quais variáveis a Vercel usa (não há Vercel CLI nesta máquina), mas tudo indica que desenvolvimento e o ambiente publicado compartilham o mesmo banco.
 
 Decisão: o projeto atual (`pomtzhzoxwwnxztwwmft`) passa a ser **só de desenvolvimento**. Produção ganha um projeto Supabase **novo e vazio**.
 

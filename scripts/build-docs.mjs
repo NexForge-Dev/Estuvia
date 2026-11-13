@@ -14,7 +14,7 @@ const PARTS = [
   { titulo: 'Para o estudante', docs: ['23', '08'] },
   { titulo: 'Produto e jornada', docs: ['01', '02', '13', '27', '14', '06'] },
   { titulo: 'Módulos', docs: ['15', '07', '16', '19', '20', '21', '17', '18', '11', '24', '12'] },
-  { titulo: 'Técnico', docs: ['22', '03', '05', '04', '25', '28', '26'] },
+  { titulo: 'Técnico', docs: ['22', '03', '05', '04', '25', '28', '29', '26'] },
   { titulo: 'Apresentação e próximos passos', docs: ['09', '10'] },
 ];
 
