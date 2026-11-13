@@ -23,6 +23,7 @@ Runbook curto para colocar a Estuvia no ar. A arquitetura de produção é **Ver
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Conta do painel `#/admin` (senha ≥ 12, letras e números) |
 | `RESEND_API_KEY`, `EMAIL_FROM` | Recuperação de senha. Sem elas, "Esqueci a senha" responde 503 |
 | `MENTOR_PROVIDER=anthropic`, `ANTHROPIC_API_KEY`, `AI_DAILY_TOKENS_PER_USER` | Opcional: Mentor com IA. Sem elas, Modo Guiado |
+| `CRON_SECRET` | 16+ caracteres. Liga a coleta agendada do Radar (`/api/cron/radar`); o Vercel Cron envia o segredo sozinho |
 | `YOUTUBE_API_KEY`, `TRAVELPAYOUTS_TOKEN` | Opcional e gratuito: vídeos e preços de passagens |
 
 A lista completa, com comentários, está em `.env.example`. No escopo **Preview**, não deixe nenhuma credencial de produção. Variável nova só vale depois de um **Redeploy**.
@@ -37,11 +38,16 @@ Gerar segredos: `node -e "console.log(require('crypto').randomBytes(48).toString
 
 ## 4. Dados do Radar em produção
 
-A Vercel não roda o atualizador automático do Radar (`server/radar/scheduler.js`). Depois do primeiro deploy, como admin, em **Painel admin → Radar** (`#/radar/admin`):
+Na Vercel não há processo contínuo, então o atualizador do Radar roda por **coleta agendada**: `GET /api/cron/radar`, protegido por `CRON_SECRET`. Cada chamada roda as fontes vencidas, a mais atrasada primeiro, em até ~45 s.
 
-1. Rode **"Catálogo de másteres do DUA"** uma vez (também cria os programas das outras universidades andaluzas).
-2. Rode **"Fichas dos másteres no DUA"** cerca de 11 vezes (10 mestrados por vez, ~36 s cada).
-3. Repita periodicamente até existir uma rotina agendada (ver `docs/11-radar.md`).
+- **Vercel Cron** (`vercel.json`): uma vez por dia, às 05:00 UTC. Funciona em qualquer plano; basta existir `CRON_SECRET` nas variáveis.
+- **GitHub Actions** (`.github/workflows/radar-cron.yml`): a cada 2 horas, para manter os prazos frescos. Crie os segredos do repositório `ESTUVIA_CRON_URL` (ex.: `https://app.estuvia.com/api/cron/radar`) e `CRON_SECRET` (o mesmo valor da Vercel). Sem eles, o job não faz nada. Em repositório privado, consome cerca de 360 minutos de Actions por mês.
+- **Painel admin → Status** avisa se a coleta agendada parou (mais de 26 h sem rodar).
+
+**Carga inicial** (uma vez, logo após o primeiro deploy), em **Painel admin → Radar** (`#/radar/admin`):
+
+1. Rode **"Catálogo de másteres do DUA"** (também cria os programas das outras universidades andaluzas).
+2. Rode **"Fichas dos másteres no DUA"** cerca de 11 vezes (10 mestrados por vez, ~36 s cada). Depois disso, a coleta agendada mantém tudo atualizado.
 
 ## 5. Antes de abrir ao público (não técnico)
 
@@ -61,4 +67,5 @@ A Vercel não roda o atualizador automático do Radar (`server/radar/scheduler.j
 5. Documentos: aceitar o consentimento, enviar um PDF, abrir, excluir; em Documentos → Privacidade, revogar o consentimento.
 6. Perfil: baixar os dados; excluir a conta de teste.
 7. Admin (`#/admin`): alunos, status da IA, eventos; abrir **Radar** e **Moderação** no menu do painel.
-8. No Supabase de produção, a conta de teste apareceu e depois sumiu.
+8. Coleta agendada: `curl -H "Authorization: Bearer $CRON_SECRET" https://<domínio>/api/cron/radar` responde `{"ok":true,...}`; em **Status**, o Radar não aparece como desligado.
+9. No Supabase de produção, a conta de teste apareceu e depois sumiu.

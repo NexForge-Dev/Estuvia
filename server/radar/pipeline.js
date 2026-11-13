@@ -399,11 +399,11 @@ export function ingest(sourceId, { url, text, fetchedAt = new Date().toISOString
   return { ...result, changed, snapshot, valido };
 }
 
-export async function runSource(sourceId, { fetchImpl, now = Date.now() } = {}) {
+export async function runSource(sourceId, { fetchImpl, now = Date.now(), origem = null } = {}) {
   ensureSources();
   const source = sourceById(sourceId);
   if (!source) throw new Error(`Fonte desconhecida: ${sourceId}`);
-  const run = { id: newId(), sourceId, inicio: nowIso(now), fim: null, resultado: null, mudancas: 0, erro: null, itens: 0 };
+  const run = { id: newId(), sourceId, inicio: nowIso(now), fim: null, resultado: null, mudancas: 0, erro: null, itens: 0, ...(origem ? { origem } : {}) };
   data().runs.push(run);
 
   if (source.metodo !== 'html-publico' || !source.ativa || source.indisponivelManual) {

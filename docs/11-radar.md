@@ -31,7 +31,8 @@ server/radar/
 ├── notify.js          Alertas por mudança publicada e por data (abertura, prazo, resultados, confirmação)
 ├── service.js         Consultas, filtros, indicadores, detalhe, Agenda, contratos para jornada/assistente
 ├── admin.js           Painel: revisão, correções com evidência, registro manual (BOJA), simulação dev
-├── scheduler.js       A cada 15 min roda fontes vencidas; a cada hora recalcula alertas por data
+├── scheduler.js       A cada 15 min roda fontes vencidas; a cada hora recalcula alertas por data (servidor comum).
+│                      Na Vercel, runScheduled() roda via GET /api/cron/radar (routes/cron.js, CRON_SECRET)
 ├── db.js              Persistência em data/radar.json (escrita atômica) + snapshots brutos em data/radar-snapshots/
 └── seed/              HTML oficial capturado em 24/10/2026 (carga inicial offline e testes)
 server/routes/radar.js        API do estudante
@@ -74,7 +75,7 @@ Vagas e preço não constam da ficha. Ficha devolvida em branco (código inexist
 
 Os dados chegam à interface em três lugares: painel **Como funciona a seleção** no detalhe do Radar; filtro **Meu nível de espanhol** (sem ficha DUA, o máster fica fora do filtro: não presumimos "não exige"); e `programForJourney` (`idioma` no formato do catálogo, `outrosIdiomas`, `criterios`), que alimenta a elegibilidade (missão 1.4), a aplicabilidade da missão 2.5 e as dicas.
 
-**Em produção (a Vercel não roda o agendador):** no painel do Radar, rode "Catálogo de másteres do DUA" uma vez (a UGR vai primeiro enquanto não tiver vínculo) e depois "Fichas dos másteres no DUA" até cobrir os ~111 programas (≈ 11 execuções de 10).
+**Em produção (Vercel):** não há processo contínuo; a coleta agendada (`GET /api/cron/radar`, chamada pelo Vercel Cron diário e pelo GitHub Actions a cada 2 h, ver `LANCAMENTO.md`) roda as fontes vencidas. Para a carga inicial, no painel do Radar, rode "Catálogo de másteres do DUA" uma vez (a UGR vai primeiro enquanto não tiver vínculo) e depois "Fichas dos másteres no DUA" até cobrir os ~111 programas (≈ 11 execuções de 10).
 
 #### Nota média na escala espanhola
 

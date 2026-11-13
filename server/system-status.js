@@ -8,7 +8,7 @@ import { usesSupabase } from './database.js';
 import { users } from './store.js';
 import { aiStatus, checkAI } from './ai-health.js';
 import { fxEnabled, cachedRate, refreshRate } from './fx.js';
-import { schedulerRunning } from './radar/scheduler.js';
+import { schedulerRunning, lastScheduledRun } from './radar/scheduler.js';
 import { overview as radarOverview } from './radar/admin.js';
 import { requestStats, uptimeMs, startedAtIso } from './ops.js';
 
@@ -38,6 +38,11 @@ export async function systemStatus({ check = false } = {}) {
   const radar = radarOverview();
   const radarErros24h = radar.erros.filter((r) => Date.now() - Date.parse(r.fim || r.inicio || r.em || 0) < DAY).length;
   const falhando = radar.fontes.filter((s) => s.ativa && (s.estado === 'falhando' || s.estado === 'bloqueada'));
+  // Na Vercel não há temporizador no processo: o atualizador é o cron (CRON_SECRET). Mais de 26 h sem coleta = parado.
+  const viaCron = !schedulerRunning() && (process.env.CRON_SECRET || '').length >= 16;
+  const automatico = schedulerRunning() || viaCron;
+  const ultimaAgendada = viaCron ? lastScheduledRun() : null;
+  const cronAtrasado = viaCron && (!ultimaAgendada || Date.now() - Date.parse(ultimaAgendada.inicio) > 26 * 60 * 60 * 1000);
   const mem = process.memoryUsage();
 
   const servicos = [];
@@ -56,8 +61,9 @@ export async function systemStatus({ check = false } = {}) {
 
   add({
     id: 'radar', nome: 'Radar de Oportunidades', grupo: 'Plataforma',
-    estado: !schedulerRunning() ? 'desligado' : falhando.length || radarErros24h ? 'aviso' : 'ok',
-    detalhe: !schedulerRunning() ? 'Atualizador automático desligado (RADAR_SCHEDULER=off ou servidor de testes).'
+    estado: !automatico ? 'desligado' : cronAtrasado ? 'aviso' : falhando.length || radarErros24h ? 'aviso' : 'ok',
+    detalhe: !automatico ? (process.env.VERCEL ? 'Coleta agendada desligada: defina CRON_SECRET na Vercel (o Vercel Cron chama /api/cron/radar).' : 'Atualizador automático desligado (RADAR_SCHEDULER=off ou servidor de testes).')
+      : cronAtrasado ? (ultimaAgendada ? `Última coleta agendada em ${new Date(ultimaAgendada.inicio).toLocaleString('pt-BR', { timeZone: 'Europe/Madrid' })}: o agendamento parou?` : 'CRON_SECRET definido, mas nenhuma coleta agendada ainda. Confira o Vercel Cron / GitHub Actions.')
       : falhando.length ? `${falhando.length} fonte(s) oficial(is) falhando: ${falhando.slice(0, 3).map((s) => s.titulo || s.id).join(', ')}`
         : radarErros24h ? `${radarErros24h} execução(ões) com erro nas últimas 24 h.`
           : `${radar.fontes.length} fonte(s) monitoradas${radar.desatualizadas.length ? ` · ${radar.desatualizadas.length} sem verificação recente` : ''}.`,

@@ -16,6 +16,7 @@ import achievementsRoutes from './routes/achievements.js';
 import communityRoutes from './routes/community.js';
 import radarRoutes from './routes/radar.js';
 import radarAdminRoutes from './routes/radar-admin.js';
+import cronRoutes from './routes/cron.js';
 import mentorRoutes from './routes/mentor.js';
 import travelRoutes from './routes/travel.js';
 import documentRoutes from './routes/documents.js';
@@ -89,6 +90,7 @@ export function createApp() {
   api.use('/events', eventRoutes);
   api.use('/content', contentRoutes);
   api.use('/assistant', assistantRoutes);
+  api.use('/cron', cronRoutes);
   api.use((req, res) => res.status(404).json({ error: 'Rota não encontrada.' }));
   app.use('/api', api);
 
