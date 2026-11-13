@@ -72,8 +72,8 @@ router.post('/actions/:id/confirm', async (req, res) => {
   res.status(r.ok ? 200 : 409).json(r);
 });
 
-router.post('/actions/:id/cancel', (req, res) => {
-  cancel(req.user, req.params.id);
+router.post('/actions/:id/cancel', async (req, res) => {
+  await cancel(req.user, req.params.id);
   res.json({ ok: true, texto: 'Tudo bem, não alterei nada.' });
 });
 

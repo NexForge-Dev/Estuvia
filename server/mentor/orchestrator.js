@@ -131,7 +131,7 @@ async function agentReply(provider, user, { mensagem, contexto, historico }, sig
     messages.push({ role: 'tool', resultados });
   }
 
-  const proposta = passos.length ? propose(ctx.user, { titulo: passos.length === 1 ? passos[0].preview.resumo.slice(0, 80) : 'Ações propostas pelo Mentor', passos, contexto }) : null;
+  const proposta = passos.length ? await propose(ctx.user, { titulo: passos.length === 1 ? passos[0].preview.resumo.slice(0, 80) : 'Ações propostas pelo Mentor', passos, contexto }) : null;
   return {
     modo: 'ia', provedor: provider.nome, intencao: 'ia', compreendido: true,
     texto: texto || (proposta ? 'Preparei a ação abaixo. Confirma?' : 'Não consegui montar uma resposta agora.'),

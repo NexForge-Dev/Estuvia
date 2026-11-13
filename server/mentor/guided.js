@@ -68,7 +68,7 @@ class Turn {
       if (!r.ok) return { erro: r.erro, ferramenta: p.ferramenta };
       prepared.push({ ferramenta: p.ferramenta, input: r.input, preview: r.preview, editavel: p.editavel || null });
     }
-    return { proposta: propose(this.user, { titulo, passos: prepared, contexto: this.ctx.contexto, confirmarRotulo: opts.confirmarRotulo }) };
+    return { proposta: await propose(this.user, { titulo, passos: prepared, contexto: this.ctx.contexto, confirmarRotulo: opts.confirmarRotulo }) };
   }
 }
 

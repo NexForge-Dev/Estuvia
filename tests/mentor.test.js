@@ -130,9 +130,13 @@ test('"Agenda para amanhã a tarefa de solicitar meu histórico": propõe, não 
   assert.match(r.data.texto, /Missão 2\.3/);
   assert.match(r.data.texto, /Confirma\?/);
   assert.equal(plannerCount(), before, 'nada gravado antes da confirmação');
+  // A proposta fica no registro do estudante (persistido), não na memória do processo:
+  // na Vercel, a confirmação pode chegar a outra instância.
+  assert.ok(users.findById(uid).mentorPropostas?.[r.data.proposta.id], 'proposta gravada no estudante');
   const c = await confirm(r.data.proposta);
   assert.equal(c.status, 200);
   assert.equal(c.data.ok, true);
+  assert.equal(users.findById(uid).mentorPropostas?.[r.data.proposta.id], undefined, 'confirmada sai do registro');
   assert.equal(plannerCount(), before + 1);
   const ev = users.findById(uid).planner.at(-1);
   assert.equal(ev.missaoId, '2.3');
@@ -167,6 +171,17 @@ test('tarefa livre com horário + "passe essa tarefa para sexta" move o compromi
   const next = new Date(`${ev.data}T12:00:00Z`); next.setUTCDate(next.getUTCDate() + 1);
   assert.equal(moved.data, next.toISOString().slice(0, 10), 'um dia depois');
   assert.equal(moved.inicio, '15:00', 'mantém o horário');
+});
+
+test('proposta vencida (30 min) não executa nem aparece', async () => {
+  const before = plannerCount();
+  const r = await say('Agende para amanhã a Missão 2.1');
+  assert.ok(r.data.proposta);
+  users.findById(uid).mentorPropostas[r.data.proposta.id].expiraEm = Date.now() - 1000;
+  assert.equal((await req('GET', `/mentor/actions/${r.data.proposta.id}`)).status, 404);
+  assert.equal((await confirm(r.data.proposta)).status, 410);
+  assert.equal(plannerCount(), before);
+  assert.equal(users.findById(uid).mentorPropostas[r.data.proposta.id], undefined, 'a limpeza remove a vencida');
 });
 
 test('cancelar proposta não altera nada e fica no histórico do estudante', async () => {
