@@ -57,6 +57,10 @@ async function doMission(req, jid, id, { evidencia } = {}) {
     if (o.tipo === 'check') await req('PUT', `/journeys/${jid}/missions/${id}/objectives/${o.id}`, { feito: true });
     if (o.tipo === 'data') await req('PUT', `/journeys/${jid}/missions/${id}/objectives/${o.id}`, { valor: today });
     if (o.tipo === 'texto') await req('PUT', `/journeys/${jid}/missions/${id}/objectives/${o.id}`, { valor: 'ok' });
+    // Escolha validada no servidor (ex.: fase do DUA): a primeira opção aceita para o perfil.
+    if (o.tipo === 'escolha') {
+      for (const [v] of o.opcoes) if ((await req('PUT', `/journeys/${jid}/missions/${id}/objectives/${o.id}`, { valor: v })).status === 200) break;
+    }
   }
   const r = await req('POST', `/journeys/${jid}/missions/${id}/complete`, { confirmo: true, ...(evidencia ? { evidencia } : {}) });
   assert.equal(r.status, 200, `concluir ${id}: ${JSON.stringify(r.data.error)}`);

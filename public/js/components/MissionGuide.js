@@ -196,6 +196,14 @@ export function MissionGuide(m, ctx) {
 
   function objectiveStep(o, i) {
     const label = h('p', { class: 'eyebrow' }, `Passo ${i + 1} de ${steps.length}`);
+    // Escolha validada pelo servidor (ex.: fase do DUA): opções grandes; a escolha pode ser trocada.
+    if (o.tipo === 'escolha') {
+      return h('div', { class: `guide-card is-step ${o.feito ? 'done' : ''}` }, label, h('h2', {}, o.texto),
+        o.dica ? h('p', { class: 'guide-text' }, o.dica) : null,
+        h('div', { class: 'choice-grid' }, (o.opcoes || []).filter(([v]) => v !== o.valor).map(([v, l]) => h('button', { type: 'button', class: 'choice', onClick: () => setObj(o, { valor: v }) }, h('span', {}, l)))),
+        o.valor ? h('p', { class: 'ok-line' }, icon('check', { size: 16 }), ` Registrado: ${(o.opcoes || []).find(([v]) => v === o.valor)?.[1] || o.valor}`) : null,
+        o.feito ? h('div', { class: 'guide-actions' }, primary('Ir para o próximo passo', () => { st.step = i + 1; ctx.redraw(); }, 'arrow')) : null);
+    }
     if (o.feito && o.tipo !== 'auto') {
       return h('div', { class: 'guide-card is-step done' }, label, h('h2', {}, o.texto), h('p', { class: 'ok-line' }, icon('check', { size: 16 }), ' Feito'),
         h('div', { class: 'guide-actions' }, primary('Ir para o próximo passo', () => { st.step = i + 1; ctx.redraw(); }, 'arrow'),
@@ -235,8 +243,10 @@ export function MissionGuide(m, ctx) {
   // ---------- Missão simples: um card, uma ação principal, confirmação no mesmo lugar ----------
   function simpleCard() {
     const pendingAuto = steps.find((o) => o.tipo === 'auto' && !o.feito);
-    const fields = steps.filter((o) => (o.tipo === 'data' || o.tipo === 'texto') && !o.feito)
-      .map((o) => ({ o, el: h('input', { type: o.tipo === 'data' ? 'date' : 'text', class: 'guide-input', maxlength: 300, value: o.valor || '', 'aria-label': o.texto }) }));
+    const fields = steps.filter((o) => ['data', 'texto', 'escolha'].includes(o.tipo) && !o.feito)
+      .map((o) => ({ o, el: o.tipo === 'escolha'
+        ? h('select', { class: 'guide-input', 'aria-label': o.texto }, h('option', { value: '' }, 'Escolha…'), (o.opcoes || []).map(([v, l]) => h('option', { value: v }, l)))
+        : h('input', { type: o.tipo === 'data' ? 'date' : 'text', class: 'guide-input', maxlength: 300, value: o.valor || '', 'aria-label': o.texto }) }));
     const ev = m.evidencia;
     const evInput = ev ? h('input', { type: 'text', class: 'guide-input', maxlength: 200, value: ev.valor || '', placeholder: 'Ex.: número, data ou nome do arquivo', 'aria-label': ev.rotulo }) : null;
     const confirmHost = h('div');

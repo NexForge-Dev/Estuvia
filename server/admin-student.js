@@ -16,7 +16,7 @@ const label = (campo, v) => SITUACAO[campo]?.find(([k]) => k === v)?.[1] || v ||
 export const daysSince = (iso) => (iso ? Math.floor((Date.now() - Date.parse(iso)) / DAY) : null);
 
 // Ordem de avanço da candidatura (para resumir várias jornadas na melhor situação).
-const ADJ_RANK = { 'nao-enviada': 0, 'exige-acao': 1, aguardando: 2, 'lista-espera': 3, 'nao-admitido': 1, admitido: 4 };
+const ADJ_RANK = { 'nao-enviada': 0, 'exige-acao': 1, excluido: 1, aguardando: 2, 'lista-espera': 3, 'nao-admitido': 1, 'admitido-outra-opcao': 4, admitido: 4 };
 
 function journeyInfo(user, jr) {
   const j = computeJourney(user, jr);

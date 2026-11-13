@@ -271,3 +271,13 @@
 .mh-source-list { margin: 0; padding-left: 18px; display: grid; gap: 8px; font-size: .9rem; }
 /* Anotações dentro do painel: sem moldura de card (o painel já é a moldura) */
 .mn.is-sheet { background: none; border: 0; padding: 0; }
+
+/* ---------- Processo deste mestrado (ApplicationProcess.js) ---------- */
+.ap-head { display: grid; gap: 6px; }
+.ap-section { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--border, rgba(127,127,127,.25)); }
+.ap-fases { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.ap-fase { padding: 10px 12px; border-radius: 12px; background: var(--surface-2, var(--surface)); display: grid; gap: 4px; }
+.ap-fase.is-mine { outline: 2px solid var(--ok); }
+.ap-fase-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.ap-fase p { margin: 0; }
+.ap-fontes a { overflow-wrap: anywhere; }

@@ -110,7 +110,7 @@ const FILTERS = {
   inativos: (r) => r.diasSemEntrar >= 7,
   'sem-jornada': (r) => !r.inscricao,
   'candidatura-enviada': (r) => r.inscricao && r.inscricao.candidatura !== 'nao-enviada',
-  admitidos: (r) => r.inscricao?.candidatura === 'admitido',
+  admitidos: (r) => ['admitido', 'admitido-outra-opcao'].includes(r.inscricao?.candidatura),
   'visto-aprovado': (r) => r.inscricao?.visto === 'aprovado',
 };
 

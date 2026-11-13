@@ -14,13 +14,20 @@
 //   opcional                       — recomendação: não conta como pendência se não for iniciada
 //   prioridade: alta|media|baixa, tempoEstimado, duracaoMin (Agenda), documentos[], fontes[]
 //   tag, criterio, prazo, marco, acoes[], ferramenta
+//   processo: true                  — a tela da missão mostra o processo oficial DESTE mestrado (server/application-process.js)
+//   alertasProcesso[chave]          — alertas do processo do mestrado que deixam a missão em "atenção" (canal, fase, ficha)
+//   objetivo tipo 'escolha'         — valor escolhido entre opcoes (validado no servidor), gravado em dados[campo]
+//   soDua: true                     — passo do Distrito Único Andaluz: "não aplicável" para mestrado com procedimento próprio
 
 const SITUACAO = {
-  adjudicacao: [['nao-enviada', 'Candidatura não enviada'], ['aguardando', 'Aguardando resultado'], ['admitido', 'Admitido(a)'], ['lista-espera', 'Lista de espera'], ['nao-admitido', 'Não admitido(a)'], ['exige-acao', 'Exige ação ou revisão']],
-  matricula: [['nao-iniciada', 'Não iniciada'], ['vaga-confirmada', 'Vaga confirmada'], ['reservada', 'Vaga reservada'], ['matriculado', 'Matriculado(a)']],
+  adjudicacao: [['nao-enviada', 'Candidatura não enviada'], ['aguardando', 'Aguardando resultado'], ['admitido', 'Admitido(a) na 1ª preferência'], ['admitido-outra-opcao', 'Admitido(a) em outra opção, em lista de espera nas preferidas'], ['lista-espera', 'Só em lista de espera'], ['nao-admitido', 'Não admitido(a)'], ['exige-acao', 'Exige ação ou revisão (ex.: documentação pendente)'], ['excluido', 'Excluído(a) / perdi o direito no processo']],
+  // "vaga-confirmada" (valor antigo) = matrícula da Fase 1 com o pagamento a cuenta de 400 € (O1 art. 6).
+  matricula: [['nao-iniciada', 'Não iniciada'], ['vaga-confirmada', 'Pagamento a cuenta feito (Fase 1)'], ['reservada', 'Vaga reservada (em lista nas preferidas)'], ['matriculado', 'Matriculado(a) (provisória até a conferência dos documentos)']],
   visto: [['preparacao', 'Preparação'], ['apresentada', 'Solicitação apresentada'], ['em-analise', 'Em análise'], ['doc-adicional', 'Exige documentação adicional'], ['aprovado', 'Aprovado'], ['indeferido', 'Indeferido']],
 };
-export { SITUACAO };
+// Resultados com vaga atribuída: abrem a Rodada 4 (matrícula) e o pedido de visto.
+const ADMITIDO = ['admitido', 'admitido-outra-opcao'];
+export { SITUACAO, ADMITIDO };
 
 export const JOURNEY_TEMPLATE = {
   id: 'br-andaluzia-master',
@@ -83,7 +90,7 @@ export const ROUNDS = [
           { id: 'opcoes', texto: 'Adicionar meus programas de interesse em "Minhas opções"', tipo: 'auto', regra: 'temOpcoes' },
         ],
         dependencias: ['1.2'], prioridade: 'alta', tempoEstimado: '1–2 h', duracaoMin: 90, fontes: ['O3', 'O4'], tag: 'verificado',
-        criterio: 'Programa definido e ficha oficial lida.', acoes: [{ tipo: 'programa', rotulo: 'Abrir ficha oficial do meu mestrado' }],
+        criterio: 'Programa definido e ficha oficial lida.', acoes: [{ tipo: 'programa', rotulo: 'Abrir ficha oficial do meu mestrado' }], processo: true, alertasProcesso: ['canal'],
       },
       {
         id: '1.4', titulo: 'Verificar minha elegibilidade',
@@ -100,7 +107,7 @@ export const ROUNDS = [
           { id: 'criterios', texto: 'Conferir critérios de seleção e documentos específicos' },
         ],
         dependencias: ['1.3'], prioridade: 'alta', tempoEstimado: '30 min', duracaoMin: 30, fontes: ['O1', 'O3', 'O30'], tag: 'pendente',
-        criterio: 'Elegibilidade preliminar conferida com base em evidências.', ferramenta: 'elegibilidade',
+        criterio: 'Elegibilidade preliminar conferida com base em evidências.', ferramenta: 'elegibilidade', processo: true, alertasProcesso: ['ficha'],
       },
       {
         id: '1.5', titulo: 'Criar meu planejamento financeiro inicial',
@@ -146,15 +153,18 @@ export const ROUNDS = [
         porque: 'É a base do acesso. Para pedir acesso a mestrado oficial, não é necessária homologação prévia: a universidade verifica a equivalência de nível.',
         comoExecutar: [
           { titulo: 'Solicite à universidade', texto: 'Peça o diploma ou verifique na convocatória qual documento substitutivo é aceito se ainda não o tiver.' },
-          { titulo: 'Homologação', texto: 'A verificação de equivalência para acesso ao mestrado não reconhece o diploma para outras finalidades (ex.: exercício profissional).' },
+          { titulo: 'Data-limite do título', texto: 'O título precisa estar concluído e os direitos de expedição pagos até a data-limite da sua fase (ciclo 2026/27: Fase 1, 29 de janeiro; Fase 2, 4 de setembro; Fase 3, 5 de outubro). Sem o diploma, vale a certificação supletória que mostre a data desse pagamento. Com título estrangeiro isso vale em TODAS as fases: a exceção para quem ainda cursa a graduação (requisitos 4 e 5) é só para universidade espanhola ou PARS andaluz, na Fase 3 (O1 art. 4; O2 arts. 2 e 3, Anexo I).' },
+          { titulo: 'Homologação', texto: 'A verificação de equivalência para acesso ao mestrado não reconhece o diploma para outras finalidades (ex.: exercício profissional). Alguns mestrados exigem o título homologado: veja a Missão 2.8.' },
         ],
         objetivos: [
-          { id: 'obter', texto: 'Ter o diploma ou documento aceito' },
+          { id: 'obter', texto: 'Ter o diploma ou a certificação supletória com a data de pagamento da expedição' },
+          { id: 'prazo-titulo', texto: 'Confirmar que o título estará concluído e a expedição paga até a data-limite da minha fase' },
           { id: 'conferir', texto: 'Conferir nome, curso e data' },
           { id: 'digital', texto: 'Digitalizar em PDF legível' },
         ],
-        prioridade: 'alta', tempoEstimado: '1–3 semanas (emissão)', duracaoMin: 45, documentos: ['diploma'], fontes: ['O1', 'O3'], tag: 'verificado', aguardavel: true,
-        criterio: 'Diploma digitalizado e conferido.',
+        prioridade: 'alta', tempoEstimado: '1–3 semanas (emissão)', duracaoMin: 45, documentos: ['diploma'], fontes: ['O1', 'O2'], tag: 'verificado', aguardavel: true,
+        prazo: { tipo: 'usuario', rotulo: 'Data-limite do título (expedição paga)' }, processo: true,
+        criterio: 'Diploma digitalizado, conferido e dentro da data-limite da fase.',
       },
       {
         id: '2.3', titulo: 'Preparar meu histórico acadêmico',
@@ -178,13 +188,13 @@ export const ROUNDS = [
         id: '2.4', titulo: 'Verificar documentos acadêmicos complementares',
         resumo: 'Acesso à pós-graduação no país de origem, escala de notas e outros.', objetivo: 'Ter os documentos complementares que o processo vigente exigir.',
         porque: 'Para título estrangeiro não homologado, o DUA pede comprovação de que o título permite cursar pós-graduação no país de origem. A escala de notas permite avaliar corretamente a média; sem ela, a regra pode atribuir a nota mínima aprobatória.',
-        comoExecutar: [{ titulo: 'Declaração de acesso à pós-graduação', texto: 'Solicite à sua universidade ou ao órgão oficial indicado na convocatória uma declaração de que sua graduação permite cursar pós-graduação no Brasil. Este documento é exigido para a via de título estrangeiro.' }, { titulo: 'Escala de notas', texto: 'Peça documento oficial com a nota mínima e máxima da escala e a nota mínima para aprovação. Sem a escala, o DUA pode considerar a nota mínima aprobatória.' }, { titulo: 'Tradução e legalização', texto: 'Na pré-inscrição, a documentação deve estar em espanhol, mas a convocatória 2026/27 não exige em todos os casos tradução juramentada ou legalização já nessa etapa. A universidade pode pedir originais, apostila ou tradução juramentada na matrícula ou depois.' }],
+        comoExecutar: [{ titulo: 'Declaração de acesso à pós-graduação', texto: 'Baixe o modelo do Anexo II no portal de solicitações do DUA e peça que um órgão oficial do Brasil o emita (confirme com a sua universidade qual setor). Ele declara que a sua graduação permite cursar pós-graduação no Brasil e é exigido de todo título estrangeiro não homologado (O1 art. 4).' }, { titulo: 'Escala de notas', texto: 'Peça documento oficial com a nota mínima e máxima da escala e a nota mínima para aprovação. Sem a escala, o DUA pode considerar a nota mínima aprobatória.' }, { titulo: 'Tradução e legalização', texto: 'Na pré-inscrição, a documentação deve estar em espanhol, mas a convocatória 2026/27 não exige em todos os casos tradução juramentada ou legalização já nessa etapa. A universidade pode pedir originais, apostila ou tradução juramentada na matrícula ou depois.' }],
         objetivos: [
-          { id: 'conferir', texto: 'Conferir os requisitos e o modelo de declaração na convocatória vigente' },
+          { id: 'conferir', texto: 'Baixar o modelo do Anexo II e conferir os requisitos na convocatória vigente' },
           { id: 'escala', texto: 'Obter a escala oficial de notas (ou registrar que aceito a nota mínima aprobatória)' },
           { id: 'acesso', texto: 'Obter declaração oficial de que a graduação permite cursar pós-graduação no Brasil' },
         ],
-        dependencias: ['1.3'], prioridade: 'media', tempoEstimado: '1–2 semanas', duracaoMin: 45, documentos: ['escala-notas', 'acesso-pos'], fontes: ['O1'], tag: 'verificado',
+        dependencias: ['1.3'], prioridade: 'media', tempoEstimado: '1–2 semanas', duracaoMin: 45, documentos: ['escala-notas', 'acesso-pos'], fontes: ['O1', 'O2'], tag: 'verificado', soDua: true,
         aguardavel: true,
         criterio: 'Declaração de acesso obtida e escala de notas preparada, ou consequência da ausência da escala compreendida.',
       },
@@ -209,7 +219,10 @@ export const ROUNDS = [
         id: '2.6', titulo: 'Verificar currículo, cartas e outros documentos',
         resumo: 'Requisitos específicos de cada mestrado escolhido.', objetivo: 'Preparar os anexos específicos dos programas.',
         porque: 'Além dos documentos gerais, cada programa pode pedir CV, carta de motivação ou outros anexos que pontuam na seleção.',
-        comoExecutar: [{ titulo: 'Siga a ficha', texto: 'Use o formato pedido (modelo, limite de páginas, idioma).' }],
+        comoExecutar: [
+          { titulo: 'Siga a ficha', texto: 'O card "Processo deste mestrado" lista os requisitos obrigatórios da ficha do DUA (texto oficial) e os documentos que os critérios de seleção costumam pedir. Use o formato pedido (modelo, limite de páginas, idioma).' },
+          { titulo: 'Prazo', texto: 'A documentação específica é anexada eletronicamente DENTRO do prazo de solicitação da fase (O2 art. 9). Anexo enviado depois não é considerado.' },
+        ],
         objetivos: [
           { id: 'listar', texto: 'Listar os anexos pedidos por cada programa' },
           { id: 'preparar', texto: 'Preparar cada anexo' },
@@ -217,6 +230,7 @@ export const ROUNDS = [
         ],
         dependencias: ['1.3'], prioridade: 'media', tempoEstimado: '2–6 h', duracaoMin: 90, documentos: ['especificos'], fontes: ['O3'], tag: 'pendente',
         condicional: true, condicaoTexto: 'Só se os programas pedirem anexos específicos.', criterio: 'Anexos preparados, ou nenhum é exigido.',
+        processo: true, alertasProcesso: ['ficha'],
       },
       {
         id: '2.7', titulo: 'Organizar minha documentação',
@@ -232,6 +246,24 @@ export const ROUNDS = [
         documentos: ['passaporte', 'diploma', 'historico', 'escala-notas', 'acesso-pos', 'idioma', 'especificos'], fontes: ['O1', 'M'], tag: 'pratica',
         criterio: 'Documentação revisada e pronta para a pré-inscrição.', ferramenta: 'documentos',
         acoes: [{ tipo: 'interna', rota: '/documentos', rotulo: 'Abrir área de documentos' }],
+      },
+      {
+        id: '2.8', titulo: 'Obter a certificação do Ministério (Psicología General Sanitaria)',
+        resumo: 'Só para o Máster en Psicología General Sanitaria (e duplos com ele).', objetivo: 'Ter a resolução favorável ou certificação exigida antes do fim do prazo de solicitação.',
+        porque: 'Com título estrangeiro de Psicologia, o acesso a este máster exige, na data de fim do prazo de solicitação, a resolução favorável ou certificação de cumprimento dos requisitos da Orden CNU/1309/2018, emitida conforme a Resolución de 16 de noviembre de 2023 (O2 art. 9). Sem ela, a solicitação não vale.',
+        comoExecutar: [
+          { titulo: 'Pedido', texto: 'A certificação é emitida pelo Ministério de Ciencia, Innovación y Universidades conforme a Resolución de 16 de noviembre de 2023. Confira na sede eletrônica do Ministério o procedimento, os documentos e o prazo de resposta antes de planejar a candidatura: ela precisa estar em mãos no fim do prazo da sua fase.' },
+          { titulo: 'Não é homologação do título', texto: 'O acordo pede a certificação específica para o acesso a este máster, não a homologação geral do diploma.' },
+          { titulo: 'Fase 1', texto: 'O acordo da Fase 1 não repete a regra: confira a documentação específica publicada no portal do DUA para a Fase 1.' },
+        ],
+        objetivos: [
+          { id: 'confirmar', texto: 'Confirmar a exigência na documentação específica do meu mestrado no portal do DUA' },
+          { id: 'pedido', texto: 'Data do pedido ao Ministério', tipo: 'data', campo: 'dataPedidoCertificacaoPGS' },
+          { id: 'resolucao', texto: 'Ter a resolução favorável ou certificação antes do fim do prazo de solicitação da minha fase' },
+        ],
+        regra: { tipo: 'processo', flag: 'exigeResolucaoPGS' },
+        dependencias: ['1.3'], prioridade: 'alta', tempoEstimado: 'Meses (análise do Ministério)', duracaoMin: 60, documentos: ['certificacao-pgs'], fontes: ['O2'], tag: 'verificado', aguardavel: true,
+        processo: true, criterio: 'Resolução favorável ou certificação obtida dentro do prazo.',
       },
     ],
   },
@@ -251,20 +283,25 @@ export const ROUNDS = [
         comoExecutar: [{ titulo: 'Portal', texto: 'Acesse o portal oficial e localize a área de másteres.' }],
         objetivos: [{ id: 'abrir', texto: 'Abrir o portal oficial do DUA' }, { id: 'area', texto: 'Localizar a área de másteres' }],
         dependencias: ['1.3'], prioridade: 'alta', tempoEstimado: '20 min', duracaoMin: 20, fontes: ['O8', 'O5'], tag: 'verificado',
-        criterio: 'Portal oficial acessado e área de másteres localizada.', acoes: [{ tipo: 'oficial', fonte: 'O8', rotulo: 'Abrir portal do DUA' }],
+        criterio: 'Portal oficial acessado e área de másteres localizada.', soDua: true, acoes: [{ tipo: 'oficial', fonte: 'O8', rotulo: 'Abrir portal do DUA' }], alertasProcesso: ['canal'],
       },
       {
         id: '3.2', titulo: 'Identificar a fase de candidatura',
         resumo: 'Fase aplicável ao seu perfil e ano acadêmico.', objetivo: 'Saber em qual fase do DUA você deve se candidatar e qual é o prazo dela.',
         porque: 'A fase, as datas e os mestrados participantes mudam por ciclo. A fase exclusiva para títulos estrangeiros não oferece vagas em todos os mestrados.',
-        comoExecutar: [{ titulo: 'Convocatória do seu ano', texto: 'Abra a convocatória oficial do ciclo em que pretende ingressar. Confirme se o seu mestrado oferece vagas na fase exclusiva para títulos estrangeiros, qual fase se aplica ao seu perfil e os prazos de candidatura, adjudicação, matrícula, reserva e confirmação de lista de espera. Não reutilize calendário de anos anteriores.' }],
+        comoExecutar: [
+          { titulo: 'As três fases', texto: 'Fase 1 (janeiro): só nacionalidade estrangeira com título estrangeiro não homologado, e só nos mestrados em que a universidade reservou vagas. Fase 2 (junho): todos que já concluíram o título. Fase 3 (setembro): vagas que sobraram. Em qualquer fase, com título estrangeiro, o título precisa estar concluído até a data-limite da fase (O1 arts. 1, 2 e 9; O2 arts. 2 e 3). O card "Processo deste mestrado" mostra em quais fases o catálogo do DUA lista o seu mestrado.' },
+          { titulo: 'Convocatória do seu ano', texto: 'Confirme na convocatória do ciclo em que pretende ingressar os prazos de candidatura, adjudicação, alegações, matrícula, reserva e confirmação de lista de espera. Não reutilize calendário de anos anteriores.' },
+          { titulo: 'Visto', texto: 'As Fases 2 e 3 terminam perto do início das aulas. Se você precisa de visto, compare essas datas com o prazo de antecedência exigido pelo seu consulado (Rodada 5) antes de escolher a fase.' },
+        ],
         objetivos: [
           { id: 'convocatoria', texto: 'Abrir a convocatória do meu ciclo' },
-          { id: 'fase', texto: 'Confirmar se meu mestrado participa da fase e identificar a fase aplicável ao meu perfil' },
-          { id: 'prazo', texto: 'Registrar o prazo da minha fase (campo "Prazo")' },
+          { id: 'fase', texto: 'Fase em que vou me candidatar', tipo: 'escolha', campo: 'faseDua', opcoes: [['1', 'Fase 1 (exclusiva para estrangeiros)'], ['2', 'Fase 2'], ['3', 'Fase 3']] },
+          { id: 'prazo', texto: 'Conferir o prazo da minha fase (campo "Prazo")' },
         ],
         dependencias: ['3.1'], prioridade: 'alta', tempoEstimado: '30 min', duracaoMin: 30, fontes: ['O1', 'O2', 'O3'], tag: 'verificado',
-        prazo: { tipo: 'usuario', rotulo: 'Prazo da minha fase no DUA' }, criterio: 'Fase e prazo identificados na convocatória vigente.',
+        prazo: { tipo: 'usuario', rotulo: 'Prazo da minha fase no DUA' }, criterio: 'Fase compatível com o perfil e o mestrado escolhida, e prazo identificado na convocatória vigente.',
+        processo: true, alertasProcesso: ['canal', 'fase', 'ciclo'], soDua: true,
       },
       {
         id: '3.3', titulo: 'Criar minha candidatura',
@@ -275,32 +312,38 @@ export const ROUNDS = [
           { titulo: 'Credenciais', texto: 'Guarde usuário e senha fora da plataforma, a Estuvia não pede nem armazena essas credenciais.' },
         ],
         objetivos: [{ id: 'criar', texto: 'Criar a solicitação' }, { id: 'dados', texto: 'Preencher dados pessoais e acadêmicos' }, { id: 'guardar', texto: 'Guardar as credenciais em local seguro' }],
-        dependencias: ['3.2'], prioridade: 'alta', tempoEstimado: '40 min', duracaoMin: 45, fontes: ['O8'], tag: 'verificado', criterio: 'Solicitação criada.',
+        dependencias: ['3.2'], prioridade: 'alta', tempoEstimado: '40 min', duracaoMin: 45, fontes: ['O8'], tag: 'verificado', criterio: 'Solicitação criada.', alertasProcesso: ['canal', 'ciclo'], soDua: true,
       },
       {
         id: '3.4', titulo: 'Selecionar meus mestrados',
         resumo: 'Lista de preferência pronta antes de preencher o portal, respeitando o limite do ciclo vigente.', objetivo: 'Opções e ordem definidas na plataforma e reproduzidas no DUA.',
         porque: 'A adjudicação considera a ordem de preferência indicada.',
         comoExecutar: [
-          { titulo: 'Preferência real', texto: 'Coloque primeiro o que você mais quer. Confira os requisitos de cada opção.' },
+          { titulo: 'Limite de 6', texto: 'A solicitação aceita até 6 másteres, em ordem de preferência. Másteres que habilitam para a mesma profissão regulada contam como um só, assim como um interuniversitário em várias sedes (O1 art. 3; O2 art. 14.1).' },
+          { titulo: 'Preferência real', texto: 'Coloque primeiro o que você mais quer: ao receber vaga numa opção, as de menor preferência saem da disputa (O1 art. 6). Confira os requisitos e a fase de cada opção.' },
           { titulo: 'Comparar lado a lado', texto: 'A comparação mostra, para cada opção, idioma, graduação aceita, peso da nota e critérios de seleção pela ficha do DUA. Ela não ordena por você: a ordem é sua.' },
         ],
         objetivos: [
           { id: 'lista', texto: 'Montar minha lista em "Minhas opções"', tipo: 'auto', regra: 'temOpcoes' },
+          { id: 'limite', texto: 'Lista com no máximo 6 mestrados (limite da solicitação no DUA)', tipo: 'auto', regra: 'opcoesNoLimite' },
           { id: 'dua', texto: 'Reproduzir as opções e a ordem no DUA' },
         ],
         dependencias: ['3.3', '1.4'], prioridade: 'alta', tempoEstimado: '20 min', duracaoMin: 30, fontes: ['O2'], tag: 'verificado',
-        criterio: 'Mesma lista e ordem na plataforma e no DUA.', acoes: [{ tipo: 'interna', rota: '/mestrados', rotulo: 'Minhas opções' }], ferramenta: 'comparar-opcoes',
+        criterio: 'Mesma lista (até 6) e ordem na plataforma e no DUA.', acoes: [{ tipo: 'interna', rota: '/mestrados', rotulo: 'Minhas opções' }], ferramenta: 'comparar-opcoes', processo: true, alertasProcesso: ['canal'], soDua: true,
       },
       {
         id: '3.5', titulo: 'Anexar a documentação',
         resumo: 'Documentos exigidos pelo sistema para cada candidatura.', objetivo: 'Todos os anexos exigidos carregados no DUA.',
         porque: 'Anexos faltando podem deixar a candidatura incompleta.',
-        comoExecutar: [{ titulo: 'Confira o formato', texto: 'Respeite formato e tamanho de arquivo pedidos pelo portal. Depois, marque os documentos como "Enviado".' }],
+        comoExecutar: [
+          { titulo: 'Confira o formato', texto: 'Respeite formato e tamanho de arquivo pedidos pelo portal. Depois, marque os documentos como "Enviado".' },
+          { titulo: 'Idioma', texto: 'Na solicitação, os documentos devem estar em espanhol, mas não precisam de tradução juramentada nem legalização (O1 art. 4; O2 art. 9). Originais, cópias autênticas e traduções juramentadas podem ser pedidos na matrícula.' },
+          { titulo: 'Verdade dos documentos', texto: 'Documento falso ou que não corresponda à verdade causa exclusão imediata (O1 art. 4.a).' },
+        ],
         objetivos: [{ id: 'anexar', texto: 'Anexar cada documento exigido no portal' }, { id: 'conferir', texto: 'Conferir que todos os anexos abriram corretamente' }, { id: 'status', texto: 'Atualizar os documentos para "Enviado"' }],
         dependencias: ['3.4', '2.7'], prioridade: 'alta', tempoEstimado: '40 min', duracaoMin: 45,
-        documentos: ['passaporte', 'diploma', 'historico', 'escala-notas', 'acesso-pos', 'idioma', 'especificos'], fontes: ['O1', 'O8'], tag: 'verificado',
-        criterio: 'Anexos carregados e conferidos.',
+        documentos: ['passaporte', 'diploma', 'historico', 'escala-notas', 'acesso-pos', 'idioma', 'especificos'], fontes: ['O1', 'O2', 'O8'], tag: 'verificado',
+        criterio: 'Anexos carregados e conferidos.', processo: true, alertasProcesso: ['canal'], soDua: true,
       },
       {
         id: '3.6', titulo: 'Enviar minha solicitação',
@@ -311,8 +354,8 @@ export const ROUNDS = [
           { titulo: '2. Como identificar a fase de candidatura', texto: 'Confirme que a fase está aberta para o seu perfil e que o mestrado oferece vagas nela (Missão 3.2). Fases e cursos participantes mudam a cada ciclo.' },
           { titulo: '3. Como iniciar a solicitação', texto: 'Abra a solicitação de mestrado já criada; não crie uma nova se já existir uma em andamento.' },
           { titulo: '4. Como preencher os dados pessoais', texto: 'Use o nome exatamente como no passaporte. Confira e-mail e telefone: é por eles que você receberá avisos.' },
-          { titulo: '5. Como selecionar os mestrados', texto: 'Inclua os programas da sua lista em "Minhas opções", respeitando o limite publicado na convocatória vigente.' },
-          { titulo: '6. Como organizar as preferências', texto: 'Ordene pela sua preferência real: a adjudicação respeita essa ordem.' },
+          { titulo: '5. Como selecionar os mestrados', texto: 'Inclua os programas da sua lista em "Minhas opções": no máximo 6 (O1 art. 3; O2 art. 14.1).' },
+          { titulo: '6. Como organizar as preferências', texto: 'Ordene pela sua preferência real: a adjudicação respeita essa ordem. Durante o prazo você pode alterar a solicitação; cada alteração gera uma nova solicitação que substitui a anterior (O1 art. 3).' },
           { titulo: '7. Como anexar documentos', texto: 'Anexe cada documento exigido no formato e tamanho pedidos (Missão 3.5). Abra cada arquivo depois de enviar para conferir.' },
           { titulo: '8. Como revisar e enviar', texto: 'Revise todas as telas antes de confirmar. Depois do envio, alterações podem ser limitadas. Use o botão de envio do portal oficial, a Estuvia não envia por você.' },
           { titulo: '9. Como guardar o comprovante', texto: 'Baixe o comprovante logo após o envio e registre a referência na Missão 3.7.' },
@@ -322,7 +365,7 @@ export const ROUNDS = [
         objetivos: [{ id: 'revisar', texto: 'Revisar dados, opções e anexos' }, { id: 'enviar', texto: 'Enviar no portal oficial' }, { id: 'situacao', texto: 'Situação da candidatura', tipo: 'situacao', campo: 'adjudicacao', concluiQuandoNao: ['nao-enviada'] }],
         dependencias: ['3.5'], prioridade: 'alta', tempoEstimado: '30 min', duracaoMin: 30, fontes: ['O1', 'O2', 'O8'], tag: 'verificado',
         prazo: { tipo: 'usuario', rotulo: 'Prazo de envio da minha fase no DUA' },
-        marco: 'primeira-candidatura', criterio: 'Candidatura enviada e situação atualizada.', acoes: [{ tipo: 'oficial', fonte: 'O8', rotulo: 'Ir para o DUA' }],
+        marco: 'primeira-candidatura', criterio: 'Candidatura enviada e situação atualizada.', acoes: [{ tipo: 'oficial', fonte: 'O8', rotulo: 'Ir para o DUA' }], processo: true, alertasProcesso: ['canal', 'fase'], soDua: true,
       },
       {
         id: '3.7', titulo: 'Salvar o comprovante',
@@ -331,7 +374,7 @@ export const ROUNDS = [
         comoExecutar: [{ titulo: 'Referência', texto: 'Anote número/data do comprovante. Você pode anexar o PDF, ele fica só neste dispositivo.' }],
         objetivos: [{ id: 'baixar', texto: 'Baixar o comprovante' }, { id: 'ref', texto: 'Referência do comprovante (número ou data)', tipo: 'texto', campo: 'comprovanteDua' }],
         dependencias: ['3.6'], prioridade: 'media', tempoEstimado: '10 min', duracaoMin: 15, documentos: ['comprovante-dua'], fontes: ['M'], tag: 'pratica',
-        criterio: 'Comprovante salvo e referência registrada.',
+        criterio: 'Comprovante salvo e referência registrada.', soDua: true,
       },
       {
         id: '3.8', titulo: 'Entrar em contato com a universidade',
@@ -351,23 +394,48 @@ export const ROUNDS = [
         porque: 'Admitido, lista de espera, não admitido e "exige ação" pedem ações diferentes, às vezes com prazo curto.',
         comoExecutar: [
           { titulo: 'Datas', texto: 'Cadastre as datas de publicação da sua fase no campo "Prazo" para a Agenda lembrar você.' },
+          { titulo: 'Depois de CADA lista: ação obrigatória', texto: 'Admitido na 1ª preferência: matricule-se. Admitido em outra opção: matricule-se (renunciando às listas preferidas) ou reserve a vaga e continue nas listas preferidas. Só em lista de espera: confirme que deseja continuar. Quem não age no prazo perde o direito no processo daquela fase (O1 art. 6; O2 art. 14.7).' },
+          { titulo: 'Alegações e revisão', texto: 'Depois de cada lista há um prazo curto de alegações/revisão, pedido no portal. Não se aceita revisão de lista anterior da mesma fase. Quem tem vaga provisória e quer reordenar as preferências usa a alegação (O1 arts. 6 e 10; O2 arts. 14.2 e 17).' },
+          { titulo: 'Admitido não é matriculado', texto: 'Ser admitido não confirma os requisitos: a universidade confere os documentos na matrícula e pode anular a admissão se faltar algum (O1 art. 11; O2 art. 16).' },
           { titulo: 'Enquanto aguarda', texto: 'Adiante a trilha financeira, o dossiê do visto (Rodada 5) e a pesquisa de moradia.' },
         ],
         objetivos: [{ id: 'datas', texto: 'Cadastrar a data de publicação dos resultados (campo "Prazo")' }, { id: 'situacao', texto: 'Resultado da adjudicação', tipo: 'situacao', campo: 'adjudicacao', concluiQuandoNao: ['nao-enviada', 'aguardando'] }],
         dependencias: ['3.6'], aguardandoSe: { campo: 'adjudicacao', valores: ['aguardando'] },
-        atencaoSe: { campo: 'adjudicacao', valores: ['exige-acao'], texto: 'O DUA indicou que sua candidatura exige ação ou revisão. Confira a instrução oficial o quanto antes.' },
-        prioridade: 'alta', tempoEstimado: 'Semanas (calendário oficial)', duracaoMin: 15, fontes: ['O2', 'O3'], tag: 'verificado', aguardavel: true,
-        prazo: { tipo: 'usuario', rotulo: 'Publicação do resultado' }, criterio: 'Resultado registrado.',
+        atencaoSe: { campo: 'adjudicacao', valores: ['exige-acao', 'excluido'], texto: 'Sua candidatura exige ação, está com documentação pendente ou você registrou exclusão. Confira a instrução oficial e o prazo de alegações o quanto antes.' },
+        prioridade: 'alta', tempoEstimado: 'Semanas (calendário oficial)', duracaoMin: 15, fontes: ['O1', 'O2', 'O3'], tag: 'verificado', aguardavel: true,
+        prazo: { tipo: 'usuario', rotulo: 'Publicação do resultado' }, criterio: 'Resultado registrado.', processo: true, alertasProcesso: ['canal'],
       },
       {
         id: '3.10', titulo: 'Acompanhar a lista de espera',
         resumo: 'Confirmações e próximos prazos enquanto você está na lista.', objetivo: 'Não perder uma vaga que se abra para você.',
         porque: 'Quem está em lista de espera pode precisar confirmar interesse e acompanhar novas publicações.',
-        comoExecutar: [{ titulo: 'A cada adjudicação', texto: 'Consulte o portal do DUA em cada publicação. Dentro do prazo, faça a matrícula ou reserva da vaga atribuída e confirme que deseja continuar nas listas de espera de maior preferência, quando o sistema pedir. Repita a confirmação em cada nova adjudicação.' }],
+        comoExecutar: [
+          { titulo: 'A cada adjudicação', texto: 'Consulte o portal do DUA em cada publicação. Dentro do prazo, faça a matrícula ou reserva da vaga atribuída e confirme que deseja continuar nas listas de espera de maior preferência. Reservas e confirmações precisam ser ratificadas em CADA nova adjudicação (O1 art. 6; O2 art. 14.7).' },
+          { titulo: 'Última lista da Fase 1', texto: 'Quem não recebeu a 1ª preferência na última lista da Fase 1 precisa confirmar que deseja continuar na lista de espera: só assim concorre às vagas gerais das fases seguintes (O1 arts. 6 e 9).' },
+          { titulo: 'Resultas (Fases 2 e 3)', texto: 'Nas listas de resultas a matrícula é obrigatória e não existe reserva (O2 art. 4.b).' },
+        ],
         objetivos: [{ id: 'confirmar', texto: 'Em cada adjudicação, confirmar participação na lista e reservar/matricular quando solicitado' }, { id: 'datas', texto: 'Registrar a próxima publicação e o prazo de ação (campo "Prazo")' }, { id: 'acompanhar', texto: 'Consultar cada nova publicação até obter resultado final' }],
-        regra: { tipo: 'situacao', campo: 'adjudicacao', valores: ['lista-espera'] }, urgenteSe: { campo: 'adjudicacao', valores: ['lista-espera'] },
-        prioridade: 'alta', tempoEstimado: 'Semanas', duracaoMin: 15, fontes: ['O2'], tag: 'verificado', aguardavel: true,
+        regra: { tipo: 'situacao', campo: 'adjudicacao', valores: ['lista-espera', 'admitido-outra-opcao'] }, urgenteSe: { campo: 'adjudicacao', valores: ['lista-espera', 'admitido-outra-opcao'] },
+        prioridade: 'alta', tempoEstimado: 'Semanas', duracaoMin: 15, fontes: ['O1', 'O2'], tag: 'verificado', aguardavel: true, processo: true, soDua: true,
         prazo: { tipo: 'usuario', rotulo: 'Próxima publicação / confirmação' }, criterio: 'Lista acompanhada até uma decisão.',
+      },
+      {
+        id: '3.11', titulo: 'Candidatar-me pelo canal próprio do programa',
+        resumo: 'Para mestrados fora do DUA (Erasmus Mundus, Arqus): candidatura no canal oficial do programa.', objetivo: 'Candidatura enviada no canal oficial do programa, dentro do prazo dele.',
+        porque: 'A universidade classifica este máster como de procedimento próprio: o Distrito Único Andaluz não vale para ele. Prazos, documentos e seleção são os publicados pelo programa.',
+        comoExecutar: [
+          { titulo: 'Canal oficial', texto: 'Abra o canal indicado no card "Processo deste mestrado" (publicado pela universidade). Leia requisitos, documentos, prazos e bolsas do próprio programa.' },
+          { titulo: 'Nada é presumido', texto: 'A Estuvia não tem as regras internas de cada consórcio: confira tudo no canal oficial e registre aqui o envio e o resultado.' },
+        ],
+        objetivos: [
+          { id: 'canal', texto: 'Abrir o canal oficial e ler requisitos, documentos e prazo do programa' },
+          { id: 'docs', texto: 'Preparar os documentos que o programa pede' },
+          { id: 'enviar', texto: 'Enviar a candidatura no canal oficial' },
+          { id: 'situacao', texto: 'Situação da candidatura', tipo: 'situacao', campo: 'adjudicacao', concluiQuandoNao: ['nao-enviada'] },
+        ],
+        regra: { tipo: 'processo', flag: 'naoDua' }, acoes: [{ tipo: 'canal-programa', rotulo: 'Abrir o canal oficial do programa' }],
+        dependencias: ['1.3'], prioridade: 'alta', tempoEstimado: 'Conforme o programa', duracaoMin: 60, fontes: ['M'], tag: 'pendente', processo: true,
+        prazo: { tipo: 'usuario', rotulo: 'Prazo de candidatura do programa' }, marco: null, criterio: 'Candidatura enviada no canal do programa e situação registrada.',
       },
     ],
   },
@@ -377,39 +445,44 @@ export const ROUNDS = [
     etapa: 'Admissão e matrícula',
     banner: '/img/rounds/matricula.svg',
     icone: 'cap',
-    resumo: 'Formalizar a vaga: admitido ≠ vaga confirmada/reservada ≠ matriculado.',
+    resumo: 'Formalizar a vaga: admitido ≠ reservado ≠ matriculado ≠ documentos conferidos pela universidade.',
     conclusao: 'Matrícula formalizada e documentos de admissão organizados para o visto.',
     missoes: [
       {
         id: '4.1', titulo: 'Consultar o resultado oficial de admissão', resumo: 'Confira a publicação oficial.', objetivo: 'Confirmar sua admissão na fonte oficial.',
-        porque: 'Decisões de admissão são externas: registre-as como estão na publicação.',
-        objetivos: [{ id: 'consultar', texto: 'Consultar a publicação oficial' }, { id: 'opcao', texto: 'Identificar em qual opção fui admitido(a)' }],
-        requer: { campo: 'adjudicacao', valores: ['admitido'], rotulo: 'Resultado: admitido(a)' }, urgenteSe: { campo: 'adjudicacao', valores: ['admitido'] },
+        porque: 'Decisões de admissão são externas: registre-as como estão na publicação. Se a vaga é numa opção que não é a sua 1ª preferência, você escolhe entre matricular-se (saindo das listas preferidas) ou reservar e continuar nelas.',
+        objetivos: [{ id: 'consultar', texto: 'Consultar a publicação oficial' }, { id: 'opcao', texto: 'Identificar em qual opção fui admitido(a) e se é a minha 1ª preferência' }],
+        requer: { campo: 'adjudicacao', valores: ADMITIDO, rotulo: 'Resultado: admitido(a)' }, urgenteSe: { campo: 'adjudicacao', valores: ADMITIDO },
         prioridade: 'alta', tempoEstimado: '15 min', duracaoMin: 15, fontes: ['O2'], tag: 'verificado', criterio: 'Admissão conferida na fonte oficial.',
       },
       {
-        id: '4.2', titulo: 'Identificar o procedimento de confirmação', resumo: 'Confirmação, reserva ou matrícula, conforme a sua situação.', objetivo: 'Saber exatamente qual ação a instrução vigente pede.',
-        porque: 'Ser admitido não é o mesmo que confirmar/reservar a vaga nem estar matriculado.',
-        objetivos: [{ id: 'instrucao', texto: 'Ler a instrução vigente para a minha situação' }, { id: 'prazo', texto: 'Registrar o prazo da ação (campo "Prazo")' }],
-        dependencias: ['4.1'], requer: { campo: 'adjudicacao', valores: ['admitido'], rotulo: 'Resultado: admitido(a)' }, urgenteSe: { campo: 'adjudicacao', valores: ['admitido'] },
-        prioridade: 'alta', tempoEstimado: '20 min', duracaoMin: 20, fontes: ['O2'], tag: 'verificado', prazo: { tipo: 'usuario', rotulo: 'Prazo para confirmar/reservar/matricular' }, criterio: 'Procedimento e prazo identificados.',
+        id: '4.2', titulo: 'Identificar a ação e o pagamento exigidos', resumo: 'Matrícula ou reserva, com o pagamento que a sua fase exige.', objetivo: 'Saber exatamente qual ação, qual pagamento e qual prazo valem para você.',
+        porque: 'Ser admitido não é o mesmo que reservar a vaga nem estar matriculado. A ação e o pagamento acontecem no mesmo prazo curto (poucos dias) após a lista.',
+        comoExecutar: [
+          { titulo: 'Fase 1', texto: 'Quem se matricula na Fase 1 paga 400 € a cuenta dos preços públicos, salvo quem tem bolsa de máster; o restante é cobrado depois (O1 art. 6).' },
+          { titulo: 'Fases 2 e 3', texto: 'A matrícula segue os preços públicos e os prazos de pagamento da universidade. Nas listas de resultas não existe reserva: só matrícula (O2 arts. 4.b e 14.7).' },
+        ],
+        objetivos: [{ id: 'instrucao', texto: 'Ler a instrução vigente para a minha situação (matrícula ou reserva)' }, { id: 'valor', texto: 'Conferir o valor e o meio de pagamento exigidos no mesmo prazo (Fase 1: 400 € a cuenta)' }, { id: 'prazo', texto: 'Registrar o prazo da ação (campo "Prazo")' }],
+        dependencias: ['4.1'], requer: { campo: 'adjudicacao', valores: ADMITIDO, rotulo: 'Resultado: admitido(a)' }, urgenteSe: { campo: 'adjudicacao', valores: ADMITIDO },
+        prioridade: 'alta', tempoEstimado: '20 min', duracaoMin: 20, fontes: ['O1', 'O2'], tag: 'verificado', prazo: { tipo: 'usuario', rotulo: 'Prazo para matricular/reservar' }, criterio: 'Ação, pagamento e prazo identificados.', processo: true,
       },
       {
-        id: '4.3', titulo: 'Realizar a ação dentro do prazo', resumo: 'Confirmar, reservar ou matricular.', objetivo: 'Garantir a vaga.',
-        porque: 'Perder o prazo pode significar perder a vaga.',
-        objetivos: [{ id: 'acao', texto: 'Realizar a ação no canal oficial' }, { id: 'situacao', texto: 'Situação da matrícula', tipo: 'situacao', campo: 'matricula', concluiQuandoNao: ['nao-iniciada'] }],
-        dependencias: ['4.2'], requer: { campo: 'adjudicacao', valores: ['admitido'], rotulo: 'Resultado: admitido(a)' }, urgenteSe: { campo: 'adjudicacao', valores: ['admitido'] },
-        prioridade: 'alta', tempoEstimado: '30 min', duracaoMin: 30, fontes: ['O2'], tag: 'verificado', marco: 'vaga-conquistada', criterio: 'Vaga confirmada, reservada ou matrícula iniciada.',
+        id: '4.3', titulo: 'Realizar a ação dentro do prazo', resumo: 'Matricular (com o pagamento exigido) ou reservar.', objetivo: 'Garantir a vaga.',
+        porque: 'Quem não se matricula nem reserva no prazo perde o direito no processo daquela fase e a vaga passa ao seguinte da lista (O1 art. 6; O2 art. 14.7).',
+        comoExecutar: [{ titulo: 'Reserva', texto: 'A reserva mantém você nas listas de maior preferência, mas precisa ser ratificada a cada nova adjudicação (Missão 3.10).' }],
+        objetivos: [{ id: 'acao', texto: 'Realizar a ação (e o pagamento exigido) no canal oficial' }, { id: 'comprovante', texto: 'Guardar o comprovante da ação' }, { id: 'situacao', texto: 'Situação da matrícula', tipo: 'situacao', campo: 'matricula', concluiQuandoNao: ['nao-iniciada'] }],
+        dependencias: ['4.2'], requer: { campo: 'adjudicacao', valores: ADMITIDO, rotulo: 'Resultado: admitido(a)' }, urgenteSe: { campo: 'adjudicacao', valores: ADMITIDO },
+        prioridade: 'alta', tempoEstimado: '30 min', duracaoMin: 30, documentos: ['aceitacao-vaga'], fontes: ['O1', 'O2'], tag: 'verificado', marco: 'vaga-conquistada', criterio: 'Matrícula feita (com o pagamento exigido) ou vaga reservada, dentro do prazo.', processo: true,
       },
       {
-        id: '4.4', titulo: 'Conferir as taxas universitárias', resumo: 'Valores e formas de pagamento oficiais.', objetivo: 'Saber quanto e como pagar.',
-        porque: 'A plataforma não insere valores sem fonte: use os da universidade e registre no planejamento financeiro.',
-        objetivos: [{ id: 'valores', texto: 'Conferir valores e formas de pagamento' }, { id: 'financeiro', texto: 'Registrar o valor da matrícula no planejamento financeiro' }],
+        id: '4.4', titulo: 'Conferir as taxas restantes da matrícula', resumo: 'Preço total, parcelas e o que já foi pago.', objetivo: 'Saber quanto falta pagar, como e até quando.',
+        porque: 'Na Fase 1 os 400 € são só a cuenta: o restante é cobrado depois. A plataforma não insere valores sem fonte: use os da universidade e registre no planejamento financeiro.',
+        objetivos: [{ id: 'valores', texto: 'Conferir o valor restante, as parcelas e as formas de pagamento' }, { id: 'financeiro', texto: 'Registrar o valor da matrícula no planejamento financeiro' }],
         dependencias: ['4.3'], prioridade: 'media', tempoEstimado: '20 min', duracaoMin: 20, fontes: ['O4'], tag: 'verificado', criterio: 'Taxas conferidas e registradas.',
         acoes: [{ tipo: 'interna', rota: '/financiamento', rotulo: 'Atualizar custos' }],
       },
       {
-        id: '4.5', titulo: 'Realizar o pagamento exigido', resumo: 'Pagamento no prazo, pelo meio indicado.', objetivo: 'Pagamento efetuado e comprovado.',
+        id: '4.5', titulo: 'Pagar as taxas restantes', resumo: 'Pagamento no prazo, pelo meio indicado pela universidade.', objetivo: 'Pagamento efetuado e comprovado.',
         porque: 'A matrícula pode depender do pagamento no prazo.',
         objetivos: [{ id: 'pagar', texto: 'Efetuar o pagamento' }, { id: 'comprovante', texto: 'Guardar o comprovante' }],
         dependencias: ['4.4'], prioridade: 'alta', tempoEstimado: '20 min', duracaoMin: 20, documentos: ['comprovante-pagamento'], fontes: ['O4'], tag: 'verificado', criterio: 'Pagamento efetuado e comprovante guardado.',
@@ -417,7 +490,8 @@ export const ROUNDS = [
       {
         id: '4.6', titulo: 'Obter os comprovantes acadêmicos', resumo: 'Carta de admissão e comprovante de matrícula.', objetivo: 'Comprovantes acadêmicos em mãos.',
         porque: 'O consulado exige comprovação de admissão/matrícula.',
-        objetivos: [{ id: 'carta', texto: 'Obter a carta de admissão/matrícula' }, { id: 'conferir', texto: 'Conferir nome, passaporte, curso e datas' }, { id: 'situacao', texto: 'Matrícula efetivada', tipo: 'situacao', campo: 'matricula', concluiQuandoNao: ['nao-iniciada', 'vaga-confirmada', 'reservada'] }],
+        comoExecutar: [{ titulo: 'Matrícula provisória', texto: 'A matrícula é provisória até a universidade conferir a documentação. Na matrícula, ou quando pedirem, entregue originais ou cópias autênticas e, se exigida, tradução juramentada. Se faltar um requisito, admissão e matrícula são anuladas (O1 arts. 4 e 11; O2 arts. 9 e 16).' }],
+        objetivos: [{ id: 'carta', texto: 'Obter a carta de admissão/matrícula' }, { id: 'conferir', texto: 'Conferir nome, passaporte, curso e datas' }, { id: 'originais', texto: 'Entregar originais/cópias autênticas e traduções juramentadas, se a universidade pedir' }, { id: 'situacao', texto: 'Matrícula efetivada', tipo: 'situacao', campo: 'matricula', concluiQuandoNao: ['nao-iniciada', 'vaga-confirmada', 'reservada'] }],
         dependencias: ['4.5'], prioridade: 'alta', tempoEstimado: '15 min', duracaoMin: 15, documentos: ['admissao'], fontes: ['O7'], tag: 'verificado', aguardavel: true,
         marco: 'matricula-concluida', criterio: 'Matrícula efetivada e comprovantes obtidos.',
       },
@@ -485,7 +559,7 @@ export const ROUNDS = [
         id: '5.7', titulo: 'Solicitar o visto', resumo: 'Agendamento, documentação, comparecimento e taxas.', objetivo: 'Pedido de visto apresentado.',
         porque: 'A regra geral exige apresentar o pedido com pelo menos dois meses de antecedência do início dos estudos; exceções precisam ser confirmadas oficialmente. O prazo de análise também pode aumentar se pedirem documentos ou entrevista.',
         objetivos: [{ id: 'formulario', texto: 'Preencher o formulário' }, { id: 'agendar', texto: 'Agendar (se o consulado exigir)' }, { id: 'taxa', texto: 'Pagar a taxa aplicável' }, { id: 'data', texto: 'Data do pedido', tipo: 'data', campo: 'dataPedidoVisto' }],
-        dependencias: ['4.7', '5.4', '5.5', '5.6', '9.10'], requer: { campo: 'adjudicacao', valores: ['admitido'], rotulo: 'Admissão registrada' },
+        dependencias: ['4.7', '5.4', '5.5', '5.6', '9.10'], requer: { campo: 'adjudicacao', valores: ADMITIDO, rotulo: 'Admissão registrada' },
         prioridade: 'alta', tempoEstimado: 'Meio dia', duracaoMin: 120, documentos: ['formulario', 'foto-visto', 'passaporte', 'comprovante-residencia-br', 'admissao', 'comprovante-matricula', 'comprovante-pagamento', 'meios', 'seguro', 'antecedentes', 'atestado', 'taxa-visto', 'agendamento-consular'], fontes: ['O6', 'O7'], tag: 'verificado', criterio: 'Pedido apresentado no consulado.',
       },
       {

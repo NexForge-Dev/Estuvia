@@ -10,6 +10,7 @@
 // O passo a passo (MissionGuide) continua existindo, DENTRO da ferramenta "Passo a passo"/"Fazer agora".
 // Abrir um card nunca conclui nada: só objetivos e a confirmação explícita contam.
 import { h, mount, toast } from '../../ui.js';
+import { ApplicationProcess } from '../ApplicationProcess.js';
 import { icon } from '../../icons.js';
 import { api } from '../../api.js';
 import { fmtDate, showEvents } from '../common.js';
@@ -243,6 +244,7 @@ export function MissionHub(m, ctx) {
       case 'agenda': return AgendaPanel(m, ctx, hub);
       case 'ferramenta': return MissionTool(m, { journey, onChange: () => hub.dirty() }) || h('p', {}, 'Ferramenta indisponível.');
       case 'entender': return UnderstandPanel(m);
+      case 'processo': return ApplicationProcess(m.processo);
       case 'anotacoes': return MissionNotes(m, { journey, inSheet: true, onChange: () => hub.dirty(), onAskMentor: (pergunta) => { hub.close(); mentor(pergunta); } });
       case 'comunidade': return CommunityPanel(m, journey);
       default: return h('p', {}, 'Ferramenta indisponível.');

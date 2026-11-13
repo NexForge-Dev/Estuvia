@@ -26,6 +26,7 @@ function selecao(o) {
 
 const ROWS = [
   ['Universidade', (o) => (o.universidade ? h('span', {}, `${o.universidade.sigla} · ${o.universidade.cidade}`) : nd('Não informada'))],
+  ['Canal de candidatura', (o) => (o.canal ? h('span', { class: `chip-status t-${{ confirmado: 'ok', 'nao-confirmado': 'warn', demo: 'muted', 'nao-dua': 'pending', 'nao-dua-sem-canal': 'warn' }[o.canal]}` }, { confirmado: 'DUA (confirmado)', 'nao-confirmado': 'Não confirmado no DUA', demo: 'Demonstrativo', 'nao-dua': 'Fora do DUA (procedimento próprio)', 'nao-dua-sem-canal': 'Fora do DUA, canal não publicado' }[o.canal]) : nd())],
   ['Início das aulas', (o) => (fmtData(o.inicioCurso) ? h('span', {}, fmtData(o.inicioCurso)) : nd())],
   ['Duração', (o) => (o.duracaoMeses ? h('span', {}, `${o.duracaoMeses} meses`) : nd('Não informada'))],
   ['Graduação aceita', (o) => status(o.graduacao, 'Sem a lista de graduações da ficha')],

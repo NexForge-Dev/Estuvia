@@ -61,7 +61,7 @@ const dash = async () => (await req('GET', `/documents/dashboard?journeyId=${jid
 
 test('catálogo: 17 categorias com todos os itens da lista, sem documentos duplicados, ids antigos preservados', () => {
   assert.equal(DOC_CATEGORIES.length, 17);
-  const expected = { pessoais: 13, academicos: 15, candidatura: 16, matricula: 12, financeira: 18, visto: 19, saude: 14, moradia: 19, viagem: 19, empadronamiento: 14, 'nie-tie': 14, 'universidade-es': 12, banco: 10, trabalho: 14, familiares: 14, complementar: 10, renovacao: 12 };
+  const expected = { pessoais: 13, academicos: 16, candidatura: 16, matricula: 12, financeira: 18, visto: 19, saude: 14, moradia: 19, viagem: 19, empadronamiento: 14, 'nie-tie': 14, 'universidade-es': 12, banco: 10, trabalho: 14, familiares: 14, complementar: 10, renovacao: 12 };
   for (const [c, n] of Object.entries(expected)) assert.equal(CATEGORY_USES[c].length, n, c);
   const ids = DOCUMENTS.map((d) => d.id);
   assert.equal(new Set(ids).size, ids.length, 'cada documento existe uma vez');

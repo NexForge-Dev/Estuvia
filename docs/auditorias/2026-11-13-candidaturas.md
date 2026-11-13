@@ -1,0 +1,399 @@
+# Auditoria dos processos de candidatura
+
+Gerado em 2026-11-13T16:38:46.977Z a partir de dump 2026-11-13T16:07:01.688Z.
+
+- Mestrados auditados: **882** (877 reais + 5 demonstrativos)
+- Corretos antes da correção: **0** (as lacunas gerais abaixo afetavam todos)
+- Processo confirmado em fontes oficiais (canal + ficha): **849**
+- Processo parcialmente confirmado: **28** (canal não confirmado: 28; sem ficha: 28)
+- Oferta de vagas na Fase 1 não confirmada por fonte oficial: 849 (nenhuma fonte pública a informa por máster)
+- Com requisitos de cumprimento obrigatório na ficha: 691
+- Com regra oficial específica: 163 (profesorado: 153; psicologia-geral-sanitaria: 10)
+
+## Por universidade
+
+| Universidade | Total | Confirmados | Parciais | Canal não confirmado | Sem ficha | Com requisitos obrigatórios |
+|---|---|---|---|---|---|---|
+| UAL | 73 | 73 | 0 | 0 | 0 | 70 |
+| UCA | 81 | 81 | 0 | 0 | 0 | 74 |
+| UCO | 121 | 121 | 0 | 0 | 0 | 88 |
+| UGR | 138 | 110 | 28 | 28 | 28 | 83 |
+| UHU | 56 | 56 | 0 | 0 | 0 | 39 |
+| UJAEN | 87 | 87 | 0 | 0 | 0 | 57 |
+| UMA | 102 | 102 | 0 | 0 | 0 | 95 |
+| UPO | 53 | 53 | 0 | 0 | 0 | 53 |
+| US | 166 | 166 | 0 | 0 | 0 | 132 |
+
+## Lacunas gerais corrigidas (valiam para todos os mestrados)
+
+- Fase 1: pagamento a cuenta de 400 € na matrícula (O1 art. 6) não aparecia; a Rodada 4 tratava "confirmar vaga" e taxas como etapas genéricas.
+- Limite de 6 másteres por solicitação (O1 art. 3; O2 art. 14.1) não era validado.
+- Data-limite para o título concluído e a expedição paga, por fase (O1 Anexo I; O2 Anexo I), não existia como etapa nem prazo.
+- Obrigação de agir após CADA lista (matrícula, reserva ou confirmação) e a perda do direito por omissão (O1 art. 6; O2 art. 14.7) não estavam explícitas.
+- Alegações/revisão após cada lista (O1 art. 10; O2 art. 17) não eram mencionadas.
+- Situação "admitido em outra opção, em lista nas preferidas" não existia: quem reservava ficava sem a Missão 3.10.
+- Matrícula apresentada como definitiva, sem a conferência posterior dos documentos (O1 art. 11; O2 art. 16).
+- Prazos oficiais de todas as fases eram aplicados à jornada, inclusive de fases vencidas ou que o estudante não usaria.
+- Fase 3 como única fase para quem ainda não concluiu a graduação (O2 art. 3) não era informada.
+
+## Mestrados com problemas específicos
+
+- **ABOGACÍA Y PROCURA** (US, DUA 826701): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 006.
+- **ABOGACÍA Y PROCURA + ASESORÍA JURÍDICO MERCANTIL, FISCAL Y LABORAL** (US, DUA 826811): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 006.
+- **ABOGACÍA Y PROCURA + DERECHO PÚBLICO** (US, DUA 826923): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 006.
+- **ABOGACÍA Y PROCURA + RELACIONES JURÍDICO-PRIVADAS** (US, DUA 827036): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 006.
+- **ACTIVIDAD FÍSICA Y SALUD** (UCA, DUA 213404): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **AGROALIMENTACIÓN** (UCA, DUA 214009): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **AGROALIMENTACIÓN (SEMIPRESENCIAL)** (UCO, DUA 313901): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **ANÁLISIS Y GESTIÓN AMBIENTAL** (UMA, DUA 717706): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 017.
+- **ANÁLISIS, CONSERVACIÓN Y REST. COMP. FÍSICOS Y BIÓTICOS + PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: BIOLOGÍA Y GEOLOGÍA)** (UJAEN, DUA 631404): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **ANÁLISIS, CONSERVACIÓN Y RESTAURACIÓN DE COMPONENTES FÍSICOS Y BIÓTICOS DE LOS HÁBITATS** (UJAEN, DUA 619801): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 008, 009.
+- **ARQUEOLOGÍA NÁUTICA Y SUBACUÁTICA** (UCA, DUA 214408): 4 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 010, 012, 015, 099.
+- **ARQUITECTURA** (UMA, DUA 721807): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004.
+- **ARQUITECTURA** (US, DUA 820004): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004.
+- **ARQUITECTURA + DERECHO DE LA ORDENACIÓN DEL TERRITORIO, EL URBANISMO Y EL MEDIO AMBIENTE** (UMA, DUA 792507): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 002.
+- **ARQUITECTURA + INGENIERÍA ACÚSTICA** (UMA, DUA 792302): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 002.
+- **ARQUITECTURA + PROYECTOS ARQUITECTÓNICOS: DISEÑO AMBIENTAL Y NUEVAS TECNOLOGÍAS** (UMA, DUA 791302): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 002.
+- **ARTE: IDEA Y PRODUCCIÓN** (US, DUA 804504): 4 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 008, 009, 016, 018.
+- **ASESORIA JURIDICA DE EMPRESAS** (UMA, DUA 702109): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 005, 007.
+- **AUDITORÍA Y CONTABILIDAD SUPERIOR** (US, DUA 820403): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004, 012.
+- **AVANCES EN SEGURIDAD DE LOS ALIMENTOS + PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: BIOLOGÍA Y GEOLOGÍA)** (UJAEN, DUA 630702): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **BIOTECNOLOGÍA** (UCA, DUA 215401): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004, 005.
+- **BIOTECNOLOGÍA** (UCO, DUA 313705): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 003.
+- **BIOTECNOLOGÍA Y BIOMEDICINA** (UJAEN, DUA 618603): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 007.
+- **BIOTECNOLOGÍA Y BIOMEDICINA + PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: BIOLOGÍA Y GEOLOGÍA)** (UJAEN, DUA 631307): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **CIENCIAS DEL LENGUAJE Y SUS APLICACIONES** (UCA, DUA 216904): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **CINEMATOGRAFÍA (SEMIPRESENCIAL)** (UCO, DUA 303701): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004.
+- **CIUDAD Y ARQUITECTURA SOSTENIBLES (MCAS)** (US, DUA 820802): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 010.
+- **COMUNICACIÓN INTERNACIONAL** (UCA, DUA 213201): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **COMUNICACION INTERNACIONAL, TRADUCCION E INTERPRETACION** (UPO, DUA 901502): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004.
+- **COMUNICACIÓN Y CULTURA** (US, DUA 803705): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 002.
+- **CONSERVACIÓN Y GESTIÓN DEL MEDIO NATURAL** (UCA, DUA 211900): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 009, 099.
+- **CONTABILIDAD Y AUDITORIA** (UCA, DUA 201703): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **CONTABILIDAD Y FINANZAS CORPORATIVAS (SEMIPRESENCIAL)** (UAL, DUA 102902): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 007.
+- **CREACIÓN DE EMPRESAS, NUEVOS NEGOCIOS Y PROYECTOS INNOVADORES (MASTERUP)** (UCA, DUA 203700): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 002.
+- **DESARROLLO RURAL -ERASMUS MUNDUS-** (UCO, DUA 317807): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 002.
+- **DESARROLLOS SOCIALES DE LA CULTURA ARTISTICA** (UMA, DUA 702605): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 006.
+- **DIRECCIÓN DE EMPRESAS** (UCA, DUA 204003): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 014, 099.
+- **DIRECCIÓN DE RECURSOS HUMANOS** (UCA, DUA 202405): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 012.
+- **DIRECCIÓN TURISTICA** (UCA, DUA 203301): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **DIRECCIÓN Y PLANIFICACIÓN DEL TURISMO (PARA EXTRANJEROS)** (US, DUA 803141): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 005.
+- **DIRECCIÓN Y PLANIFICACIÓN DEL TURISMO (PARA TITULADOS ESPAÑOLES DE OTROS TÍTULOS)** (US, DUA 803135): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004.
+- **DIRECCIÓN, GESTIÓN Y EMPRENDIMIENTO DE CENTROS Y SERVICIOS SOCIOSANITARIOS** (UJAEN, DUA 619402): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 002.
+- **DISEÑO AVANZADO EN INGENIERÍA MECÁNICA** (US, DUA 820901): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 012, 021.
+- **DOBLE DE PROFESORADO EN ESO, BACHILLERATO,F.P. O ENSEÑANZA IDIOMAS + TECNOLOGÍAS AVANZADAS DE MATERIALES PARA LA CONSTRUCCIÓN SOSTENIBLE** (UCO, DUA 331202): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **DOCUMENTOS Y LIBROS. ARCHIVOS Y BIBLIOTECAS** (US, DUA 805109): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 007.
+- **ECONOMIA DE LA SALUD, GESTION SANITARIA Y USO RACIONAL DEL MEDICAMENTO** (UMA, DUA 702801): 4 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 007, 013, 014, 015.
+- **ECONOMÍA Y DESARROLLO** (US, DUA 805206): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 005.
+- **ECONOMÍA Y DESARROLLO TERRITORIAL** (UCA, DUA 213900): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **ECONOMÍA Y DESARROLLO TERRITORIAL** (UHU, DUA 516208): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **ECONOMÍA Y DESARROLLO TERRITORIAL** (UJAEN, DUA 617502): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **EMPLEO. ESTRATEGIAS Y GESTIÓN DE SERVICIOS Y POLÍTICAS TERRITORIALES DE EMPLEO (A DISTANCIA)** (UCO, DUA 318703): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004.
+- **EMPLEO. ESTRATEGIAS Y GESTIÓN DE SERVICIOS Y POLÍTICAS TERRITORIALES DE EMPLEO (A DISTANCIA)** (UHU, DUA 519608): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004.
+- **EMPLEO. ESTRATEGIAS Y GESTIÓN DE SERVICIOS Y POLÍTICAS TERRITORIALES DE EMPLEO (SEMIPRESENCIAL)** (UCO, DUA 318304): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004.
+- **EMPLEO. ESTRATEGIAS Y GESTIÓN DE SERVICIOS Y POLÍTICAS TERRITORIALES DE EMPLEO (SEMIPRESENCIAL)** (UHU, DUA 519500): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004.
+- **ENFERMERÍA DE CUIDADOS CRÍTICOS, URGENCIAS Y EMERGENCIAS** (UJAEN, DUA 615807): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 003.
+- **ENSEÑANZA DE LA LENGUA Y LA LITERATURA ESPAÑOLAS PARA PROFESORADO DE ESPAÑOL COMO LENGUA EXTRANJERA (A DISTANCIA)** (UAL, DUA 110802): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **ENSEÑANZA DEL ESPAÑOL COMO LENGUA EXTRANJERA. (MODALIDAD ONLINE)** (UPO, DUA 900610): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 005.
+- **ENSEÑANZA DEL ESPAÑOL COMO LENGUA EXTRANJERA. (MODALIDAD SEMIPRESENCIAL)** (UPO, DUA 900606): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 005.
+- **ESPECIALIZACIÓN PROFESIONAL EN FARMACIA (ESP. ALIMENTACIÓN Y SALUD)** (US, DUA 811401): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 005.
+- **ESPECIALIZACIÓN PROFESIONAL EN FARMACIA (ESP. GESTIÓN Y CALIDAD ASISTENCIAL EN LA OFICINA DE FARMACIA)** (US, DUA 811416): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 005.
+- **ESPECIALIZACIÓN PROFESIONAL EN FARMACIA (ESP. INDUSTRIA FARMACÉUTICA)** (US, DUA 811420): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 009.
+- **ESTRATEGIAS PARA EL DESARROLLO RURAL Y TERRITORIAL** (UCO, DUA 313500): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004.
+- **ESTUDIOS AVANZADOS EN DIRECCIÓN DE EMPRESAS** (US, DUA 802809): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 007.
+- **ESTUDIOS EUROPEOS** (US, DUA 803802): 3 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 005, 006, 007.
+- **ESTUDIOS HISPÁNICOS** (UCA, DUA 200701): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **ESTUDIOS INGLESES Y COMUNICACION MULTILINGÜE E INTERCULTURAL** (UMA, DUA 702702): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 006.
+- **EVALUACIÓN E INVESTIGACIÓN EN ORGANIZACIONES Y CONTEXTOS DE APRENDIZAJE (MEVINAP) - A DISTANCIA** (UCA, DUA 216200): 3 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 003, 005, 099.
+- **FILOSOFÍA Y CULTURA MODERNA** (US, DUA 807505): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 005.
+- **FILOSOFÍA, CIENCIA Y CIUDADANÍA** (UMA, DUA 716801): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 006.
+- **FINANZAS,BANCA Y SEGUROS** (UMA, DUA 705211): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004.
+- **FÍSICA NUCLEAR** (US, DUA 806005): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 005, 008.
+- **FÍSICA NUCLEAR (ERASMUS MUNDUS)** (US, DUA 824807): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 003.
+- **FISIOTERAPIA NEUROLÓGICA** (UCA, DUA 214701): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **FORMACIÓN DEL PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: BIOLOGÍA Y GEOLOGÍA)** (UHU, DUA 530167): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **FORMACIÓN DEL PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: CIENCIAS SOCIALES: GEOGRAFÍA E HISTORIA)** (UHU, DUA 530171): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **FORMACIÓN DEL PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: EDUCACION FISICA)** (UHU, DUA 530186): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **FORMACIÓN DEL PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: EDUCACION FISICA) + INVESTIGACIÓN EN EDUCACIÓN FÍSICA Y CIENCIAS DEL DEPORTE** (UHU, DUA 530190): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **FORMACIÓN DEL PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: FÍSICA Y QUÍMICA)** (UHU, DUA 530509): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **FORMACIÓN DEL PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA EXTRANJERA - INGLÉS)** (UHU, DUA 530207): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **FORMACIÓN DEL PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA EXTRANJERA - INGLÉS)+ LENGUAS Y LITERATURAS EN CONTRASTE: ESTUDIOS AVANZADOS** (UHU, DUA 530401): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **FORMACIÓN DEL PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA Y LITERATURA ESPAÑOLA)** (UHU, DUA 530211): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **FORMACIÓN DEL PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA Y LITERATURA ESPAÑOLA) + LENGUAS Y LITERATURAS EN CONTRASTE: ESTUDIOS AVANZADOS** (UHU, DUA 530304): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **FORMACIÓN DEL PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: ORIENTACIÓN EDUCATIVA)** (UHU, DUA 530226): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **FORMACIÓN DEL PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: TECNOLOGIA, INFORMATICA Y PROCESOS INDUSTRIALES)** (UHU, DUA 530230): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **GENÉTICA MOLECULAR Y BIOTECNOLOGÍA** (US, DUA 802205): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 006.
+- **GEOLOGIA Y GESTION AMBIENTAL DE LOS RECURSOS MINERALES** (UHU, DUA 502704): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 003.
+- **GEOMÁTICA, TELEDETECCIÓN Y MODELOS ESPACIALES APLICADOS A LA GESTIÓN FORESTAL (SEMIPRESENCIAL)** (UCO, DUA 304606): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004, 005.
+- **GERONTOLOGÍA: LONGEVIDAD, SALUD Y CALIDAD** (UJAEN, DUA 617901): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 003.
+- **GESTIÓN ESTRATÉGICA Y NEGOCIOS INTERNACIONALES** (US, DUA 803306): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 010.
+- **GESTIÓN Y ADMINISTRACIÓN PÚBLICA** (UCA, DUA 203409): 3 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 008, 012, 099.
+- **INGENIERÍA ACÚSTICA** (UCA, DUA 204501): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 008.
+- **INGENIERÍA AMBIENTAL** (US, DUA 821202): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 007, 017.
+- **INGENIERÍA DE LOS SISTEMAS FOTOVOLTAICOS** (UJAEN, DUA 620804): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **INGENIERÍA DE TELECOMUNICACIÓN (EN INGLÉS) (CAMPUS LINARES)** (UJAEN, DUA 615904): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 003.
+- **INGENIERÍA ELECTRÓNICA, ROBÓTICA Y AUTOMÁTICA** (US, DUA 821301): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 007, 008.
+- **INGENIERÍA ELECTRÓNICA, ROBÓTICA Y AUTOMÁTICA (GRUPO EN INGLÉS)** (US, DUA 828003): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004, 005.
+- **INGENIERÍA INDUSTRIAL** (UAL, DUA 106605): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 005.
+- **INGENIERÍA INDUSTRIAL** (US, DUA 819400): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 006, 007.
+- **INGENIERÍA INDUSTRIAL (ALGECIRAS)** (UCA, DUA 212907): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 011.
+- **INGENIERÍA INDUSTRIAL (GRUPO EN INGLÉS)** (US, DUA 828100): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 014, 015.
+- **INGENIERÍA MECÁNICA AVANZADA** (UMA, DUA 790402): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 005, 009.
+- **INGENIERÍA MECATRÓNICA** (UMA, DUA 719509): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004.
+- **INGENIERÍA QUÍMICA** (UAL, DUA 105806): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 008.
+- **INGENIERÍA QUÍMICA** (UCA, DUA 213307): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 008.
+- **INGENIERÍA QUÍMICA** (UHU, DUA 519403): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 008.
+- **INGENIERÍA QUÍMICA** (UMA, DUA 718300): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 008.
+- **INGENIERÍA QUÍMICA** (US, DUA 823609): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **INICIACIÓN EN INVESTIGACIÓN EN SALUD MENTAL** (UCA, DUA 203506): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **INTELIGENCIA INSTITUCIONAL: GESTIÓN Y GOBERNANZA DE DATOS** (UAL, DUA 112101): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 003.
+- **INTERVENCIÓN Y MEDIACIÓN FAMILIAR** (US, DUA 801805): 3 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 009, 010, 012.
+- **INVESTIGACIÓN E INTERVENCIÓN EN TRABAJO SOCIAL (SEMIPRESENCIAL)** (UHU, DUA 516801): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 006, 007.
+- **INVESTIGACIÓN EN INGENIERÍA DE SISTEMAS Y DE LA COMPUTACIÓN** (UCA, DUA 204208): 3 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 005, 006, 007.
+- **INVESTIGACIÓN Y DOCENCIA EN CIENCIAS DE LA ACTIVIDAD FÍSICA Y SALUD** (UJAEN, DUA 617601): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 005, 099.
+- **JUEGO, EDUCACIÓN, JUGUETES Y LENGUAS / PLAY, EDUCATION, TOYS AND LANGUAGES** (UCO, DUA 318207): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004.
+- **LENGUA ESPAÑOLA Y LITERATURA: INV. Y APL. PROFESIONALES (ESP. ESTUDIOS LINGÜÍSTICOS Y ESP. ESTUDIOS LITERARIOS) + PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA Y LITERATURA)** (UJAEN, DUA 631201): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **LENGUAS Y LITERATURAS EN CONTRASTE: ESTUDIOS AVANZADOS** (UHU, DUA 517309): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 007, 099.
+- **LENGUAS Y LITERATURAS EN CONTRASTE: ESTUDIOS AVANZADOS (SEMIPRESENCIAL)** (UHU, DUA 518302): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 007, 099.
+- **LOGÍSTICA Y GESTIÓN DE OPERACIONES - INTERMODALIDAD (DUAL)** (US, DUA 828208): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 005.
+- **LOGÍSTICA Y GESTIÓN DE OPERACIONES - LOGÍSTICA 4.0 (DUAL)** (UCO, DUA 323204): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 005.
+- **LOGÍSTICA Y GESTIÓN DE OPERACIONES - LOGÍSTICA DE TERMINALES FERROPORTUARIAS (DUAL)** (UCA, DUA 297801): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 005.
+- **LOGÍSTICA Y GESTIÓN DE OPERACIONES - LOGÍSTICA INTERNACIONAL (DUAL)** (UAL, DUA 111807): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 005.
+- **Máster Doble: Máster Universitario en Ciencia y Tecnología en Patrimonio Arquitectónico + Máster Universitario en Rehabilitación Arquitectónica** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **Máster Doble: Máster Universitario en Estructuras + Máster Universitario en Rehabilitación Arquitectónica** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **Máster Doble: Máster Universitario en Ingeniería de Caminos, Canales y Puertos + Máster Universitario en Economía / Economics** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **Máster Universitario en Abogacía y Procura** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **Máster Universitario en Abogacía y Procura (Melilla)** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **Máster Universitario en Alimentación, Nutrición y Salud (Food-H)** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **Máster Universitario en Artes Visuales y Educación: un Enfoque Construccionista** (UGR, DUA 405307): 3 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 012, 013, 014.
+- **Máster Universitario en Ciberseguridad y Ciberinteligencia Internacional** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **Máster Universitario en Ciencia y Tecnología de Plasmas y Fusión** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **Máster Universitario en Ciencia y Tecnología en Patrimonio Arquitectónico** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **Máster Universitario en Ciencias Odontológicas** (UGR, DUA 417407): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **Máster Universitario en Ciencias y Tecnologías Químicas, Khemia** (UGR, DUA 413909): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004.
+- **Máster Universitario en Cirugía Bucal e Implantología** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **Máster Universitario en Comercio Exterior y Relaciones Económicas Internacionales** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **Máster Universitario en Cooperación al Desarrollo, Gestión Pública y de las ONGD** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **Máster Universitario en Cuidados de Salud para la Promoción de la Autonomía de las Personas y la Atención a los Procesos del Fin de Vida** (UGR, DUA 405201): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004, 099.
+- **Máster Universitario en Desarrollo del Software** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **Máster Universitario en Didáctica de la Matemática** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **Máster Universitario en Educación Musical: una Perspectiva Multidisciplinar** (UGR, DUA 406408): 3 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004, 005, 006.
+- **Máster Universitario en Empleo. Estrategias y Gestión de Servicios y Políticas Territoriales de Empleo** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **MÁSTER UNIVERSITARIO EN ESPECIALIZACIÓN EN GESTIÓN CULTURAL: INVESTIGACIÓN Y EJERCICIO PROFESIONAL AVANZADOS POR LA UNIVERSIDAD DE ALMERÍA; LA UNIVERSIDAD DE CÓRDOBA Y LA UNIVERSIDAD DE HUELVA** (UCO, DUA 322100): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 009.
+- **MÁSTER UNIVERSITARIO EN ESPECIALIZACIÓN EN GESTIÓN CULTURAL: INVESTIGACIÓN Y EJERCICIO PROFESIONAL AVANZADOS POR LA UNIVERSIDAD DE ALMERÍA; LA UNIVERSIDAD DE CÓRDOBA Y LA UNIVERSIDAD DE HUELVA** (UHU, DUA 521103): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 009.
+- **MÁSTER UNIVERSITARIO EN ESPECIALIZACIÓN EN GESTIÓN CULTURAL: INVESTIGACIÓN Y EJERCICIO PROFESIONAL AVANZADOS POR LA UNIVERSIDAD DE ALMERÍA; LA UNIVERSIDAD DE CÓRDOBA Y LA UNIVERSIDAD DE HUELVA (A DISTANCIA)** (UAL, DUA 110901): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 009.
+- **Máster Universitario en Estudios Europeos** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **Máster Universitario en Estudios Latinoamericanos. Cultura y Gestión** (UGR, DUA 409808): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 002, 003.
+- **Máster Universitario en Filología y Tradición Clásicas** (UGR, DUA 420504): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 002.
+- **Máster Universitario en Filosofía Contemporánea** (UGR, DUA 416500): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **Máster Universitario en Física Nuclear** (UGR, DUA 407908): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 005, 008.
+- **Máster Universitario en Física: Radiaciones, Nanotecnología, Partículas y Astrofísica** (UGR, DUA 414104): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 009, 011.
+- **Máster Universitario en Genética y Evolución** (UGR, DUA 407207): 3 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004, 005, 006.
+- **Máster Universitario en Gestión y Tecnologías de Procesos de Negocio** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **Máster Universitario en Hidráulica Ambiental** (UGR, DUA 403806): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 008, 013.
+- **Máster Universitario en Ingeniería Acústica** (UGR, DUA 411707): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 008.
+- **Máster Universitario en Ingeniería de Telecomunicación** (UGR, DUA 490405): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 003.
+- **Máster Universitario en Ingeniería Tisular y Terapias Avanzadas** (UGR, DUA 418508): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **Máster Universitario en Interpretación de Conferencias** (UGR, DUA 411502): 3 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 005, 010, 011.
+- **Máster Universitario en Investigación de los Trastornos del Movimiento y Alteración Funcional** (UGR, DUA 421303): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **Máster Universitario en Investigación e Innovación en Currículum y Formación** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **Máster Universitario en Investigación e Innovación en Currículum y Formación** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **Máster Universitario en Investigación en Actividad Física y Deporte** (UGR, DUA 408308): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 007, 010.
+- **Máster Universitario en Investigación y Avances en Medicina Preventiva y Salud Pública** (UGR, DUA 418801): 3 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 005, 006, 008.
+- **Máster Universitario en Lenguas y Culturas Modernas** (UGR, DUA 415809): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004, 006.
+- **Máster Universitario en Marketing y Comportamiento del Consumidor** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **Máster Universitario en Marketing y Comportamiento del Consumidor** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **Máster Universitario en Neurociencia Cognitiva y del Comportamiento** (UGR, DUA 416608): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 012.
+- **Máster Universitario en Patrimonio Musical** (UGR, DUA 408006): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004.
+- **Máster Universitario en Prevención de Riesgos Laborales** (UGR, DUA 407703): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 010, 011.
+- **Máster Universitario en Problemas Sociales: Dirección y Gestión de Programas Sociales** (UGR, DUA 404702): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **Máster Universitario en Producción e Investigación en Arte** (UGR, DUA 408502): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 007.
+- **Máster Universitario en Profesorado de Enseñanza Secundaria Obligatoria y Bachillerato, Formación Profesional y Enseñanzas de Idiomas** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados. Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **Máster Universitario en Psicología General Sanitaria** (UGR, DUA 414406): Regra oficial específica ausente da jornada: psicologia-geral-sanitaria (O2 art. 9).
+- **Máster Universitario en Psicología Jurídica y Forense** (UGR, DUA 416004): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 005, 007.
+- **Máster Universitario en Rehabilitación Arquitectónica** (UGR, DUA 414503): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 008.
+- **Máster Universitario en Técnicas Cuantitativas en Gestión Empresarial** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **Máster Universitario en Técnicas y Ciencias de la Calidad del Agua (Idea)** (UGR, DUA 410606): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 005.
+- **Máster Universitario en Tecnologías para la Investigación de Mercados y Marketing** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **Máster Universitario en Traducción Profesional** (UGR, DUA 414600): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 031.
+- **MÁSTER UNIVERSITARIO ERASMUS MUNDUS EN DIVERSIDAD RELIGIOSA EN UN MUNDO GLOBALIZADO (RED GLOBAL)** (UCO, DUA 321207): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 006.
+- **Máster Universitario Erasmus Mundus en Estudios de las Mujeres y de Género** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **Máster Universitario Erasmus Mundus en Excelencia en Salud Pública** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **Máster Universitario Erasmus Mundus en Liderazgo Intercultural (Clide)** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **Máster Universitario Erasmus Mundus en Migraciones Transnacionales (Mitra)** (UGR): Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso. Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.
+- **MATEMÁTICAS** (US, DUA 820608): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 006.
+- **MATEMÁTICAS + PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: MATEMÁTICAS)** (UJAEN, DUA 630508): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **MEDIACIÓN** (UCA, DUA 204305): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **MICROELECTRÓNICA: DISEÑO Y APLICACIONES DE SISTEMAS MICRO/NANOMÉTRICOS (ONLINE)** (US, DUA 803403): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 013.
+- **NANOCIENCIA Y TECNOLOGÍA DE MATERIALES** (UCA, DUA 215908): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004.
+- **ODONTOLOGÍA INFANTIL** (US, DUA 822605): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 002.
+- **ODONTOLOGÍA MÉDICO-QUIRÚRGICA E INTEGRAL** (US, DUA 821504): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 017.
+- **ODONTOLOGÍA RESTAURADORA, ESTÉTICA Y FUNCIONAL** (US, DUA 822109): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004.
+- **OLIVAR Y ACEITE DE OLIVA + PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: ECONOMIA, EMPRESA Y COMERCIO)** (UJAEN, DUA 631102): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **ORGANIZACIÓN INDUSTRIAL Y GESTIÓN DE EMPRESAS** (US, DUA 821709): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 010, 018.
+- **PATRIMONIO ARTÍSTICO ANDALUZ Y SU PROYECCIÓN IBEROAMERICANA** (US, DUA 806803): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 008, 009.
+- **PATRIMONIO HISTÓRICO Y CULTURAL** (UHU, DUA 516305): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **PATRIMONIO HISTÓRICO Y CULTURAL (SEMIPRESENCIAL)** (UHU, DUA 519705): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **PLANIFICACIÓN Y GESTIÓN SOSTENIBLE DEL TURISMO** (UJAEN, DUA 620601): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 002, 003.
+- **PREVENCIÓN DE RIESGOS LABORALES** (UJAEN, DUA 602207): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: : CIENCIAS SOCIALES, GEOGRAFÍA E HISTORIA) + ESPAÑOL: LENGUA, LITERATURA, HISTORIA O ENSEÑANZA (ITINERARIO: HISTORIA)** (UCO, DUA 330901): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: ADMINISTRACIÓN, EMPRESA Y FORMACIÓN LABORAL)** (UCA, DUA 230039): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: BIOLOGÍA Y GEOLOGÍA)** (UAL, DUA 130010): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: BIOLOGÍA Y GEOLOGÍA)** (UCA, DUA 230011): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: BIOLOGÍA Y GEOLOGÍA)** (UCO, DUA 330019): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: BIOLOGÍA Y GEOLOGÍA)** (UJAEN, DUA 630016): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: BIOLOGÍA Y GEOLOGÍA)** (UMA, DUA 730015): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: BIOLOGÍA Y GEOLOGÍA)** (UPO, DUA 930203): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: BIOLOGÍA Y GEOLOGÍA)** (US, DUA 830014): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: BIOLOGÍA Y GEOLOGÍA)** (US, DUA 830316): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: BIOLOGÍA Y GEOLOGÍA) + USO SOSTENIBLE RECURSOS NATURALES** (UAL, DUA 130502): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: CIENCIAS SOCIALES FILOSOFÍA)** (US, DUA 832104): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: CIENCIAS SOCIALES GEOGRAFÍA E HISTORIA)** (US, DUA 830071): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: CIENCIAS SOCIALES, GEOGRAFÍA E HISTORIA)** (UCO, DUA 330076): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: CIENCIAS SOCIALES: GEOGRAFÍA E HISTORIA Y FILOSOFÍA)** (UCA, DUA 230077): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: CIENCIAS SOCIALES: GEOGRAFÍA E HISTORIA Y FILOSOFÍA)** (UCA, DUA 233401): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: CIENCIAS SOCIALES: GEOGRAFÍA E HISTORIA Y FILOSOFÍA)** (UMA, DUA 730072): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: CIENCIAS SOCIALES: GEOGRAFÍA E HISTORIA Y FILOSOFIA) + FILOSOFÍA, CIENCIA Y CIUDADANÍA** (UMA, DUA 730401): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: CIENCIAS SOCIALES: GEOGRAFÍA E HISTORIA)** (UJAEN, DUA 630073): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: CIENCIAS SOCIALES: GEOGRAFÍA E HISTORIA)** (UPO, DUA 930070): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: CIENCIAS SOCIALES)** (UAL, DUA 130078): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: CIENCIAS SOCIALES)** (US, DUA 830354): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: CIENCIAS SOCIALES) + ESTUDIOS AVANZADOS EN HISTORIA** (UAL, DUA 130601): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: CIENCIAS SOCIALES) + FILOSOFÍA Y CULTURA MODERNAS** (US, DUA 830301): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: DIBUJO, IMAGEN Y ARTES PLASTICAS)** (UAL, DUA 130025): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: DIBUJO, IMAGEN Y ARTES PLASTICAS)** (UCA, DUA 230024): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: DIBUJO, IMAGEN Y ARTES PLASTICAS)** (UCO, DUA 330023): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: DIBUJO, IMAGEN Y ARTES PLASTICAS)** (UJAEN, DUA 630020): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: DIBUJO, IMAGEN Y ARTES PLASTICAS)** (UMA, DUA 730021): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: DIBUJO, IMAGEN Y ARTES PLÁSTICAS)** (US, DUA 830029): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: DIBUJO, IMAGEN Y ARTES PLÁSTICAS)** (US, DUA 830392): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: DIBUJO, IMAGEN Y ARTES PLÁSTICAS) + REPRESENTACIÓN Y DISEÑO EN INGENIERÍA Y ARQUITECTURA** (UCO, DUA 330306): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: ECONOMIA, EMPRESA Y COMERCIO)** (UAL, DUA 130031): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: ECONOMIA, EMPRESA Y COMERCIO)** (UCO, DUA 330038): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: ECONOMIA, EMPRESA Y COMERCIO)** (UJAEN, DUA 630035): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: ECONOMIA, EMPRESA Y COMERCIO)** (UMA, DUA 730034): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: ECONOMIA, EMPRESA Y COMERCIO)** (UPO, DUA 930032): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: ECONOMÍA, EMPRESA Y COMERCIO)** (US, DUA 830033): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: ECONOMÍA, EMPRESA Y COMERCIO)** (US, DUA 832219): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: EDUCACIÓN FÍSICA Y DEPORTIVA)** (UJAEN, DUA 630206): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: EDUCACION FISICA)** (UCA, DUA 230043): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: EDUCACION FISICA)** (UCA, DUA 233993): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: EDUCACION FISICA)** (UMA, DUA 730049): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: EDUCACION FISICA)** (UPO, DUA 930047): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: EDUCACIÓN FÍSICA)** (UAL, DUA 130308): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: EDUCACIÓN FÍSICA)** (UCO, DUA 331105): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: EDUCACIÓN FÍSICA)** (US, DUA 830048): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: EDUCACIÓN FÍSICA)** (US, DUA 832201): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: EDUCACIÓN FÍSICA) + INVESTIGACIÓN E INNOVACIÓN EN CIENCIAS DE LA ACTIVIDAD FÍSICA Y DEPORTE** (UAL, DUA 130707): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: FÍSICA Y QUÍMICA)** (UAL, DUA 130759): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: FÍSICA Y QUÍMICA)** (UCA, DUA 230058): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: FÍSICA Y QUÍMICA)** (UCO, DUA 330057): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: FÍSICA Y QUÍMICA)** (UJAEN, DUA 630801): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: FÍSICA Y QUÍMICA)** (UMA, DUA 730053): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: FÍSICA Y QUÍMICA)** (UPO, DUA 930051): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: FÍSICA Y QUÍMICA)** (US, DUA 830052): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: FÍSICA Y QUÍMICA) + LABORATORIO AVANZADO DE QUÍMICA** (UAL, DUA 130803): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: FÍSICA Y QUÍMICA) + QUÍMICA APLICADA** (UCO, DUA 331008): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: FORMACION Y ORIENTACION LABORAL)** (UJAEN, DUA 630069): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: FORMACION Y ORIENTACION LABORAL)** (UMA, DUA 730068): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: FORMACION Y ORIENTACION LABORAL)** (UPO, DUA 930066): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: FORMACIÓN Y ORIENTACIÓN LABORAL)** (US, DUA 830067): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: FORMACIÓN Y ORIENTACIÓN LABORAL)** (US, DUA 830373): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: HOSTELERIA Y TURISMO)** (UMA, DUA 730087): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: HOSTELERÍA Y TURISMO)** (US, DUA 830086): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: INFORMATICA)** (UJAEN, DUA 630166): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: INFORMÁTICA)** (US, DUA 830164): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA CASTELLANA Y LITERATURA)** (UCA, DUA 230101): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA CASTELLANA Y LITERATURA)** (UCO, DUA 330100): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA CASTELLANA Y LITERATURA) + ESPAÑOL: LENGUA, LITERATURA, HISTORIA O ENSEÑANZA (ITINERARIO: LENGUA-LINGÜÍSTICA)** (UCO, DUA 330403): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA CASTELLANA Y LITERATURA) + ESPAÑOL: LENGUA, LITERATURA, HISTORIA O ENSEÑANZA (ITINERARIO: LITERATURA HISPÁNICA)** (UCO, DUA 330705): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA CASTELLANA Y LITERATURA) + ESPAÑOL: LENGUA, LITERATURA, HISTORIA O ENSEÑANZA (ITINERARIO: MEELE)** (UCO, DUA 330802): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA EXTRANJERA - FRANCÉS)** (UMA, DUA 730165): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA EXTRANJERA - INGLÉS)** (UCO, DUA 330095): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA EXTRANJERA - INGLÉS)** (UMA, DUA 730091): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA EXTRANJERA - INGLÉS) + ESTUDIOS INGLESES AVANZADOS** (UCO, DUA 330213): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA EXTRANJERA ALEMÁN)** (US, DUA 830603): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA EXTRANJERA FRANCÉS)** (US, DUA 830700): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA EXTRANJERA GRUPO FRANCÉS)** (UJAEN, DUA 630605): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA EXTRANJERA GRUPO INGLÉS)** (UJAEN, DUA 630092): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA EXTRANJERA INGLÉS)** (US, DUA 830341): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA EXTRANJERA INGLÉS)** (US, DUA 830905): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA EXTRANJERA INGLÉS) + ESTUDIOS INGLESES Y COMUNICACION MULTILINGUE E INTERCULTURAL** (UMA, DUA 730205): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 003. Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA EXTRANJERA ITALIANO)** (US, DUA 830808): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA EXTRANJERA)** (UAL, DUA 130097): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA EXTRANJERA)** (UCA, DUA 230096): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA Y LITERATURA O LENGUA EXTRANJERA) + ESTUDIOS LINGÜÍSTICOS, LITERARIOS Y CULTURALES** (US, DUA 830506): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA Y LITERATURA, LATIN Y GRIEGO)** (UAL, DUA 130102): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA Y LITERATURA, LATIN Y GRIEGO)** (UMA, DUA 730107): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA Y LITERATURA, LATIN Y GRIEGO) + ENSEÑANZA DE LA LENGUA Y LA LITERATURA ESPAÑOLAS PARA PROFESORADO DE ESPAÑOL COMO LENGUA EXTRANJERA** (UAL, DUA 130856): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA Y LITERATURA, LATIN Y GRIEGO) + GESTION DEL PATRIMONIO LITERARIO Y LINGÜISTICO ESPAÑOL** (UMA, DUA 730302): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 003. Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA Y LITERATURA. LATÍN Y GRIEGO)** (US, DUA 831003): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA Y LITERATURA)** (UJAEN, DUA 630108): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA Y LITERATURA)** (UPO, DUA 930408): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA Y LITERATURA)** (US, DUA 830106): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA Y LITERATURA)** (US, DUA 830369): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUA Y LITERATURA) + ESTUDIOS HISPÁNICOS SUPERIORES** (US, DUA 830204): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUAS EXTRANJERAS - FRANCÉS)** (UPO, DUA 930300): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: LENGUAS EXTRANJERAS - INGLÉS)** (UPO, DUA 930091): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: MATEMÁTICAS E INFORMÁTICA)** (UCO, DUA 330184): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: MATEMÁTICAS)** (UAL, DUA 130151): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: MATEMÁTICAS)** (UCA, DUA 230159): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: MATEMÁTICAS)** (UJAEN, DUA 630210): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: MATEMÁTICAS)** (UMA, DUA 730154): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: MATEMÁTICAS)** (UPO, DUA 930152): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: MATEMÁTICAS)** (US, DUA 830143): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: MATEMÁTICAS)** (US, DUA 830335): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: MATEMÁTICAS) + MATEMÁTICAS** (UAL, DUA 130200): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: MATEMÁTICAS) + MATEMÁTICAS** (UCA, DUA 230161): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: MATEMÁTICAS) + MATEMÁTICAS** (UMA, DUA 730184): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 011. Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: MATEMÁTICAS) + MATEMÁTICAS** (US, DUA 832007): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: MUSICA)** (UCO, DUA 330116): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: MUSICA)** (UJAEN, DUA 631501): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: MUSICA)** (UMA, DUA 730112): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: MÚSICA)** (US, DUA 830111): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: ORIENTACION EDUCATIVA)** (UCA, DUA 230122): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: ORIENTACION EDUCATIVA)** (UCA, DUA 234000): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: ORIENTACION EDUCATIVA)** (UCO, DUA 330121): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: ORIENTACION EDUCATIVA)** (UJAEN, DUA 630129): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: ORIENTACION EDUCATIVA)** (UMA, DUA 730128): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: ORIENTACIÓN EDUCATIVA)** (US, DUA 830127): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: ORIENTACIÓN EDUCATIVA)** (US, DUA 832226): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: PROCESOS SANITARIOS)** (UJAEN, DUA 630400): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: PROCESOS SANITARIOS)** (UMA, DUA 730133): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: PROCESOS SANITARIOS)** (US, DUA 830132): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: PROCESOS SANITARIOS)** (US, DUA 830388): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: TECNOLOGIA Y PROCESOS INDUSTRIALES)** (UAL, DUA 130165): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: TECNOLOGIA Y PROCESOS INDUSTRIALES)** (UCO, DUA 330163): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: TECNOLOGIA Y PROCESOS INDUSTRIALES)** (UJAEN, DUA 630150): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: TECNOLOGÍA Y PROCESOS INDUSTRIALES)** (US, DUA 830159): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: TECNOLOGIA Y PROCESOS INDUSTRIALES) + REPRESENTACIÓN Y DISEÑO EN INGENIERÍA Y ARQUITECTURA** (UAL, DUA 130405): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: TECNOLOGIA, INFORMATICA Y PROCESOS INDUSTRIALES)** (UCA, DUA 230143): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: TECNOLOGIA, INFORMATICA Y PROCESOS INDUSTRIALES)** (UMA, DUA 730149): Regra oficial específica ausente da jornada: profesorado (O2 Anexo I).
+- **PROTECCIÓN JURÍDICO-SOCIAL DE PERSONAS Y COLECTIVOS VULNERABLES** (UCA, DUA 215703): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **PROYECTOS ARQUITECTÓNICOS: DISEÑO AMBIENTAL Y NUEVAS TECNOLOGÍAS** (UMA, DUA 718701): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 005.
+- **PSICOLOGÍA DE LA INTERVENCIÓN SOCIAL Y COMUNITARIA** (US, DUA 807009): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 005.
+- **PSICOLOGÍA GENERAL SANITARIA** (UAL, DUA 106508): Regra oficial específica ausente da jornada: psicologia-geral-sanitaria (O2 art. 9).
+- **PSICOLOGÍA GENERAL SANITARIA** (UCA, DUA 215606): Regra oficial específica ausente da jornada: psicologia-geral-sanitaria (O2 art. 9).
+- **PSICOLOGÍA GENERAL SANITARIA** (UCO, DUA 312604): Regra oficial específica ausente da jornada: psicologia-geral-sanitaria (O2 art. 9).
+- **PSICOLOGÍA GENERAL SANITARIA** (UHU, DUA 516100): Regra oficial específica ausente da jornada: psicologia-geral-sanitaria (O2 art. 9).
+- **PSICOLOGÍA GENERAL SANITARIA** (UJAEN, DUA 616304): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 006, 099. Regra oficial específica ausente da jornada: psicologia-geral-sanitaria (O2 art. 9).
+- **PSICOLOGÍA GENERAL SANITARIA** (UMA, DUA 717501): Regra oficial específica ausente da jornada: psicologia-geral-sanitaria (O2 art. 9).
+- **PSICOLOGÍA GENERAL SANITARIA** (US, DUA 819702): Regra oficial específica ausente da jornada: psicologia-geral-sanitaria (O2 art. 9).
+- **PSICOLOGÍA GENERAL SANITARIA (ACCESO ESPECÍFICO)** (UCO, DUA 316307): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004. Regra oficial específica ausente da jornada: psicologia-geral-sanitaria (O2 art. 9).
+- **PSICOLOGÍA GENERAL SANITARIA + ESTUDIOS AVANZADOS EN CEREBRO Y CONDUCTA** (US, DUA 828501): Regra oficial específica ausente da jornada: psicologia-geral-sanitaria (O2 art. 9).
+- **QUÍMICA MÉDICA** (UCA, DUA 215800): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 002.
+- **RELACIONES INTERNACIONALES Y MIGRACIONES - INTERNATIONAL RELATIONS AND MIGRATIONS (INTERNATIONAL AND EUROPEAN STUDIES)** (UCA, DUA 216103): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 099.
+- **RENDIMIENTO FÍSICO Y DEPORTIVO** (UPO, DUA 904765): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 003.
+- **SISTEMAS DE ENERGÍA ELÉCTRICA** (US, DUA 821806): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 008, 009.
+- **SISTEMAS DE ENERGÍA TÉRMICA** (US, DUA 821903): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 007, 016.
+- **SISTEMAS ELECTRÓNICOS PARA ENTORNOS INTELIGENTES** (UMA, DUA 704505): 4 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 008, 010, 013, 014.
+- **SOCIOLOGÍA APLICADA** (UMA, DUA 721701): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 004.
+- **TRADUCCIÓN E INTERCULTURALIDAD** (US, DUA 803500): 4 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 022, 023, 025, 099.
+- **TRADUCCIÓN ESPECIALIZADA INGLÉS/FRANCÉS/ALEMÁN-ESPAÑOL (A DISTANCIA)** (UCO, DUA 303009): 3 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 006, 008, 099.
+- **TRADUCCIÓN PARA EL MUNDO EDITORIAL** (UMA, DUA 701202): 1 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 006.
+- **TRANSFORMACIÓN DIGITAL DE EMPRESAS - AGROALIMENTARIO (SEMIPRESENCIAL) (DUAL)** (UAL, DUA 111009): 2 requisito(s) obrigatório(s) da ficha que não eram exibidos nas missões (só os de idioma apareciam): 008, 009.
+- **Mestrado em Engenharia, exemplo A (exige B2)** (UGR): Programa demonstrativo (não é um mestrado real).
+- **Mestrado em Arquitetura, exemplo B (sem certificado)** (UGR): Programa demonstrativo (não é um mestrado real).
+- **Mestrado em Ciências, exemplo C (idioma a confirmar)** (UGR): Programa demonstrativo (não é um mestrado real).
+- **Mestrado em Administração, exemplo D (B1, sem certificado formal)** (US): Programa demonstrativo (não é um mestrado real).
+- **Mestrado em Turismo, exemplo E (idioma a confirmar)** (UMA): Programa demonstrativo (não é um mestrado real).

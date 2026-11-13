@@ -23,6 +23,7 @@ import { sourceById } from './content/sources.js';
 import { consulateResult } from './content/places.js';
 import { computeJourney } from './journey-engine.js';
 import { docRule } from './document-rules.js';
+import { PROGRAM_SPECIFIC } from './content/application-procedures.js';
 
 const DONE = new Set(['pronto', 'enviado', 'nao-se-aplica']);
 const READY = new Set(['pronto', 'enviado']);
@@ -111,6 +112,12 @@ function detectCondition(key, ctx) {
       if (req.status === 'requerido' && req.certificado) return { valor: true, detalhe: `O seu mestrado exige espanhol ${req.nivel || ''} com certificado.`.replace('  ', ' ') };
       if (req.status === 'requerido') return { valor: null, detalhe: `O mestrado pede espanhol ${req.nivel || ''}, sem exigir certificado formal: confira como comprovar.`.replace('  ', ' ') };
       return { valor: null, detalhe: 'A exigência de idioma do seu mestrado ainda não está confirmada na ficha oficial.' };
+    }
+    case 'certificacaoPGS': {
+      if (!ctx.program) return { valor: null, detalhe: 'Defina o mestrado da jornada para saber se ele é o de Psicología General Sanitaria.' };
+      const nome = String(ctx.program.nome || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+      const regra = PROGRAM_SPECIFIC.find((x) => x.flag === 'exigeResolucaoPGS' && x.match.test(nome));
+      return regra ? { valor: true, detalhe: `${regra.texto} (${regra.fonte} ${regra.artigo})` } : { valor: false, detalhe: 'O seu mestrado não é o de Psicología General Sanitaria.' };
     }
     case 'bolsa':
       return ctx.bolsas.some((b) => b.status === 'concedida') ? { valor: true, detalhe: 'Você registrou uma bolsa concedida.' } : { valor: false, detalhe: 'Nenhuma bolsa concedida registrada.' };

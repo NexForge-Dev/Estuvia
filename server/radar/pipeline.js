@@ -25,6 +25,7 @@ import * as ugrProgram from './connectors/ugr-program.js';
 import * as duaProgram from './connectors/dua-program.js';
 import { onPublished } from './notify.js';
 import { sameJson } from '../json-equal.js';
+import { MANUAL_DUA_LINKS } from '../content/program-channels.js';
 
 export const CONNECTORS = { 'dua-calendar': duaCalendar, 'dua-catalog': duaCatalog, 'ugr-catalog': ugrCatalog, 'ugr-program': ugrProgram, 'dua-program': duaProgram };
 
@@ -236,6 +237,12 @@ export function applyCatalog(parsed, { source, snapshot, por = 'atualizador', co
     programas = programas.map((p) => ({ ...p, duaCodigo: p.codigo }));
     if (locals.length) {
       const pairs = linkDuaPrograms(programas, locals);
+      // Vínculos conferidos manualmente (nomes ambíguos ou com grafia diferente): só se o código está no catálogo atual.
+      for (const l of locals) {
+        const codigo = MANUAL_DUA_LINKS[l.id];
+        const dua = codigo && !pairs.has(l.id) ? programas.find((x) => x.codigo === codigo) : null;
+        if (dua) pairs.set(l.id, dua);
+      }
       for (const [localId, dua] of pairs) {
         const l = d.programs.find((x) => x.id === localId);
         if (l.duaCodigo && l.duaCodigo !== dua.codigo) revisions.push(revision({ entidade: 'Program', entidadeId: l.id, campo: 'duaCodigo', anterior: l.duaCodigo, novo: dua.codigo, evidencia: evidence, por }));

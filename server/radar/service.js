@@ -8,6 +8,12 @@ import { APPLICATION_CHANNEL, UNIVERSITY_INFO } from './registry.js';
 import { EVENT_TYPES, tick } from './notify.js';
 import { parseAcademicYear, todayMadrid, daysBetween } from './dates.js';
 import { bootstrap, ensureSources, duaSheetUrl } from './pipeline.js';
+import { MANUAL_DUA_LINKS } from '../content/program-channels.js';
+import { languageRequirements } from './connectors/dua-program.js';
+
+// Idiomas exigidos recalculados a partir dos requisitos da ficha guardada: correções do interpretador valem
+// na hora, sem esperar a próxima coleta (o texto oficial é a fonte; idiomasExigidos guardado é só cache).
+const fichaIdiomas = (f) => (f ? languageRequirements(f.requisitos || []) : []);
 import { matchDegree } from '../../public/js/data/degree.js';
 
 let scholarships = [];
@@ -104,7 +110,7 @@ export const criterioPt = (desc) => (String(desc || '').length <= 45 && CRITERIO
 export function spanishRequirement(p) {
   const f = p?.fichaDua;
   if (!f) return null;
-  const es = (f.idiomasExigidos || []).find((i) => i.idioma === 'espanhol');
+  const es = fichaIdiomas(f).find((i) => i.idioma === 'espanhol');
   return es ? { exige: true, nivel: es.nivel, obrigatorio: es.obrigatorio, estrangeiros: es.estrangeiros, texto: es.texto } : { exige: false };
 }
 
@@ -124,7 +130,7 @@ function admissionFromDua(p) {
     somenteNotaExpediente: f.somenteNotaExpediente,
     criterios: f.baremo.map((c) => ({ descricao: criterioPt(c.descricao), original: c.descricao, peso: c.peso })),
     requisitos: f.requisitos,
-    idiomas: f.idiomasExigidos,
+    idiomas: fichaIdiomas(f),
     titulacoes: { alta: pref('alta'), media: pref('media'), baixa: pref('baixa'), condicionadas: f.condicionadas, outras: f.restoComAcesso },
     equivalentes: f.titulacoesEquivalentes || [],
   };
@@ -175,7 +181,7 @@ function card(opp, { user = null, now = Date.now() } = {}) {
       duracaoEstimadaAnos: p.ficha?.duracaoEstimadaAnos ?? null, fichaVerificada: Boolean(p.ficha), fichaVerificadaEm: p.ficha?.verificadaEm || null,
       cursoFicha: p.ficha?.anoAcademico || null,
       // Da ficha do DUA (null enquanto não coletada: "não informado", nunca "não exige").
-      idiomasExigidos: p.fichaDua ? p.fichaDua.idiomasExigidos.map(({ idioma, nivel, obrigatorio }) => ({ idioma, nivel, obrigatorio })) : null,
+      idiomasExigidos: p.fichaDua ? fichaIdiomas(p.fichaDua).map(({ idioma, nivel, obrigatorio }) => ({ idioma, nivel, obrigatorio })) : null,
       criteriosVerificados: Boolean(p.fichaDua),
       inicioCurso: p.fichaDua?.inicioCurso || null,
     },
@@ -569,6 +575,8 @@ export const exportUser = (userId) => {
 export function programForJourney(id) {
   const p = data().programs.find((x) => x.id === id);
   if (!p) return null;
+  // Código DUA conferido manualmente (content/program-channels.js) quando o vínculo automático não resolveu.
+  const duaCodigo = p.duaCodigo || MANUAL_DUA_LINKS[p.id] || null;
   return {
     id: p.id,
     universidadeId: p.universidadeId,
@@ -581,13 +589,18 @@ export function programForJourney(id) {
     demo: false,
     radar: true,
     idioma: journeyLanguage(p),
-    outrosIdiomas: (p.fichaDua?.idiomasExigidos || []).filter((i) => i.idioma !== 'espanhol').map(({ idioma, nivel, obrigatorio, texto }) => ({ idioma, nivel, obrigatorio, texto, fonte: 'O30' })),
+    outrosIdiomas: fichaIdiomas(p.fichaDua).filter((i) => i.idioma !== 'espanhol').map(({ idioma, nivel, obrigatorio, texto }) => ({ idioma, nivel, obrigatorio, texto, fonte: 'O30' })),
     criterios: p.fichaDua ? p.fichaDua.baremo.map((c) => ({ descricao: criterioPt(c.descricao), peso: c.peso })) : null,
     somenteNotaExpediente: p.fichaDua?.somenteNotaExpediente ?? null,
     // Graduações de acesso pela ficha do DUA (Missão 1.4 compara com o curso do perfil).
     titulacoes: p.fichaDua ? { titulacoes: p.fichaDua.titulacoes || [], condicionadas: p.fichaDua.condicionadas || [], restoComAcesso: p.fichaDua.restoComAcesso || [], equivalentes: p.fichaDua.titulacoesEquivalentes || [] } : null,
     inicioCurso: p.fichaDua?.inicioCurso || null,
-    fichaDuaUrl: p.duaCodigo ? duaSheetUrl(p.duaCodigo) : null,
+    fichaDuaUrl: duaCodigo ? duaSheetUrl(duaCodigo) : null,
+    // Processo de candidatura (server/application-process.js): canal, fases com oferta e requisitos da ficha.
+    duaCodigo,
+    requisitosFicha: p.fichaDua ? (p.fichaDua.requisitos || []).map(({ codigo, texto, obrigatorio }) => ({ codigo, texto, obrigatorio })) : null,
+    criteriosOriginais: p.fichaDua ? p.fichaDua.baremo.map((c) => ({ original: c.descricao, peso: c.peso })) : null,
+    fichaVerificadaEm: p.fichaDua?.verificadaEm || null,
     requisitos: [
       { tipo: 'acesso', descricao: 'Título universitário que dê acesso à pós-graduação no país emissor', status: 'requerido', fonte: 'O1' },
       journeyLanguageRequirement(p),
@@ -614,23 +627,52 @@ function journeyLanguageRequirement(p) {
 
 export const radarPrograms = () => data().programs.filter((p) => !p.ausenteNoCatalogo).map((p) => programForJourney(p.id));
 
-/** Prazos oficiais confirmados das jornadas do estudante ligadas a programas do Radar. */
-export function officialDeadlines(user) {
+/** Calendário oficial confirmado do procedimento do programa no ano acadêmico da jornada (processo de candidatura). */
+export function processCalendar(jr, program) {
+  const d = data();
+  const p = d.programs.find((x) => x.id === program?.id);
+  const proc = p ? UNIVERSITY_INFO[p.universidadeId]?.procedimentoId : null;
+  const curso = longYear(jr?.anoAcademico);
+  if (!proc || !curso) return { windows: [], events: [] };
+  return {
+    windows: d.windows.filter((x) => x.procedimentoId === proc && x.anoAcademico === curso && x.confirmacao === 'confirmado'),
+    events: d.events.filter((x) => x.procedimentoId === proc && x.anoAcademico === curso && x.confirmacao === 'confirmado'),
+  };
+}
+
+// Fases cujas datas valem para a jornada: a declarada na Missão 3.2; sem declaração, as três.
+// (A exceção de quem ainda cursa a graduação, requisitos 4 e 5 do art. 2 de O2, é só para universidade espanhola/PARS.)
+function journeyPhases(jr) {
+  if (jr.dados?.faseDua) return { fases: [Number(jr.dados.faseDua)], declarada: true };
+  return { fases: [1, 2, 3], declarada: false };
+}
+
+/**
+ * Prazos oficiais confirmados das jornadas do estudante ligadas a programas do Radar, por fase.
+ * Sem fase declarada, só entram datas futuras: um prazo vencido de uma fase que o estudante não escolheu
+ * não pode aparecer como "prazo vencido" da missão.
+ */
+export function officialDeadlines(user, now = Date.now()) {
   const d = data();
   const out = [];
+  const today = todayMadrid(new Date(now));
   for (const jr of user.journeys || []) {
     const p = d.programs.find((x) => x.id === jr.programaId);
     if (!p) continue;
-    const curso = longYear(jr.anoAcademico);
-    if (!curso) continue;
-    const proc = UNIVERSITY_INFO[p.universidadeId]?.procedimentoId;
+    const { windows, events } = processCalendar(jr, { id: p.id });
+    if (!windows.length && !events.length) continue;
+    const { fases, declarada } = journeyPhases(jr);
+    const vale = (fase, data) => fases.includes(Number(fase)) && (declarada || data >= today);
     const src = sourceById('dua-calendario');
-    for (const w of d.windows.filter((x) => x.procedimentoId === proc && x.anoAcademico === curso && x.confirmacao === 'confirmado')) {
-      out.push({ id: `radar-${jr.id}-${w.id}-abertura`, titulo: `Abre a candidatura DUA: Fase ${w.fase}`, data: w.abertura, fonteUrl: src?.url, categoria: 'academico', journeyId: jr.id, missaoId: '3.2' });
-      out.push({ id: `radar-${jr.id}-${w.id}-fim`, titulo: `Fim da candidatura DUA: Fase ${w.fase}`, data: w.encerramento, fonteUrl: src?.url, categoria: 'academico', journeyId: jr.id, missaoId: '3.6' });
+    const add = (id, titulo, data, missaoId, fase) => { if (data && vale(fase, data)) out.push({ id: `radar-${jr.id}-${id}`, titulo, data, fonteUrl: src?.url, categoria: 'academico', journeyId: jr.id, missaoId, fase: Number(fase) }); };
+    for (const w of windows) {
+      add(`${w.id}-abertura`, `Abre a candidatura DUA: Fase ${w.fase}`, w.abertura, '3.2', w.fase);
+      add(`${w.id}-fim`, `Fim da candidatura DUA: Fase ${w.fase}`, w.encerramento, '3.6', w.fase);
     }
-    for (const e of d.events.filter((x) => x.procedimentoId === proc && x.anoAcademico === curso && x.confirmacao === 'confirmado' && ['adjudicacao', 'resultas'].includes(x.tipo))) {
-      out.push({ id: `radar-${jr.id}-${e.id}`, titulo: `${e.rotulo}: Fase ${e.fase}`, data: e.inicio || e.fim, fonteUrl: src?.url, categoria: 'academico', journeyId: jr.id, missaoId: e.tipo === 'resultas' ? '3.10' : '3.9' });
+    for (const e of events) {
+      if (e.tipo === 'adjudicacao' || e.tipo === 'resultas') add(e.id, `${e.rotulo}: Fase ${e.fase}`, e.inicio || e.fim, e.tipo === 'resultas' ? '3.10' : '3.9', e.fase);
+      else if (e.tipo === 'pagamento-titulo') add(e.id, `${e.rotulo}: Fase ${e.fase}`, e.fim || e.inicio, '2.2', e.fase);
+      else if (e.tipo === 'confirmacao') add(e.id, `${e.rotulo}: Fase ${e.fase}`, e.fim || e.inicio, '4.2', e.fase);
     }
   }
   return out.sort((a, b) => a.data.localeCompare(b.data));

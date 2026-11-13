@@ -3,7 +3,8 @@
 // O progresso nunca é armazenado como número: é recalculado a partir dos fatos
 // (objetivos marcados, missões concluídas, dados declarados e decisões externas registradas).
 
-import { ROUNDS, MILESTONES, SITUACAO, missionById, missionLabel, JOURNEY_TEMPLATE } from './content/rounds.js';
+import { ROUNDS, MILESTONES, SITUACAO, ADMITIDO, missionById, missionLabel, JOURNEY_TEMPLATE } from './content/rounds.js';
+import { applicationProcess } from './application-process.js';
 import { programById, universityById } from './content/catalog.js';
 import { DOCUMENTS, DOC_STATUS_LABEL } from './content/documents.js';
 import { sourceById } from './content/sources.js';
@@ -60,6 +61,20 @@ export function ensureJourney(jr) {
   return jr;
 }
 
+// Calendário oficial do procedimento (Radar), registrado em tempo de execução: { windows, events } confirmados.
+const calendarProviders = [];
+export const registerProcessCalendar = (fn) => { if (!calendarProviders.includes(fn)) calendarProviders.push(fn); };
+const calendarFor = (jr, program) => {
+  for (const fn of calendarProviders) { try { const c = fn(jr, program); if (c) return c; } catch { /* fonte indisponível */ } }
+  return { windows: [], events: [] };
+};
+
+/** Processo oficial de candidatura do mestrado desta jornada (null sem mestrado definido). */
+export function processFor(user, jr, program = programById(jr?.programaId)) {
+  if (!program) return null;
+  return applicationProcess(program, { calendario: calendarFor(jr, program), profile: user.profile || {}, requisitos: user.requisitos || {}, faseDeclarada: jr?.dados?.faseDua || null, cicloJornada: jr?.anoAcademico || null });
+}
+
 export function buildContext(user, jr, now = new Date()) {
   ensureJourney(jr);
   const profile = user.profile || {};
@@ -78,6 +93,7 @@ export function buildContext(user, jr, now = new Date()) {
     situacao: jr.situacao,
     duracaoMeses: Number(jr.duracaoMeses) || program?.duracaoMeses || null,
     get finance() { return (this._fin ??= computeFinance(user, jr, now)); },
+    get processo() { if (this._proc === undefined) this._proc = processFor(user, jr, program); return this._proc; },
   };
 }
 
@@ -93,6 +109,8 @@ const AUTO_RULES = {
   temProgramaPrincipal: (ctx) => Boolean(ctx.program),
   temAnoAcademico: (ctx) => Boolean(ctx.journey.anoAcademico),
   temOpcoes: (ctx) => ctx.choices.length > 0,
+  // Limite oficial da solicitação no DUA (O1 art. 3; O2 art. 14.1).
+  opcoesNoLimite: (ctx) => ctx.choices.length > 0 && ctx.choices.length <= 6,
   certificadoAtende: (ctx) => {
     const req = ctx.program?.idioma;
     if (!req?.nivel) return false;
@@ -129,6 +147,7 @@ const AUTO_HINTS = {
   temProgramaPrincipal: 'Marcado quando a jornada tem um mestrado definido.',
   temAnoAcademico: 'Marcado quando a jornada tem o ano acadêmico definido.',
   temOpcoes: 'Marcado quando há programas em "Minhas opções".',
+  opcoesNoLimite: 'Marcado quando "Minhas opções" tem de 1 a 6 mestrados: a solicitação no DUA aceita no máximo 6.',
   certificadoAtende: 'Marcado quando o certificado declarado no perfil atinge o nível exigido (declaração sua, não validação oficial).',
   docsCandidaturaProntos: 'Marcado quando passaporte, diploma e histórico estão "Pronto", "Enviado" ou "Não se aplica" na área de documentos.',
   temCustos: 'Marcado quando você começa o planejamento financeiro ("Calcular meus custos") ou informa algum custo.',
@@ -154,7 +173,7 @@ const AUTO_HINTS = {
 // Onde o estudante resolve um objetivo automático (o guia mostra um único botão para lá).
 const AUTO_ROUTE = {
   perfilOrigem: ['/perfil', 'Completar meu perfil'], perfilFormacao: ['/perfil', 'Completar meu perfil'], perfilIdioma: ['/perfil', 'Informar meu espanhol'], temEstado: ['/perfil', 'Informar meu estado'],
-  temProgramaPrincipal: ['/mestrados', 'Escolher meu mestrado'], temOpcoes: ['/mestrados', 'Adicionar às minhas opções'], certificadoAtende: ['/perfil', 'Informar meu certificado'],
+  temProgramaPrincipal: ['/mestrados', 'Escolher meu mestrado'], temOpcoes: ['/mestrados', 'Adicionar às minhas opções'], opcoesNoLimite: ['/mestrados', 'Revisar minhas opções'], certificadoAtende: ['/perfil', 'Informar meu certificado'],
   docsCandidaturaProntos: ['/documentos', 'Atualizar meus documentos'], temCustos: ['/financiamento', 'Calcular meus custos'],
   temRecursosInformados: ['/financiamento#recursos', 'Registrar meus recursos'], recursosCobremVisto: ['/financiamento#recursos', 'Ver meus recursos'], planoViavel: ['/financiamento', 'Revisar meu plano'],
   temBolsas: ['/financiamento#bolsas', 'Procurar bolsas'], bolsaEnviada: ['/financiamento#bolsas', 'Atualizar minha bolsa'], bolsaDecidida: ['/financiamento#bolsas', 'Registrar o resultado'],
@@ -164,7 +183,7 @@ const AUTO_ROUTE = {
 
 function objectiveDone(obj, ctx, mp) {
   if (obj.tipo === 'auto') return Boolean(AUTO_RULES[obj.regra]?.(ctx));
-  if (obj.tipo === 'data' || obj.tipo === 'texto') return Boolean(ctx.dados[obj.campo]);
+  if (obj.tipo === 'data' || obj.tipo === 'texto' || obj.tipo === 'escolha') return Boolean(ctx.dados[obj.campo]);
   if (obj.tipo === 'situacao') return !obj.concluiQuandoNao.includes(ctx.situacao[obj.campo]);
   return Boolean(mp.objetivos?.[obj.id]);
 }
@@ -177,6 +196,10 @@ function applicability(mission, ctx, mp) {
   if (mission.condicional && mp.naoAplicavel) {
     return { aplicavel: false, motivo: 'Você conferiu e marcou que esta missão não se aplica ao seu caso.' };
   }
+  // Passo do DUA em mestrado com procedimento próprio (Erasmus Mundus, Arqus): seguir o canal do programa (Missão 3.11).
+  if (mission.soDua && ctx.program && ctx.processo?.flags?.naoDua) {
+    return { aplicavel: false, motivo: 'O seu mestrado não usa o Distrito Único Andaluz: a candidatura segue o procedimento próprio do programa (Missão 3.11).' };
+  }
   const rule = mission.regra;
   if (!rule) return { aplicavel: true };
 
@@ -184,10 +207,19 @@ function applicability(mission, ctx, mp) {
     if (!ctx.program) return { aplicavel: true, atencao: 'Defina o mestrado desta jornada para saber se esta missão é obrigatória.' };
     const req = ctx.program.idioma || { status: 'verificar' };
     const demo = req.fonte === 'DEMO' ? ' (dado demonstrativo)' : '';
-    if (req.status === 'nao-requerido') return { aplicavel: false, motivo: `Seu mestrado não exige certificado de idioma${demo}.` };
+    if (req.status === 'nao-requerido') return { aplicavel: false, motivo: req.fonte === 'O30' ? 'A ficha oficial do seu mestrado no DUA, onde a universidade publica os requisitos específicos de acesso (O2 art. 2), não lista exigência de idioma. Se a página do máster disser algo diferente, confirme com a coordenação.' : `Seu mestrado não exige certificado de idioma${demo}.` };
     if (req.status === 'verificar') return { aplicavel: true, atencao: 'A exigência de idioma do seu mestrado não está confirmada na ficha. Confirme com a coordenação.' };
     if (rule.exigeCertificado && !req.certificado) return { aplicavel: false, motivo: `Seu mestrado pede espanhol ${req.nivel}, mas sem certificado formal${demo}.` };
     return { aplicavel: true, info: `Seu mestrado exige espanhol ${req.nivel || ''}${req.certificado ? ' com certificado' : ''}${demo}.` };
+  }
+
+  // Regra oficial que vale só para alguns mestrados (content/application-procedures.js → PROGRAM_SPECIFIC).
+  if (rule.tipo === 'processo') {
+    if (!ctx.program) return { aplicavel: true, atencao: 'Defina o mestrado desta jornada para saber se esta missão se aplica.' };
+    const regra = ctx.processo?.regrasEspecificas.find((x) => x.flag === rule.flag);
+    if (regra) return { aplicavel: true, info: `Regra oficial do seu mestrado: ${regra.texto} (${regra.fonte} ${regra.artigo})` };
+    if (ctx.processo?.flags?.[rule.flag]) return { aplicavel: true, info: ctx.processo.canal?.texto || null };
+    return { aplicavel: false, motivo: rule.flag === 'naoDua' ? 'O seu mestrado usa o Distrito Único Andaluz (Missões 3.1 a 3.10).' : 'Nenhuma regra oficial cadastrada exige esta etapa para o seu mestrado.' };
   }
 
   if (rule.tipo === 'situacao') {
@@ -238,8 +270,11 @@ function deadlineFor(mission, ctx, mp) {
 const officialProviders = [];
 export const registerOfficialDeadlines = (fn) => { if (!officialProviders.includes(fn)) officialProviders.push(fn); };
 function officialFor(ctx, missionId) {
-  ctx._official ??= officialProviders.flatMap((fn) => { try { return fn(ctx.user) || []; } catch { return []; } }).filter((d) => d.journeyId === ctx.journey.id);
-  return ctx._official.find((d) => d.missaoId === missionId) || null;
+  ctx._official ??= officialProviders.flatMap((fn) => { try { return fn(ctx.user, ctx.now) || []; } catch { return []; } }).filter((d) => d.journeyId === ctx.journey.id);
+  // Vários prazos para a mesma missão (ex.: uma confirmação por lista): vale o próximo; todos vencidos, o último.
+  const lista = ctx._official.filter((d) => d.missaoId === missionId);
+  const hoje = todayMadrid(ctx.now);
+  return lista.find((d) => d.data >= hoje) || lista.at(-1) || null;
 }
 
 // Dias de calendário até o prazo, contados em Madri (os prazos oficiais são do horário espanhol):
@@ -294,6 +329,11 @@ export function missionState(mission, ctx, cache = new Map()) {
   const alertas = [];
   if (app.atencao) alertas.push({ tipo: 'requisito', texto: app.atencao });
   if (matches(mission.atencaoSe, ctx)) alertas.push({ tipo: 'externo', texto: mission.atencaoSe.texto });
+  // Alertas do processo oficial deste mestrado (canal não confirmado, fase sem oferta, ficha não coletada).
+  for (const k of mission.alertasProcesso || []) {
+    const t = ctx.processo?.alertas?.[k];
+    if (t && app.aplicavel) alertas.push({ tipo: 'processo', chave: k, texto: t });
+  }
 
   const prazo = deadlineFor(mission, ctx, mp);
   if (prazo) prazo.diasRestantes = daysUntil(prazo.data, ctx.now);
@@ -488,9 +528,19 @@ export function eligibility(ctx) {
     ? { requisito: 'Titulação de acesso', status: 'declarado', texto: `Você declarou: ${p.formacao}. A universidade verifica a equivalência de nível e o direito de acesso à pós-graduação no país que emitiu o título.`, fonte: 'O1' }
     : { requisito: 'Titulação de acesso', status: 'falta-informar', texto: 'Informe sua graduação no perfil.', fonte: 'O1' });
   if (prog.titulacoes) items.push(degreeItem(p, prog.titulacoes));
+  const proc = ctx.processo !== undefined ? ctx.processo : applicationProcess(prog, { profile: p, requisitos: ctx.user?.requisitos || {} });
+  if (proc && !prog.demo) {
+    if (proc.canal.status !== 'confirmado') items.push({ requisito: 'Canal de candidatura', status: 'nao-confirmado', texto: proc.canal.texto, fonte: 'O5' });
+    const f1 = proc.fases[0];
+    if (f1.perfil.status === 'nao') items.push({ requisito: 'Fase 1 (estrangeiros)', status: 'falta-comprovar', texto: f1.perfil.texto, fonte: 'O1' });
+    else if (f1.oferta === 'nao-confirmado') items.push({ requisito: 'Fase 1 (estrangeiros)', status: 'nao-confirmado', texto: f1.ofertaTexto, fonte: 'O1' });
+    for (const r of proc.regrasEspecificas) items.push({ requisito: 'Regra oficial deste mestrado', status: 'falta-comprovar', texto: `${r.texto}${r.aviso ? ` ${r.aviso}` : ''}`, fonte: r.fonte });
+    const obrig = proc.requisitosEspecificos.filter((x) => x.obrigatorio);
+    if (obrig.length) items.push({ requisito: 'Requisitos de cumprimento obrigatório (ficha do DUA)', status: 'falta-comprovar', texto: obrig.map((x) => `${x.codigo}: “${x.texto}”`).join(' · '), fonte: 'O30' });
+  }
   const req = prog.idioma || { status: 'verificar' };
   const lvl = LANG_LEVELS.indexOf(p.espanhol || 'nenhum');
-  if (req.status === 'nao-requerido') items.push({ requisito: 'Idioma', status: 'nao-exigido', texto: 'O programa não exige certificado de idioma (confirme na ficha).', fonte: req.fonte });
+  if (req.status === 'nao-requerido') items.push({ requisito: 'Idioma', status: 'nao-exigido', texto: 'A ficha oficial do DUA não lista exigência de idioma para este máster (é onde os requisitos específicos são publicados, O2 art. 2).', fonte: req.fonte });
   else if (req.status === 'verificar') items.push({ requisito: 'Idioma', status: 'nao-confirmado', texto: 'Exigência não confirmada na ficha. Pergunte à coordenação.', fonte: req.fonte });
   else {
     const need = LANG_LEVELS.indexOf(req.nivel);
@@ -532,7 +582,8 @@ export function compareChoices(user) {
     const prog = programById(id);
     if (!prog) return { id, posicao: i + 1, indisponivel: true };
     const uni = universityById(prog.universidadeId);
-    const items = eligibility({ profile, program: prog });
+    const items = eligibility({ profile, program: prog, user });
+    const proc = applicationProcess(prog, { profile, requisitos: user.requisitos || {} });
     const pick = (re) => { const it = items.find((x) => re.test(x.requisito)); return it ? { status: it.status, texto: it.texto } : null; };
     const pesoNota = prog.criterios?.length ? (prog.somenteNotaExpediente ? 100 : prog.criterios.filter((c) => usesGrade(c.descricao)).reduce((t, c) => t + (c.peso || 0), 0)) : null;
     return {
@@ -555,6 +606,7 @@ export function compareChoices(user) {
       graduacao: pick(/^Graduação aceita/),
       nota: pick(/^Nota média/),
       pontosDeAtencao: items.filter((x) => ATENCAO.has(x.status)).length,
+      canal: proc ? proc.canal.status : null,
     };
   });
 }
@@ -644,6 +696,7 @@ export function missionDetail(user, jr, id, now = new Date()) {
     extra.consulado = { sugerido: c, estado: ctx.profile.estado || null, listaUrl: CONSULATE_LIST_URL, resultado: consulateResult(ctx.profile.estado, { pais: ctx.profile.paisResidencia || 'Brasil' }) };
   }
   if (def.ferramenta === 'contato-academico') extra.contatos = jr.contatos;
+  if (def.processo) extra.processo = ctx.processo;
   // Fluxo do processo: o que vem antes, o que depende desta missão e o que pode correr em paralelo.
   const cache = new Map();
   const st = (id) => missionState(missionById(id), ctx, cache);
@@ -665,8 +718,9 @@ export function missionDetail(user, jr, id, now = new Date()) {
   extra.evidencia = EVIDENCE[id] ? { ...EVIDENCE[id], valor: mp.evidencia || '' } : null;
   extra.riscoInfo = riskOf(id);
   extra.tutorial = def.tutorial || null; // só tutoriais verificados (nenhum cadastrado ainda)
+  const canalPrograma = (def.acoes || []).some((a) => a.tipo === 'canal-programa') && ctx.processo?.canal?.url ? { rotulo: 'Abrir o canal oficial do programa', url: ctx.processo.canal.url, orgao: ctx.processo.canal.evidencia?.fonte || null } : null;
   const oficial = (def.acoes || []).find((a) => a.tipo === 'oficial');
-  extra.linkOficial = oficial ? { rotulo: oficial.rotulo, url: sourceById(oficial.fonte)?.url, orgao: sourceById(oficial.fonte)?.orgao || null } : def.acoes?.some((a) => a.tipo === 'programa') && ctx.program ? { rotulo: 'Abrir ficha oficial do mestrado', url: ctx.program.url } : null;
+  extra.linkOficial = canalPrograma || (oficial ? { rotulo: oficial.rotulo, url: sourceById(oficial.fonte)?.url, orgao: sourceById(oficial.fonte)?.orgao || null } : def.acoes?.some((a) => a.tipo === 'programa') && ctx.program ? { rotulo: 'Abrir ficha oficial do mestrado', url: ctx.program.url } : null);
   if (!extra.linkOficial) {
     const s = (def.fontes || []).map(sourceById).find((x) => x?.url && x.tipo === 'oficial');
     if (s) extra.linkOficial = { rotulo: 'Abrir site oficial', url: s.url, orgao: s.orgao };
@@ -709,9 +763,9 @@ export function missionDetail(user, jr, id, now = new Date()) {
       tipo: o.tipo || 'check',
       feito: _objetivos[i].feito,
       valor: o.tipo === 'situacao' ? ctx.situacao[o.campo] : o.campo ? ctx.dados[o.campo] || '' : null,
-      opcoes: o.tipo === 'situacao' ? SITUACAO[o.campo] : null,
+      opcoes: o.tipo === 'situacao' ? SITUACAO[o.campo] : o.tipo === 'escolha' ? o.opcoes : null,
       acao: o.tipo === 'auto' && AUTO_ROUTE[o.regra] ? { rota: AUTO_ROUTE[o.regra][0], rotulo: AUTO_ROUTE[o.regra][1] } : null,
-      dica: o.tipo === 'auto' ? AUTO_HINTS[o.regra] : o.tipo === 'situacao' ? 'Decisão externa registrada por você: a plataforma não consulta o sistema oficial.' : null,
+      dica: o.tipo === 'auto' ? AUTO_HINTS[o.regra] : o.tipo === 'situacao' ? 'Decisão externa registrada por você: a plataforma não consulta o sistema oficial.' : o.tipo === 'escolha' && o.campo === 'faseDua' ? 'A Fase 1 é só para nacionalidade estrangeira. Em qualquer fase, com título estrangeiro, o título precisa estar concluído até a data-limite da fase. Na Fase 1, confirme no portal que o seu mestrado tem vagas.' : null,
     })),
     documentos: (def.documentos || []).map((docId) => {
       const d = DOCUMENTS.find((x) => x.id === docId);
@@ -721,6 +775,7 @@ export function missionDetail(user, jr, id, now = new Date()) {
     acoes: (def.acoes || []).map((a) => {
       if (a.tipo === 'oficial') return { ...a, url: sourceById(a.fonte)?.url };
       if (a.tipo === 'programa') return ctx.program ? { ...a, tipo: 'oficial', url: ctx.program.url } : { tipo: 'interna', rota: '/mestrados', rotulo: 'Defina seu mestrado primeiro' };
+      if (a.tipo === 'canal-programa') return ctx.processo?.canal?.url ? { ...a, tipo: 'oficial', url: ctx.processo.canal.url } : { tipo: 'interna', rota: '/mestrados', rotulo: 'Canal do programa não publicado: confirme com a universidade' };
       return a;
     }),
     prazoDeclarado: mp.prazo || null,
@@ -754,8 +809,16 @@ export function setSituacao(jr, campo, valor, now = new Date()) {
   if (!SITUACAO[campo]) throw new JourneyError(400, 'Situação desconhecida.');
   if (!SITUACAO[campo].some(([v]) => v === valor)) throw new JourneyError(400, 'Valor de situação inválido.');
   ensureJourney(jr);
-  if (campo !== 'adjudicacao' && valor !== DEFAULT_SITUACAO[campo] && jr.situacao.adjudicacao !== 'admitido') {
+  if (campo !== 'adjudicacao' && valor !== DEFAULT_SITUACAO[campo] && !ADMITIDO.includes(jr.situacao.adjudicacao)) {
     throw new JourneyError(409, campo === 'visto' ? 'Registre primeiro a admissão: o pedido de visto de estudante exige a carta de admissão.' : 'Registre primeiro a admissão para registrar a matrícula.');
+  }
+  // Sem vaga atribuída não existe matrícula/reserva: corrija a matrícula antes de registrar esse resultado.
+  if (campo === 'adjudicacao' && !ADMITIDO.includes(valor) && jr.situacao.matricula !== DEFAULT_SITUACAO.matricula) {
+    throw new JourneyError(409, 'Você tem uma matrícula ou reserva registrada. Volte a matrícula para "Não iniciada" antes de registrar um resultado sem vaga.');
+  }
+  // Reserva só existe para quem recebeu vaga numa opção que não é a 1ª preferência (O2 art. 14.7).
+  if (campo === 'matricula' && valor === 'reservada' && jr.situacao.adjudicacao !== 'admitido-outra-opcao') {
+    throw new JourneyError(409, 'A reserva serve para quem foi admitido em outra opção e quer continuar nas listas de maior preferência. Na 1ª preferência, a ação é a matrícula.');
   }
   jr.situacao[campo] = valor;
   recordSituacao(jr, campo, valor, 'declarado', now);
@@ -784,6 +847,16 @@ export function setObjective(user, jr, missionId, objId, { feito, valor }) {
   if (obj.tipo === 'data') {
     if (valor && !/^\d{4}-\d{2}-\d{2}$/.test(valor)) throw new JourneyError(400, 'Data inválida.');
     if (valor) journey.dados[obj.campo] = valor;
+    else delete journey.dados[obj.campo];
+  } else if (obj.tipo === 'escolha') {
+    const v = String(valor || '');
+    if (v && !obj.opcoes.some(([k]) => k === v)) throw new JourneyError(400, 'Opção inválida.');
+    if (v && obj.campo === 'faseDua') {
+      const proc = processFor(user, jr);
+      const f = proc?.fases.find((x) => String(x.fase) === v);
+      if (f?.perfil.status === 'nao') throw new JourneyError(409, f.perfil.texto);
+    }
+    if (v) journey.dados[obj.campo] = v;
     else delete journey.dados[obj.campo];
   } else if (obj.tipo === 'texto') {
     const v = String(valor || '').trim().slice(0, 300);

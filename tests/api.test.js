@@ -103,7 +103,7 @@ test('3: a Rodada 3 (DUA) começa bloqueada e só mostra a prévia', async () =>
   const j = (await req('GET', `/journeys/${jid}`)).data.journey;
   const r3 = j.rodadas[2];
   assert.equal(r3.desbloqueada, false);
-  assert.equal(r3.ocultas, 10, '10 missões do processo DUA, ainda ocultas');
+  assert.equal(r3.ocultas, 11, '10 missões do processo DUA + a 3.11 (mestrado fora do DUA), ainda ocultas');
   assert.ok(r3.desbloqueio.texto);
   const d = (await req('GET', `/journeys/${jid}/missions/3.6`)).data.mission;
   assert.equal(d.bloqueada, true);

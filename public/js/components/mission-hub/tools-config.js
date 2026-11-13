@@ -20,6 +20,7 @@ const T = {
   oficial: { painel: 'oficial', titulo: 'Site oficial', desc: 'Onde o procedimento é feito de verdade.', ic: 'globe', cor: 'azul' },
   ajuda: { painel: 'ajuda', titulo: 'Preciso de ajuda', desc: 'O Mentor já conhece esta missão.', ic: 'chat', cor: 'roxo' },
   entender: { painel: 'entender', titulo: 'Entender melhor', desc: 'Por quê, resultado esperado e erros comuns.', ic: 'book', cor: 'laranja' },
+  processo: { painel: 'processo', titulo: 'Processo deste mestrado', desc: 'Fases, documentos e regras oficiais do seu mestrado.', ic: 'shieldCheck', cor: 'ciano' },
 };
 const tool = (id, extra = {}) => ({ id, ...T[id], ...extra });
 
@@ -97,12 +98,14 @@ const TOOL_LABEL = {
 /** Ferramentas de uma missão: configuração própria ou composição pela complexidade. */
 export function toolsFor(m) {
   const own = MISSION_TOOLS[m.id];
-  if (own) return { descricao: own.descricao || null, ferramentas: own.ferramentas };
+  if (own) return { descricao: own.descricao || null, ferramentas: m.processo ? [...own.ferramentas, tool('processo')] : own.ferramentas };
   const def = m.definicao;
   const level = m.complexidade || 'guiada';
   const out = [];
   const stepsTitle = level === 'simples' ? 'Fazer agora' : 'Passo a passo';
   out.push({ id: 'guia', painel: 'guia', titulo: stepsTitle, desc: level === 'simples' ? `Leva ${def.tempoEstimado}.` : `${m.objetivosTotal} passo(s), um de cada vez.`, ic: 'target', cor: 'turquesa', destaque: true, objetivos: '*' });
+  // Processo oficial do mestrado: sempre visível nas missões de candidatura (não conta no limite da grade).
+  const processo = m.processo ? [tool('processo', { desc: m.processo.verificacao === 'confirmado' ? 'Fases, documentos e regras oficiais do seu mestrado.' : 'Fases, documentos e o que ainda não está confirmado.' })] : [];
   if (def.ferramenta && TOOL_LABEL[def.ferramenta] && level !== 'simples') {
     const [titulo, desc, ic] = TOOL_LABEL[def.ferramenta];
     out.push({ id: 'ferramenta', painel: 'ferramenta', titulo, desc, ic, cor: 'ciano' });
@@ -113,5 +116,5 @@ export function toolsFor(m) {
   if (level === 'complexa' && (def.porque || m.errosComuns?.length)) out.push(tool('entender'));
   if (level === 'simples') out.push(tool('ajuda'));
   const max = { simples: 3, guiada: 5, complexa: 8 }[level] || 5;
-  return { descricao: null, ferramentas: out.slice(0, max) };
+  return { descricao: null, ferramentas: [...out.slice(0, 1), ...processo, ...out.slice(1, max)] };
 }

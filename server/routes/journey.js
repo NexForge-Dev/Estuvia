@@ -5,12 +5,13 @@ import { z } from 'zod';
 import { users, newId, audit } from '../store.js';
 import { requireAuth } from '../security.js';
 import { UNIVERSITIES, programById, registerProgramSource } from '../content/catalog.js';
-import { programForJourney, officialDeadlines } from '../radar/service.js';
-import { registerOfficialDeadlines } from '../journey-engine.js';
+import { programForJourney, officialDeadlines, processCalendar } from '../radar/service.js';
+import { registerOfficialDeadlines, registerProcessCalendar } from '../journey-engine.js';
 import { syncDocumentsFromMissions } from '../document-engine.js';
 
 registerProgramSource(programForJourney);
 registerOfficialDeadlines(officialDeadlines);
+registerProcessCalendar(processCalendar);
 import { SITUACAO } from '../content/rounds.js';
 import { PRIOR_STAGES, REQUIREMENTS } from '../content/progression.js';
 import {

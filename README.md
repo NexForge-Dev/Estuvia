@@ -102,6 +102,7 @@ tests/
 | [26 — Launch and LGPD audit](docs/26-auditoria-lancamento-lgpd.md) | Launch and data-protection audit |
 | [27 — Onboarding](docs/27-onboarding.md) | Field-by-field audit (what each answer feeds), the 6-step flow, validation, saving order, components (Select, Toasts) |
 | [28 — DEV × PROD environments](docs/28-ambientes-dev-prod.md) | Separate Supabase projects, isolation guards, backup, migrations and the manual steps to create production |
+| [30 — Production plan](docs/30-plano-de-producao.md) | Phased plan from the current state to a controlled pilot, with owners, dependencies, evidence and go/no-go criteria |
 | [11 — Opportunity Radar](docs/11-radar.md) | Monitoring of official sources |
 | [12 — Community](docs/12-comunidade.md) | Moderated community |
 | [01](docs/01-visao-produto.md), [02](docs/02-requisitos.md), [03](docs/03-arquitetura.md), [08](docs/08-manual-do-estudante.md) | Vision, requirements, architecture and manual for version 0.1 (historical context) |

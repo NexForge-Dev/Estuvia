@@ -25,6 +25,11 @@ export function MissionChecklist(objetivos, { disabled, situacaoAberta, onToggle
       return h('li', { class: `ck field situ ${o.feito ? 'done' : ''}` }, box,
         h('label', { class: 'ck-text' }, o.texto, sel, h('small', { class: 'ck-hint' }, icon('globe', { size: 12 }), o.dica)));
     }
+    if (o.tipo === 'escolha') {
+      const sel = h('select', { disabled, 'aria-label': o.texto }, h('option', { value: '' }, 'Escolha…'), o.opcoes.map(([v, l]) => h('option', { value: v, selected: v === o.valor }, l)));
+      sel.addEventListener('change', () => onValue(o, sel.value));
+      return h('li', { class: `ck field ${o.feito ? 'done' : ''}` }, box, h('label', { class: 'ck-text' }, o.texto, sel, o.dica ? h('small', { class: 'ck-hint' }, o.dica) : null));
+    }
     if (o.tipo === 'data' || o.tipo === 'texto') {
       const input = h('input', { type: o.tipo === 'data' ? 'date' : 'text', value: o.valor || '', maxlength: 300, disabled, 'aria-label': o.texto, placeholder: o.tipo === 'texto' ? 'Digite aqui' : null });
       input.addEventListener('change', () => onValue(o, input.value.trim()));

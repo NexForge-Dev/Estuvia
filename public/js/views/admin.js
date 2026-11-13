@@ -37,7 +37,7 @@ const device = (d) => (d ? `${d.browser} · ${d.os} · ${d.device}` : '-');
 
 // Tons das situações (candidatura, matrícula, visto, documentos).
 const TONE = {
-  candidatura: { admitido: 'ok', aguardando: 'info', 'lista-espera': 'warn', 'exige-acao': 'bad', 'nao-admitido': 'bad', 'nao-enviada': 'muted' },
+  candidatura: { admitido: 'ok', 'admitido-outra-opcao': 'ok', aguardando: 'info', 'lista-espera': 'warn', 'exige-acao': 'bad', 'nao-admitido': 'bad', excluido: 'bad', 'nao-enviada': 'muted' },
   matricula: { matriculado: 'ok', 'vaga-confirmada': 'ok', reservada: 'info', 'nao-iniciada': 'muted' },
   visto: { aprovado: 'ok', apresentada: 'info', 'em-analise': 'info', 'doc-adicional': 'warn', indeferido: 'bad', preparacao: 'muted' },
   doc: { pronto: 'ok', enviado: 'ok', 'em-preparacao': 'info', correcao: 'bad', pendente: 'muted', 'nao-se-aplica': 'muted' },

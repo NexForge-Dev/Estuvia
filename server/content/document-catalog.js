@@ -63,6 +63,7 @@ export const CONDITIONS = {
   menor: { rotulo: 'Tenho menos de 18 anos', ajuda: 'Autorizações de responsáveis.', padrao: false },
   representante: { rotulo: 'Alguém vai me representar em algum trâmite', ajuda: 'Procuração e documento do representante.', padrao: false },
   nomeMudou: { rotulo: 'Meu nome mudou (casamento, retificação…)', ajuda: 'Os documentos precisam mostrar a ligação entre os nomes.', padrao: false },
+  certificacaoPGS: { rotulo: 'Meu mestrado é o de Psicología General Sanitaria', ajuda: 'Exige a certificação do Ministério da Orden CNU/1309/2018 (O2 art. 9).', detect: 'mestrado' },
   diplomaPendente: { rotulo: 'Ainda não recebi o diploma', ajuda: 'A certidão de conclusão pode ser aceita no lugar, conforme a convocatória.', padrao: false },
   outrasGraduacoes: { rotulo: 'Tenho outra graduação além da principal', ajuda: 'Diplomas e históricos adicionais.', padrao: false },
   residiuOutrosPaises: { rotulo: 'Morei em outro país nos últimos 5 anos', ajuda: 'Antecedentes criminais de outros países podem ser pedidos.', padrao: false },
@@ -143,17 +144,20 @@ T('mudanca-nome', 'pessoais', 'Comprovante de mudança de nome', { icone: 'edit'
 T('diploma', 'academicos', 'Diploma de graduação', { icone: 'cap', partes: ['frente', 'verso'],
   oque: 'O documento oficial da sua universidade brasileira que comprova que você concluiu a graduação.',
   para: 'Comprovar a formação superior exigida para concorrer ao mestrado.',
-  quando: 'Antes de iniciar a candidatura ao mestrado.',
+  quando: 'O título precisa estar concluído e os direitos de expedição pagos até a data-limite da sua fase do DUA (ciclo 2026/27: Fase 1, 29/01; Fase 2, 04/09; Fase 3, 05/10).',
   apostilaNota: 'Pode ser exigida na matrícula definitiva, conforme a universidade.', traducaoNota: 'Depende das regras do procedimento e da instituição.' });
 T('certidao-conclusao', 'academicos', 'Certidão de conclusão da graduação', { icone: 'file', missoes: ['2.2'],
-  oque: 'Declaração da faculdade de que você concluiu o curso, enquanto o diploma não sai.', para: 'Substituir o diploma na candidatura, quando a convocatória aceitar.' });
+  oque: 'Certificação supletória da faculdade, enquanto o diploma não sai. Pelo procedimento do DUA, ela deve mostrar a data de pagamento dos direitos de expedição do título (ou que todos os requisitos para obtê-lo foram cumpridos).', para: 'Substituir o diploma na candidatura (O1 art. 4; O2 Tabla 3).' });
 T('historico', 'academicos', 'Histórico escolar completo da graduação', { icone: 'book',
   oque: 'O documento da faculdade com as disciplinas cursadas, notas e carga horária.', para: 'Calcular a sua nota média e avaliar a sua formação na candidatura.' });
 T('escala-notas', 'academicos', 'Declaração oficial da escala de notas', { icone: 'scale',
-  oque: 'Declaração da faculdade explicando a nota mínima, a máxima e a de aprovação do seu histórico.', para: 'Permitir converter a sua média para o sistema espanhol.' });
+  oque: 'Certificado oficial com a nota mínima de aprovação e a nota máxima possível da sua graduação.', para: 'Converter a sua média para o sistema espanhol. Sem ele, o DUA considera a nota mínima aprovatória (O1 arts. 4 e 7).' });
 T('acesso-pos', 'academicos', 'Declaração de que a graduação permite acesso à pós-graduação no Brasil', { icone: 'unlock',
   oque: 'Declaração de que o seu título dá acesso a cursos de pós-graduação no Brasil.', para: 'Cumprir o requisito de acesso ao mestrado com título estrangeiro não homologado.',
-  onde: 'Na sua universidade ou no órgão indicado na convocatória do ciclo.' });
+  onde: 'Segue o modelo do Anexo II, disponível no portal de solicitações do DUA, emitido por órgão oficial do país de origem. Confirme com a sua universidade qual setor emite (O1 art. 4).' });
+T('certificacao-pgs', 'academicos', 'Certificação do Ministério para o Máster en Psicología General Sanitaria', { icone: 'shield', missoes: ['2.8'], fontes: ['O2'],
+  oque: 'Resolução favorável ou certificação de que o seu título estrangeiro de Psicologia cumpre os requisitos da Orden CNU/1309/2018 para o acesso a este máster.', para: 'Exigida para o Máster en Psicología General Sanitaria na data de fim do prazo de solicitação (O2 art. 9).',
+  onde: 'Ministério de Ciencia, Innovación y Universidades, conforme a Resolución de 16 de noviembre de 2023. Confira na sede eletrônica o procedimento e o prazo vigentes.' });
 T('media-final', 'academicos', 'Comprovação da média final da graduação', { icone: 'scale', atendidoPor: ['historico'], missoes: ['2.3'],
   oque: 'O documento que mostra a sua média final.', para: 'Ordenar os candidatos na adjudicação de vagas.' });
 T('carga-horaria', 'academicos', 'Informação oficial de carga horária e créditos', { icone: 'clock', atendidoPor: ['historico'], missoes: ['2.3'],
@@ -217,9 +221,9 @@ T('condicoes-especiais', 'candidatura', 'Documentação para reserva de vagas ou
 T('admissao', 'matricula', 'Carta oficial de admissão ao mestrado', { icone: 'mail',
   oque: 'A carta da universidade confirmando que você foi admitido(a).', para: 'Comprovar a admissão no consulado e na viagem.', onde: 'Na sede eletrônica da universidade ou com a secretaria do mestrado.' });
 T('aceitacao-vaga', 'matricula', 'Confirmação de aceitação da vaga', { icone: 'check', missoes: ['4.3'],
-  oque: 'O registro de que você aceitou a vaga oferecida.', para: 'Não perder a vaga na adjudicação.', onde: 'No portal do DUA ou da universidade, conforme o procedimento.' });
+  oque: 'Comprovante da ação feita no portal do DUA após cada lista: matrícula, reserva da vaga ou confirmação na lista de espera.', para: 'Sem essa ação no prazo, você perde o direito no processo daquela fase (O1 art. 6; O2 art. 14.7).', onde: 'No portal do DUA, dentro do prazo publicado para cada adjudicação.' });
 T('reserva-vaga', 'matricula', 'Comprovante de reserva da vaga', { icone: 'check', missoes: ['4.3'],
-  oque: 'Comprovante de que a vaga ficou reservada (às vezes com pagamento).', para: 'Garantir a vaga até a matrícula.' });
+  oque: 'Comprovante de que você reservou a vaga atribuída e continua nas listas de espera de maior preferência.', para: 'A reserva precisa ser ratificada em cada nova adjudicação; nas listas de resultas não há reserva, só matrícula (O2 arts. 4.b e 14.7).' });
 T('comprovante-matricula', 'matricula', 'Comprovante de matrícula universitária', { icone: 'file', prepara: '4.6', missoes: ['4.6', '4.7'],
   oque: 'O documento da universidade que confirma que você está matriculado(a).', para: 'Visto, residência estudantil, TIE e banco pedem.' });
 T('comprovante-pagamento', 'matricula', 'Comprovante de pagamento das taxas de matrícula', { icone: 'euro',
@@ -558,6 +562,7 @@ export const CATEGORY_USES = {
     u('certidao-conclusao', 'C', { cond: 'diplomaPendente', condicao: 'Se o diploma ainda não estiver disponível.' }),
     u('historico', 'O'),
     u('escala-notas', 'O'),
+    u('certificacao-pgs', 'C', { cond: 'certificacaoPGS', condicao: 'Só para o Máster en Psicología General Sanitaria (O2 art. 9).' }),
     u('acesso-pos', 'O'),
     u('media-final', 'O', { nota: 'Se o seu histórico mostra a média final, ele já atende.' }),
     u('carga-horaria', 'O', { nota: 'Se o seu histórico mostra a carga horária e os créditos, ele já atende.' }),
@@ -591,7 +596,7 @@ export const CATEGORY_USES = {
   matricula: [
     u('admissao', 'O'),
     u('aceitacao-vaga', 'C', { condicao: 'Conforme o procedimento de adjudicação.' }),
-    u('reserva-vaga', 'C', { condicao: 'Quando a universidade exigir reserva.' }),
+    u('reserva-vaga', 'C', { condicao: 'Se você reservar a vaga para continuar nas listas de maior preferência.' }),
     u('comprovante-matricula', 'O'),
     u('comprovante-pagamento', 'O'),
     u('documentacao-original', 'O', { condicao: 'Conforme as exigências da universidade.' }),

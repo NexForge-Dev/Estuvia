@@ -76,7 +76,10 @@ export function languageRequirements(requisitos) {
     }
   }
   // Um item por idioma: vale o obrigatório e, entre eles, o que informa nível.
-  const rank = (x) => (x.obrigatorio ? 2 : 0) + (x.nivel ? 1 : 0);
+  // Um item por idioma: vale o obrigatório e, entre os obrigatórios, o de nível MAIS ALTO (uma ficha pode ter
+  // dois requisitos de espanhol, ex.: B1 e B2; orientar pelo menor seria induzir o estudante ao erro).
+  const NIVEIS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+  const rank = (x) => (x.obrigatorio ? 100 : 0) + (x.nivel ? 10 + NIVEIS.indexOf(x.nivel) : 0);
   return [...out.reduce((m, x) => (!m.has(x.idioma) || rank(x) > rank(m.get(x.idioma)) ? m.set(x.idioma, x) : m), new Map()).values()];
 }
 

@@ -9,7 +9,7 @@
 // Trilhas paralelas: missões que não esperam o desbloqueio da rodada (só as próprias dependências),
 // porque o estudante precisa conhecê-las cedo para decidir, se preparar ou não perder prazos.
 
-const ENVIOU = ['aguardando', 'admitido', 'lista-espera', 'nao-admitido', 'exige-acao'];
+const ENVIOU = ['aguardando', 'admitido', 'admitido-outra-opcao', 'lista-espera', 'nao-admitido', 'exige-acao', 'excluido'];
 
 export const ROUND_UNLOCK = [
   { rodada: 1, sempre: true, texto: 'Disponível desde o início.' },
@@ -21,13 +21,13 @@ export const ROUND_UNLOCK = [
   },
   {
     rodada: 3,
-    requisitos: [{ missao: '2.4' }, { missao: '2.5' }, { missao: '2.6' }, { missao: '2.7' }],
+    requisitos: [{ missao: '2.4' }, { missao: '2.5' }, { missao: '2.6' }, { missao: '2.7' }, { missao: '2.8' }],
     alternativas: [{ situacao: { campo: 'adjudicacao', valores: ENVIOU } }],
     texto: 'Organize sua documentação e verifique os requisitos aplicáveis ao seu mestrado.',
   },
   {
     rodada: 4,
-    requisitos: [{ missao: '3.6' }],
+    requisitos: [{ missao: '3.6' }, { missao: '3.11' }],
     alternativas: [{ situacao: { campo: 'adjudicacao', valores: ENVIOU } }],
     texto: 'Envie sua candidatura no DUA (ou registre que já enviou). A matrícula só abre quando você registrar uma admissão.',
   },
@@ -100,7 +100,7 @@ export const PRIOR_STAGES = [
 // Resultados ainda não favoráveis (lista de espera, não admitido, exige ação, visto indeferido) ficam
 // abaixo do resultado positivo: quem saiu da lista de espera ou teve um novo pedido aprovado consegue declarar.
 export const SITUACAO_RANK = {
-  adjudicacao: { 'nao-enviada': 0, aguardando: 1, 'lista-espera': 1, 'exige-acao': 1, 'nao-admitido': 1 },
+  adjudicacao: { 'nao-enviada': 0, aguardando: 1, 'lista-espera': 1, 'exige-acao': 1, 'nao-admitido': 1, excluido: 1 },
   matricula: { 'nao-iniciada': 0, 'vaga-confirmada': 1, reservada: 1 },
   visto: { preparacao: 0, apresentada: 1, 'em-analise': 1, 'doc-adicional': 1, indeferido: 1 },
 };
@@ -109,11 +109,13 @@ export const situacaoRank = (campo, valor) => SITUACAO_RANK[campo]?.[valor] ?? 2
 // ---------- Complexidade adaptativa ----------
 // complexidade orienta a interface (simples: um card e uma ação · guiada: poucos passos · complexa: ambiente completo).
 // risco é avaliado à parte: uma tarefa fácil pode ter consequência séria se for feita errado.
-const SIMPLES = ['1.1', '1.2', '2.1', '2.2', '2.3', '2.6', '3.1', '3.2', '3.3', '3.7', '4.1', '4.4', '4.5', '4.7', '5.9', '6.4', '7.1', '7.2', '7.3', '7.4', '7.5', '7.6', '7.7', '7.8', '8.1', '8.2', '8.5', '8.7', '8.8', '9.2', '9.9'];
+const SIMPLES = ['1.1', '1.2', '2.1', '2.2', '2.3', '2.6', '3.1', '3.3', '3.7', '4.1', '4.4', '4.5', '4.7', '5.9', '6.4', '7.1', '7.2', '7.3', '7.4', '7.5', '7.6', '7.7', '7.8', '8.1', '8.2', '8.5', '8.7', '8.8', '9.2', '9.9'];
 const COMPLEXAS = ['3.6', '5.4', '5.7', '9.6', '9.10'];
 export const RISK = {
   '3.6': { nivel: 'alto', texto: 'Envie dentro do prazo da sua fase e guarde o comprovante: sem ele, você não consegue provar o envio.' },
-  '4.3': { nivel: 'alto', texto: 'Perder o prazo de confirmação ou reserva pode significar perder a vaga.' },
+  '4.3': { nivel: 'alto', texto: 'Sem matrícula ou reserva no prazo, você perde o direito no processo daquela fase (O1 art. 6; O2 art. 14.7).' },
+  '3.10': { nivel: 'alto', texto: 'A confirmação na lista de espera precisa ser repetida em cada adjudicação; sem ela você sai do processo.' },
+  '2.8': { nivel: 'alto', texto: 'Sem a resolução de homologação até o fim do prazo, a solicitação a este mestrado não vale.' },
   '5.4': { nivel: 'alto', texto: 'Recursos "previstos" não contam: vale o que você consegue comprovar, do jeito que o consulado pede.' },
   '5.7': { nivel: 'alto', texto: 'Vá com o dossiê completo, seguindo a lista do seu consulado: documento faltando atrasa ou prejudica o pedido.' },
   '6.2': { nivel: 'alto', texto: 'Nunca pague caução sem contrato e sem confirmar quem é o anunciante.' },
