@@ -83,6 +83,28 @@ test('a ficha importada passa pelo pipeline normal e guarda a data real da colet
   assert.ok(JSON.stringify(snap).includes(COLETADO), 'a data é a da coleta, não a da importação');
 });
 
+test('reimportar a mesma ficha depois de uma ida e volta ao Supabase (jsonb reordena as chaves) não gera mudança', async () => {
+  // Simula o que o Postgres faz: mesmas chaves e valores, outra ordem (inclusive nos objetos dentro dos arrays).
+  const reorder = (v) => (Array.isArray(v) ? v.map(reorder) : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).reverse().map((k) => [k, reorder(v[k])])) : v);
+  prog.fichaDua = reorder(prog.fichaDua);
+  // Com mais fichas do que o limite de snapshots guardados (600), o snapshot anterior já foi descartado
+  // e a ficha passa pela comparação campo a campo: é ali que a ordem das chaves fazia diferença.
+  const d = radarDb.data();
+  d.snapshots = d.snapshots.filter((s) => !(s.sourceId === 'dua-fichas' && String(s.chave || '').includes(prog.id)));
+  const r = await equipe('POST', '/radar/admin/import', { fonte: 'dua-fichas', robots: { [ORIGIN]: '' }, paginas: [ficha('404508')] });
+  assert.equal(r.status, 200);
+  assert.equal(r.data.run.mudancas, 0, 'nenhuma alteração falsa no histórico');
+  assert.equal(r.data.run.resultado, 'sem-alteracao');
+});
+
+test('uma mudança real na ficha continua sendo registrada', async () => {
+  const alterada = seed('dua-ficha-404508-biotecnologia.html').replace('UN NIVEL DE ESPAÑOL B1', 'UN NIVEL DE ESPAÑOL B2');
+  const r = await equipe('POST', '/radar/admin/import', { fonte: 'dua-fichas', robots: { [ORIGIN]: '' }, paginas: [ficha('404508', alterada)] });
+  assert.equal(r.status, 200);
+  assert.ok(r.data.run.mudancas >= 1);
+  assert.equal(prog.fichaDua.idiomasExigidos[0].nivel, 'B2');
+});
+
 test('páginas sem alvo atual não marcam a fonte como verificada', async () => {
   const r = await equipe('POST', '/radar/admin/import', { fonte: 'dua-fichas', robots: { [ORIGIN]: '' }, paginas: [ficha('999999')] });
   assert.equal(r.status, 200);

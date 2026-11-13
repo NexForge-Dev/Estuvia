@@ -24,6 +24,7 @@ import * as ugrCatalog from './connectors/ugr-catalog.js';
 import * as ugrProgram from './connectors/ugr-program.js';
 import * as duaProgram from './connectors/dua-program.js';
 import { onPublished } from './notify.js';
+import { sameJson } from '../json-equal.js';
 
 export const CONNECTORS = { 'dua-calendar': duaCalendar, 'dua-catalog': duaCatalog, 'ugr-catalog': ugrCatalog, 'ugr-program': ugrProgram, 'dua-program': duaProgram };
 
@@ -312,7 +313,7 @@ export function applyDuaSheet(programId, parsed, { source, snapshot, por = 'atua
   const before = p.fichaDua;
   if (before) {
     for (const [campo, cfg] of Object.entries(DUA_FIELDS)) {
-      if (JSON.stringify(before[campo] ?? null) === JSON.stringify(parsed.dados[campo] ?? null)) continue;
+      if (sameJson(before[campo], parsed.dados[campo])) continue; // sem depender da ordem das chaves (jsonb)
       revisions.push(revision({ entidade: 'Program', entidadeId: p.id, opportunityKey: `program:${p.id}`, campo: `fichaDua.${campo}`, anterior: cfg.resumo(before[campo]), novo: cfg.resumo(parsed.dados[campo]), evidencia: { sourceId: source.id, snapshotId: snapshot?.id || null, url: duaSheetUrl(p.duaCodigo), versao: snapshot?.versao || null }, impacto: cfg.impacto, por }));
     }
   }

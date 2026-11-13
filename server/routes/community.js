@@ -13,6 +13,7 @@ import {
   effectiveVerification, isVerifiable, relevance, communityRadarFeed,
 } from '../community-engine.js';
 import { putMedia, getMedia, deleteMedia } from '../storage.js';
+import { sameJson } from '../json-equal.js';
 
 // Radar oficial (opcional): se o módulo falhar ao carregar, a comunidade segue sem a checagem.
 let findOfficialMatch = () => ({ match: false });
@@ -330,7 +331,7 @@ router.put('/posts/:id', communityWriteLimiter, async (req, res) => {
     if (prep.erro) return prep;
     if (prep.campos.links.some((l) => l.nivel === 'suspeito')) post.moderacao = { estado: 'em-revisao', motivos: ['Contém link suspeito.'] };
     // Qualquer mudança em algo já verificado exige nova conferência: sai do Radar até lá.
-    const changed = JSON.stringify(post.oportunidade) !== JSON.stringify(prep.campos.oportunidade) || post.texto !== prep.campos.texto;
+    const changed = !sameJson(post.oportunidade, prep.campos.oportunidade) || post.texto !== prep.campos.texto;
     if (post.verificacao && ['verificada', 'desatualizada'].includes(post.verificacao.status) && changed) {
       post.verificacao.status = 'em-verificacao';
       post.verificacao.historico.push({ status: 'em-verificacao', em: now(), por: 'sistema', nota: 'Editada pelo autor depois da verificação: precisa ser conferida de novo.' });
@@ -760,7 +761,7 @@ mod.put('/posts/:id/opportunity', async (req, res) => {
   const out = await community.mutate((c) => {
     const post = findPost(c, req.params.id);
     if (!post || post.tipo !== 'oportunidade') return { erro: [404, 'Oportunidade não encontrada.'] };
-    const campos = Object.keys(changes).filter((k) => JSON.stringify(post.oportunidade[k]) !== JSON.stringify(changes[k]));
+    const campos = Object.keys(changes).filter((k) => !sameJson(post.oportunidade[k], changes[k]));
     if (!campos.length) return { erro: [400, 'Nenhuma alteração em relação aos dados atuais.'] };
     if (changes.linkOficial) {
       const link = analyzeLink(changes.linkOficial);
