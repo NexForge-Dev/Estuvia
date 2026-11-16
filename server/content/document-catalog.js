@@ -50,7 +50,7 @@ export const CONDITIONS = {
   residenteBrasil: { rotulo: 'Moro no Brasil', ajuda: 'Define o consulado que atende você.', detect: 'perfil' },
   longa: { rotulo: 'Minha autorização de estudos terá mais de seis meses', ajuda: 'Define a obrigação da TIE. A carteira estima pela duração informada do curso; confirme a duração que será concedida no visto/autorização.', detect: 'jornada' },
   antecedentesConsulares: { rotulo: 'Meu consulado exige antecedentes criminais para minha duração de estadia', ajuda: 'Confira o limite da lista atual do seu consulado (algumas instruções usam mais de 180 dias; a regra migratória espanhola também usa mais de seis meses).', padrao: null },
-  pedidoNaEspanha: { rotulo: 'Vou pedir a autorização de estudos já estando na Espanha', ajuda: 'Caminho alternativo oficial (Missão 5.10). Pedindo pelo consulado, o atestado médico é sempre exigido; pedindo já na Espanha, ele não é exigido (Ministerio de Inclusión).', padrao: false },
+  pedidoNaEspanha: { rotulo: 'Vou pedir a autorização de estudos já estando na Espanha', ajuda: 'Vem da escolha da Missão 5.10. Pedindo pelo consulado, o visto e o atestado médico são exigidos; pedindo já na Espanha, entram o formulário EX-00 e o comprovante de entrada, e o atestado não é exigido (Ministerio de Inclusión).', detect: 'jornada' },
   idiomaEspanhol: { rotulo: 'Meu mestrado exige certificado de espanhol', ajuda: 'Vem da ficha oficial do mestrado.', detect: 'mestrado' },
   idiomaIngles: { rotulo: 'Meu mestrado exige certificado de inglês', ajuda: 'Confira na ficha do mestrado.', padrao: null },
   bolsa: { rotulo: 'Tenho bolsa concedida', ajuda: 'Detectado quando você registra uma bolsa como concedida.', detect: 'financas' },
@@ -290,6 +290,10 @@ T('antecedentes-outros-paises', 'visto', 'Certidões criminais de outros países
 T('atestado', 'visto', 'Atestado médico (Regulamento Sanitário Internacional de 2005)', { icone: 'help', validade: 'recencia', fontes: ['O6', 'O7'],
   oque: 'Atestado de que você não tem doenças com repercussão grave para a saúde pública, nos termos do Regulamento Sanitário Internacional de 2005.',
   para: 'Exigido no pedido feito pelo consulado; não é exigido quando a autorização é pedida já estando na Espanha (Ministerio de Inclusión). O texto e a data de emissão aceitos estão na lista do consulado competente.', onde: 'Com um médico registrado, usando o texto pedido pelo consulado.' });
+T('ex00', 'visto', 'Formulário EX-00 (autorização de estudos pedida na Espanha)', { icone: 'edit', missoes: ['7.10'], ...ES, fontes: ['O6'],
+  oque: 'O formulário oficial do pedido de autorização de estancia por estudios apresentado já na Espanha.', para: 'É o próprio pedido quando você o faz estando na Espanha (Missão 5.10).', onde: 'Modelo oficial no portal do Ministerio de Inclusión; preencha antes de apresentar.' });
+T('taxa-autorizacao-estudos', 'visto', 'Comprovante da taxa do pedido de autorização de estudos', { icone: 'euro', missoes: ['7.10'], ...ES, fontes: ['O6'],
+  oque: 'O comprovante da taxa paga pelo pedido feito na Espanha.', para: 'O pedido é apresentado com a taxa paga.', onde: 'Confira o modelo e o valor da taxa na fonte oficial antes de pagar.' });
 T('taxa-visto', 'visto', 'Comprovante de pagamento da taxa do visto', { icone: 'euro', prepara: '5.7', missoes: ['5.7'], ...ES,
   oque: 'O recibo da taxa consular.', para: 'O visto só é processado com a taxa paga.', onde: 'Conforme as instruções do consulado (valor e forma mudam).' });
 T('agendamento-consular', 'visto', 'Comprovante de agendamento consular', { icone: 'calendar', missoes: ['5.7'], ...ES,
@@ -415,7 +419,7 @@ T('taxa-tie', 'nie-tie', 'Comprovante da taxa 790-012 paga', { icone: 'euro', fo
   oque: 'O comprovante de pagamento da taxa (modelo 790, código 012) do cartão de estrangeiro.', para: 'Levar no atendimento da TIE.', onde: 'Gere o formulário 790-012 na fonte oficial e pague no banco.' });
 T('cita-huellas', 'nie-tie', 'Comprovante do agendamento para coleta de digitais', { icone: 'calendar', prepara: '8.3', missoes: ['8.3', '8.6'], fontes: ['O20'],
   oque: 'A confirmação da cita previa para tirar as digitais (toma de huellas).', para: 'Comparecer ao atendimento da TIE.', onde: 'No sistema de cita previa do governo espanhol.' });
-T('comprovante-entrada', 'nie-tie', 'Comprovante da data de entrada na Espanha', { icone: 'plane', missoes: ['8.2'],
+T('comprovante-entrada', 'nie-tie', 'Comprovante da data de entrada na Espanha', { icone: 'plane', missoes: ['7.10', '8.2'],
   oque: 'Carimbo de entrada no passaporte ou cartão de embarque.', para: 'Mostrar quando começou a contar o prazo da TIE.' });
 T('resolucao-autorizacao', 'nie-tie', 'Resolução de autorização de estudos', { icone: 'file',
   oque: 'A resolução que concedeu a sua autorização, quando houver.', para: 'Quando a autorização foi concedida por resolução (e não só pelo visto).' });
@@ -628,8 +632,10 @@ export const CATEGORY_USES = {
     u('comprovante-pagamento', 'O', { rotulo: 'Comprovante de pagamento da matrícula para o visto' }),
   ],
   visto: [
-    u('formulario', 'O'),
-    u('foto-visto', 'O', { rotulo: 'Fotografia de identificação' }),
+    u('formulario', 'O', { cond: '!pedidoNaEspanha' }),
+    u('ex00', 'O', { cond: 'pedidoNaEspanha' }),
+    u('comprovante-entrada', 'O', { cond: 'pedidoNaEspanha', rotulo: 'Comprovante da entrada na Espanha (estadia regular)' }),
+    u('foto-visto', 'O', { cond: '!pedidoNaEspanha', rotulo: 'Fotografia de identificação' }),
     u('passaporte', 'O', { rotulo: 'Passaporte válido e cópia da página de identificação' }),
     u('admissao', 'O'),
     u('comprovante-matricula', 'O', { rotulo: 'Comprovante de matrícula' }),
@@ -639,8 +645,9 @@ export const CATEGORY_USES = {
     u('antecedentes', 'C', { cond: ['antecedentesConsulares', '!menor'], condicao: 'Para adultos, quando exigido pela lista vigente do consulado.' }),
     u('antecedentes-outros-paises', 'C', { cond: ['antecedentesConsulares', 'residiuOutrosPaises'] }),
     u('atestado', 'O', { cond: '!pedidoNaEspanha', condicao: 'Exigido no pedido feito pelo consulado; não é exigido quando a autorização é pedida já na Espanha.' }),
-    u('comprovante-residencia-br', 'O', { cond: 'residenteBrasil', rotulo: 'Comprovante de residência na jurisdição consular' }),
-    u('taxa-visto', 'O'),
+    u('comprovante-residencia-br', 'O', { cond: ['residenteBrasil', '!pedidoNaEspanha'], rotulo: 'Comprovante de residência na jurisdição consular' }),
+    u('taxa-visto', 'O', { cond: '!pedidoNaEspanha' }),
+    u('taxa-autorizacao-estudos', 'O', { cond: 'pedidoNaEspanha' }),
     u('agendamento-consular', 'C', { condicao: 'Quando o consulado atende com agendamento.' }),
     u('apostilas-visto', 'C', { condicao: 'Conforme a lista do seu consulado.' }),
     u('traducoes', 'C', { condicao: 'Conforme a lista do seu consulado.' }),
@@ -687,7 +694,8 @@ export const CATEGORY_USES = {
   ],
   viagem: [
     u('passaporte', 'O'),
-    u('visto', 'O'),
+    u('visto', 'O', { cond: '!pedidoNaEspanha' }),
+    u('passagem-retorno', 'C', { cond: 'pedidoNaEspanha', condicao: 'Entrando como turista, a fronteira pode pedir a passagem de volta.' }),
     u('passagem', 'O', { condicao: 'Para o transporte contratado.' }),
     u('cartao-embarque', 'O', { condicao: 'No momento do voo.' }),
     u('transito', 'C', { condicao: 'Se o país da conexão exigir.' }),

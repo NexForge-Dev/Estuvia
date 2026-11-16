@@ -67,7 +67,7 @@ export const PARALLEL_TRACKS = {
 };
 
 export const MISSION_TRACK = {
-  '5.1': 'visto-preparacao', '5.2': 'visto-preparacao', '5.3': 'visto-preparacao', '5.4': 'visto-preparacao', '5.5': 'visto-preparacao', '5.6': 'visto-preparacao',
+  '5.1': 'visto-preparacao', '5.10': 'visto-preparacao', '5.2': 'visto-preparacao', '5.3': 'visto-preparacao', '5.4': 'visto-preparacao', '5.5': 'visto-preparacao', '5.6': 'visto-preparacao',
   '6.1': 'moradia-pesquisa', '6.3': 'viagem-pesquisa',
   '8.1': 'obrigacoes-legais', '8.2': 'obrigacoes-legais',
 };

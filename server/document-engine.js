@@ -123,6 +123,10 @@ function detectCondition(key, ctx) {
       return ctx.bolsas.some((b) => b.status === 'concedida') ? { valor: true, detalhe: 'Você registrou uma bolsa concedida.' } : { valor: false, detalhe: 'Nenhuma bolsa concedida registrada.' };
     case 'patrocinador':
       return ctx.recursos.some((r) => r.tipo === 'familiar') ? { valor: true, detalhe: 'Você registrou apoio familiar no planejador.' } : { valor: false, detalhe: 'Nenhum apoio de terceiros registrado no planejador.' };
+    case 'pedidoNaEspanha': {
+      const espanha = ctx.jr?.dados?.rotaVisto === 'espanha';
+      return { valor: espanha, detalhe: espanha ? 'Na Missão 5.10 você escolheu pedir a autorização já na Espanha.' : 'Pela Missão 5.10, o pedido é feito no consulado (padrão).' };
+    }
     case 'vistoAprovado':
       return { valor: ctx.journey?.situacao?.visto === 'aprovado', detalhe: 'Situação do visto registrada na jornada.' };
     case 'chegou':

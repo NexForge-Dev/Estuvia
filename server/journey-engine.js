@@ -91,6 +91,8 @@ export function buildContext(user, jr, now = new Date()) {
     dados: jr.dados,
     missions: jr.missions,
     situacao: jr.situacao,
+    // Caminho do pedido de autorização de estudos (Missão 5.10): consulado (padrão) ou já na Espanha.
+    rota: jr.dados?.rotaVisto === 'espanha' ? 'espanha' : 'consulado',
     duracaoMeses: Number(jr.duracaoMeses) || program?.duracaoMeses || null,
     get finance() { return (this._fin ??= computeFinance(user, jr, now)); },
     get processo() { if (this._proc === undefined) this._proc = processFor(user, jr, program); return this._proc; },
@@ -200,6 +202,12 @@ function applicability(mission, ctx, mp) {
   if (mission.soDua && ctx.program && ctx.processo?.flags?.naoDua) {
     return { aplicavel: false, motivo: 'O seu mestrado não usa o Distrito Único Andaluz: a candidatura segue o procedimento próprio do programa (Missão 3.11).' };
   }
+  // Etapa de um só caminho do pedido de autorização (Missão 5.10).
+  if (mission.rota && mission.rota !== ctx.rota) {
+    return { aplicavel: false, motivo: mission.rota === 'consulado'
+      ? 'Você escolheu pedir a autorização de estudos já na Espanha (Missão 5.10): esta etapa do consulado não se aplica.'
+      : 'Esta etapa é do pedido feito já na Espanha. Você vai pedir pelo consulado (Missão 5.10).' };
+  }
   const rule = mission.regra;
   if (!rule) return { aplicavel: true };
 
@@ -245,7 +253,8 @@ function applicability(mission, ctx, mp) {
 // Só existem prazos com regra oficial cadastrada ou declarados pelo estudante. Nunca inventamos datas.
 
 function deadlineFor(mission, ctx, mp) {
-  const p = mission.prazo;
+  // No pedido feito na Espanha, o prazo da TIE vem da resolução (declarado pelo estudante), não da entrada.
+  const p = (ctx.rota === 'espanha' && mission.prazo?.rotaEspanha) || mission.prazo;
   if (!p) return null;
   if (p.tipo === 'usuario') {
     const off = officialFor(ctx, mission.id);
@@ -770,7 +779,7 @@ export function missionDetail(user, jr, id, now = new Date()) {
       valor: o.tipo === 'situacao' ? ctx.situacao[o.campo] : o.campo ? ctx.dados[o.campo] || '' : null,
       opcoes: o.tipo === 'situacao' ? SITUACAO[o.campo] : o.tipo === 'escolha' ? o.opcoes : null,
       acao: o.tipo === 'auto' && AUTO_ROUTE[o.regra] ? { rota: AUTO_ROUTE[o.regra][0], rotulo: AUTO_ROUTE[o.regra][1] } : null,
-      dica: o.tipo === 'auto' ? AUTO_HINTS[o.regra] : o.tipo === 'situacao' ? 'Decisão externa registrada por você: a plataforma não consulta o sistema oficial.' : o.tipo === 'escolha' && o.campo === 'faseDua' ? 'A Fase 1 é só para nacionalidade estrangeira. Em qualquer fase, com título estrangeiro, o título precisa estar concluído até a data-limite da fase. Na Fase 1, confirme no portal que o seu mestrado tem vagas.' : null,
+      dica: o.tipo === 'auto' ? AUTO_HINTS[o.regra] : o.tipo === 'situacao' ? 'Decisão externa registrada por você: a plataforma não consulta o sistema oficial.' : o.tipo === 'escolha' && o.campo === 'faseDua' ? 'A Fase 1 é só para nacionalidade estrangeira. Em qualquer fase, com título estrangeiro, o título precisa estar concluído até a data-limite da fase. Na Fase 1, confirme no portal que o seu mestrado tem vagas.' : o.tipo === 'escolha' && o.campo === 'rotaVisto' ? 'A escolha mostra só as etapas do caminho escolhido (consulado: Missões 5.1 a 5.9; na Espanha: Missões 7.10 a 7.12) e ajusta os documentos. Você pode mudar depois.' : null,
     })),
     documentos: (def.documentos || []).map((docId) => {
       const d = DOCUMENTS.find((x) => x.id === docId);
@@ -1050,7 +1059,8 @@ export function registerArrival(user, jr, { dataEntrada, confirmo }, now = new D
   validEntry(dataEntrada, now);
   const ctx = buildContext(user, jr, now);
   const visto = missionState(missionById('5.9'), ctx);
-  if (ctx.situacao.visto !== 'aprovado' && visto.status !== 'concluida') {
+  // No pedido feito já na Espanha (Missão 5.10) a pessoa entra sem visto: a chegada vem antes do pedido.
+  if (ctx.rota !== 'espanha' && ctx.situacao.visto !== 'aprovado' && visto.status !== 'concluida') {
     throw new JourneyError(409, 'Registre primeiro a aprovação do visto (situação da jornada ou Missão 5.9).');
   }
   ensureJourney(jr).dados.dataEntrada = dataEntrada;
