@@ -335,3 +335,28 @@ test('catálogo DUA vincula o código sem duplicar o máster; ficha DUA alimenta
   assert.equal(rev?.anterior, 'espanhol B1');
   assert.equal(rev?.novo, 'espanhol B2');
 });
+
+test('catálogo DUA da UGR: código sem página na UGR (duplo) vira programa do DUA; variante declarada e vinculado não', () => {
+  const d = radarDb.data();
+  const prog = d.programs.find((p) => p.id === 'ugr-master-universitario-gestion-tecnologias-procesos-negocio');
+  const antes = d.programs.length;
+  const base = { universidadeId: 'ugr', ramos: [], tipoTitulo: 'oficial', modalidade: null, ofertaCondicionada: false, fonteCatalogo: 'dua-catalogo' };
+  const parsed = { ok: true, tipo: 'catalogo', universidadeId: 'ugr', anoAcademico: '2026/2027', avisos: [], programas: [
+    { ...base, id: 'dua-404508', codigo: '404508', nome: 'GESTIÓN Y TECNOLOGÍAS DE PROCESOS DE NEGOCIO', webPropria: prog.ficha?.webPropria || prog.webPropria },
+    // Variante declarada em program-channels.js (Plasmas): continua só como variante do máster da UGR.
+    { ...base, id: 'dua-493309', codigo: '493309', nome: 'CIENCIA Y TECNOLOGÍA DE PLASMAS Y FUSIÓN (ESP. CIENCIAS DEL PLASMA)', webPropria: null },
+    // Duplos sem página própria no catálogo da UGR (fichas DUA 2026/27): vários apontam para a mesma web.
+    { ...base, id: 'dua-433306', codigo: '433306', nome: 'PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: MATEMÁTICAS) + FÍSICA Y MATEMÁTICAS', webPropria: 'https://masterprofesorado.ugr.es' },
+    { ...base, id: 'dua-433403', codigo: '433403', nome: 'PROFESORADO EN ESO, BACHILLERATO, F.P. O ENSEÑANZA IDIOMAS (ESP: MATEMÁTICAS) + ESTADÍSTICA APLICADA', webPropria: 'https://masterprofesorado.ugr.es' },
+  ] };
+  const r = pipeline.ingest('dua-catalogo', { url: 'https://dua.example/cat', text: 'y', parsedOverride: parsed, snapshotKey: 'dua-catalogo:ugr' });
+  assert.equal(r.publicado, true);
+  assert.equal(prog.duaCodigo, '404508', 'vínculo preservado');
+  assert.equal(d.programs.length, antes + 2, 'só os duplos entram');
+  const duplo = d.programs.find((p) => p.id === 'dua-433306');
+  assert.equal(duplo.universidadeId, 'ugr');
+  assert.equal(duplo.somenteDua, true);
+  assert.equal(duplo.duaCodigo, '433306', 'a ficha DUA dele pode ser coletada');
+  assert.equal(d.programs.some((p) => p.id === 'dua-493309'), false, 'variante não duplica');
+  assert.equal(d.programs.some((p) => p.id === 'dua-404508'), false, 'vinculado não duplica');
+});

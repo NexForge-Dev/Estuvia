@@ -98,7 +98,7 @@ export const CATEGORY_DEFAULTS = {
   trabalho: { ...ES, quando: 'Antes de começar a trabalhar ou estagiar.', fontes: ['O6', 'O25'] },
   familiares: { ...BR, quando: 'Junto com o seu pedido de visto.', fontes: ['O6', 'O21'] },
   complementar: { apostila: 'talvez', traducao: 'talvez', quando: 'Quando o caso se aplicar a você.', fontes: ['M'] },
-  renovacao: { ...ES, onde: 'Na Oficina de Extranjería da sua província, pelo procedimento indicado na fonte oficial.', quando: 'Antes de a autorização atual vencer (confira o prazo na fonte oficial).', fontes: ['O6'] },
+  renovacao: { ...ES, onde: 'Por meios eletrônicos, dirigido à Oficina de Extranjería da província onde você obteve a autorização inicial (Ministerio de Inclusión).', quando: 'Nos dois meses antes ou nos três meses depois do vencimento da autorização. Cada prorrogação vale pelo curso matriculado, até um ano; são permitidas até duas por autorização (Ministerio de Inclusión, conferido em 14/11/2026). Confira o prazo na fonte oficial).', fontes: ['O6'] },
 };
 
 // ---------------------------------------------------------------------------
@@ -109,11 +109,11 @@ export const DOC_TYPES = [];
 const T = (id, categoria, nome, o = {}) => DOC_TYPES.push({ id, categoria, nome, ...o });
 
 // ===== 1. Documentos pessoais =====
-T('passaporte', 'pessoais', 'Passaporte válido', { icone: 'passport', validade: 'data', fontes: ['O23', 'O21'],
+T('passaporte', 'pessoais', 'Passaporte válido', { icone: 'passport', validade: 'data', fontes: ['O23', 'O21', 'O6'],
   oque: 'Seu documento de viagem, emitido pela Polícia Federal. Ele identifica você na candidatura, no visto, na viagem e na TIE.',
   para: 'Identificar você em todos os procedimentos e receber o visto colado nele.',
   onde: 'Na Polícia Federal: agende pelo gov.br, pague a taxa (GRU) e compareça ao atendimento.',
-  quando: 'O quanto antes: a validade precisa cobrir toda a estadia, e a emissão leva algumas semanas. Para o visto, confirme também páginas em branco e eventual limite para a data de emissão na página do seu consulado.',
+  quando: 'O quanto antes: a emissão leva algumas semanas. Para o visto de estudos, a regra oficial pede passaporte em vigor com vigência mínima de um ano (Ministerio de Inclusión). Confirme também páginas em branco e eventual limite para a data de emissão na página do seu consulado.',
   apostila: 'nao', traducao: 'nao' });
 T('rg-cin', 'pessoais', 'RG ou Carteira de Identidade Nacional (CIN)', { icone: 'user', partes: ['frente', 'verso'], apostila: 'nao', traducao: 'nao',
   oque: 'Seu documento de identidade brasileiro.', para: 'Identificação complementar quando um procedimento pedir.', onde: 'No órgão de identificação do seu estado.' });
@@ -168,10 +168,10 @@ T('grade-curricular', 'academicos', 'Grade curricular completa', { icone: 'book'
   oque: 'A estrutura oficial do curso (disciplinas por período).', para: 'Complementar a análise da formação, quando pedida.' });
 T('tcc-info', 'academicos', 'Comprovação das informações do TCC', { icone: 'edit',
   oque: 'Declaração ou documento com título, nota e orientador do seu TCC.', para: 'Quando o programa considera o trabalho de conclusão na avaliação.' });
-T('equivalencia-nota', 'academicos', 'Declaração de equivalência de nota média ao sistema espanhol', { icone: 'scale', apostila: 'nao', traducao: 'nao',
-  oque: 'Declaração que converte a sua média para a escala espanhola (0 a 10).',
-  para: 'Ajuda a mostrar a sua média no padrão espanhol; confira se o seu mestrado pede.',
-  onde: 'Procedimento online do governo espanhol (Ministério responsável pelas universidades). Confira o procedimento vigente.' });
+T('equivalencia-nota', 'academicos', 'Declaração de equivalência de nota média ao sistema espanhol', { icone: 'scale', apostila: 'nao', traducao: 'nao', fontes: ['O31', 'O2'],
+  oque: 'Declaração (DENM) que converte a média do seu diploma estrangeiro para a escala espanhola (0 a 10). Você mesmo a gera, gratuitamente, num conversor oficial; é uma declaração por titulação.',
+  para: 'No DUA (Fases 2 e 3) é opcional: anexada com a declaração responsável assinada, ela é usada no lugar da fórmula Ce = 5 + 5 × (Co − Cm) / (CM − Cm) aplicada com a escala do seu histórico (O2 art. 12.2). Compare os dois resultados antes de decidir.',
+  onde: 'No site do Ministerio de Ciencia, Innovación y Universidades (substitui o antigo procedimento da ANECA), com o histórico e a escala de notas em mãos. Dúvidas: notamedia.uni@ciencia.gob.es.' });
 T('outros-diplomas', 'academicos', 'Diplomas de outras graduações', { icone: 'cap', multiplos: true,
   oque: 'Diplomas de outros cursos superiores que você concluiu.', para: 'Quando você quer que outra formação seja considerada.' });
 T('outros-historicos', 'academicos', 'Históricos de outras graduações', { icone: 'book', multiplos: true,
@@ -240,8 +240,8 @@ T('reconhecimento-creditos', 'matricula', 'Documentação de reconhecimento de c
   oque: 'Pedido e documentos para aproveitar créditos já cursados.', para: 'Só se você pedir reconhecimento de créditos.' });
 
 // ===== 5. Documentação financeira =====
-T('meios', 'financeira', 'Comprovação de recursos suficientes para a estadia', { icone: 'euro', missoes: ['9.8'],
-  oque: 'O conjunto de documentos que mostra que você tem como se manter durante os estudos.', para: 'Exigência do visto de estudos.',
+T('meios', 'financeira', 'Comprovação de recursos suficientes para a estadia', { icone: 'euro', missoes: ['9.8'], fontes: ['O6', 'O28'],
+  oque: 'O conjunto de documentos que mostra que você tem como se manter durante os estudos.', para: 'Exigência do visto de estudos. Regra oficial: 100% do IPREM por mês de estadia, mais o retorno; o dinheiro reservado para pagar o curso não conta (Ministerio de Inclusión).',
   onde: 'Escolha os meios aceitos pelo seu consulado (extratos, bolsa, patrocinador…). Veja no planejador quanto falta.' });
 T('extratos', 'financeira', 'Extratos bancários recentes', { icone: 'euro', validade: 'recencia', missoes: ['5.4', '9.8'],
   oque: 'Extratos da sua conta com saldo e movimentação.', para: 'Um dos meios de comprovar recursos.', onde: 'No seu banco (aplicativo ou agência).', quando: 'Perto do pedido do visto: costuma-se pedir extratos recentes.' });
@@ -281,15 +281,15 @@ T('alojamento-pago', 'financeira', 'Comprovante de alojamento integralmente pago
 T('formulario', 'visto', 'Formulário oficial de visto nacional', { icone: 'edit', prepara: '5.7', apostila: 'nao', traducao: 'nao',
   oque: 'O formulário de pedido do visto nacional (tipo D) de estudos, preenchido e assinado.', para: 'É o próprio pedido do visto.', onde: 'Na página de vistos do SEU consulado.' });
 T('antecedentes', 'visto', 'Certidão de antecedentes criminais da Polícia Federal', { icone: 'shield', validade: 'recencia', fontes: ['O6', 'O22'],
-  oque: 'A certidão de que você não tem antecedentes criminais no Brasil.', para: 'A exigência e o limite de duração variam conforme a regra migratória e a lista do consulado competente. Confira a instrução vigente do seu consulado.',
+  oque: 'A certidão de que você não tem antecedentes criminais no Brasil.', para: 'Regra oficial: exigida quando a estadia passa de seis meses, para maiores de idade penal, emitida pelo país de origem ou pelos países onde você residiu nos últimos cinco anos (Ministerio de Inclusión). O consulado pode ter limite próprio de duração e de data de emissão: confira a lista vigente dele.',
   onde: 'Emita gratuitamente no gov.br (Polícia Federal). Confira se o consulado também pede a estadual.',
   quando: 'Perto do pedido do visto: o consulado pode aceitar só certidões recentes.',
   apostilaNota: 'Costuma ser exigida para uso na Espanha: confira na lista do seu consulado.', traducaoNota: 'Confira na lista do seu consulado.' });
 T('antecedentes-outros-paises', 'visto', 'Certidões criminais de outros países de residência', { icone: 'shield', validade: 'recencia', multiplos: true,
-  oque: 'Certidões dos países onde você morou nos últimos anos.', para: 'Quando o consulado pedir, conforme os países e o período de residência.', onde: 'Nos órgãos de cada país (geralmente pelo consulado dele).' });
-T('atestado', 'visto', 'Atestado médico (Regulamento Sanitário Internacional de 2005)', { icone: 'help', validade: 'recencia',
+  fontes: ['O6'], oque: 'Certidões dos países onde você morou nos últimos cinco anos.', para: 'Regra oficial: estadia acima de seis meses exige certidão de cada país onde você residiu nos últimos cinco anos (Ministerio de Inclusión).', onde: 'Nos órgãos de cada país (geralmente pelo consulado dele).' });
+T('atestado', 'visto', 'Atestado médico (Regulamento Sanitário Internacional de 2005)', { icone: 'help', validade: 'recencia', fontes: ['O6'],
   oque: 'Atestado de que você não tem doenças com repercussão grave para a saúde pública, nos termos do Regulamento Sanitário Internacional de 2005.',
-  para: 'A exigência e o limite de duração dependem da regra vigente e da lista do consulado competente.', onde: 'Com um médico registrado, usando o texto pedido pelo consulado.' });
+  para: 'Exigido no pedido feito pelo consulado; não é exigido quando a autorização é pedida já estando na Espanha (Ministerio de Inclusión). O texto e a data de emissão aceitos estão na lista do consulado competente.', onde: 'Com um médico registrado, usando o texto pedido pelo consulado.' });
 T('taxa-visto', 'visto', 'Comprovante de pagamento da taxa do visto', { icone: 'euro', prepara: '5.7', missoes: ['5.7'], ...ES,
   oque: 'O recibo da taxa consular.', para: 'O visto só é processado com a taxa paga.', onde: 'Conforme as instruções do consulado (valor e forma mudam).' });
 T('agendamento-consular', 'visto', 'Comprovante de agendamento consular', { icone: 'calendar', missoes: ['5.7'], ...ES,
@@ -297,15 +297,15 @@ T('agendamento-consular', 'visto', 'Comprovante de agendamento consular', { icon
 T('apostilas-visto', 'visto', 'Apostilas dos documentos exigidos para o visto', { icone: 'shield', agregado: ['antecedentes', 'atestado', 'certidao-casamento', 'uniao-estavel', 'certidao-nascimento', 'apoio-familiar'], fontes: ['O18'],
   oque: 'As apostilas que o consulado pedir.', para: 'Só para os documentos que a lista do seu consulado indicar. Anexe a apostila dentro de cada documento.' });
 T('traducoes', 'visto', 'Traduções oficiais exigidas para o visto', { icone: 'lang', agregado: ['antecedentes', 'atestado', 'certidao-casamento', 'uniao-estavel', 'certidao-nascimento', 'apoio-familiar', 'extratos'], fontes: ['O24'],
-  oque: 'As traduções que o consulado pedir.', para: 'Só quando a lista do seu consulado pedir. Anexe a tradução dentro de cada documento.' });
+  fontes: ['O24', 'O6'], oque: 'As traduções que o consulado pedir.', para: 'Regra geral do Ministerio de Inclusión: documentos de outros países vão traduzidos ao espanhol por tradutor juramentado, e documento público estrangeiro precisa de apostila da Haia (o Brasil é parte da Convenção). Vale a lista do seu consulado: traduza e apostile o que ela pedir. Anexe a tradução dentro de cada documento.' });
 T('autorizacao-menor', 'visto', 'Autorização dos responsáveis (menores de idade)', { icone: 'users',
   oque: 'Autorização dos pais ou responsáveis para o pedido do visto.', para: 'Obrigatória para menores de 18 anos.', onde: 'Em cartório, conforme o modelo do consulado.' });
 T('complementar-consulado', 'visto', 'Documentação complementar solicitada pelo consulado', { icone: 'mail', multiplos: true,
   oque: 'Qualquer documento extra que o consulado pedir durante a análise.', para: 'Responder a pedidos do consulado.' });
 
 // ===== 7. Saúde e seguro médico =====
-T('seguro', 'saude', 'Certificado do seguro médico válido na Espanha', { icone: 'shield', validade: 'data', missoes: ['5.5'], apostila: 'nao',
-  oque: 'O certificado do seguro saúde que cobre você durante toda a estadia na Espanha.', para: 'Exigido para o visto e útil em qualquer atendimento.',
+T('seguro', 'saude', 'Certificado do seguro médico válido na Espanha', { icone: 'shield', validade: 'data', missoes: ['5.5'], apostila: 'nao', fontes: ['O6'],
+  oque: 'O certificado do seguro saúde que cobre você durante toda a estadia na Espanha.', para: 'Exigido para o visto. Regra oficial: seguro de doença contratado com uma seguradora autorizada a operar na Espanha, com prestações semelhantes às da carteira comum básica do Sistema Nacional de Saúde (Ministerio de Inclusión). Seguro-viagem comum costuma não atender: confira antes de pagar.',
   onde: 'Com a seguradora. Confira com o consulado as coberturas exigidas.' });
 T('apolice-seguro', 'saude', 'Apólice completa do seguro', { icone: 'file', missoes: ['5.5'], apostila: 'nao',
   oque: 'O contrato completo do seguro.', para: 'Alguns consulados pedem a apólice além do certificado.', onde: 'Com a seguradora.' });
@@ -516,7 +516,7 @@ T('autorizacion-regreso', 'complementar', 'Autorización de regreso', { icone: '
 
 // ===== 17. Renovação =====
 T('ex-00', 'renovacao', 'Formulário de prorrogação da autorização de estudos', { icone: 'edit', fontes: ['O6'],
-  oque: 'O formulário oficial para prorrogar a autorização de estudos (confira na fonte oficial o modelo vigente; costuma ser o EX-00).', para: 'Continuar estudando depois do período autorizado.' });
+  oque: 'O formulário oficial para prorrogar a autorização de estudos, apresentado por meios eletrônicos (a fonte oficial fala em "modelo oficial" sem nomeá-lo: confira o modelo vigente antes de enviar).', para: 'Continuar estudando depois do período autorizado.' });
 T('continuacao-estudos', 'renovacao', 'Comprovação de continuação dos estudos', { icone: 'book',
   oque: 'Documento da universidade de que você continua os estudos.', para: 'Mostrar que a renovação se justifica.' });
 T('matricula-novo-periodo', 'renovacao', 'Matrícula do novo período acadêmico', { icone: 'file',

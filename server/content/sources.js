@@ -54,9 +54,11 @@ export const SOURCES = [
   {
     id: 'O6',
     orgao: 'Ministerio de Inclusión, Seguridad Social y Migraciones',
-    titulo: 'Estancia por estudios / TIE',
+    titulo: 'Estancia por estudios / TIE (Hoja informativa 1, base RD 1155/2024)',
     url: 'https://inclusion.gob.es/web/migraciones/w/estancia-por-estudios',
-    revisadoEm: '2026-10-24',
+    // 14/11/2026: requisitos, documentos, prazos do visto (pedido 2 meses antes, resolução em 1 mês, retirada em
+    // 2 meses), TIE em 1 mês, prorrogação (2 meses antes / 3 depois) e regra "custo dos estudos não conta" conferidos.
+    revisadoEm: '2026-11-14',
     tipo: 'oficial',
   },
   {
@@ -169,6 +171,11 @@ export const SOURCES = [
   { id: 'O29', orgao: 'Boletín Oficial del Estado', titulo: 'Real Decreto-ley 3/2026: prorrogação dos Orçamentos Gerais do Estado', url: 'https://www.boe.es/eli/es/rdl/2026/02/03/3', revisadoEm: '2026-11-09', tipo: 'oficial' },
   // A ficha de cada máster é coletada pelo Radar (fonte "dua-fichas"); esta é a entrada geral do catálogo.
   { id: 'O30', orgao: 'Junta de Andalucía: Distrito Único Andaluz', titulo: 'Ficha do máster no DUA: critérios de seleção, requisitos e titulações de acesso', url: 'https://www.juntadeandalucia.es/economiaconocimientoempresasyuniversidad/sguit/?q=masteres&d=mo_catalogo_top.php', revisadoEm: '2026-11-12', tipo: 'oficial' },
+  // Conferida em 14/11/2026: substitui o procedimento antigo da ANECA; gratuito; não vale para estudos feitos na Espanha.
+  { id: 'O31', orgao: 'Ministerio de Ciencia, Innovación y Universidades', titulo: 'Declaración de equivalencia de la nota media (DENM) de estudios realizados en centros extranjeros', url: 'https://www.ciencia.gob.es/Universidades/NotaMedia.html', revisadoEm: '2026-11-14', tipo: 'oficial' },
+  // Conferida em 14/11/2026: art. 15 ("Toda persona que viva en España está obligada a inscribirse en el Padrón del
+  // municipio en el que resida habitualmente"). O procedimento (cita, documentos) é de cada ayuntamiento.
+  { id: 'O32', orgao: 'Boletín Oficial del Estado', titulo: 'Ley 7/1985, de Bases del Régimen Local, art. 15 (obrigação de inscrição no Padrón municipal)', url: 'https://www.boe.es/buscar/act.php?id=BOE-A-1985-5392#a15', revisadoEm: '2026-11-14', tipo: 'oficial' },
   {
     id: 'DEMO',
     orgao: 'Plataforma (protótipo)',

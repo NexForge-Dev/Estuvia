@@ -120,7 +120,7 @@ export async function financeView() {
       h('div', { class: 'fp-calc card is-visa' },
         h('span', { class: 'fp-calc-letter' }, 'C'), h('small', {}, 'Comprovar para o visto'),
         h('strong', {}, eur(v.valor)),
-        h('div', { class: 'fp-mini' }, bar(v.cobertoPct, 'Comprovação coberta'), h('span', {}, `${Math.round(v.cobertoPct * 100)}% coberto`)),
+        h('div', { class: 'fp-mini' }, bar(v.cobertoPct, 'Comprovação coberta'), h('span', {}, `${Math.round(v.cobertoPct * 100)}% coberto`), v.descontoMatricula ? h('small', { class: 'muted' }, `Sem contar ${eur(v.descontoMatricula)} da matrícula ainda não paga: esse valor não vale como meio de subsistência.`) : null),
         h('p', { class: 'small muted' }, `${Math.round(p.iprem.percentual * 100)}% do IPREM (€ ${p.iprem.mensal}/mês, ${p.iprem.ano}) × ${p.meses} meses. É dinheiro para mostrar ao consulado, não um gasto a mais.`),
         h('p', { class: 'small' }, v.status === 'pendente' ? h('span', { class: 'tag tag-pending' }, 'Valor do IPREM pendente de conferência oficial') : h('span', { class: 'tag tag-ok' }, 'Fonte verificada'), v.fonte?.url ? [' ', h('a', { href: v.fonte.url, target: '_blank', rel: 'noopener noreferrer' }, 'Ver regra oficial', icon('external', { size: 11 }))] : null),
         v.aproximado ? h('p', { class: 'hint' }, `Ainda não há IPREM cadastrado para ${p.ano}; usamos o de ${p.iprem.ano}.`) : null));

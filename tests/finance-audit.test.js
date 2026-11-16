@@ -81,3 +81,21 @@ test('bolsa ainda não concedida não conta como dinheiro disponível (nem para 
   const concedida = computeFinance(user({}, { scholarshipApps: apps('concedida') }), journey, NOW);
   assert.equal(concedida.confirmados, 9000);
 });
+
+// O6 (Ministerio de Inclusión, "Estancia por estudios", conferido em 14/11/2026): "No se computarán a estos efectos
+// las cuantías utilizadas para sufragar el coste de los estudios".
+test('visto: matrícula ainda não paga não conta como meio de subsistência; paga, não desconta', () => {
+  const recursos = [{ id: 'r1', tipo: 'poupanca', descricao: 'Poupança', valor: 8000, moeda: 'EUR', status: 'disponivel' }];
+  const base = { recursos, informouRecursos: true };
+  const sem = computeFinance(user(base), journey, NOW);
+  assert.equal(sem.exigenciaVisto, 7200);
+  assert.equal(sem.deficitVisto, 0, 'sem matrícula informada, 8000 cobrem 7200');
+  const devendo = computeFinance(user({ ...base, itens: { matricula: { valor: 3000, moeda: 'EUR', status: 'confirmado' } } }), journey, NOW);
+  assert.equal(devendo.visto.descontoMatricula, 3000);
+  assert.equal(devendo.visto.recursosConsiderados, 5000);
+  assert.equal(devendo.deficitVisto, 2200, '8000 − 3000 da matrícula = 5000 para 7200');
+  assert.ok(devendo.visto.cobertoPct < 1);
+  const paga = computeFinance(user({ ...base, itens: { matricula: { valor: 3000, moeda: 'EUR', status: 'pago' } } }), journey, NOW);
+  assert.equal(paga.visto.descontoMatricula, 0, 'já paga: o recurso informado é o que sobrou');
+  assert.equal(paga.deficitVisto, 0);
+});

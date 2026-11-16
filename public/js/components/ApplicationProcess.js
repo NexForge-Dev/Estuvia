@@ -64,6 +64,9 @@ export function ApplicationProcess(p) {
         : h('p', { class: 'small muted' }, p.flags.fichaColetada ? 'A ficha do DUA não lista requisitos adicionais para este mestrado.' : 'Ficha do DUA ainda não coletada: leia a ficha oficial.'),
       p.programa.fichaUrl ? h('a', { href: p.programa.fichaUrl, target: '_blank', rel: 'noopener noreferrer' }, 'Abrir a ficha oficial no DUA ', icon('external', { size: 12 })) : null),
 
+    p.alertas?.homologacao ? section('Título homologado exigido pela ficha', h('p', { class: 'notice' }, p.alertas.homologacao)) : null,
+    p.etapasAdicionais?.length ? section('Etapa própria de seleção (ficha do DUA)', h('ul', { class: 'mc-list' }, p.etapasAdicionais.map((e) => h('li', {}, chip('ficha'), ` ${e.codigo}: “${e.texto}”`)))) : null,
+
     p.documentosDerivados.length ? section('O que os critérios de seleção costumam pedir',
       h('p', { class: 'small muted' }, 'Deduzido do texto oficial de cada critério. O formato exato (modelo, páginas, idioma) é o publicado no portal do DUA para o seu mestrado.'),
       h('ul', { class: 'mc-list' }, p.documentosDerivados.map((d) => h('li', {}, chip('derivado'), ` ${d.texto}`, h('small', { class: 'muted' }, ` · critério: “${d.criterio}”${d.peso != null ? ` (${d.peso}%)` : ''}`))))) : null,

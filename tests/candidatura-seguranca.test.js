@@ -171,3 +171,26 @@ test('Cirugía Bucal (fora do catálogo do DUA 2026/27): passos do DUA continuam
   assert.notEqual(state(u, j, '3.2').status, 'nao-aplicavel', 'não é escondido: o estudante decide com a universidade');
   assert.equal(state(u, j, '3.11').status, 'nao-aplicavel');
 });
+
+// ---------- Exigências da própria ficha oficial (páginas reais do DUA) ----------
+test('ficha oficial real (UAL 106605, Ingeniería Industrial): título homologado exigido vira alerta e item de elegibilidade', () => {
+  const f = fixture('ficha-106605-ingenieria-industrial-ual.html');
+  PROGS['real-ii'] = { ...fromFicha('real-ii', f), universidadeId: 'ual' };
+  const p = applicationProcess(PROGS['real-ii'], { profile: { nacionalidade: 'Brasileira' } });
+  assert.ok(p.flags.exigeTituloHomologadoFicha);
+  assert.match(p.alertas.homologacao, /NO PODRÁN TENER ACCESO/);
+  const u = user();
+  assert.ok(state(u, jr('real-ii'), '1.3').alertas.some((a) => a.chave === 'homologacao'));
+  const item = engine.eligibility(engine.buildContext(u, jr('real-ii'))).find((x) => x.requisito === 'Título homologado (ficha do DUA)');
+  assert.equal(item.status, 'falta-comprovar');
+  assert.equal(applicationProcess(PROGS['real-agro'], { profile: { nacionalidade: 'Brasileira' } }).flags.exigeTituloHomologadoFicha, undefined, 'certificados de idioma "homologados" não contam');
+});
+
+test('ficha oficial real (UCO 313500): entrevista obrigatória vira etapa própria com o texto oficial', () => {
+  const f = fixture('ficha-313500-desarrollo-rural-uco.html');
+  PROGS['real-rural'] = fromFicha('real-rural', f);
+  const p = applicationProcess(PROGS['real-rural'], { profile: { nacionalidade: 'Brasileira' } });
+  assert.ok(p.etapasAdicionais.some((e) => /ENTREVISTA PERSONAL/.test(e.texto)));
+  assert.match(p.alertas.etapa, /etapa de seleção própria/);
+  assert.ok(state(user(), jr('real-rural'), '1.4').alertas.some((a) => a.chave === 'etapa'));
+});

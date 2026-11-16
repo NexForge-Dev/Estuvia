@@ -68,7 +68,8 @@ export async function ProofPanel(m) {
       h('div', { class: 'mh-abc-item c' }, h('span', { class: 'mh-abc-tag' }, 'C'), h('small', {}, 'Seu dinheiro garantido'), h('strong', {}, f.informouRecursos ? eur(f.confirmados) : '-'),
         h('p', {}, f.informouRecursos ? (f.previstos ? `+ ${eur(f.previstos)} prometidos ou solicitados (não contam).` : 'Só conta o que já é seu ou foi concedido.') : 'Você ainda não informou.'))),
     f.informouRecursos
-      ? h('div', { class: 'mh-meter' }, h('div', { class: 'bar' }, fill({ class: 'bar-fill' }, v.cobertoPct * 100)), h('small', {}, v.falta ? `Para a comprovação, faltam ${eur(v.falta)} (estimativa).` : 'Seu dinheiro garantido cobre a referência do visto.'))
+      ? h('div', { class: 'mh-meter' }, h('div', { class: 'bar' }, fill({ class: 'bar-fill' }, v.cobertoPct * 100)), h('small', {}, v.falta ? `Para a comprovação, faltam ${eur(v.falta)} (estimativa).` : 'Seu dinheiro garantido cobre a referência do visto.'),
+        v.descontoMatricula ? h('small', { class: 'muted' }, `${v.regraMatricula} Descontamos ${eur(v.descontoMatricula)} da matrícula ainda não paga.`) : null)
       : notice('Registre quanto você já tem (mesmo que seja zero) para ver se cobre a comprovação.', 'piggy'),
     h('details', { class: 'mh-more' }, h('summary', {}, 'Entender melhor'),
       h('div', { class: 'stack' },

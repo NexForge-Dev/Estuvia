@@ -535,6 +535,8 @@ export function eligibility(ctx) {
     if (f1.perfil.status === 'nao') items.push({ requisito: 'Fase 1 (estrangeiros)', status: 'falta-comprovar', texto: f1.perfil.texto, fonte: 'O1' });
     else if (f1.oferta === 'nao-confirmado') items.push({ requisito: 'Fase 1 (estrangeiros)', status: 'nao-confirmado', texto: f1.ofertaTexto, fonte: 'O1' });
     for (const r of proc.regrasEspecificas) items.push({ requisito: 'Regra oficial deste mestrado', status: 'falta-comprovar', texto: `${r.texto}${r.aviso ? ` ${r.aviso}` : ''}`, fonte: r.fonte });
+    if (proc.alertas.homologacao) items.push({ requisito: 'Título homologado (ficha do DUA)', status: 'falta-comprovar', texto: proc.alertas.homologacao, fonte: 'O30' });
+    if (proc.alertas.etapa) items.push({ requisito: 'Etapa própria de seleção (ficha do DUA)', status: 'falta-comprovar', texto: proc.alertas.etapa, fonte: 'O30' });
     const obrig = proc.requisitosEspecificos.filter((x) => x.obrigatorio);
     if (obrig.length) items.push({ requisito: 'Requisitos de cumprimento obrigatório (ficha do DUA)', status: 'falta-comprovar', texto: obrig.map((x) => `${x.codigo}: “${x.texto}”`).join(' · '), fonte: 'O30' });
   }

@@ -27,7 +27,7 @@ import * as ugrProgram from './connectors/ugr-program.js';
 import * as duaProgram from './connectors/dua-program.js';
 import { onPublished } from './notify.js';
 import { sameJson } from '../json-equal.js';
-import { MANUAL_DUA_LINKS } from '../content/program-channels.js';
+import { MANUAL_DUA_LINKS, CHANNELS } from '../content/program-channels.js';
 
 export const CONNECTORS = { 'dua-calendar': duaCalendar, 'dua-catalog': duaCatalog, 'ugr-catalog': ugrCatalog, 'ugr-program': ugrProgram, 'dua-program': duaProgram };
 
@@ -351,8 +351,16 @@ export function applyCatalog(parsed, { source, snapshot, por = 'atualizador', co
         openReview({ tipo: 'vinculo-dua', sourceId: source.id, snapshotId: snapshot?.id, impacto: 'baixo', chave: `vinculo-dua:${parsed.universidadeId}:${hash(semVinculo.map((l) => l.id))}`,
           motivo: `${semVinculo.length} máster(es) de ${parsed.universidadeId.toUpperCase()} sem correspondência única no catálogo do DUA (ficha DUA não será coletada): ${semVinculo.slice(0, 12).map((l) => l.nome).join('; ')}${semVinculo.length > 12 ? '…' : ''}` });
       }
-      programas = []; // a lista oficial da universidade continua sendo a do catálogo próprio
       if (!linked.size) return { publicado: false, revisions };
+      // A lista da universidade continua sendo a do catálogo próprio. Exceção: códigos do DUA que não correspondem a
+      // nenhuma página dela (duplos como "Profesorado + Matemáticas", variantes duais) são ofertas oficiais distintas,
+      // com ficha e requisitos próprios: entram como programas do DUA. Variantes já declaradas de um máster
+      // existente (program-channels.js) e códigos já vinculados não entram, para não duplicar.
+      const variantes = new Set(Object.values(CHANNELS).flatMap((c) => (c.variantes || []).map((v) => v.codigo)));
+      const jaVinculados = new Set(locals.map((l) => l.duaCodigo).filter(Boolean));
+      programas = programas
+        .filter((p) => !linked.has(p.codigo) && !variantes.has(p.codigo) && !jaVinculados.has(p.codigo))
+        .map((p) => ({ ...p, somenteDua: true }));
     }
   }
 

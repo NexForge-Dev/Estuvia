@@ -90,7 +90,7 @@ export const ROUNDS = [
           { id: 'opcoes', texto: 'Adicionar meus programas de interesse em "Minhas opções"', tipo: 'auto', regra: 'temOpcoes' },
         ],
         dependencias: ['1.2'], prioridade: 'alta', tempoEstimado: '1–2 h', duracaoMin: 90, fontes: ['O3', 'O4'], tag: 'verificado',
-        criterio: 'Programa definido e ficha oficial lida.', acoes: [{ tipo: 'programa', rotulo: 'Abrir ficha oficial do meu mestrado' }], processo: true, alertasProcesso: ['canal'],
+        criterio: 'Programa definido e ficha oficial lida.', acoes: [{ tipo: 'programa', rotulo: 'Abrir ficha oficial do meu mestrado' }], processo: true, alertasProcesso: ['canal', 'homologacao'],
       },
       {
         id: '1.4', titulo: 'Verificar minha elegibilidade',
@@ -107,7 +107,7 @@ export const ROUNDS = [
           { id: 'criterios', texto: 'Conferir critérios de seleção e documentos específicos' },
         ],
         dependencias: ['1.3'], prioridade: 'alta', tempoEstimado: '30 min', duracaoMin: 30, fontes: ['O1', 'O3', 'O30'], tag: 'pendente',
-        criterio: 'Elegibilidade preliminar conferida com base em evidências.', ferramenta: 'elegibilidade', processo: true, alertasProcesso: ['ficha'],
+        criterio: 'Elegibilidade preliminar conferida com base em evidências.', ferramenta: 'elegibilidade', processo: true, alertasProcesso: ['ficha', 'homologacao', 'etapa'],
       },
       {
         id: '1.5', titulo: 'Criar meu planejamento financeiro inicial',
@@ -137,14 +137,14 @@ export const ROUNDS = [
       {
         id: '2.1', titulo: 'Preparar meu passaporte',
         resumo: 'Validade e apresentação do documento.', objetivo: 'Passaporte válido para toda a estadia, digitalizado.',
-        porque: 'Ele será usado na candidatura, no visto e na viagem; renovar leva tempo.',
+        porque: 'Ele será usado na candidatura, no visto e na viagem; renovar leva tempo. Para o visto de estudos, a regra oficial pede passaporte em vigor com vigência mínima de um ano (Ministerio de Inclusión).',
         comoExecutar: [{ titulo: 'Validade', texto: 'A validade deve cobrir o período da estadia autorizado. Se não cobrir, agende a renovação com antecedência.' }, { titulo: 'Pedido de visto', texto: 'Confira na página do seu consulado o prazo de validade exigido, o número de páginas em branco e qualquer regra sobre a data de emissão do passaporte.' }],
         objetivos: [
           { id: 'validade', texto: 'Verificar a validade' },
           { id: 'renovar', texto: 'Renovar, se necessário (ou confirmar que não é necessário)' },
           { id: 'digital', texto: 'Digitalizar a página de dados' },
         ],
-        prioridade: 'alta', tempoEstimado: '20 min', duracaoMin: 30, documentos: ['passaporte'], fontes: ['M'], tag: 'pratica', aguardavel: true,
+        prioridade: 'alta', tempoEstimado: '20 min', duracaoMin: 30, documentos: ['passaporte'], fontes: ['O23', 'O6', 'M'], tag: 'verificado', aguardavel: true,
         criterio: 'Passaporte válido e digitalizado.',
       },
       {
@@ -301,7 +301,7 @@ export const ROUNDS = [
         ],
         dependencias: ['3.1'], prioridade: 'alta', tempoEstimado: '30 min', duracaoMin: 30, fontes: ['O1', 'O2', 'O3'], tag: 'verificado',
         prazo: { tipo: 'usuario', rotulo: 'Prazo da minha fase no DUA' }, criterio: 'Fase compatível com o perfil e o mestrado escolhida, e prazo identificado na convocatória vigente.',
-        processo: true, alertasProcesso: ['canal', 'fase', 'ciclo'], soDua: true,
+        processo: true, alertasProcesso: ['canal', 'fase', 'ciclo', 'homologacao'], soDua: true,
       },
       {
         id: '3.3', titulo: 'Criar minha candidatura',
@@ -403,7 +403,7 @@ export const ROUNDS = [
         dependencias: ['3.6'], aguardandoSe: { campo: 'adjudicacao', valores: ['aguardando'] },
         atencaoSe: { campo: 'adjudicacao', valores: ['exige-acao', 'excluido'], texto: 'Sua candidatura exige ação, está com documentação pendente ou você registrou exclusão. Confira a instrução oficial e o prazo de alegações o quanto antes.' },
         prioridade: 'alta', tempoEstimado: 'Semanas (calendário oficial)', duracaoMin: 15, fontes: ['O1', 'O2', 'O3'], tag: 'verificado', aguardavel: true,
-        prazo: { tipo: 'usuario', rotulo: 'Publicação do resultado' }, criterio: 'Resultado registrado.', processo: true, alertasProcesso: ['canal'],
+        prazo: { tipo: 'usuario', rotulo: 'Publicação do resultado' }, criterio: 'Resultado registrado.', processo: true, alertasProcesso: ['canal', 'etapa'],
       },
       {
         id: '3.10', titulo: 'Acompanhar a lista de espera',
@@ -564,7 +564,7 @@ export const ROUNDS = [
       },
       {
         id: '5.8', titulo: 'Acompanhar meu visto', resumo: 'Registre cada mudança de situação.', objetivo: 'Saber em que pé está o pedido.',
-        porque: 'Exigências adicionais costumam ter prazo; registre para não perder.',
+        porque: 'Exigências adicionais costumam ter prazo; registre para não perder. Regra oficial: o consulado tem até um mês, contado do dia seguinte ao pedido, para notificar a decisão; sem resposta nesse prazo, o pedido pode ser entendido como negado (silêncio negativo) (Ministerio de Inclusión).',
         objetivos: [{ id: 'situacao', texto: 'Situação do visto', tipo: 'situacao', campo: 'visto', concluiQuandoNao: ['preparacao', 'apresentada', 'em-analise', 'doc-adicional'] }],
         dependencias: ['5.7'], aguardandoSe: { campo: 'visto', valores: ['apresentada', 'em-analise'] },
         atencaoSe: { campo: 'visto', valores: ['doc-adicional'], texto: 'O consulado pediu documentação adicional. Confira o prazo e o que foi solicitado.' },
@@ -572,7 +572,7 @@ export const ROUNDS = [
       },
       {
         id: '5.9', titulo: 'Conferir o visto aprovado', resumo: 'Dados e datas do documento emitido.', objetivo: 'Visto conferido antes de viajar.',
-        porque: 'Um erro identificado cedo é bem mais fácil de corrigir.',
+        porque: 'Um erro identificado cedo é bem mais fácil de corrigir. Regra oficial: o visto concedido precisa ser retirado em até dois meses da notificação; se não for, entende-se que você renunciou a ele (Ministerio de Inclusión).',
         objetivos: [{ id: 'dados', texto: 'Conferir nome e número do passaporte' }, { id: 'datas', texto: 'Conferir tipo e datas de validade' }],
         requer: { campo: 'visto', valores: ['aprovado'], rotulo: 'Visto aprovado' }, urgenteSe: { campo: 'visto', valores: ['aprovado'] },
         prioridade: 'alta', tempoEstimado: '15 min', duracaoMin: 15, fontes: ['O7'], tag: 'pratica', marco: 'visto-aprovado', criterio: 'Visto conferido.',
@@ -651,8 +651,8 @@ export const ROUNDS = [
         objetivos: [{ id: 'banco', texto: 'Abrir conta bancária (se necessário)' }, { id: 'cartao', texto: 'Definir meios de pagamento' }], dependencias: ['7.1'], prioridade: 'baixa', tempoEstimado: '1 dia', duracaoMin: 90, fontes: ['M'], tag: 'pratica', criterio: 'Meios de pagamento definidos.' },
       { id: '7.8', titulo: 'Conhecer as opções de transporte', resumo: 'Passes e tarifas de estudante.', objetivo: 'Deslocamento diário resolvido.', porque: 'Passes de estudante costumam reduzir o custo mensal.',
         objetivos: [{ id: 'cartao', texto: 'Obter o cartão/passe de transporte' }], dependencias: ['7.1'], prioridade: 'baixa', tempoEstimado: '1 h', duracaoMin: 45, fontes: ['M'], tag: 'pratica', criterio: 'Transporte resolvido.', ferramenta: 'guia-cidade' },
-      { id: '7.9', titulo: 'Verificar procedimentos locais de registro', resumo: 'Empadronamiento e outros registros aplicáveis.', objetivo: 'Registros locais em dia.', porque: 'O empadronamiento é pedido em vários trâmites locais.',
-        objetivos: [{ id: 'agendar', texto: 'Agendar o empadronamiento no ayuntamiento' }, { id: 'comprovante', texto: 'Guardar o comprovante' }], dependencias: ['7.1', '6.2'], prioridade: 'media', tempoEstimado: '1–2 semanas (agenda)', duracaoMin: 60, fontes: ['M'], tag: 'pratica', aguardavel: true, criterio: 'Registro local feito.' },
+      { id: '7.9', titulo: 'Verificar procedimentos locais de registro', resumo: 'Empadronamiento e outros registros aplicáveis.', objetivo: 'Registros locais em dia.', porque: 'É uma obrigação legal: toda pessoa que vive na Espanha deve se inscrever no Padrón do município onde reside habitualmente (Lei 7/1985, art. 15). O empadronamiento também é pedido em vários trâmites locais. A forma de pedir (cita prévia, documentos) é definida por cada ayuntamiento: confira na sede eletrônica da sua cidade.',
+        objetivos: [{ id: 'agendar', texto: 'Agendar o empadronamiento no ayuntamiento' }, { id: 'comprovante', texto: 'Guardar o comprovante' }], dependencias: ['7.1', '6.2'], prioridade: 'media', tempoEstimado: '1–2 semanas (agenda)', duracaoMin: 60, fontes: ['O32', 'M'], tag: 'verificado', aguardavel: true, criterio: 'Registro local feito.' },
     ],
   },
   {
@@ -667,7 +667,7 @@ export const ROUNDS = [
       const tie = { tipo: 'perfil', campo: 'duracaoMeses', maiorQue: 6, senao: 'nao-aplicavel' };
       const base = { regra: tie, fontes: ['O6'], tag: 'verificado' };
       return [
-        { id: '8.1', titulo: 'Verificar se existe obrigação de solicitar a TIE', resumo: 'Depende da duração da autorização.', objetivo: 'Saber se a TIE se aplica.', porque: 'Para estada por estudos superior a seis meses, a orientação oficial prevê solicitar a TIE em até um mês após a entrada.',
+        { id: '8.1', titulo: 'Verificar se existe obrigação de solicitar a TIE', resumo: 'Depende da duração da autorização.', objetivo: 'Saber se a TIE se aplica.', porque: 'Para estada por estudos superior a seis meses, a orientação oficial prevê solicitar a TIE pessoalmente, em até um mês após a entrada, na Comisaría de Policía do seu lugar de residência. A autorização dura o tempo total dos estudos (vale de um mês antes até quinze dias depois do fim do curso); se passar de um ano, é preciso apresentar a matrícula de cada novo curso para mantê-la (Ministerio de Inclusión).',
           objetivos: [{ id: 'duracao', texto: 'Confirmar a duração da minha autorização' }, { id: 'orientacao', texto: 'Ler a orientação oficial' }], dependencias: ['5.9'], prioridade: 'alta', tempoEstimado: '20 min', duracaoMin: 20, criterio: 'Obrigação confirmada.', ...base },
         { id: '8.2', titulo: 'Identificar o prazo aplicável', resumo: 'Até 1 mês após a entrada (estada > 6 meses).', objetivo: 'Prazo da TIE calculado.', porque: 'O prazo conta da entrada na Espanha.',
           objetivos: [{ id: 'entrada', texto: 'Data de entrada registrada (Missão 7.1)', tipo: 'auto', regra: 'temEntrada' }], dependencias: ['8.1'], prioridade: 'alta', tempoEstimado: '5 min', duracaoMin: 10,

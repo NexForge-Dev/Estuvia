@@ -14,7 +14,7 @@ export const IPREM = {
 // Regra de referência para visto de estudos: % do IPREM mensal por mês de estadia.
 export const VISA_RULE = {
   percentualEstudante: 1.0,
-  descricao: 'Estimativa de referência: 100% do IPREM mensal para o estudante por mês. Dependentes podem elevar o valor (75% do IPREM para o primeiro familiar e 50% para cada um dos demais); alojamento pago antecipadamente pode alterar o cálculo. O simulador não calcula esses ajustes: confirme o valor e as provas aceitas no consulado competente.',
+  descricao: 'Estimativa de referência: 100% do IPREM mensal para o estudante por mês. Dependentes podem elevar o valor (75% do IPREM para o primeiro familiar e 50% para cada um dos demais); alojamento pago antecipadamente pode alterar o cálculo. O dinheiro reservado para pagar a matrícula não conta como meio de subsistência (o simulador desconta a matrícula ainda não paga). O simulador não calcula esses ajustes: confirme o valor e as provas aceitas no consulado competente.',
   fonte: 'O6',
   fontes: ['O6', 'O28', 'O29'],
 };

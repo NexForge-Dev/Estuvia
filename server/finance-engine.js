@@ -238,7 +238,12 @@ export function computeFinance(user, jr, now = new Date()) {
   const confirmados = res.confirmados;
 
   const falta = Math.max(0, totals.aDesembolsar - confirmados);
-  const deficitVisto = Math.max(0, exigenciaVisto - confirmados);
+  // O6 (Ministerio de Inclusión, conferido em 14/11/2026): "No se computarán a estos efectos las cuantías utilizadas
+  // para sufragar el coste de los estudios". A matrícula ainda não paga sai dos recursos que contam para o visto.
+  const matriculaItem = itens.find((i) => i.id === 'matricula');
+  const reservadoEstudos = matriculaItem && !matriculaItem.pago && matriculaItem.valorEur > 0 ? matriculaItem.valorEur : 0;
+  const recursosParaVisto = Math.max(0, confirmados - reservadoEstudos);
+  const deficitVisto = Math.max(0, exigenciaVisto - recursosParaVisto);
   const deficit = Math.max(deficitVisto, falta);
   const custosInformados = itens.filter((i) => ['usuario', 'moradia', 'viagem'].includes(i.origemTipo)).length;
   const planoIniciado = Boolean(fin.iniciadoEm) || custosInformados > 0;
@@ -295,7 +300,7 @@ export function computeFinance(user, jr, now = new Date()) {
     cambio: fx.taxa, cambioInfo: fx,
     iprem: { ...iprem, regra: VISA_RULE.descricao, fonteRegra: VISA_RULE.fonte, percentual: VISA_RULE.percentualEstudante },
     exigenciaVisto,
-    visto: { valor: exigenciaVisto, cobertoPct: exigenciaVisto ? Math.min(1, confirmados / exigenciaVisto) : 1, falta: deficitVisto, fonte: src(VISA_RULE.fonte), verificadoEm: iprem.atualizadoEm, status: iprem.status, aproximado: iprem.aproximado },
+    visto: { valor: exigenciaVisto, cobertoPct: exigenciaVisto ? Math.min(1, recursosParaVisto / exigenciaVisto) : 1, falta: deficitVisto, recursosConsiderados: recursosParaVisto, descontoMatricula: reservadoEstudos, regraMatricula: 'O valor reservado para pagar a matrícula não conta como meio de subsistência para o visto.', fonte: src(VISA_RULE.fonte), verificadoEm: iprem.atualizadoEm, status: iprem.status, aproximado: iprem.aproximado },
     itens, linhas, custosInformados, planoIniciado,
     ...totals,
     parcial: totals.faltamInformar.length > 0,
