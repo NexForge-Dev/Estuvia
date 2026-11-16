@@ -626,7 +626,8 @@ function journeyLanguage(p) {
   if (!es) return { status: 'verificar', fonte: 'O10' };
   if (!es.exige) return { status: 'nao-requerido', fonte: 'O30' };
   // "Acreditar"/"justificar" = comprovar com documento; sem esses verbos a ficha só cita o nível.
-  const certificado = /ACREDIT|CERTIFIC|JUSTIFIC/.test(upperNorm(es.texto));
+  // ACRE?DIT: a ficha oficial 407101 (UGR) publica "B1 ACRDITADO", com erro de digitação.
+  const certificado = /ACRE?DIT|CERTIFIC|JUSTIFIC/.test(upperNorm(es.texto));
   return es.nivel ? { status: 'requerido', nivel: es.nivel, certificado, fonte: 'O30', texto: es.texto } : { status: 'verificar', fonte: 'O30', texto: es.texto };
 }
 

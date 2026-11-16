@@ -58,7 +58,7 @@ export function languageRequirements(requisitos) {
     if (!CONTEXTO_IDIOMA.test(t)) continue;
     // Requisito não marcado como obrigatório só conta se o texto exigir algo (e não apenas pontuar).
     // ("Deberá tener en cuenta", "es recomendable" e "se valorará" não são exigências.)
-    if (!r.obrigatorio && !/EXIGIRA|EXIGE|(ES|SERA) NECESARI|DEBERAN? (ACREDITAR|JUSTIFICAR|POSEER|TENER UN NIVEL)|REQUERIRA|REQUIERE|IMPRESCINDIBLE/.test(t.replace(/NO ES NECESARI\w*|NO SE EXIGE|NO SE REQUIERE/g, ''))) continue;
+    if (!r.obrigatorio && !/EXIGIRA|EXIGE|(ES|SERA) NECESARI|DEBERAN? (ACREDITAR|JUSTIFICAR|POSEER|TENER UN NIVEL)|REQUERIRA|REQUIERE|IMPRESCINDIBLE|NO TENDRAN ACCESO|NO PODRAN (TENER )?ACCE/.test(t.replace(/NO ES NECESARI\w*|NO SE EXIGE|NO SE REQUIERE/g, ''))) continue;
     const niveis = [...t.matchAll(/\b([ABC][12])\b/g)].map((m) => ({ nivel: m[1], pos: m.index }));
     for (const [chave, idioma] of IDIOMAS) {
       // "ÁRABE/ESPAÑOL" é nome de especialidade (par de línguas), não exigência.

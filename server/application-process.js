@@ -164,16 +164,26 @@ export function applicationProcess(program, { calendario = { windows: [], events
   // Exigências que a PRÓPRIA ficha oficial impõe e que mudam a candidatura (sempre com o texto oficial):
   //  - título homologado (ex.: másteres habilitantes): com diploma estrangeiro não homologado não há acesso;
   //  - etapa própria de seleção obrigatória (entrevista, prova, exame).
-  const obrigatorios = requisitosEspecificos.filter((r) => r.obrigatorio);
-  const homologacao = obrigatorios.filter((r) => /TITUL[OA]S?[^.]{0,80}HOMOLOGAD|HOMOLOGAD[^.]{0,40}TITUL|ACCESO HOMOLOGADO/.test(upper(r.texto)));
+  // O DUA nem sempre marca como "obrigatório" um requisito cujo próprio texto é impeditivo (conferido nas 987
+  // fichas em 16/11/2026: UMA 515204 "NO HOMOLOGADAS, NO TENDRÁN ACCESO"; UGR 411502 "PRUEBA DE ACCESO EN TODO CASO").
+  const IMPEDITIVO = /NO TENDRAN ACCESO|NO PODRAN (TENER )?ACCE|EN TODO CASO|TENDRAN QUE|SERA OBLIGATORI|DEBERAN SUPERAR/;
+  const vinculante = (r) => r.obrigatorio || IMPEDITIVO.test(upper(r.texto));
+  const exigeHomologado = (r) => {
+    const t = upper(r.texto);
+    if (!/TITUL[OA]S?[^.]{0,80}HOMOLOGAD|HOMOLOGAD[^.]{0,40}TITUL|ACCESO HOMOLOGADO/.test(t)) return false;
+    if (/NO HOMOLOGAD/.test(t) && !IMPEDITIVO.test(t)) return false; // "título no homologado deben aportar…" é documento, não barreira
+    return vinculante(r) || /TITULO EXTRANJERO[^.]{0,80}HOMOLOGAD/.test(t);
+  };
+  const homologacao = requisitosEspecificos.filter(exigeHomologado);
   if (homologacao.length) {
     flags.exigeTituloHomologadoFicha = true;
     alertas.homologacao = `A ficha oficial deste máster exige título HOMOLOGADO (requisito ${homologacao[0].codigo}): “${homologacao[0].texto}”. Com diploma brasileiro não homologado na data exigida, você não terá acesso a este máster.`;
   }
-  const etapasAdicionais = obrigatorios.filter((r) => /ENTREVISTA|PRUEBA|EXAMEN/.test(upper(r.texto))).map((r) => ({ codigo: r.codigo, texto: r.texto, origem: 'ficha', fonte: 'O30' }));
+  const etapasAdicionais = requisitosEspecificos.filter((r) => vinculante(r) && /ENTREVISTA|PRUEBA|EXAMEN/.test(upper(r.texto)) && !/NO EXISTIENDO|NO TIENE PREVISTA|NO HAY PRUEBA|SIN PRUEBA/.test(upper(r.texto)))
+    .map((r) => ({ codigo: r.codigo, texto: r.texto, origem: 'ficha', fonte: 'O30' }));
   if (etapasAdicionais.length) {
     flags.etapaPropriaFicha = true;
-    alertas.etapa = `A ficha oficial deste máster tem etapa de seleção própria: ${etapasAdicionais.map((r) => `“${r.texto}” (requisito ${r.codigo})`).join('; ')}. Confirme datas e formato com a coordenação do máster.`;
+    alertas.etapa = `A ficha oficial deste máster prevê etapa de seleção própria: ${etapasAdicionais.map((r) => `“${r.texto}” (requisito ${r.codigo})`).join('; ')}. Confirme datas e formato com a coordenação do máster.`;
   }
 
   // ---------- Documentos ----------

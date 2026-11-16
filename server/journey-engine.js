@@ -217,7 +217,8 @@ function applicability(mission, ctx, mp) {
     const demo = req.fonte === 'DEMO' ? ' (dado demonstrativo)' : '';
     if (req.status === 'nao-requerido') return { aplicavel: false, motivo: req.fonte === 'O30' ? 'A ficha oficial do seu mestrado no DUA, onde a universidade publica os requisitos específicos de acesso (O2 art. 2), não lista exigência de idioma. Se a página do máster disser algo diferente, confirme com a coordenação.' : `Seu mestrado não exige certificado de idioma${demo}.` };
     if (req.status === 'verificar') return { aplicavel: true, atencao: 'A exigência de idioma do seu mestrado não está confirmada na ficha. Confirme com a coordenação.' };
-    if (rule.exigeCertificado && !req.certificado) return { aplicavel: false, motivo: `Seu mestrado pede espanhol ${req.nivel}, mas sem certificado formal${demo}.` };
+    // A ficha diz o nível mas não diz como comprovar: não concluímos que o certificado é dispensado.
+    if (rule.exigeCertificado && !req.certificado) return { aplicavel: true, atencao: `A ficha oficial do seu mestrado exige espanhol ${req.nivel}, mas não diz como comprovar o nível. Pergunte à coordenação se aceitam outra comprovação além de um certificado (DELE ou SIELE) antes de decidir pela prova.` };
     return { aplicavel: true, info: `Seu mestrado exige espanhol ${req.nivel || ''}${req.certificado ? ' com certificado' : ''}${demo}.` };
   }
 

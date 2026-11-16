@@ -110,7 +110,7 @@ function detectCondition(key, ctx) {
       if (!req) return { valor: null, detalhe: 'Defina o mestrado da jornada para saber se ele exige certificado.' };
       if (req.status === 'nao-requerido') return { valor: false, detalhe: 'O seu mestrado não exige certificado de idioma.' };
       if (req.status === 'requerido' && req.certificado) return { valor: true, detalhe: `O seu mestrado exige espanhol ${req.nivel || ''} com certificado.`.replace('  ', ' ') };
-      if (req.status === 'requerido') return { valor: null, detalhe: `O mestrado pede espanhol ${req.nivel || ''}, sem exigir certificado formal: confira como comprovar.`.replace('  ', ' ') };
+      if (req.status === 'requerido') return { valor: null, detalhe: `O mestrado exige espanhol ${req.nivel || ''}, mas a ficha não diz como comprovar: confirme com a coordenação se pedem certificado.`.replace('  ', ' ') };
       return { valor: null, detalhe: 'A exigência de idioma do seu mestrado ainda não está confirmada na ficha oficial.' };
     }
     case 'certificacaoPGS': {
