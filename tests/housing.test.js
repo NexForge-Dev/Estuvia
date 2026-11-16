@@ -13,6 +13,7 @@ process.env.FX_PROVIDER = 'off';
 delete process.env.ANTHROPIC_API_KEY;
 delete process.env.ANTHROPIC_AUTH_TOKEN;
 
+await import('./fixtures/programas-reais.js'); // mestrados reais do DUA (fixture)
 const { housingCosts, compareHousing, safetySummary } = await import('../server/housing-engine.js');
 const { createApp } = await import('../server/app.js');
 const { flush } = await import('../server/store.js');
@@ -68,11 +69,11 @@ test('3/5/6/10/11/16/18: fluxo completo pela API', async () => {
   const c = client();
   await c('POST', '/auth/register', { nome: 'Nina Reis', email: 'nina@exemplo.com', senha: 'segura123', aceite: true, maiorIdade: true });
   await c('PUT', '/me/profile', { nacionalidade: 'Brasileira', paisResidencia: 'Brasil', estado: 'BA', formacao: 'Letras', espanhol: 'B2', onboardingConcluido: true });
-  const jid = (await c('POST', '/journeys', { programaId: 'ugr-demo-arq', anoAcademico: '2027/28' })).data.journey.id;
+  const jid = (await c('POST', '/journeys', { programaId: 'ugr-master-universitario-arqueologia', anoAcademico: '2027/28' })).data.journey.id;
 
   let d = (await c('GET', '/living')).data;
   assert.equal(d.destino.cidade, 'Granada', 'destino vem da jornada');
-  assert.equal(d.destino.meses, 18);
+  assert.equal(d.destino.meses, 12, 'duração da ficha oficial do DUA (404605: 1 ano)');
   assert.ok(d.destino.faixas.quarto.length === 3, 'faixas de preço só onde há fonte (UGR)');
   assert.ok(d.destino.busca.sites.length >= 3 && d.destino.busca.oficial.url.startsWith('https://internacional.ugr.es'));
   assert.equal(d.housing.length, 0);

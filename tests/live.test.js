@@ -17,6 +17,7 @@ delete process.env.MENTOR_PROVIDER;
 delete process.env.TRAVELPAYOUTS_TOKEN;
 delete process.env.YOUTUBE_API_KEY;
 
+await import('./fixtures/programas-reais.js'); // mestrados reais do DUA (fixture)
 const { createApp } = await import('../server/app.js');
 const { flush, users } = await import('../server/store.js');
 const { initRadar } = await import('../server/radar/service.js');
@@ -56,7 +57,7 @@ test('setup', async () => {
   const r = await req('POST', '/auth/register', { nome: 'Lia Souza', email: 'lia@live.dev', senha: 'segura123', aceite: true, maiorIdade: true });
   uid = r.data.user.id;
   await req('PUT', '/me/profile', { estado: 'SP', paisResidencia: 'Brasil' });
-  jid = (await req('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2027/28', inicioAulas: '2027-09-20' })).data.journey.id;
+  jid = (await req('POST', '/journeys', { programaId: 'ugr-master-universitario-estudios-asia-oriental', anoAcademico: '2027/28', inicioAulas: '2027-09-20' })).data.journey.id;
 });
 
 // ---------- Anotações da missão ----------

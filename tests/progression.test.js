@@ -12,6 +12,7 @@ process.env.RATE_LIMIT_SCALE = '20';
 delete process.env.ANTHROPIC_API_KEY;
 delete process.env.ANTHROPIC_AUTH_TOKEN;
 
+await import('./fixtures/programas-reais.js'); // mestrados reais do DUA (fixture)
 const { createApp } = await import('../server/app.js');
 const { flush } = await import('../server/store.js');
 const engine = await import('../server/journey-engine.js');
@@ -84,7 +85,7 @@ test('1–3: usuário novo começa na Rodada 1; rodadas futuras bloqueadas e sem
   req = client();
   assert.equal((await req('POST', '/auth/register', { nome: 'Ana Souza', email: 'ana@exemplo.com', senha: 'segura123', aceite: true, maiorIdade: true })).status, 201);
   await req('PUT', '/me/profile', PROFILE);
-  const r = await req('POST', '/journeys', { programaId: 'ugr-demo-arq', anoAcademico: '2027/28' });
+  const r = await req('POST', '/journeys', { programaId: 'ugr-master-universitario-arqueologia', anoAcademico: '2027/28' });
   assert.equal(r.status, 201);
   const j = r.data.journey;
   jid = j.id;
@@ -164,7 +165,7 @@ test('12: recarregar não apaga o estado; recálculo é idempotente', async () =
 });
 
 test('13: duas jornadas do mesmo usuário progridem de forma independente', async () => {
-  const r = await req('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2027/28' });
+  const r = await req('POST', '/journeys', { programaId: 'ugr-master-universitario-estudios-asia-oriental', anoAcademico: '2027/28' });
   const j2 = r.data.journey;
   assert.equal(round(j2, 2).desbloqueada, false, 'a outra jornada começa do início');
   assert.equal(find(j2, '1.2').status, 'disponivel');
@@ -177,7 +178,7 @@ test('14: missão não aplicável não impede a progressão', async () => {
   for (const id of ['2.1', '2.2', '2.3']) await doMission(req, jid, id);
   await req('PUT', '/me/documents', { passaporte: 'pronto', diploma: 'pronto', historico: 'pronto' });
   const mid = (await req('GET', `/journeys/${jid}`)).data.journey;
-  assert.equal(find(mid, '2.5').status, 'nao-aplicavel', 'o mestrado de arquitetura (demo) não exige certificado');
+  assert.equal(find(mid, '2.5').status, 'nao-aplicavel', 'a ficha oficial do máster de Arqueología (UGR, DUA 404605) não exige espanhol');
   await doMission(req, jid, '2.4');
   await req('PUT', `/journeys/${jid}/missions/2.6/state`, { naoAplicavel: true });
   const r = await doMission(req, jid, '2.7');
@@ -221,7 +222,7 @@ test('11: estudante que já está na Espanha registra o progresso anterior e che
   const c = client();
   await c('POST', '/auth/register', { nome: 'Bruno Lima', email: 'bruno@exemplo.com', senha: 'segura123', aceite: true, maiorIdade: true });
   await c('PUT', '/me/profile', PROFILE);
-  const j0 = (await c('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2026/27' })).data;
+  const j0 = (await c('POST', '/journeys', { programaId: 'ugr-master-universitario-estudios-asia-oriental', anoAcademico: '2026/27' })).data;
   assert.ok(j0.etapas.some((e) => e.id === 'na-espanha'));
   const id = j0.journey.id;
   assert.equal((await c('POST', `/journeys/${id}/prior-progress`, { etapa: 'na-espanha', dataEntrada: today })).status, 400, 'exige confirmação');
@@ -247,7 +248,7 @@ test('11: estudante que já está na Espanha registra o progresso anterior e che
 
 test('motor: recordUnlocks é idempotente e rodadas registradas não voltam a bloquear', () => {
   const user = { profile: PROFILE, journeys: [], documents: {} };
-  const jr = { id: 'j1', programaId: 'ugr-demo-eng', anoAcademico: '2027/28', missions: {}, dados: {} };
+  const jr = { id: 'j1', programaId: 'ugr-master-universitario-estudios-asia-oriental', anoAcademico: '2027/28', missions: {}, dados: {} };
   const first = engine.recordUnlocks(jr, engine.computeJourney(user, jr));
   assert.ok(first.some((e) => e.entidade === 'rodada:1'));
   assert.equal(engine.recordUnlocks(jr, engine.computeJourney(user, jr)).length, 0);
@@ -277,7 +278,7 @@ test('requisito já atendido: passaporte e documentos sem burocracia, com histó
   assert.ok(q.perguntas.some((p) => p.id === 'passaporte'));
   assert.equal((await c('PUT', '/journeys/requirements', { respostas: { passaporte: 'talvez' } })).status, 400);
   await c('PUT', '/journeys/requirements', { respostas: { passaporte: 'tenho', historico: 'tenho' } });
-  const id = (await c('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2027/28' })).data.journey.id;
+  const id = (await c('POST', '/journeys', { programaId: 'ugr-master-universitario-estudios-asia-oriental', anoAcademico: '2027/28' })).data.journey.id;
   await doMission(c, id, '1.1');
   await doMission(c, id, '1.2');
   await doMission(c, id, '1.3');

@@ -28,6 +28,31 @@ function load() {
   }
 }
 
+// Os 5 mestrados de exemplo do protótipo foram removidos (16/11/2026): só existem mestrados reais do DUA.
+// Jornadas antigas que apontavam para eles ficam com "Mestrado a definir" na mesma universidade, e o
+// estudante escolhe o mestrado real na Missão 1.3; as "Minhas opções" deixam de listá-los.
+const REMOVED_DEMO_PROGRAMS = { 'ugr-demo-eng': 'ugr', 'ugr-demo-arq': 'ugr', 'ugr-demo-ciencias': 'ugr', 'us-demo-adm': 'us', 'uma-demo-tur': 'uma' };
+export function dropRemovedDemoPrograms(data) {
+  let changed = 0;
+  for (const u of data.users || []) {
+    let touched = false;
+    for (const jr of u.journeys || []) {
+      const uni = REMOVED_DEMO_PROGRAMS[jr.programaId];
+      if (!uni) continue;
+      jr.universidadeId ||= uni;
+      jr.programaId = null;
+      touched = true;
+    }
+    if (Array.isArray(u.choices) && u.choices.some((id) => id in REMOVED_DEMO_PROGRAMS)) {
+      u.choices = u.choices.filter((id) => !(id in REMOVED_DEMO_PROGRAMS));
+      touched = true;
+    }
+    if (touched) { u.updatedAt = new Date().toISOString(); changed += 1; }
+  }
+  return changed;
+}
+dropRemovedDemoPrograms(db); // base JSON: corrigida em memória e gravada na próxima escrita
+
 const normalize = (value) => {
   const data = { ...structuredClone(EMPTY), ...(value || {}) };
   data.community = { ...EMPTY_COMMUNITY(), ...data.community };
@@ -101,6 +126,11 @@ export async function initStore() {
   if (importFrom) {
     await persist();
     console.log(`[store] Importado de ${importFrom.origem} para as tabelas: ${db.users.length} usuário(s), ${db.audit.length} registro(s) de auditoria.`);
+  }
+  const semDemo = dropRemovedDemoPrograms(db);
+  if (semDemo) {
+    await persist();
+    console.log(`[store] ${semDemo} estudante(s) com mestrado de exemplo removido: jornada ficou com o mestrado a definir.`);
   }
   if (env.aviso) console.warn(`[store] ${env.aviso}`);
   if (env.marcar) {

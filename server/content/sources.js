@@ -179,14 +179,6 @@ export const SOURCES = [
   // 16/11/2026: obrigação (saída definitiva ou mais de 12 meses fora), prazo da comunicação e relação com a DSDP conferidos.
   { id: 'O33', orgao: 'Receita Federal (gov.br)', titulo: 'Comunicação e Declaração de Saída Definitiva do País', url: 'https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/preenchimento/dsdp', revisadoEm: '2026-11-16', tipo: 'oficial' },
   { id: 'O34', orgao: 'Receita Federal (gov.br)', titulo: 'Residente e não residente', url: 'https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/preenchimento/dsdp/nao-residente', revisadoEm: '2026-11-16', tipo: 'oficial' },
-  {
-    id: 'DEMO',
-    orgao: 'Plataforma (protótipo)',
-    titulo: 'Dados demonstrativos, não usar para decisões reais',
-    url: null,
-    revisadoEm: '2026-10-24',
-    tipo: 'demo',
-  },
 ];
 
 export const sourceById = (id) => SOURCES.find((s) => s.id === id) || null;

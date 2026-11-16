@@ -11,6 +11,7 @@ process.env.MEDIA_DIR = path.join(tmp, 'media');
 delete process.env.ANTHROPIC_API_KEY;
 delete process.env.ANTHROPIC_AUTH_TOKEN;
 
+await import('./fixtures/programas-reais.js'); // mestrados reais do DUA (fixture)
 const { compareChoices } = await import('../server/journey-engine.js');
 const { missionById } = await import('../server/content/rounds.js');
 const { createApp } = await import('../server/app.js');
@@ -30,9 +31,9 @@ after(async () => {
 });
 
 test('uma linha por opção, na ordem do estudante, com idioma e universidade', () => {
-  const rows = compareChoices({ profile: { espanhol: 'B2' }, choices: ['us-demo-adm', 'ugr-demo-eng', 'nao-existe'] });
-  assert.deepEqual(rows.map((r) => [r.posicao, r.id]), [[1, 'us-demo-adm'], [2, 'ugr-demo-eng'], [3, 'nao-existe']]);
-  assert.equal(rows[0].universidade.sigla, 'US');
+  const rows = compareChoices({ profile: { espanhol: 'B2' }, choices: ['dua-200300', 'ugr-master-universitario-estudios-asia-oriental', 'nao-existe'] });
+  assert.deepEqual(rows.map((r) => [r.posicao, r.id]), [[1, 'dua-200300'], [2, 'ugr-master-universitario-estudios-asia-oriental'], [3, 'nao-existe']]);
+  assert.equal(rows[0].universidade.sigla, 'UCA');
   assert.ok(rows[0].idioma?.status, 'idioma vem da elegibilidade da Missão 1.4');
   assert.equal(rows[0].temFichaDua, false);
   assert.equal(rows[0].graduacao, null, 'sem ficha do DUA: sem comparação de graduação');
@@ -55,9 +56,9 @@ test('GET /me/choices/compare devolve as opções salvas do usuário logado', as
   assert.equal((await req('GET', '/me/choices/compare')).status, 401);
   assert.equal((await req('POST', '/auth/register', { nome: 'Bia Compara', email: 'bia-compara@exemplo.com', senha: 'segura123', aceite: true, maiorIdade: true })).status, 201);
   assert.deepEqual((await req('GET', '/me/choices/compare')).data.opcoes, []);
-  assert.equal((await req('PUT', '/me/choices', { choices: ['ugr-demo-arq', 'uma-demo-tur'] })).status, 200);
+  assert.equal((await req('PUT', '/me/choices', { choices: ['ugr-master-universitario-arqueologia', 'dua-200300'] })).status, 200);
   const r = await req('GET', '/me/choices/compare');
   assert.equal(r.status, 200);
-  assert.deepEqual(r.data.opcoes.map((o) => o.id), ['ugr-demo-arq', 'uma-demo-tur']);
-  assert.equal(r.data.opcoes[1].universidade.sigla, 'UMA');
+  assert.deepEqual(r.data.opcoes.map((o) => o.id), ['ugr-master-universitario-arqueologia', 'dua-200300']);
+  assert.equal(r.data.opcoes[1].universidade.sigla, 'UCA');
 });

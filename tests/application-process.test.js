@@ -24,7 +24,7 @@ const { createApp } = await import('../server/app.js');
 const { flush } = await import('../server/store.js');
 
 // Programas de teste no formato de programForJourney (Radar).
-const BASE = { universidadeId: 'ugr', ciclo: '2026/27', duracaoMeses: 12, demo: false, radar: true, idioma: { status: 'nao-requerido', fonte: 'O30' }, requisitos: [] };
+const BASE = { universidadeId: 'ugr', ciclo: '2026/27', duracaoMeses: 12, radar: true, idioma: { status: 'nao-requerido', fonte: 'O30' }, requisitos: [] };
 const FAKE = {
   'teste-dua': { ...BASE, id: 'teste-dua', nome: 'MÁSTER DE TESTE', duaCodigo: '999001', fichaDuaUrl: 'https://exemplo.invalid/ficha',
     requisitosFicha: [{ codigo: '001', texto: 'ES IMPRESCINDIBLE PRESENTAR CERTIFICADO DE PRÁCTICAS', obrigatorio: true }, { codigo: '002', texto: 'SE VALORARÁ LA EXPERIENCIA', obrigatorio: false }],
@@ -157,12 +157,6 @@ test('canais conferidos individualmente: Erasmus Mundus/Arqus fora do DUA, varia
   assert.equal(bucal.canal.status, 'nao-confirmado');
   assert.equal(bucal.verificacao, 'parcial');
   assert.equal(MANUAL_DUA_LINKS['ugr-master-universitario-abogacia-procura'], '492208');
-});
-
-test('programa demonstrativo nunca aparece como processo real', () => {
-  const p = applicationProcess({ id: 'demo', nome: 'Demo', demo: true }, { profile: BR });
-  assert.equal(p.verificacao, 'demo');
-  assert.equal(p.canal.status, 'demo');
 });
 
 // ---------- Missões: aplicabilidade e alertas por mestrado ----------

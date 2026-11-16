@@ -23,7 +23,7 @@ export function journeyOverview(user, jr) {
   const atual = j.rodadas.find((r) => r.numero === j.rodadaAtual);
   return {
     id: j.id,
-    destino: { universidade: j.destino.universidade?.nome || null, sigla: j.destino.universidade?.sigla || null, cidade: j.destino.cidade, programa: j.destino.programa?.nome || null, programaDemo: Boolean(j.destino.programa?.demo), anoAcademico: j.destino.anoAcademico, duracaoMeses: j.destino.duracaoMeses, inicioAulas: j.destino.inicioAulas },
+    destino: { universidade: j.destino.universidade?.nome || null, sigla: j.destino.universidade?.sigla || null, cidade: j.destino.cidade, programa: j.destino.programa?.nome || null, anoAcademico: j.destino.anoAcademico, duracaoMeses: j.destino.duracaoMeses, inicioAulas: j.destino.inicioAulas },
     progresso: Math.round(j.progresso * 100),
     rodadaAtual: { numero: atual.numero, titulo: atual.titulo, progresso: Math.round(atual.progresso * 100) },
     situacao: j.situacao, chegada: j.chegada,

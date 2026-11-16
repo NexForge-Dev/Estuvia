@@ -64,8 +64,7 @@ export async function financeView() {
       h('div', { class: 'fp-dest' },
         h('strong', {}, dd.universidade?.nome || 'Universidade a definir'),
         h('span', {}, `${dd.cidade || '-'}, ${dd.pais}`),
-        h('span', { class: 'muted' }, `${dd.programa?.nome || 'Mestrado a definir'}${dd.anoAcademico ? ` - ${dd.anoAcademico}` : ''} · ${p.meses} meses`),
-        dd.programa?.demo ? h('span', { class: 'chip-demo' }, 'Mestrado demonstrativo') : null),
+        h('span', { class: 'muted' }, `${dd.programa?.nome || 'Mestrado a definir'}${dd.anoAcademico ? ` - ${dd.anoAcademico}` : ''} · ${p.meses} meses`)),
       h('p', { class: 'fp-lead' }, 'Vamos descobrir quanto você vai precisar para estudar aqui. A Estuvia já prepara uma estimativa; você ajusta o que quiser.'),
       h('button', { class: 'btn btn-cta btn-lg', type: 'button', onClick: () => call('put', '/finance', { iniciar: true }) }, icon('euro', { size: 16 }), 'Calcular meus custos'),
       h('p', { class: 'hint' }, 'Usamos só valores com fonte identificada. O que não tiver fonte fica marcado para você informar.'))];

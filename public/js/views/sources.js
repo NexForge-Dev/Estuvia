@@ -28,7 +28,7 @@ export async function sourcesView() {
         h('span', { class: 'cite' }, s.id),
         h('div', {},
           h('strong', {}, s.titulo),
-          h('p', { class: 'muted small' }, `${s.orgao} · revisado em ${new Date(`${s.revisadoEm}T12:00:00`).toLocaleDateString('pt-BR')}${s.pendente ? ' · link informado pelo idealizador, a confirmar' : ''}${s.tipo === 'demo' ? ' · não usar para decisões reais' : ''}`),
+          h('p', { class: 'muted small' }, `${s.orgao} · revisado em ${new Date(`${s.revisadoEm}T12:00:00`).toLocaleDateString('pt-BR')}${s.pendente ? ' · link informado pelo idealizador, a confirmar' : ''}`),
           s.url ? h('a', { href: s.url, target: '_blank', rel: 'noopener noreferrer' }, 'Abrir fonte ', icon('external', { size: 12 })) : null)))),
       h('p', { class: 'notice' }, 'Datas de ingresso, regras de idioma, listas de cursos, valores (ex.: IPREM) e instruções consulares precisam ser reconfirmados para o ciclo de cada candidato.')),
     h('section', { class: 'panel' }, h('h2', {}, 'Créditos das fotos das universidades'),

@@ -53,7 +53,7 @@ export async function homeView() {
         h('div', {},
           h('p', { class: 'eyebrow' }, `Olá, ${p.apelido} · Minha jornada`),
           h('h1', {}, j.destino.origem, h('span', { class: 'jh-arrow' }, icon('arrow', { size: 26 })), j.destino.universidade?.nome || 'Andaluzia'),
-          h('p', { class: 'jh-course' }, j.destino.programa?.nome || 'Mestrado a definir', j.destino.programa?.demo ? h('span', { class: 'chip-demo' }, 'Dados demo') : null),
+          h('p', { class: 'jh-course' }, j.destino.programa?.nome || 'Mestrado a definir'),
           j.proximaMissao
             ? h('a', { class: 'btn btn-cta btn-lg', href: `#/j/${j.id}/m/${j.proximaMissao.id}` }, icon('play', { size: 16 }), `Continuar missão ${j.proximaMissao.label}`)
             : h('a', { class: 'btn btn-cta btn-lg', href: `#/j/${j.id}` }, 'Ver rodadas'),

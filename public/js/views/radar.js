@@ -72,7 +72,7 @@ const PUBLICO = { estrangeiros: 'Exclusiva para estrangeiros', todos: 'Espanhói
 const COMPAT = { alta: 'Alta compatibilidade com sua área', media: 'Compatível com sua área', baixa: 'Área diferente da sua formação' };
 const EVENT_LABEL = { candidatura: 'Candidatura', 'pagamento-titulo': 'Taxa de expedição do título', avaliacao: 'Avaliação', adjudicacao: 'Adjudicação', reclamacao: 'Reclamações', confirmacao: 'Matrícula / reserva / confirmação', resultas: 'Lista de resultas', outro: 'Outro' };
 const PHASE_LABEL = { abertas: 'Inscrições abertas', anunciadas: 'Anunciada', previsto: 'Previsão', encerradas: 'Encerrada', 'em-avaliacao': 'Em avaliação', adjudicacoes: 'Adjudicações publicadas', resultas: 'Resultas' };
-const VERIF_ICON = { confirmada: 'shield', pendente: 'clock', 'nao-confirmada': 'alert', prevista: 'hourglass', desatualizada: 'alert', demonstrativo: 'wand' };
+const VERIF_ICON = { confirmada: 'shield', pendente: 'clock', 'nao-confirmada': 'alert', prevista: 'hourglass', desatualizada: 'alert' };
 
 const shortYear = (curso) => (curso ? curso.replace(/^(\d{4})\/\d{2}(\d{2})$/, '$1/$2') : curso);
 const nextAcademicYear = (curso) => {
@@ -173,11 +173,10 @@ function opportunityCard(c, redraw) {
   const u = c.universidade;
   const cover = h('div', { class: 'rd-card-cover', 'data-university': u.id },
     u.logo ? h('img', { class: 'rd-card-logo', src: u.logo, alt: '', loading: 'lazy' }) : null);
-  return h('article', { class: `rd-card rd-card-${c.tom}${c.demo ? ' rd-demo' : ''}` },
+  return h('article', { class: `rd-card rd-card-${c.tom}` },
     cover,
     h('div', { class: 'rd-card-body' },
       h('div', { class: 'rd-card-top' }, statusBadge(c), h('span', { class: 'rd-year' }, icon('calendar', { size: 13 }), c.anoAcademico)),
-      c.demo ? h('p', { class: 'rd-demo-flag' }, 'DADO DEMONSTRATIVO, ambiente de desenvolvimento') : null,
       h('p', { class: 'rd-uni' }, u.nome),
       h('h3', { class: 'rd-title' }, h('a', { href: `#/oportunidades/${c.id}` }, c.programa.nome)),
       h('p', { class: 'rd-place' }, icon('pin', { size: 14 }), `${u.cidade}, ${u.pais}`),
@@ -453,7 +452,6 @@ export async function radarDetailView(id) {
       h('a', { href: '#/oportunidades', class: 'rd-back' }, icon('back', { size: 16 }), 'Explorar Oportunidades'),
       h('section', { class: `rd-detail-hero rd-card-${o.tom}` },
         h('div', { class: 'rd-card-top' }, statusBadge(o), h('span', { class: 'rd-year' }, icon('calendar', { size: 13 }), `Ano acadêmico ${o.anoAcademico}`)),
-        o.demo ? h('p', { class: 'rd-demo-flag' }, 'DADO DEMONSTRATIVO, ambiente de desenvolvimento') : null,
         h('p', { class: 'rd-uni' }, `${u.nome} · ${u.cidade}, ${u.pais}`),
         h('h1', {}, o.programa.nome),
         h('p', { class: 'rd-sub' }, o.estadoDescricao),

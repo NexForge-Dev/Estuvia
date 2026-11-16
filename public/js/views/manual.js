@@ -15,7 +15,7 @@ export async function manualView() {
     h('summary', {},
       h('img', { src: r.banner, alt: '' }),
       h('span', {}, h('small', {}, r.sigla ? 'Trilha paralela' : `Rodada ${r.numero}`), h('strong', {}, r.titulo), h('span', { class: 'muted small' }, r.resumo))),
-    h('ol', { class: 'manual-list' }, r.missoes.map((m) => h('li', {}, h('span', {}, m.titulo), m.trilha ? h('small', { class: 'tag tag-info' }, 'pode adiantar') : null, m.opcional ? h('small', { class: 'chip-demo' }, 'opcional') : null))),
+    h('ol', { class: 'manual-list' }, r.missoes.map((m) => h('li', {}, h('span', {}, m.titulo), m.trilha ? h('small', { class: 'tag tag-info' }, 'pode adiantar') : null, m.opcional ? h('small', { class: 'chip-note' }, 'opcional') : null))),
     h('p', { class: 'small' }, h('strong', {}, 'Ao final: '), r.conclusao));
 
   return h('article', { class: 'manual stack-lg' },

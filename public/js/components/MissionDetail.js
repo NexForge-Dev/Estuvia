@@ -69,7 +69,7 @@ export function MissionDetail(m, ctx) {
     h('div', { class: 'md-head-content' },
       h('p', { class: 'eyebrow' }, def.rodadaSigla ? `Trilha ${def.rodadaSigla} · ${def.rodadaTitulo}` : `Rodada ${def.rodada} · ${def.rodadaTitulo}`),
       h('h1', {}, h('span', { class: 'md-id' }, `Missão ${m.label}`), def.titulo),
-      h('div', { class: 'row wrap' }, statusChip(m.status, m.statusLabel), priorityTag(m.prioridade), def.opcional ? h('span', { class: 'chip-demo' }, 'Recomendação opcional') : null,
+      h('div', { class: 'row wrap' }, statusChip(m.status, m.statusLabel), priorityTag(m.prioridade), def.opcional ? h('span', { class: 'chip-note' }, 'Recomendação opcional') : null,
         h('span', { class: 'meta-pill' }, icon('clock', { size: 13 }), def.tempoEstimado), deadlineTag(m.prazo), h('span', { class: `tag ${tagCls}` }, tagLabel)),
       h('div', { class: 'md-progress' }, progressBar(m.progresso, { label: 'Progresso da missão', cls: 'bar-lg' }), h('span', {}, `${m.objetivosFeitos}/${m.objetivosTotal} objetivos · ${pctLabel(m.progresso)}`)),
     ),

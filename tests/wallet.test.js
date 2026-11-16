@@ -16,6 +16,7 @@ process.env.RADAR_SCHEDULER = 'off';
 process.env.ADMIN_EMAIL = 'equipe@carteira.dev';
 process.env.ADMIN_PASSWORD = 'admin-carteira-123';
 
+await import('./fixtures/programas-reais.js'); // mestrados reais do DUA (fixture)
 const { createApp } = await import('../server/app.js');
 const { flush, users } = await import('../server/store.js');
 const { DOCUMENTS, DOC_CATEGORIES, CATEGORY_USES, CONDITIONS, LEGACY_IDS } = await import('../server/content/documents.js');
@@ -87,7 +88,7 @@ test('setup: estudante de 12 meses, morando em SP, mestrado sem certificado de i
   const r = await req('POST', '/auth/register', { nome: 'Lia Rocha', email: 'lia@carteira.dev', senha: 'segura123', aceite: true, maiorIdade: true });
   uid = r.data.user.id;
   await req('PUT', '/me/profile', { nacionalidade: 'Brasileira', paisResidencia: 'Brasil', estado: 'SP' });
-  jid = (await req('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2027/28', duracaoMeses: 12 })).data.journey.id;
+  jid = (await req('POST', '/journeys', { programaId: 'ugr-master-universitario-estudios-asia-oriental', anoAcademico: '2027/28', duracaoMeses: 12 })).data.journey.id;
   await req('POST', '/documents/consent', { aceito: true, versao: '2026-11-13' });
 });
 

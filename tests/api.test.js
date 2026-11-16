@@ -11,6 +11,7 @@ process.env.MEDIA_DIR = path.join(tmp, 'media');
 delete process.env.ANTHROPIC_API_KEY;
 delete process.env.ANTHROPIC_AUTH_TOKEN;
 
+await import('./fixtures/programas-reais.js'); // mestrados reais do DUA (fixture)
 const { createApp } = await import('../server/app.js');
 const { flush } = await import('../server/store.js');
 
@@ -87,7 +88,7 @@ test('1–2: criar jornada Brasil → Granada com mestrado e requisitos aplicado
   const p = await req('PUT', '/me/profile', { nacionalidade: 'Brasileira', paisResidencia: 'Brasil', estado: 'BA', formacao: 'Engenharia Civil', instituicao: 'UFBA', espanhol: 'B1', onboardingConcluido: true });
   assert.equal(p.status, 200);
   assert.equal((await req('PUT', '/me/profile', { isAdmin: true })).status, 400, 'campos extras são rejeitados');
-  const r = await req('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2027/28' });
+  const r = await req('POST', '/journeys', { programaId: 'ugr-master-universitario-estudios-asia-oriental', anoAcademico: '2027/28' });
   assert.equal(r.status, 201);
   const j = r.data.journey;
   jid = j.id;
@@ -95,7 +96,7 @@ test('1–2: criar jornada Brasil → Granada com mestrado e requisitos aplicado
   assert.equal(j.rodadas.length, 9, '8 rodadas + trilha financeira');
   assert.equal(find(j, '3.10'), undefined, 'Rodada 3 ainda bloqueada: as missões dela não são enviadas ao navegador');
   assert.ok(find(j, '9.1').status === 'disponivel', 'trilha financeira é paralela desde o início');
-  assert.equal((await req('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2027/28' })).status, 409);
+  assert.equal((await req('POST', '/journeys', { programaId: 'ugr-master-universitario-estudios-asia-oriental', anoAcademico: '2027/28' })).status, 409);
   assert.equal((await req('POST', '/journeys', { programaId: 'inexistente', anoAcademico: '2027/28' })).status, 400);
 });
 

@@ -30,7 +30,7 @@ export function buildContext(user, contexto = {}, now = new Date()) {
   else {
     const j = computeJourney(user, jr, now);
     const atual = j.rodadas.find((r) => r.numero === j.rodadaAtual);
-    L.push(`Jornada em foco (id ${jr.id}): ${j.destino.programa?.nome || 'mestrado não definido'}${j.destino.programa?.demo ? ' [DADO DEMONSTRATIVO]' : ''} - ${j.destino.universidade?.nome || '-'} (${j.destino.cidade || '-'}); ano ${j.destino.anoAcademico || 'não definido'}; duração ${j.destino.duracaoMeses || '?'} meses; progresso ${Math.round(j.progresso * 100)}%; Rodada ${atual.numero} - ${atual.titulo}.`);
+    L.push(`Jornada em foco (id ${jr.id}): ${j.destino.programa?.nome || 'mestrado não definido'} - ${j.destino.universidade?.nome || '-'} (${j.destino.cidade || '-'}); ano ${j.destino.anoAcademico || 'não definido'}; duração ${j.destino.duracaoMeses || '?'} meses; progresso ${Math.round(j.progresso * 100)}%; Rodada ${atual.numero} - ${atual.titulo}.`);
     L.push(`Situação registrada: candidatura=${j.situacao.adjudicacao}; matrícula=${j.situacao.matricula}; visto=${j.situacao.visto}; chegada à Espanha=${j.chegada || 'não registrada'}.`);
     L.push(`Próxima missão recomendada: ${j.proximaMissao ? `${j.proximaMissao.label} ${j.proximaMissao.titulo}` : 'nenhuma'}.`);
     if (contexto.missaoId) {

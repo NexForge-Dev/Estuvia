@@ -11,13 +11,14 @@ process.env.DATA_FILE = path.join(tmp, 'db.json');
 process.env.MEDIA_DIR = path.join(tmp, 'media');
 process.env.FX_PROVIDER = 'off';
 
+await import('./fixtures/programas-reais.js'); // mestrados reais do DUA (fixture)
 const { computeFinance, exchange } = await import('../server/finance-engine.js');
 const { setRateForTests, rateIsStale, refreshRate } = await import('../server/fx.js');
 
 after(() => { setRateForTests(null); fs.rmSync(tmp, { recursive: true, force: true }); });
 
 const NOW = new Date('2026-10-24T12:00:00Z');
-const journey = { id: 'j1', programaId: 'ugr-demo-eng', anoAcademico: '2027/28', duracaoMeses: 12, missions: {}, dados: {} };
+const journey = { id: 'j1', programaId: 'ugr-master-universitario-estudios-asia-oriental', anoAcademico: '2027/28', duracaoMeses: 12, missions: {}, dados: {} };
 const user = (finance = {}, extra = {}) => ({ profile: {}, documents: {}, finance: { ...finance }, ...extra });
 const item = (f, id) => f.itens.find((i) => i.id === id);
 

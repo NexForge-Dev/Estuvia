@@ -9,7 +9,7 @@ import { data as radarData } from '../radar/db.js';
 import { getEvidence } from '../storage.js';
 import { config } from '../config.js';
 import {
-  overview, addSource, setSourceAvailability, runNow, resolveReview, registerCalendar, correct, republish, simulateDev, clearDemo, importCommunityFeed,
+  overview, addSource, setSourceAvailability, runNow, resolveReview, registerCalendar, correct, republish, importCommunityFeed,
   clearCorrection, corrections, entityHistory, invalidateRevision, suspectRevisions,
 } from '../radar/admin.js';
 
@@ -155,17 +155,5 @@ router.get('/snapshots/:id/evidencia', async (req, res) => {
 
 router.post('/republish', (req, res) => send(res, () => republish()));
 router.post('/community/import', (req, res) => send(res, () => importCommunityFeed()));
-
-// Somente em desenvolvimento: simulação claramente marcada como DEMONSTRATIVA.
-router.post('/dev/simulate', (req, res) => {
-  if (config.isProd) return res.status(404).json({ error: 'Rota não encontrada.' });
-  const parsed = z.object({ anoAcademico: z.string().max(9), abertura: date, encerramento: date }).strict().safeParse(req.body);
-  if (!parsed.success) return bad(res, parsed);
-  return send(res, () => simulateDev(parsed.data, who(req)));
-});
-router.delete('/dev/simulate', (req, res) => {
-  if (config.isProd) return res.status(404).json({ error: 'Rota não encontrada.' });
-  return send(res, () => clearDemo());
-});
 
 export default router;

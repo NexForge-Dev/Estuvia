@@ -26,7 +26,7 @@ function selecao(o) {
 
 const ROWS = [
   ['Universidade', (o) => (o.universidade ? h('span', {}, `${o.universidade.sigla} · ${o.universidade.cidade}`) : nd('Não informada'))],
-  ['Canal de candidatura', (o) => (o.canal ? h('span', { class: `chip-status t-${{ confirmado: 'ok', 'nao-confirmado': 'warn', demo: 'muted', 'nao-dua': 'pending', 'nao-dua-sem-canal': 'warn' }[o.canal]}` }, { confirmado: 'DUA (confirmado)', 'nao-confirmado': 'Não confirmado no DUA', demo: 'Demonstrativo', 'nao-dua': 'Fora do DUA (procedimento próprio)', 'nao-dua-sem-canal': 'Fora do DUA, canal não publicado' }[o.canal]) : nd())],
+  ['Canal de candidatura', (o) => (o.canal ? h('span', { class: `chip-status t-${{ confirmado: 'ok', 'nao-confirmado': 'warn', 'nao-dua': 'pending', 'nao-dua-sem-canal': 'warn' }[o.canal]}` }, { confirmado: 'DUA (confirmado)', 'nao-confirmado': 'Não confirmado no DUA', 'nao-dua': 'Fora do DUA (procedimento próprio)', 'nao-dua-sem-canal': 'Fora do DUA, canal não publicado' }[o.canal]) : nd())],
   ['Início das aulas', (o) => (fmtData(o.inicioCurso) ? h('span', {}, fmtData(o.inicioCurso)) : nd())],
   ['Duração', (o) => (o.duracaoMeses ? h('span', {}, `${o.duracaoMeses} meses`) : nd('Não informada'))],
   ['Graduação aceita', (o) => status(o.graduacao, 'Sem a lista de graduações da ficha')],
@@ -55,7 +55,7 @@ export function ChoicesCompare() {
     const sem = opcoes.filter((o) => o.indisponivel).length;
     box.append(...[
       h('div', { class: 'table-wrap' }, h('table', { class: 'cmp cmp-choices' },
-        h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Opção'), validas.map((o) => h('th', { scope: 'col' }, h('span', { class: 'cmp-pos' }, String(o.posicao)), ' ', o.nome, o.demo ? h('span', { class: 'tag tag-pending' }, 'demonstração') : null)))),
+        h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Opção'), validas.map((o) => h('th', { scope: 'col' }, h('span', { class: 'cmp-pos' }, String(o.posicao)), ' ', o.nome)))),
         h('tbody', {}, ROWS.map(([label, cell]) => h('tr', {}, h('th', { scope: 'row' }, label), validas.map((o) => h('td', {}, cell(o)))))))),
       sem ? h('p', { class: 'muted small' }, `${sem} opção(ões) não estão mais no catálogo e ficaram de fora.`) : null,
       h('p', { class: 'hint' }, 'A comparação usa a ficha de cada máster no DUA e o que você declarou no perfil. Ela não ordena por você e não garante admissão: a ordem de preferência é sua e a decisão é da universidade.'),

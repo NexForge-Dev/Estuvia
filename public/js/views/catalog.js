@@ -5,7 +5,6 @@ import { h, mount, toast } from '../ui.js';
 import { icon } from '../icons.js';
 import { api } from '../api.js';
 import { state, setMe } from '../app.js';
-import { getCatalog } from '../data.js';
 import { ChoicesCompare } from '../components/ChoicesCompare.js';
 import { addToJourney } from './radar.js';
 import { filterPrograms, spanishText, degreeText, displayName } from '../data/programs.js';
@@ -15,12 +14,10 @@ const MODALIDADE = { presencial: 'Presencial', online: 'Online', hibrida: 'Híbr
 const fmtDate = (iso) => (iso ? new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : null);
 
 export async function catalogView() {
-  const [cat, demo] = await Promise.all([api.get('/radar/programs'), getCatalog().catch(() => ({ programs: [], universities: [] }))]);
+  const cat = await api.get('/radar/programs');
   const { universidades, programas } = cat;
   const uni = new Map(universidades.map((u) => [u.id, u]));
   const byId = new Map(programas.map((p) => [p.id, p]));
-  // Opções antigas podem apontar para os exemplos demonstrativos (content/catalog.js): o nome continua aparecendo.
-  const demoById = new Map((demo.programs || []).map((p) => [p.id, p]));
   const filters = { q: '', universidade: '', cidade: '', area: '', modalidade: '', espanhol: '', graduacao: '', ficha: false };
   let shown = PAGE;
   const root = h('div', { class: 'stack-lg mest' });
@@ -45,9 +42,9 @@ export async function catalogView() {
   function choicesPanel(choices) {
     const move = (i, d) => { const c = [...choices]; [c[i], c[i + d]] = [c[i + d], c[i]]; save(c); };
     const label = (id) => {
-      const p = byId.get(id) || demoById.get(id);
-      const u = p ? uni.get(p.universidadeId) || (demo.universities || []).find((x) => x.id === p.universidadeId) : null;
-      return [p ? displayName(p.nome) : 'Programa que não está mais no catálogo', h('small', { class: 'muted' }, `${u ? ` · ${u.sigla}` : ''}${demoById.has(id) ? ' · exemplo demonstrativo' : ''}`)];
+      const p = byId.get(id);
+      const u = p ? uni.get(p.universidadeId) : null;
+      return [p ? displayName(p.nome) : 'Programa que não está mais no catálogo', h('small', { class: 'muted' }, `${u ? ` · ${u.sigla}` : ''}`)];
     };
     return h('section', { class: 'panel' },
       h('h2', { class: 'panel-title' }, icon('flag', { size: 18 }), `Minhas opções (${choices.length}/6 na Estuvia)`),

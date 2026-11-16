@@ -214,12 +214,11 @@ function applicability(mission, ctx, mp) {
   if (rule.tipo === 'requisito-programa' && rule.requisito === 'idioma') {
     if (!ctx.program) return { aplicavel: true, atencao: 'Defina o mestrado desta jornada para saber se esta missão é obrigatória.' };
     const req = ctx.program.idioma || { status: 'verificar' };
-    const demo = req.fonte === 'DEMO' ? ' (dado demonstrativo)' : '';
-    if (req.status === 'nao-requerido') return { aplicavel: false, motivo: req.fonte === 'O30' ? 'A ficha oficial do seu mestrado no DUA, onde a universidade publica os requisitos específicos de acesso (O2 art. 2), não lista exigência de idioma. Se a página do máster disser algo diferente, confirme com a coordenação.' : `Seu mestrado não exige certificado de idioma${demo}.` };
+    if (req.status === 'nao-requerido') return { aplicavel: false, motivo: req.fonte === 'O30' ? 'A ficha oficial do seu mestrado no DUA, onde a universidade publica os requisitos específicos de acesso (O2 art. 2), não lista exigência de idioma. Se a página do máster disser algo diferente, confirme com a coordenação.' : 'Seu mestrado não exige certificado de idioma.' };
     if (req.status === 'verificar') return { aplicavel: true, atencao: 'A exigência de idioma do seu mestrado não está confirmada na ficha. Confirme com a coordenação.' };
     // A ficha diz o nível mas não diz como comprovar: não concluímos que o certificado é dispensado.
     if (rule.exigeCertificado && !req.certificado) return { aplicavel: true, atencao: `A ficha oficial do seu mestrado exige espanhol ${req.nivel}, mas não diz como comprovar o nível. Pergunte à coordenação se aceitam outra comprovação além de um certificado (DELE ou SIELE) antes de decidir pela prova.` };
-    return { aplicavel: true, info: `Seu mestrado exige espanhol ${req.nivel || ''}${req.certificado ? ' com certificado' : ''}${demo}.` };
+    return { aplicavel: true, info: `Seu mestrado exige espanhol ${req.nivel || ''}${req.certificado ? ' com certificado' : ''}.` };
   }
 
   // Regra oficial que vale só para alguns mestrados (content/application-procedures.js → PROGRAM_SPECIFIC).
@@ -494,7 +493,7 @@ export function computeJourney(user, jr, now = new Date()) {
     destino: {
       origem: ctx.profile.paisResidencia || 'Brasil',
       universidade: ctx.university ? { id: ctx.university.id, nome: ctx.university.nome, sigla: ctx.university.sigla, capa: ctx.university.capa, logo: ctx.university.logo } : null,
-      programa: ctx.program ? { id: ctx.program.id, nome: ctx.program.nome, demo: Boolean(ctx.program.demo), url: ctx.program.url } : null,
+      programa: ctx.program ? { id: ctx.program.id, nome: ctx.program.nome, url: ctx.program.url } : null,
       cidade: ctx.university?.cidade || null,
       pais: ctx.university?.pais || 'Espanha',
       anoAcademico: jr.anoAcademico || null,
@@ -542,7 +541,7 @@ export function eligibility(ctx) {
     : { requisito: 'Titulação de acesso', status: 'falta-informar', texto: 'Informe sua graduação no perfil.', fonte: 'O1' });
   if (prog.titulacoes) items.push(degreeItem(p, prog.titulacoes));
   const proc = ctx.processo !== undefined ? ctx.processo : applicationProcess(prog, { profile: p, requisitos: ctx.user?.requisitos || {} });
-  if (proc && !prog.demo) {
+  if (proc) {
     if (proc.canal.status !== 'confirmado') items.push({ requisito: 'Canal de candidatura', status: 'nao-confirmado', texto: proc.canal.texto, fonte: 'O5' });
     const f1 = proc.fases[0];
     if (f1.perfil.status === 'nao') items.push({ requisito: 'Fase 1 (estrangeiros)', status: 'falta-comprovar', texto: f1.perfil.texto, fonte: 'O1' });
@@ -605,7 +604,6 @@ export function compareChoices(user) {
       id,
       posicao: i + 1,
       nome: prog.nome,
-      demo: Boolean(prog.demo),
       universidade: uni ? { id: uni.id, sigla: uni.sigla, nome: uni.nome, cidade: uni.cidade } : null,
       url: prog.url || null,
       fichaDuaUrl: prog.fichaDuaUrl || null,

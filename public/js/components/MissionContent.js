@@ -208,7 +208,7 @@ export function MissionContent(m, ctx) {
       ctxCard(def.rodadaSigla ? 'Trilha' : 'Rodada', roundLabel, 'flag'),
       ctxCard('Missão', `Missão ${m.label} - ${def.titulo}`, 'target', true)),
     h('div', { class: 'mc-meta' },
-      statusChip(m.status, m.statusLabel), priorityTag(m.prioridade), def.opcional ? h('span', { class: 'chip-demo' }, 'Recomendação opcional') : null,
+      statusChip(m.status, m.statusLabel), priorityTag(m.prioridade), def.opcional ? h('span', { class: 'chip-note' }, 'Recomendação opcional') : null,
       m.prazo ? deadlineTag(m.prazo) : null,
       m.ultimaVerificacao ? h('span', { class: 'meta-pill' }, icon('shield', { size: 13 }), `Fontes verificadas em ${fmtDate(m.ultimaVerificacao)}`) : null),
     h('p', { class: 'mc-desc' }, def.resumo),

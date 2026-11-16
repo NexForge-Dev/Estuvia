@@ -108,8 +108,7 @@ function card(c, ui) {
       return box('Radar de Oportunidades', 'search', h('ul', { class: 'mt-list' }, c.itens.map((o) => h('li', { class: 'mt-opp' },
         h('div', {}, h('a', { href: `#/oportunidades/${o.id}`, onClick: ui.close }, o.programa), h('small', { class: 'muted' }, ` · ${o.universidade} · ${o.anoAcademico}`)),
         h('span', { class: `mt-state s-${o.estado}` }, o.estadoLabel),
-        o.abertura || o.prazoFinal ? h('small', {}, `${o.abertura ? `abre ${fmt(o.abertura)}` : ''}${o.prazoFinal ? ` · até ${fmt(o.prazoFinal)}` : ''}`) : null,
-        o.demo ? h('span', { class: 'mt-pill o-declarado' }, 'DADO DEMONSTRATIVO') : null))),
+        o.abertura || o.prazoFinal ? h('small', {}, `${o.abertura ? `abre ${fmt(o.abertura)}` : ''}${o.prazoFinal ? ` · até ${fmt(o.prazoFinal)}` : ''}`) : null))),
         h('p', { class: 'hint' }, 'Situação verificada na fonte oficial.'));
     case 'bolsas':
       return box('Bolsas', 'cap', h('ul', { class: 'mt-list' }, c.itens.map((b) => h('li', {}, h('strong', {}, b.nome), h('small', { class: 'muted' }, ` · ${b.entidade}`), ' ', h('span', { class: `mt-pill ${b.status === 'aberta' ? 'o-oficial' : 'o-declarado'}` }, b.statusLabel), b.salva ? h('span', { class: 'mt-pill' }, 'acompanhando') : null))),

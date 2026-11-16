@@ -13,6 +13,7 @@ process.env.RATE_LIMIT_SCALE = '20';
 delete process.env.ANTHROPIC_API_KEY;
 delete process.env.ANTHROPIC_AUTH_TOKEN;
 
+await import('./fixtures/programas-reais.js'); // mestrados reais do DUA (fixture)
 const { createApp } = await import('../server/app.js');
 const { flush } = await import('../server/store.js');
 
@@ -56,7 +57,7 @@ const concluir = async (id) => {
 test('setup: estudante de 12 meses em SP, admitida', async () => {
   assert.equal((await req('POST', '/auth/register', { nome: 'Rita Rota', email: 'rita@rota.dev', senha: 'segura123', aceite: true, maiorIdade: true })).status, 201);
   await req('PUT', '/me/profile', { nacionalidade: 'Brasileira', paisResidencia: 'Brasil', estado: 'SP', onboardingConcluido: true });
-  jid = (await req('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2027/28', duracaoMeses: 12 })).data.journey.id;
+  jid = (await req('POST', '/journeys', { programaId: 'ugr-master-universitario-estudios-asia-oriental', anoAcademico: '2027/28', duracaoMeses: 12 })).data.journey.id;
   await req('POST', '/documents/consent', { aceito: true, versao: '2026-11-13' });
   assert.equal((await req('PUT', `/journeys/${jid}/situacao`, { campo: 'adjudicacao', valor: 'admitido' })).status, 200);
 });

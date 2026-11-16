@@ -233,7 +233,7 @@ router.get('/document-rules', (req, res) => {
   const rules = allDocRules();
   res.json({
     documentos: DOCUMENTS.map((d) => ({ id: d.id, nome: d.nome, categoria: d.categoria, fontes: d.fontes || [d.fonte], revisao: rules[d.id] || null })),
-    fontes: SOURCES.filter((s) => s.tipo !== 'demo').map((s) => ({ id: s.id, orgao: s.orgao, titulo: s.titulo, url: s.url, revisadoEm: s.revisadoEm })),
+    fontes: SOURCES.map((s) => ({ id: s.id, orgao: s.orgao, titulo: s.titulo, url: s.url, revisadoEm: s.revisadoEm })),
   });
 });
 

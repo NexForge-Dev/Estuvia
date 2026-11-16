@@ -10,7 +10,7 @@ const cardOut = (c) => ({
   id: c.id, programa: c.programa.nome, universidade: c.universidade.sigla, cidade: c.universidade.cidade, anoAcademico: c.anoAcademico,
   estado: c.estado, estadoLabel: c.estadoLabel, abertura: c.abertura, prazoFinal: c.prazoFinal, diasParaPrazo: c.diasParaPrazo,
   verificacao: c.verificacao?.texto || null, fichaUrl: c.programa.fichaUrl, candidaturaUrl: c.candidatura?.url || null,
-  compatibilidade: c.compatibilidade, acompanhando: c.acompanhando, naJornada: c.naJornada, demo: c.demo,
+  compatibilidade: c.compatibilidade, acompanhando: c.acompanhando, naJornada: c.naJornada,
   referenciaHistorica: c.referenciaHistorica ? { anoAcademico: c.referenciaHistorica.anoAcademico, aviso: c.referenciaHistorica.aviso } : null,
 });
 

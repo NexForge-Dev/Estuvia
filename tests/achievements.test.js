@@ -14,7 +14,7 @@ const { default: cookieParser } = await import('cookie-parser');
 const { createApp } = await import('../server/app.js');
 const { flush } = await import('../server/store.js');
 const { default: achievementsRoutes } = await import('../server/routes/achievements.js');
-const { PROGRAMS } = await import('../server/content/catalog.js');
+const { ASIA_B2 } = await import('./fixtures/programas-reais.js');
 const { ACHIEVEMENTS } = await import('../server/content/achievements.js');
 const { evaluate, syncRecord, markSeen } = await import('../server/achievements-engine.js');
 
@@ -80,7 +80,7 @@ test('vaga e visto registrados na situação da jornada liberam conquistas', asy
   assert.equal(r.status, 200);
   assert.equal(r.data.resumo.conquistadas, 0);
 
-  const jr = await req('POST', '/journeys', { programaId: PROGRAMS[0].id });
+  const jr = await req('POST', '/journeys', { programaId: ASIA_B2 });
   assert.equal(jr.status, 201);
   const jid = jr.data.journey.id;
 

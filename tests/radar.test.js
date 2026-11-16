@@ -225,7 +225,7 @@ test('critérios 11–14: jornada, missões, Agenda AI e assistente', async () =
   assert.equal(official.data, officialDeadline.data, 'prazo oficial é preservado mesmo se o estudante tentar mover');
 
   const p = service.programForJourney(target.programId);
-  assert.equal(p.demo, false);
+  assert.equal(p.radar, true);
   assert.equal(p.ciclo, '2026/27');
   const fakeUser = { journeys: [{ id: 'j1', programaId: target.programId, anoAcademico: '2027/28' }] };
   const deadlines = service.officialDeadlines(fakeUser);

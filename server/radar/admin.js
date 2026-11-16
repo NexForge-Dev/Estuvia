@@ -37,7 +37,6 @@ export function overview(now = Date.now()) {
     totais: { programas: d.programs.length, oportunidades: d.opportunities.length, janelas: d.windows.length, eventos: d.events.length, assinaturas: d.subscriptions.length, alertas: d.alerts.length, historico: d.revisions.length },
     historico: d.revisions.slice(-80).reverse(),
     correcoes: listOverrides(d),
-    demo: d.windows.some((w) => w.demo),
   };
 }
 
@@ -150,7 +149,7 @@ export async function correct({ entidade, id, campo, valor, motivo, url }, por) 
   const em = new Date().toISOString();
   const efetivo = campo === 'suspensao' ? (valor ? { motivo: String(valor), em, url } : null) : valor;
   const { anterior, valorFonte } = setOverride(target, campo, efetivo, { por, motivo, url, em });
-  const rev = { id: newId(), entidade, entidadeId: id, opportunityKey: opportunityKeyOf(entidade, target), campo, anterior: anterior ?? null, novo: target[campo] ?? null, valorFonte: valorFonte ?? null, evidencia: { url, nota: motivo }, em, validacao: 'corrigida', impacto: 'alto', por, ...(target.demo ? { demo: true } : {}) };
+  const rev = { id: newId(), entidade, entidadeId: id, opportunityKey: opportunityKeyOf(entidade, target), campo, anterior: anterior ?? null, novo: target[campo] ?? null, valorFonte: valorFonte ?? null, evidencia: { url, nota: motivo }, em, validacao: 'corrigida', impacto: 'alto', por };
   data().revisions.push(rev);
   const alerts = correctionAlerts([rev]);
   tick();
@@ -209,37 +208,6 @@ export async function republish() {
   const created = tick();
   await commit();
   return { alertas: created.length };
-}
-
-// ---------- Ambiente de desenvolvimento: simulação claramente identificada ----------
-
-export async function simulateDev({ anoAcademico, abertura, encerramento }, por) {
-  const d = data();
-  const curso = parseAcademicYear(anoAcademico);
-  if (!curso) throw err(400, 'Ano acadêmico inválido.');
-  if (d.windows.some((w) => w.anoAcademico === curso.rotulo && !w.demo)) throw err(409, 'Já existe calendário oficial para este curso, a simulação não sobrescreve dados reais.');
-  const source = d.sources.find((s) => s.id === 'dua-calendario');
-  const parsed = { tipo: 'calendario', procedimentoId: 'dua-masteres', anoAcademico: curso.rotulo, avisos: [], fases: [{ fase: 1, titulo: 'FASE 1: SIMULAÇÃO (DEMONSTRATIVO)', publico: 'estrangeiros', confirmacao: 'confirmado', itens: [{ ordem: 1, tipo: 'candidatura', rotulo: 'Simulação', texto: 'DADO DEMONSTRATIVO', inicio: abertura, fim: encerramento }] }] };
-  const result = applyCalendar(parsed, { source, snapshot: { id: 'demo', url: 'demo://simulacao', versao: 0 }, force: true, por: `${por} (simulação)` });
-  for (const w of d.windows.filter((x) => x.anoAcademico === curso.rotulo)) w.demo = true;
-  for (const o of d.opportunities.filter((x) => x.anoAcademico === curso.rotulo)) o.demo = true;
-  for (const r of result.revisions) r.demo = true;
-  const alerts = onPublished(result.revisions);
-  tick();
-  await commit();
-  return { alertas: alerts.length };
-}
-
-export async function clearDemo() {
-  const d = data();
-  const demoCycles = new Set(d.windows.filter((w) => w.demo).map((w) => w.anoAcademico));
-  d.windows = d.windows.filter((w) => !w.demo);
-  d.events = d.events.filter((e) => !demoCycles.has(e.anoAcademico) || !e.snapshotId || e.snapshotId !== 'demo');
-  d.revisions = d.revisions.filter((r) => !r.demo);
-  d.alerts = d.alerts.filter((a) => !a.demo);
-  for (const o of d.opportunities) delete o.demo;
-  await commit();
-  return { ciclos: [...demoCycles] };
 }
 
 /** Itens da Comunidade verificados pela moderação → fila de revisão (nunca publicação direta). */

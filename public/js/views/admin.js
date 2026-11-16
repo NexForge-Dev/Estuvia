@@ -429,7 +429,7 @@ function journeyCard(j) {
   const f = j.financas || {};
   return h('article', { class: 'adm-journey' },
     h('div', { class: 'row wrap adm-detail-head' },
-      h('div', {}, h('h3', {}, `${j.universidade}${j.cidade ? ` · ${j.cidade}` : ''}`), h('p', { class: 'small muted' }, `${j.programa}${j.demo ? ' (demonstração)' : ''} · ${j.anoAcademico || 'ano não definido'} · criada em ${fmtDate(j.criadaEm)}`)),
+      h('div', {}, h('h3', {}, `${j.universidade}${j.cidade ? ` · ${j.cidade}` : ''}`), h('p', { class: 'small muted' }, `${j.programa} · ${j.anoAcademico || 'ano não definido'} · criada em ${fmtDate(j.criadaEm)}`)),
       tag(j.status === 'concluida' ? 'Concluída' : j.status === 'em-andamento' ? 'Em andamento' : 'Não iniciada', j.status === 'concluida' ? 'ok' : j.status === 'em-andamento' ? 'info' : 'muted')),
     h('div', { class: 'adm-progress' }, h('strong', {}, `${j.progresso}%`), meter(j.progresso, 'adm-meter-lg'), h('span', { class: 'small muted' }, `${j.missoes.concluidas} de ${j.missoes.aplicaveis} missões concluídas · rodada atual: ${j.rodadaAtual}`)),
     h('div', { class: 'adm-situacao' },

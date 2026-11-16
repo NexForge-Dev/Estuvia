@@ -63,7 +63,7 @@ html .btn-sm { border-radius: 7px; }
 html .btn-cta, html .n-disponivel .mn-circle, html .ai-logo { background: var(--accent); }
 html .btn-cta:hover { filter: brightness(1.08); }
 html .chip { background: transparent; }
-html .chip-status, html .chip-demo { font-weight: 600; }
+html .chip-status, html .chip-note { font-weight: 600; }
 html .bar-fill { background: var(--accent); }
 
 /* ---------- Menos movimento ---------- */

@@ -12,6 +12,7 @@ process.env.MEDIA_DIR = path.join(tmp, 'media');
 process.env.DOCS_DIR = path.join(tmp, 'docfiles');
 process.env.RADAR_SCHEDULER = 'off';
 
+await import('./fixtures/programas-reais.js'); // mestrados reais do DUA (fixture)
 const { createApp } = await import('../server/app.js');
 const { flush, users } = await import('../server/store.js');
 
@@ -61,7 +62,7 @@ test('setup: estudante com jornada (mestrado sem exigência de idioma, 18 meses)
   assert.ok(users.findById(uid).termsVersion, 'o cadastro grava a versão dos Termos aceitos');
   assert.ok(users.findById(uid).ageConfirmedAt, 'e a confirmação de maioridade');
   await req('PUT', '/me/profile', { nacionalidade: 'Brasileira', paisResidencia: 'Brasil', estado: 'PB', onboardingConcluido: true });
-  const j = await req('POST', '/journeys', { programaId: 'ugr-demo-arq', anoAcademico: '2027/28' });
+  const j = await req('POST', '/journeys', { programaId: 'ugr-master-universitario-arqueologia', anoAcademico: '2027/28' });
   assert.equal(j.status, 201);
   jid = j.data.journey.id;
 });

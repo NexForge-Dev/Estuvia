@@ -17,7 +17,6 @@
 
 import fs from 'node:fs';
 import { applicationProcess } from '../server/application-process.js';
-import { PROGRAMS } from '../server/content/catalog.js';
 
 const arg = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
 const dumpFile = arg('--dump');
@@ -56,7 +55,6 @@ function fromLocal(p) {
 const dump = dumpFile ? JSON.parse(fs.readFileSync(dumpFile, 'utf8')) : null;
 const programas = [
   ...(dump ? dump.detalhes.map(fromDump) : radar.programs.filter((p) => !p.ausenteNoCatalogo).map(fromLocal)),
-  ...PROGRAMS.map((p) => ({ ...p })), // demonstrativos do catálogo local
 ];
 
 // ---------- Auditoria ----------
@@ -76,8 +74,7 @@ const LACUNAS_GERAIS = [
 const resultados = programas.map((prog) => {
   const proc = applicationProcess(prog, { calendario, profile: { nacionalidade: 'Brasileira' } });
   const problemas = [];
-  if (prog.demo) problemas.push('Programa demonstrativo (não é um mestrado real).');
-  else {
+  {
     if (proc.canal.status !== 'confirmado') problemas.push('Canal de candidatura não confirmado: o mestrado não está vinculado ao catálogo do DUA, mas a jornada mandava candidatar-se no DUA sem aviso.');
     if (!proc.flags.fichaColetada) problemas.push('Ficha do DUA não coletada: critérios, requisitos obrigatórios e graduações aceitas não confirmados.');
     const obrig = proc.requisitosEspecificos.filter((r) => r.obrigatorio);
@@ -98,7 +95,7 @@ const resultados = programas.map((prog) => {
   };
 });
 
-const reais = resultados.filter((r) => r.verificacao !== 'demo');
+const reais = resultados;
 const conta = (fn) => reais.filter(fn).length;
 const porUniv = {};
 for (const r of reais) {
@@ -113,7 +110,6 @@ const resumo = {
   fonteProgramas: dump ? `dump ${dump.coletadoEm}` : 'data/radar.json',
   total: resultados.length,
   reais: reais.length,
-  demonstrativos: resultados.length - reais.length,
   corretosAntes: 0,
   comCorrecao: reais.length,
   lacunasGerais: LACUNAS_GERAIS,
@@ -133,7 +129,7 @@ const md = [
   ``,
   `Gerado em ${resumo.geradoEm} a partir de ${resumo.fonteProgramas}.`,
   ``,
-  `- Mestrados auditados: **${resumo.total}** (${resumo.reais} reais + ${resumo.demonstrativos} demonstrativos)`,
+  `- Mestrados auditados: **${resumo.total}** (todos reais, catálogo do DUA)`,
   `- Corretos antes da correção: **${resumo.corretosAntes}** (as lacunas gerais abaixo afetavam todos)`,
   `- Processo confirmado em fontes oficiais (canal + ficha): **${resumo.confirmados}**`,
   `- Processo parcialmente confirmado: **${resumo.parciais}** (canal não confirmado: ${resumo.canalNaoConfirmado}; sem ficha: ${resumo.semFicha})`,

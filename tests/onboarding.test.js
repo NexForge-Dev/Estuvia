@@ -14,6 +14,7 @@ process.env.RATE_LIMIT_SCALE = '20';
 delete process.env.ANTHROPIC_API_KEY;
 delete process.env.ANTHROPIC_AUTH_TOKEN;
 
+await import('./fixtures/programas-reais.js'); // mestrados reais do DUA (fixture)
 const { createApp } = await import('../server/app.js');
 const { flush, users } = await import('../server/store.js');
 const engine = await import('../server/journey-engine.js');
@@ -96,7 +97,7 @@ test('jornada sem mestrado: destino = universidade; duplicidade por universidade
   assert.ok(find(j, '1.1'), 'jornada gerada com as missões');
   assert.equal((await c('POST', '/journeys', { universidadeId: 'ugr', anoAcademico: '2027/28' })).status, 409, 'mesma universidade e ano, ainda sem mestrado');
   assert.equal((await c('POST', '/journeys', { universidadeId: 'ugr', anoAcademico: '2028/29' })).status, 201, 'outro ano é outra jornada');
-  assert.equal((await c('POST', '/journeys', { universidadeId: 'us', programaId: 'ugr-demo-eng', anoAcademico: '2027/28' })).status, 400, 'mestrado de outra universidade');
+  assert.equal((await c('POST', '/journeys', { universidadeId: 'us', programaId: 'ugr-master-universitario-estudios-asia-oriental', anoAcademico: '2027/28' })).status, 400, 'mestrado de outra universidade');
 });
 
 test('definir o mestrado depois: mesma universidade, sem duplicar, Missão 1.3 reconhece', async () => {
@@ -108,14 +109,14 @@ test('definir o mestrado depois: mesma universidade, sem duplicar, Missão 1.3 r
   assert.equal((await c('PUT', `/journeys/${jid}/program`, { programaId: 'inexistente' })).status, 400);
   const other = radarPrograms().find((p) => p.universidadeId !== 'ugr');
   if (other) assert.equal((await c('PUT', `/journeys/${jid}/program`, { programaId: other.id })).status, 400, 'outra universidade');
-  const r = await c('PUT', `/journeys/${jid}/program`, { programaId: 'ugr-demo-eng' });
+  const r = await c('PUT', `/journeys/${jid}/program`, { programaId: 'ugr-master-universitario-estudios-asia-oriental' });
   assert.equal(r.status, 200);
-  assert.equal(r.data.journey.destino.programa.id, 'ugr-demo-eng');
+  assert.equal(r.data.journey.destino.programa.id, 'ugr-master-universitario-estudios-asia-oriental');
   assert.equal(objetivo(), true, 'Missão 1.3: "Mestrado desta jornada definido"');
-  assert.ok((await c('GET', '/me')).data.user.choices.includes('ugr-demo-eng'));
+  assert.ok((await c('GET', '/me')).data.user.choices.includes('ugr-master-universitario-estudios-asia-oriental'));
   const second = (await c('POST', '/journeys', { universidadeId: 'ugr', anoAcademico: '2028/29' })).data.journey.id;
-  assert.equal((await c('PUT', `/journeys/${second}/program`, { programaId: 'ugr-demo-eng' })).status, 409, 'o mesmo mestrado não vira duas jornadas');
-  assert.equal((await c('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2027/28' })).status, 409, 'regra antiga por mestrado preservada');
+  assert.equal((await c('PUT', `/journeys/${second}/program`, { programaId: 'ugr-master-universitario-estudios-asia-oriental' })).status, 409, 'o mesmo mestrado não vira duas jornadas');
+  assert.equal((await c('POST', '/journeys', { programaId: 'ugr-master-universitario-estudios-asia-oriental', anoAcademico: '2027/28' })).status, 409, 'regra antiga por mestrado preservada');
 });
 
 test('duração da estadia controla a TIE (regra > 6 meses preservada)', async () => {

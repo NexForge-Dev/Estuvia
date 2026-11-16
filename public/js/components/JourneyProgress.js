@@ -13,7 +13,7 @@ export function JourneyProgress(j) {
       h('div', { class: 'jh-main' },
         h('p', { class: 'eyebrow' }, 'Minha jornada'),
         h('h1', {}, d.origem, h('span', { class: 'jh-arrow' }, icon('arrow', { size: 26 })), d.universidade?.nome || 'Andaluzia'),
-        h('p', { class: 'jh-course' }, d.programa?.nome || 'Mestrado a definir', d.programa?.demo ? h('span', { class: 'chip-demo' }, 'Dados demo') : null),
+        h('p', { class: 'jh-course' }, d.programa?.nome || 'Mestrado a definir'),
         h('ul', { class: 'jh-facts' },
           h('li', {}, icon('pin', { size: 15 }), `${d.cidade || '-'}, ${d.pais}`),
           h('li', {}, icon('calendar', { size: 15 }), d.anoAcademico ? `Ano acadêmico ${d.anoAcademico}` : 'Ano a definir'),

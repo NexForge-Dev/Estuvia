@@ -68,9 +68,7 @@ export function applicationProcess(program, { calendario = { windows: [], events
 
   // ---------- Canal de candidatura ----------
   let canal;
-  if (program.demo) {
-    canal = { status: 'demo', texto: 'Programa demonstrativo: não existe processo real de candidatura.' };
-  } else if (canalInfo?.tipo === 'nao-dua') {
+  if (canalInfo?.tipo === 'nao-dua') {
     canal = { status: canalInfo.url ? 'nao-dua' : 'nao-dua-sem-canal', texto: canalInfo.texto, url: canalInfo.url || null, evidencia: canalInfo.evidencia };
     if (!canalInfo.url) { pendencias.push({ id: 'canal', texto: canalInfo.texto }); alertas.canal = canalInfo.texto; }
     else alertas.canal = `Este máster NÃO usa o Distrito Único Andaluz: ${canalInfo.texto} As missões do DUA (Rodada 3) não valem para ele; siga o procedimento do canal oficial.`;
@@ -97,7 +95,6 @@ export function applicationProcess(program, { calendario = { windows: [], events
   const estrangeiro = foreignNationality(profile);
   const semTitulo = requisitos.diploma === 'nao';
   const OFERTA = {
-    demo: 'Programa demonstrativo.',
     'nao-dua': 'Este máster não participa das fases do DUA: tem procedimento próprio.',
     'canal-nao-confirmado': 'O canal de candidatura deste máster não está confirmado no DUA.',
     'nao-confirmado': 'Cada universidade decide em quais másteres reserva vagas para a Fase 1, e nenhuma fonte pública lista isso por máster (o catálogo do DUA devolve a mesma lista em qualquer fase). Confirme no portal do DUA ao montar a solicitação da Fase 1, ou com a universidade.',
@@ -107,7 +104,7 @@ export function applicationProcess(program, { calendario = { windows: [], events
   const fases = proc.fases.map((f) => {
     const janela = (calendario.windows || []).find((w) => Number(w.fase) === f.fase) || null;
     const limiteTitulo = (calendario.events || []).find((e) => Number(e.fase) === f.fase && e.tipo === 'pagamento-titulo') || null;
-    const oferta = program.demo ? 'demo' : canal.status.startsWith('nao-dua') ? 'nao-dua' : canal.status !== 'confirmado' ? 'canal-nao-confirmado' : f.fase === 1 ? 'nao-confirmado' : f.fase === 2 ? 'geral' : 'se-sobrar';
+    const oferta = canal.status.startsWith('nao-dua') ? 'nao-dua' : canal.status !== 'confirmado' ? 'canal-nao-confirmado' : f.fase === 1 ? 'nao-confirmado' : f.fase === 2 ? 'geral' : 'se-sobrar';
     // Aplicabilidade ao perfil: só afirmamos "não" com base em regra oficial e dado declarado.
     let perfil = { status: 'sim', texto: 'Pelo seu perfil, você pode concorrer nesta fase.' };
     if (f.fase === 1 && estrangeiro === false) perfil = { status: 'nao', texto: 'A Fase 1 é exclusiva para nacionalidade estrangeira (O1 art. 2).' };
@@ -130,7 +127,7 @@ export function applicationProcess(program, { calendario = { windows: [], events
       declarada: Number(faseDeclarada) === f.fase,
     };
   });
-  if (!program.demo && canal.status === 'confirmado') pendencias.push({ id: 'fase1', texto: 'Se este máster oferta vagas na Fase 1 (estrangeiros): nenhuma fonte oficial pública lista isso por máster. Confirme no portal do DUA ou com a universidade antes de contar só com a Fase 1.' });
+  if (canal.status === 'confirmado') pendencias.push({ id: 'fase1', texto: 'Se este máster oferta vagas na Fase 1 (estrangeiros): nenhuma fonte oficial pública lista isso por máster. Confirme no portal do DUA ou com a universidade antes de contar só com a Fase 1.' });
   if (!(calendario.windows || []).length) pendencias.push({ id: 'calendario', texto: `Calendário oficial do curso ${ciclo} ainda não publicado ou não coletado.` });
 
   const f1 = fases[0];
@@ -151,7 +148,7 @@ export function applicationProcess(program, { calendario = { windows: [], events
       if (re.test(t) && !documentosDerivados.some((d) => d.id === id)) documentosDerivados.push({ id, texto, criterio: c.original || c.descricao, peso: c.peso ?? null, origem: 'derivado' });
     }
   }
-  if (!program.demo && !fichaColetada && !canal.status.startsWith('nao-dua')) {
+  if (!fichaColetada && !canal.status.startsWith('nao-dua')) {
     pendencias.push({ id: 'ficha', texto: 'A ficha do DUA deste máster (critérios de seleção, requisitos obrigatórios e graduações aceitas) ainda não foi coletada. Leia a ficha oficial antes de preparar os documentos específicos.' });
     alertas.ficha = 'Requisitos específicos deste máster ainda não confirmados pela ficha do DUA: leia a ficha oficial.';
   }
@@ -214,7 +211,7 @@ export function applicationProcess(program, { calendario = { windows: [], events
     pendencias,
     alertas,
     // Classificação de auditoria: "confirmado" = canal no catálogo do DUA + ficha do DUA coletada.
-    verificacao: program.demo ? 'demo' : completo ? 'confirmado' : 'parcial',
+    verificacao: completo ? 'confirmado' : 'parcial',
   };
 }
 

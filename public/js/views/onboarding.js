@@ -670,7 +670,6 @@ function resultScreen(j) {
         h('ul', {}, iniciais.map((m) => h('li', {}, h('a', { href: `#/j/${j.id}/m/${m.id}` }, h('span', { class: 'ob-mid' }, m.label || m.id), h('span', {}, m.titulo), m.status === 'atencao' ? h('span', { class: 'tag tag-warn' }, 'Atenção') : null))))) : null,
       j.progressoAnterior ? h('p', { class: 'ob-result-note' }, icon('check', { size: 14 }), `${j.progressoAnterior.missoes} missão(ões) registradas como "declaradas por mim" pelo ponto em que você está.`) : null,
       atendidos ? h('p', { class: 'ob-result-note' }, icon('folder', { size: 14 }), `${atendidos} missão(ões) concluídas porque você já tem o documento.`) : null,
-      d.programa?.demo ? h('p', { class: 'notice' }, 'Este mestrado é um dado demonstrativo do protótipo. Confirme sempre na ficha oficial.') : null,
       h('div', { class: 'row wrap ob-result-actions' },
         j.proximaMissao
           ? h('a', { class: 'btn btn-cta btn-lg', href: `#/j/${j.id}/m/${j.proximaMissao.id}` }, `Começar: ${j.proximaMissao.label} ${j.proximaMissao.titulo}`, icon('arrow', { size: 16 }))

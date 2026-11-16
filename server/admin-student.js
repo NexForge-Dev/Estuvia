@@ -28,7 +28,6 @@ function journeyInfo(user, jr) {
     universidade: j.destino.universidade?.nome || '-',
     sigla: j.destino.universidade?.sigla || null,
     programa: j.destino.programa?.nome || '-',
-    demo: Boolean(j.destino.programa?.demo),
     cidade: j.destino.cidade,
     anoAcademico: j.destino.anoAcademico,
     status: j.status,

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { ROUNDS, MILESTONES, JOURNEY_TEMPLATE } from '../content/rounds.js';
 import { SOURCES, TAGS } from '../content/sources.js';
-import { UNIVERSITIES, PROGRAMS } from '../content/catalog.js';
+import { UNIVERSITIES } from '../content/catalog.js';
 import { DOCUMENTS } from '../content/documents.js';
 import { FAQ } from '../content/knowledge.js';
 import { config } from '../config.js';
@@ -47,7 +47,7 @@ router.get('/manual', (req, res) => res.json({
 // ---------- Somente com conta ----------
 router.use(requireAuth);
 router.get('/sources', (req, res) => res.json({ sources: SOURCES, tags: TAGS }));
-router.get('/catalog', (req, res) => res.json({ universities: UNIVERSITIES, programs: PROGRAMS }));
+router.get('/catalog', (req, res) => res.json({ universities: UNIVERSITIES }));
 router.get('/documents', (req, res) => res.json({ documents: DOCUMENTS, statusLabel: DOC_STATUS_LABEL }));
 router.get('/scholarships', (req, res) => res.json({ scholarships: SCHOLARSHIPS, status: SCHOLARSHIP_STATUS }));
 router.get('/places', (req, res) => res.json({ consulates: CONSULATES, cityGuides: CITY_GUIDES, consulateListUrl: CONSULATE_LIST_URL }));

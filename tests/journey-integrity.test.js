@@ -13,6 +13,7 @@ process.env.RATE_LIMIT_SCALE = '20';
 delete process.env.ANTHROPIC_API_KEY;
 delete process.env.ANTHROPIC_AUTH_TOKEN;
 
+await import('./fixtures/programas-reais.js'); // mestrados reais do DUA (fixture)
 const { createApp } = await import('../server/app.js');
 const { flush, users } = await import('../server/store.js');
 const engine = await import('../server/journey-engine.js');
@@ -72,9 +73,9 @@ let jidA;
 test('setup: duas estudantes com uma jornada cada', async () => {
   ana = await student('Ana Teste', 'ana.integ@exemplo.com');
   bia = await student('Bia Teste', 'bia.integ@exemplo.com');
-  jidA = (await ana.c('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2027/28' })).data.journey.id;
+  jidA = (await ana.c('POST', '/journeys', { programaId: 'ugr-master-universitario-estudios-asia-oriental', anoAcademico: '2027/28' })).data.journey.id;
   assert.ok(jidA);
-  assert.equal((await bia.c('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2027/28' })).status, 201);
+  assert.equal((await bia.c('POST', '/journeys', { programaId: 'ugr-master-universitario-estudios-asia-oriental', anoAcademico: '2027/28' })).status, 201);
 });
 
 test('concluir duas vezes não duplica nada e explica que já está concluída', async () => {
@@ -150,7 +151,7 @@ test('decisões externas: matrícula e visto não podem ser registrados antes da
 
 test('resultados adversos: não admitido, lista de espera e visto indeferido ficam representados', async () => {
   const { c } = await student('Caio Teste', 'caio.integ@exemplo.com');
-  const id = (await c('POST', '/journeys', { programaId: 'ugr-demo-arq', anoAcademico: '2027/28' })).data.journey.id;
+  const id = (await c('POST', '/journeys', { programaId: 'ugr-master-universitario-arqueologia', anoAcademico: '2027/28' })).data.journey.id;
   let r = await c('PUT', `/journeys/${id}/situacao`, { campo: 'adjudicacao', valor: 'nao-admitido' });
   assert.equal(r.status, 200);
   assert.equal(find(r.data.journey, '4.1').status, 'bloqueada');
@@ -177,7 +178,7 @@ test('anotações não podem ser registradas em missão bloqueada', async () => 
 
 test('contatos acadêmicos têm limite por jornada', async () => {
   const { c } = await student('Duda Teste', 'duda.integ@exemplo.com');
-  const id = (await c('POST', '/journeys', { programaId: 'ugr-demo-arq', anoAcademico: '2027/28' })).data.journey.id;
+  const id = (await c('POST', '/journeys', { programaId: 'ugr-master-universitario-arqueologia', anoAcademico: '2027/28' })).data.journey.id;
   let last;
   for (let i = 0; i < 31; i++) last = await c('POST', `/journeys/${id}/contacts`, { nome: `Prof ${i}`, fonteUrl: 'https://www.ugr.es/x' });
   assert.equal(last.status, 409);
@@ -186,7 +187,7 @@ test('contatos acadêmicos têm limite por jornada', async () => {
 
 test('Agenda: aprovar duas vezes não duplica; replanejar preserva o que o estudante criou ou editou', async () => {
   const { c, uid } = await student('Eva Teste', 'eva.integ@exemplo.com');
-  await c('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2027/28' });
+  await c('POST', '/journeys', { programaId: 'ugr-master-universitario-estudios-asia-oriental', anoAcademico: '2027/28' });
   await c('PUT', '/planner/availability', { dias: [1, 2, 3, 4, 5], janelas: [{ inicio: '09:00', fim: '12:00' }], horasSemanais: 6, preferencia: 'curtas', fuso: 'America/Sao_Paulo' });
   const semana = nextMonday();
   const s = (await c('POST', '/planner/suggest', { semana })).data;
@@ -217,7 +218,7 @@ test('Agenda: aprovar duas vezes não duplica; replanejar preserva o que o estud
 
 test('prazos: dias restantes por data de calendário em Madri ("hoje" é 0, ontem é -1)', () => {
   const user = { profile: PROFILE, documents: {} };
-  const jr = { id: 'jx', programaId: 'ugr-demo-eng', anoAcademico: '2027/28', missions: { '3.9': { prazo: '2026-11-10' } }, dados: {} };
+  const jr = { id: 'jx', programaId: 'ugr-master-universitario-estudios-asia-oriental', anoAcademico: '2027/28', missions: { '3.9': { prazo: '2026-11-10' } }, dados: {} };
   const dias = (now) => engine.computeJourney(user, jr, new Date(now)).prazos.find((p) => p.missao === '3.9').diasRestantes;
   assert.equal(dias('2026-11-09T10:00:00Z'), 1, 'véspera');
   assert.equal(dias('2026-11-10T10:00:00Z'), 0, 'dia do prazo');
@@ -227,7 +228,7 @@ test('prazos: dias restantes por data de calendário em Madri ("hoje" é 0, onte
 
 test('chegada: data de hoje em Madri é aceita mesmo antes da virada em UTC', () => {
   const user = { profile: PROFILE, documents: {} };
-  const jr = { id: 'jy', programaId: 'ugr-demo-eng', missions: {}, dados: {}, situacao: { visto: 'aprovado', adjudicacao: 'admitido' } };
+  const jr = { id: 'jy', programaId: 'ugr-master-universitario-estudios-asia-oriental', missions: {}, dados: {}, situacao: { visto: 'aprovado', adjudicacao: 'admitido' } };
   // 23:30 UTC de 09/11 = 00:30 de 10/11 em Madri: quem acabou de desembarcar informa 10/11.
   engine.registerArrival(user, jr, { dataEntrada: '2026-11-10', confirmo: true }, new Date('2026-11-09T23:30:00Z'));
   assert.equal(jr.dados.dataEntrada, '2026-11-10');

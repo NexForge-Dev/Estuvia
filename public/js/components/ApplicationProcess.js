@@ -13,7 +13,7 @@ const ORIGEM = {
 };
 const chip = (origem) => { const [l, t] = ORIGEM[origem] || ORIGEM['nao-confirmado']; return h('span', { class: `chip-status t-${t}` }, l); };
 const ref = (x) => (x?.fonte ? h('small', { class: 'muted' }, ` (${x.fonte}${x.artigo ? `, ${x.artigo}` : ''})`) : null);
-const OFERTA = { 'nao-dua': ['Fora do DUA', 'muted'], geral: ['Fase ordinária', 'ok'], 'se-sobrar': ['Só vagas que sobrarem', 'muted'], 'nao-confirmado': ['Vagas nesta fase não confirmadas', 'pending'], 'canal-nao-confirmado': ['Canal não confirmado', 'warn'], demo: ['Demonstrativo', 'muted'] };
+const OFERTA = { 'nao-dua': ['Fora do DUA', 'muted'], geral: ['Fase ordinária', 'ok'], 'se-sobrar': ['Só vagas que sobrarem', 'muted'], 'nao-confirmado': ['Vagas nesta fase não confirmadas', 'pending'], 'canal-nao-confirmado': ['Canal não confirmado', 'warn'] };
 const PERFIL = { sim: null, nao: ['Não se aplica ao seu perfil', 'danger'], verificar: ['Complete o perfil', 'pending'] };
 
 function section(titulo, ...body) {
@@ -22,9 +22,9 @@ function section(titulo, ...body) {
 
 export function ApplicationProcess(p) {
   if (!p) return h('p', { class: 'notice' }, 'Defina o mestrado desta jornada para ver o processo de candidatura dele.');
-  const canalTone = { confirmado: 'ok', 'nao-confirmado': 'warn', demo: 'muted', 'nao-dua': 'pending', 'nao-dua-sem-canal': 'warn' }[p.canal.status];
-  const canalLabel = { confirmado: 'Distrito Único Andaluz', 'nao-confirmado': 'Canal não confirmado', demo: 'Demonstrativo', 'nao-dua': 'Fora do DUA: procedimento próprio', 'nao-dua-sem-canal': 'Fora do DUA: canal não publicado' }[p.canal.status];
-  const verif = { confirmado: ['Processo confirmado em fontes oficiais', 'ok'], parcial: ['Processo parcialmente confirmado', 'pending'], demo: ['Programa demonstrativo', 'muted'] }[p.verificacao];
+  const canalTone = { confirmado: 'ok', 'nao-confirmado': 'warn', 'nao-dua': 'pending', 'nao-dua-sem-canal': 'warn' }[p.canal.status];
+  const canalLabel = { confirmado: 'Distrito Único Andaluz', 'nao-confirmado': 'Canal não confirmado', 'nao-dua': 'Fora do DUA: procedimento próprio', 'nao-dua-sem-canal': 'Fora do DUA: canal não publicado' }[p.canal.status];
+  const verif = { confirmado: ['Processo confirmado em fontes oficiais', 'ok'], parcial: ['Processo parcialmente confirmado', 'pending'] }[p.verificacao];
 
   return h('div', { class: 'stack ap' },
     h('div', { class: 'ap-head' },

@@ -15,6 +15,7 @@ delete process.env.TRAVELPAYOUTS_TOKEN;
 delete process.env.ANTHROPIC_API_KEY;
 delete process.env.ANTHROPIC_AUTH_TOKEN;
 
+await import('./fixtures/programas-reais.js'); // mestrados reais do DUA (fixture)
 const { normalizeOffer, routePrices, clearPriceCache } = await import('../server/flight-prices.js');
 const { computeTravel } = await import('../server/travel-engine.js');
 const { createApp } = await import('../server/app.js');
@@ -136,7 +137,7 @@ test('API: um estudante não lê nem altera moradia, cotação, recurso ou bolsa
 test('API: selecionar a moradia atualiza o orçamento (inclui a taxa de agência)', async () => {
   const cy = session();
   await cy('POST', '/auth/register', { nome: 'Cy Rocha', email: 'cy@audit.dev', senha: 'segura123', aceite: true, maiorIdade: true });
-  await cy('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2027/28' });
+  await cy('POST', '/journeys', { programaId: 'ugr-master-universitario-estudios-asia-oriental', anoAcademico: '2027/28' });
   const antes = (await cy('GET', '/finance')).data.plano;
   const h = (await cy('POST', '/living/housing', { nome: 'Piso', tipo: 'quarto', aluguel: 410, contasIncluidas: true, caucao: 410, taxaAgencia: 200 })).data.criado;
   await cy('PUT', `/living/housing/${h}`, { status: 'escolhida' });

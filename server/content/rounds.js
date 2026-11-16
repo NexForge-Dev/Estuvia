@@ -66,7 +66,7 @@ export const ROUNDS = [
         resumo: 'Universidades públicas andaluzas, com filtros por cidade, área, modalidade e duração.',
         objetivo: 'Conhecer as opções antes de escolher.',
         porque: 'A candidatura pelo DUA permite combinar programas de diferentes universidades públicas andaluzas.',
-        comoExecutar: [{ titulo: 'Catálogo', texto: 'Use o catálogo da plataforma e o portal de másteres do DUA. Os programas do protótipo são demonstrativos.' }],
+        comoExecutar: [{ titulo: 'Catálogo', texto: 'Use o catálogo da plataforma, montado a partir das fichas oficiais do DUA, e confira cada máster no portal de másteres do DUA.' }],
         objetivos: [
           { id: 'catalogo', texto: 'Explorar o catálogo com filtros' },
           { id: 'portal', texto: 'Consultar o portal oficial de másteres' },

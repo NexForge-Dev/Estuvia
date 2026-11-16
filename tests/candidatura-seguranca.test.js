@@ -26,7 +26,7 @@ const doble = fixture('ficha-331202-doble-profesorado-uco.html');
 
 // Programa no formato que o Radar entrega à jornada, montado a partir da ficha oficial real.
 const fromFicha = (id, f) => ({
-  id, universidadeId: 'uca', nome: f.dados.titulo, duaCodigo: f.dados.codigoDua, ciclo: '2026/27', duracaoMeses: 12, demo: false, radar: true,
+  id, universidadeId: 'uca', nome: f.dados.titulo, duaCodigo: f.dados.codigoDua, ciclo: '2026/27', duracaoMeses: 12, radar: true,
   requisitosFicha: f.dados.requisitos, criteriosOriginais: f.dados.baremo.map((c) => ({ original: c.descricao, peso: c.peso })), criterios: f.dados.baremo,
   idioma: (() => { const es = f.dados.idiomasExigidos.find((i) => i.idioma === 'espanhol'); return es ? { status: 'requerido', nivel: es.nivel, certificado: true, fonte: 'O30' } : { status: 'nao-requerido', fonte: 'O30' }; })(),
   requisitos: [],
@@ -128,7 +128,7 @@ test('compatibilidade: jornada no formato anterior continua válida, sem perder 
 });
 
 // ---------- Programas fora do DUA e pendências institucionais (configuração real de program-channels.js) ----------
-const UGR = (id, nome) => ({ id, universidadeId: 'ugr', nome, duaCodigo: null, ciclo: '2026/27', duracaoMeses: 24, demo: false, radar: true, idioma: { status: 'verificar', fonte: 'O10' }, requisitos: [], requisitosFicha: null, criteriosOriginais: null, criterios: null });
+const UGR = (id, nome) => ({ id, universidadeId: 'ugr', nome, duaCodigo: null, ciclo: '2026/27', duracaoMeses: 24, radar: true, idioma: { status: 'verificar', fonte: 'O10' }, requisitos: [], requisitosFicha: null, criteriosOriginais: null, criterios: null });
 Object.assign(PROGS, {
   'ugr-masters-programme-european-studies': UGR('ugr-masters-programme-european-studies', 'Máster Universitario en Estudios Europeos'),
   'ugr-master-universitario-alimentacion-nutricion-salud-food-h-0': UGR('ugr-master-universitario-alimentacion-nutricion-salud-food-h-0', 'Máster Universitario en Alimentación, Nutrición y Salud (Food-H)'),

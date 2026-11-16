@@ -14,6 +14,7 @@ delete process.env.ANTHROPIC_API_KEY;
 delete process.env.ANTHROPIC_AUTH_TOKEN;
 process.env.MENTOR_PROVIDER = 'none';
 
+await import('./fixtures/programas-reais.js'); // mestrados reais do DUA (fixture)
 const { createApp } = await import('../server/app.js');
 const { flush } = await import('../server/store.js');
 const { ensureAdminAccount } = await import('../server/admin-seed.js');
@@ -117,7 +118,7 @@ test('status da IA: mostra configuração e o teste não chama a rede sem IA con
 });
 
 test('acompanhamento: inscrição, progresso e alertas por aluno; filtros da lista', async () => {
-  const r = await aluno('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2027/28' });
+  const r = await aluno('POST', '/journeys', { programaId: 'ugr-master-universitario-estudios-asia-oriental', anoAcademico: '2027/28' });
   assert.equal(r.status, 201);
   const jid = r.data.journey.id;
   assert.equal((await aluno('PUT', `/journeys/${jid}/situacao`, { campo: 'adjudicacao', valor: 'aguardando' })).status, 200);

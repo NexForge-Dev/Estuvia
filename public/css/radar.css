@@ -121,12 +121,9 @@
 .rd-verif-confirmada > svg { color: var(--ok); }
 .rd-verif-pendente > svg, .rd-verif-prevista > svg { color: var(--warn); }
 .rd-verif-nao-confirmada > svg, .rd-verif-desatualizada > svg { color: var(--warn); }
-.rd-verif-demonstrativo { border-color: var(--danger); }
 .rd-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .rd-actions .btn { display: inline-flex; align-items: center; gap: 6px; }
 .rd-following { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, var(--border)); }
-.rd-demo { outline: 2px dashed var(--danger); outline-offset: -2px; }
-.rd-demo-flag { margin: 0; font-size: .72rem; font-weight: 800; letter-spacing: .05em; color: var(--danger); }
 
 .rd-empty { text-align: center; padding: 40px 16px; border-radius: var(--rd-radius); border: 1px dashed var(--border); color: var(--muted); display: grid; justify-items: center; gap: 6px; }
 .rd-empty h2, .rd-empty h3 { color: var(--text); }
@@ -221,5 +218,4 @@
 .rd-invalidate input { width: 190px; }
 .rd-td-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .rd-admin-form { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); align-items: end; margin: 10px 0; }
-.rd-dev { border: 2px dashed var(--danger); }
 .rd-mygrade { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 8px; }

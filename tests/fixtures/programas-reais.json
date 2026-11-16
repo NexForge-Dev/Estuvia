@@ -1,0 +1,1979 @@
+{
+  "ugr-master-universitario-estudios-asia-oriental": {
+    "id": "ugr-master-universitario-estudios-asia-oriental",
+    "universidadeId": "ugr",
+    "nome": "Máster Universitario en Estudios de Asia Oriental",
+    "area": "Artes y Humanidades",
+    "ciclo": "2026/27",
+    "duracaoMeses": 12,
+    "modalidade": "presencial",
+    "url": "https://masteres.ugr.es/informacion/titulaciones/master-universitario-estudios-asia-oriental",
+    "radar": true,
+    "idioma": {
+      "status": "requerido",
+      "nivel": "B2",
+      "certificado": true,
+      "fonte": "O30",
+      "texto": "QUIENES SEAN EXTRANJEROS DE PAIS DE HABLA NO ESPAÑOLA NO TENDRÁN ACCESO AL MÁSTER SIN ACREDITAR CORRECTO CONOCIMIENTO HABLADO Y ESCRITO DE ESPAÑOL (ACREDITACION NIVEL INTERMEDIO O B2)"
+    },
+    "outrosIdiomas": [
+      {
+        "idioma": "inglês",
+        "nivel": "B1",
+        "obrigatorio": true,
+        "texto": "PARA LA ADMISIÓN EN EL MÁSTER SERÁ NECESARIO DOMINIO DEL INGLES A NIVEL B1",
+        "fonte": "O30"
+      },
+      {
+        "idioma": "chinês",
+        "nivel": "B1",
+        "obrigatorio": true,
+        "texto": "PARA LA ADMISIÓN EN EL MÁSTER SERÁ NECESARIO DOMINIO DE CHINO NIVEL B1 O JAPONÉS NIVEL A2 EN EL CASO DE ESTUDIANTES NO NATIVOS DE ESTAS LENGUAS",
+        "fonte": "O30"
+      },
+      {
+        "idioma": "japonês",
+        "nivel": "A2",
+        "obrigatorio": true,
+        "texto": "PARA LA ADMISIÓN EN EL MÁSTER SERÁ NECESARIO DOMINIO DE CHINO NIVEL B1 O JAPONÉS NIVEL A2 EN EL CASO DE ESTUDIANTES NO NATIVOS DE ESTAS LENGUAS",
+        "fonte": "O30"
+      }
+    ],
+    "criterios": [
+      {
+        "descricao": "Nota média do histórico",
+        "peso": 60
+      },
+      {
+        "descricao": "Dominio acreditado de la lengua china a un nivel igual o superior a hsk 4 (o certificado equivalente) o de la lengua japonesa a nivel igual o superior a jlpt n3 (o certificado equivalente)",
+        "peso": 20
+      },
+      {
+        "descricao": "Formación extracurricular en el ámbito de asia oriental",
+        "peso": 10
+      },
+      {
+        "descricao": "Experiencia laboral/profesional/prácticas utilizando alguna lengua de asia oriental, incluyendo la enseñanza de estas lenguas",
+        "peso": 5
+      },
+      {
+        "descricao": "Experiencia investigadora en el área de asia oriental",
+        "peso": 5
+      }
+    ],
+    "somenteNotaExpediente": false,
+    "titulacoes": {
+      "titulacoes": [
+        {
+          "nome": "GRADO EN ESTUDIOS DE ASIA ORIENTAL",
+          "preferencia": "alta",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS DE ASIA Y ÁFRICA: ARABE, CHINO Y JAPONÉS",
+          "preferencia": "alta",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS DE ESPAÑOL Y CHINO: LENGUA, LITERATURA Y CULTURA",
+          "preferencia": "alta",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN ESTUDIOS DE ASIA ORIENTAL",
+          "preferencia": "alta",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN FILOSOFÍA, POLÍTICA Y ECONOMÍA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HISTORIA DEL ARTE Y GESTIÓN DEL PATRIMONIO HISTÓRICO-ARTÍSTICO",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ANÁLISIS ECONÓMICO",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ANTROPOLOGÍA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ANTROPOLOGÍA SOCIAL",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ANTROPOLOGÍA SOCIAL Y CULTURAL",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ARQUEOLOGÍA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ARTE",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ARTE DIGITAL",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ARTE DIGITAL Y TECNOLOGÍAS CREATIVAS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ARTE ELECTRÓNICO Y DIGITAL",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ARTE PARA VIDEOJUEGOS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ARTES DIGITALES",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN CIENCIAS DEL LENGUAJE Y ESTUDIOS LITERARIOS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN CIENCIAS ECONÓMICAS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN CIENCIAS POLÍTICAS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN CIENCIAS POLÍTICAS Y DE LA ADMINISTRACIÓN",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN CIENCIAS POLÍTICAS Y DE LA ADMINISTRACIÓN PÚBLICA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN CIENCIAS POLÍTICAS Y GESTIÓN PÚBLICA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN CIENCIAS SOCIALES",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN CIENCIAS Y LENGUAS DE LA ANTIGÜEDAD",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ECONOMÍA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ECONOMÍA DE LA EMPRESA INTERNACIONAL",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ECONOMÍA DIGITAL E INTELIGENCIA DE NEGOCIOS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ECONOMÍA Y FINANZAS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ECONOMÍA Y GESTIÓN",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ECONOMÍA Y NEGOCIOS INTERNACIONALES",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESPAÑOL: ESTUDIOS LINGÜÍSTICOS Y LITERARIOS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESPAÑOL: LENGUA Y LITERATURA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS ALEMANES",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS ÁRABES E ISLÁMICOS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS CATALANES Y OCCITANOS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS CLÁSICOS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS CLÁSICOS Y DE LA ANTIGÜEDAD",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS CLÁSICOS Y ROMÁNICOS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS CULTURALES",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS DE FRANCÉS Y CATALÁN",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS DE FRANCÉS Y DE CLÁSICAS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS DE FRANCÉS Y ESPAÑOL",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS DE INGLÉS Y CATALÁN",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS DE INGLÉS Y DE CLÁSICAS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS DE INGLÉS Y FRANCÉS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS FRANCESES",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS FRANCÓFONOS APLICADOS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS INGLESES",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS INGLESES. LENGUA, LITERATURA Y CULTURA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS INTERNACIONALES",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS INTERNACIONALES DE ECONOMÍA Y EMPRESA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS INTERNACIONALES DE ECONOMÍA Y EMPRESA / INTERNATIONAL BUSINESS ECONOMICS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN FILOLOGÍA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN FILOLOGÍA MODERNA. INGLÉS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN FILOLOGÍA Y CULTURA FRANCESAS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN FILOSOFÍA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN FILOSOFÍA, POLÍTICA, DERECHO Y ECONOMÍA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN FILOSOFÍA, POLÍTICA Y COMUNICACIÓN",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN GEOGRAFÍA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN GEOGRAFÍA, ANÁLISIS TERRITORIAL Y SOSTENIBILIDAD",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN GEOGRAFÍA, DESARROLLO TERRITORIAL Y SOSTENIBILIDAD",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN GEOGRAFÍA E HISTORIA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN GEOGRAFÍA, GEOTECNOLOGÍAS Y SOSTENIBILIDAD TERRITORIAL",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN GEOGRAFÍA, MEDIO AMBIENTE Y PLANIFICACIÓN TERRITORIAL",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN GEOGRAFÍA, ORDENACIÓN DEL TERRITORIO Y GESTIÓN DEL MEDIO AMBIENTE",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN GEOGRAFÍA, TERRITORIO Y MEDIO AMBIENTE",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN GEOGRAFÍA Y CAMBIO GLOBAL",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN GEOGRAFÍA Y GESTIÓN DEL TERRITORIO",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN GEOGRAFÍA Y MEDIO AMBIENTE",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN GEOGRAFÍA Y ORDENACIÓN DEL TERRITORIO",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN GEOGRAFÍA Y PLANIFICACIÓN TERRITORIAL",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HISTORIA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HISTORIA DEL ARTE",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HISTORIA DEL ARTE Y ARQUEOLOGÍA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HISTORIA DEL ARTE Y GESTIÓN DEL PATRIMONIO ARTÍSTICO",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HISTORIA DEL ARTE Y PATRIMONIO CULTURAL",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HISTORIA DEL ARTE Y PATRIMONIO HISTÓRICO-ARTÍSTICO",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HISTORIA, GEOGRAFÍA E HISTORIA DEL ARTE (ARTES Y HUMANIDADES)",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HISTORIA, GEOGRAFÍA E HISTORIA DEL ARTE (CIENCIAS SOCIALES Y JURÍDICAS)",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HISTORIA, POLÍTICA Y ECONOMÍA CONTEMPORÁNEAS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HISTORIA Y CIENCIAS DE LA MÚSICA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HISTORIA Y CIENCIAS DE LA MÚSICA Y TECNOLOGÍA MUSICAL",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HISTORIA Y PATRIMONIO",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HISTORIA Y PATRIMONIO HISTÓRICO",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HISTORIA Y POLÍTICA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HUMANIDADES Y ANTROPOLOGÍA SOCIAL",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HUMANIDADES Y ESTUDIOS CULTURALES",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HUMANIDADES Y ESTUDIOS SOCIALES",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN INGLÉS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN INGLÉS: ESTUDIOS LINGÜÍSTICOS Y LITERARIOS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN LENGUA Y LITERATURA INGLESAS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN LENGUAS APLICADAS Y TRADUCCIÓN",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN LINGÜÍSTICA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN LINGÜÍSTICA APLICADA Y CIENCIAS DEL LENGUAJE",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN LINGÜÍSTICA Y LENGUAS APLICADAS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN LITERATURA GENERAL Y COMPARADA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN RELACIONES INTERNACIONALES",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN RELACIONES INTERNACIONALES Y UNIÓN EUROPEA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN SOCIOLOGÍA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN SOCIOLOGÍA APLICADA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN TURISMO",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN TURISMO Y DIRECCIÓN DE EMPRESAS TURÍSTICAS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN TURISMO Y GESTIÓN DEL OCIO",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN GEOGRAFÍA E HISTORIA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "DIPLOMADO EN TURISMO",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN CIENCIAS POLÍTICAS, GOBIERNO Y ADMINISTRACIÓN PÚBLICA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS DE INGLÉS Y ESPAÑOL",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN LITERATURA Y ESCRITURA CREATIVA DE LA UNIVERSIDAD DE NAVARRA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN FILOLOGÍA FRANCESA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN CIENCIAS ECONÓMICAS Y EMPRESARIALES",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN CIENCIAS POLÍTICAS Y DE LA ADMINISTRACIÓN",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN CIENCIAS POLÍTICAS Y SOCIOLOGÍA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN ECONOMÍA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN FILOLOGÍA FRANCESA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN FILOLOGÍA INGLESA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN FILOSOFÍA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN GEOGRAFÍA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN HISTORIA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN HISTORIA DEL ARTE",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN SOCIOLOGÍA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN ANTROPOLOGÍA SOCIAL Y CULTURAL",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN LINGÜÍSTICA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ANTROPOLOGÍA SOCIAL Y EVOLUCIÓN HUMANA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ARTES ESCÉNICAS-INTERPRETACIÓN",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ARTES Y DISEÑO",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN CINE",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN CINE Y ARTES AUDIOVISUALES",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN CINE Y CULTURA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN CINEMATOGRAFÍA Y ARTES AUDIOVISUALES",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN COMUNICACIÓN CULTURAL",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN COMUNICACIÓN E INDUSTRIAS CULTURALES",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS GLOBALES (GLOBAL STUDIES)",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ARTES ESCÉNICAS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ARTES ESCÉNICAS E INTERPRETACIÓN AUDIOVISUAL",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ARTES ESCÉNICAS Y CINEMATOGRÁFICAS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ARTES ESCÉNICAS Y MEDIÁTICAS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ARTES VISUALES",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN AUDIOVISUAL Y MULTIMEDIA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN BELLAS ARTES",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN CIENCIAS DE LA ANTIGÜEDAD",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN CIENCIAS DE LA CULTURA Y DIFUSIÓN CULTURAL",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN CINE Y CULTURA AUDIOVISUAL",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN CINE Y FICCIÓN AUDIOVISUAL",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN CINE Y MEDIOS AUDIOVISUALES",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN CINE Y TELEVISIÓN",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN CINEMATOGRAFÍA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN COMUNICACIÓN",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN COMUNICACIÓN AUDIOVISUAL",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN COMUNICACIÓN AUDIOVISUAL Y MULTIMEDIA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN COMUNICACIÓN AUDIOVISUAL Y NUEVOS MEDIOS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN COMUNICACIÓN CORPORATIVA, PROTOCOLO Y ORGANIZACIÓN DE EVENTOS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN COMUNICACIÓN DIGITAL",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN COMUNICACIÓN DIGITAL Y PERIODISMO",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN COMUNICACIÓN ESTRATÉGICA, PROTOCOLO Y ORGANIZACIÓN DE EVENTOS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN COMUNICACIÓN GLOBAL Y ESTRATÉGICA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN COMUNICACIÓN INTERACTIVA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN COMUNICACIÓN INTERNACIONAL",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN COMUNICACIÓN PUBLICITARIA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN COMUNICACIÓN SOCIAL",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN COMUNICACIÓN Y CREACIÓN AUDIOVISUAL",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN COMUNICACIÓN Y MEDIOS DIGITALES",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN COMUNICACIÓN Y PERIODISMO AUDIOVISUALES",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN COMUNICACIÓN Y RELACIONES PÚBLICAS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN COOPERACIÓN INTERNACIONAL PARA EL DESARROLLO",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN DERECHO",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN DERECHO / BACHELOR OF LAWS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN DERECHO CANÓNICO",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ECONOMÍA FINANCIERA Y ACTUARIAL",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN EDUCACIÓN INFANTIL (MAESTRO)",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN EDUCACIÓN PRIMARIA (MAESTRO)",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN EDUCACIÓN SOCIAL",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS DE CATALÁN Y DE CLÁSICAS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS DE COMUNICACIÓN Y MEDIOS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS DE ESPAÑOL Y DE CLÁSICAS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS DE GALLEGO Y ESPAÑOL",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS HEBREOS Y ARAMEOS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS HISPÁNICOS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS HISPÁNICOS: LENGUA ESPAÑOLA Y SUS LITERATURAS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS HISPANO-ALEMANES",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS ITALIANOS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS PORTUGUESES Y BRASILEÑOS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS SEMÍTICOS E ISLÁMICOS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS SOCIOCULTURALES DE GÉNERO",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS TEATRALES",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS TRANSCULTURALES EUROPEOS: LENGUAS, CULTURAS, INTERACCIONES",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS VASCOS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN EUROPEAN STUDIES",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN FICCIÓN Y NARRACIÓN",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN FILOLOGÍA APLICADA GALLEGA Y ESPAÑOLA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN FILOLOGÍA BÍBLICA TRILINGÜE",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN FILOLOGÍA CATALANA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN FILOLOGÍA CATALANA: ESTUDIOS DE LITERATURA Y LINGÜÍSTICA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN FILOLOGÍA CLÁSICA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN FILOLOGÍA HISPÁNICA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN FILOLOGÍA ROMÁNICA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN FILOLOGÍA VASCA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN GALLEGO Y PORTUGUÉS: ESTUDIOS LINGÜÍSTICOS Y LITERARIOS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN GESTIÓN CULTURAL",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN GESTIÓN CULTURAL (Modalidad virtual",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN GESTIÓN DE LA COMUNICACIÓN",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN GESTIÓN DE LA COMUNICACIÓN GLOBAL",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN GESTIÓN DE LA SOSTENIBILIDAD, TRANSFORMACIÓN DIGITAL Y MEDIO AMBIENTE",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HUMANIDADES",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HUMANIDADES DIGITALES",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HUMANIDADES DIGITALES GLOBALES",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HUMANIDADES. ESTUDIOS INTERCULTURALES",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HUMANIDADES: HISTORIA CULTURAL",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HUMANIDADES Y PATRIMONIO",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN IGUALDAD DE GÉNERO",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN LENGUA DE SIGNOS ESPAÑOLA Y COMUNIDAD SORDA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN LENGUA ESPAÑOLA Y LITERATURAS HISPÁNICAS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN LENGUA ESPAÑOLA Y SU LITERATURA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN LENGUA Y CULTURA VASCA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN LENGUA Y LITERATURA ALEMANAS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN LENGUA Y LITERATURA CATALANAS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN LENGUA Y LITERATURA ESPAÑOLAS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN LENGUA Y LITERATURA GALLEGAS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN LENGUA Y LITERATURA HISPÁNICA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN LENGUAS APLICADAS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN LENGUAS APLICADAS A LA COMUNICACIÓN Y AL MARKETING",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN LENGUAS APLICADAS Y COMUNICACIÓN INTERCULTURAL",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN LENGUAS EXTRANJERAS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN LENGUAS, LITERATURAS Y CULTURAS ROMÁNICAS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN LENGUAS ROMÁNICAS Y SUS LITERATURAS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN LENGUAS Y LITERATURAS MODERNAS-PORTUGUÉS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN PAISAJISMO",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN PERIODISMO",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN PERIODISMO, COMUNICACIÓN DIGITAL Y NUEVOS MEDIOS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN PERIODISMO Y COMUNICACIÓN CORPORATIVA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN PERIODISMO Y MEDIOS DIGITALES",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN PSICOLOGÍA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN TEATRO",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN URBAN SUSTAINABILITY STUDIES",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN URBANISMO, ORDENACIÓN TERRITORIAL Y SOSTENIBILIDAD",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO ESTUDIOS ÁRABES Y HEBREOS",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADUADO EN ESTUDIOS DE CATALAN Y ESPAÑOL",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "MAESTRO-ESPECIALIDAD DE EDUCACIÓN PRIMARIA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN BELLAS ARTES",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN CIENCIAS AMBIENTALES",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN COMUNICACIÓN AUDIOVISUAL",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN DERECHO",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN FILOLOGÍA ALEMANA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN FILOLOGÍA ÁRABE",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN FILOLOGÍA CATALANA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN FILOLOGÍA CLÁSICA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN FILOLOGÍA ESLAVA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN FILOLOGÍA GALLEGA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN FILOLOGÍA HEBREA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN FILOLOGÍA HISPÁNICA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN FILOLOGÍA ITALIANA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN FILOLOGÍA PORTUGUESA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN FILOLOGÍA ROMÁNICA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN FILOLOGÍA VASCA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN HUMANIDADES",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN PERIODISMO",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN PSICOLOGÍA",
+          "preferencia": "baixa",
+          "requisitos": []
+        }
+      ],
+      "condicionadas": [
+        {
+          "nome": "GRADO EN ESTUDIOS LITERARIOS",
+          "preferencia": null,
+          "requisitos": []
+        }
+      ],
+      "restoComAcesso": [],
+      "equivalentes": []
+    },
+    "inicioCurso": "2026-10-01",
+    "fichaDuaUrl": "https://www.juntadeandalucia.es/economiaconocimientoempresasyuniversidad/sguit/?c_peticion=414007&d=mo_catalogo_top.php&q=masteres",
+    "duaCodigo": "414007",
+    "requisitosFicha": [
+      {
+        "codigo": "015",
+        "texto": "PARA LA ADMISIÓN EN EL MÁSTER SERÁ NECESARIO DOMINIO DEL INGLES A NIVEL B1",
+        "obrigatorio": true
+      },
+      {
+        "codigo": "018",
+        "texto": "PARA LA ADMISIÓN EN EL MÁSTER SERÁ NECESARIO DOMINIO DE CHINO NIVEL B1 O JAPONÉS NIVEL A2 EN EL CASO DE ESTUDIANTES NO NATIVOS DE ESTAS LENGUAS",
+        "obrigatorio": true
+      },
+      {
+        "codigo": "099",
+        "texto": "QUIENES SEAN EXTRANJEROS DE PAIS DE HABLA NO ESPAÑOLA NO TENDRÁN ACCESO AL MÁSTER SIN ACREDITAR CORRECTO CONOCIMIENTO HABLADO Y ESCRITO DE ESPAÑOL (ACREDITACION NIVEL INTERMEDIO O B2)",
+        "obrigatorio": true
+      },
+      {
+        "codigo": "007",
+        "texto": "ADECUACIÓN DE SU FORMACIÓN AL PERFIL DEL MASTER",
+        "obrigatorio": false
+      },
+      {
+        "codigo": "016",
+        "texto": "A LAS TITULACIONES VINCULADAS A TRADUCCIÓN E INTERPRETACIÓN SE LES ASIGNARÁ PREFERENCIA MEDIA, SALVO QUE SE ACREDITE COMO LENGUA B CHINO O JAPONÉS. EN ESE CASO SE ASIGNARÁ PREFERENCIA ALTA.",
+        "obrigatorio": false
+      },
+      {
+        "codigo": "019",
+        "texto": "A LAS TITULACIONES VINCULADAS A LENGUAS MODERNAS Y SUS LITERATURAS SE LES ASIGNARÁ PREFERENCIA MEDIA, SALVO QUE TENGAN MENCIÓN (MAIOR) EN LENGUAS, LITERATURAS Y/O CULTURAS DE ASIA ORIENTAL, CHINA O JAPONESA. EN ESE CASO SE ASIGNARÁ PREFERENCIA ALTA.",
+        "obrigatorio": false
+      }
+    ],
+    "criteriosOriginais": [
+      {
+        "original": "NOTA MEDIA DEL EXPEDIENTE ACADEMICO",
+        "peso": 60
+      },
+      {
+        "original": "DOMINIO ACREDITADO DE LA LENGUA CHINA A UN NIVEL IGUAL O SUPERIOR A HSK 4 (O CERTIFICADO EQUIVALENTE) O DE LA LENGUA JAPONESA A NIVEL IGUAL O SUPERIOR A JLPT N3 (O CERTIFICADO EQUIVALENTE)",
+        "peso": 20
+      },
+      {
+        "original": "FORMACIÓN EXTRACURRICULAR EN EL ÁMBITO DE ASIA ORIENTAL",
+        "peso": 10
+      },
+      {
+        "original": "EXPERIENCIA LABORAL/PROFESIONAL/PRÁCTICAS UTILIZANDO ALGUNA LENGUA DE ASIA ORIENTAL, INCLUYENDO LA ENSEÑANZA DE ESTAS LENGUAS",
+        "peso": 5
+      },
+      {
+        "original": "EXPERIENCIA INVESTIGADORA EN EL ÁREA DE ASIA ORIENTAL",
+        "peso": 5
+      }
+    ],
+    "fichaVerificadaEm": "2026-11-16T16:40:39.371Z",
+    "requisitos": [
+      {
+        "tipo": "acesso",
+        "descricao": "Título universitário que dê acesso à pós-graduação no país emissor",
+        "status": "requerido",
+        "fonte": "O1"
+      },
+      {
+        "tipo": "idioma",
+        "descricao": "Espanhol B2 comprovado (ficha do DUA)",
+        "status": "requerido",
+        "fonte": "O30"
+      }
+    ]
+  },
+  "ugr-master-universitario-arqueologia": {
+    "id": "ugr-master-universitario-arqueologia",
+    "universidadeId": "ugr",
+    "nome": "Máster Universitario en Arqueología",
+    "area": "Artes y Humanidades",
+    "ciclo": "2026/27",
+    "duracaoMeses": 12,
+    "modalidade": "presencial",
+    "url": "https://masteres.ugr.es/informacion/titulaciones/master-universitario-arqueologia",
+    "radar": true,
+    "idioma": {
+      "status": "nao-requerido",
+      "fonte": "O30"
+    },
+    "outrosIdiomas": [],
+    "criterios": [
+      {
+        "descricao": "Nota média do histórico",
+        "peso": 40
+      },
+      {
+        "descricao": "Currículo",
+        "peso": 30
+      },
+      {
+        "descricao": "Entrevista",
+        "peso": 20
+      },
+      {
+        "descricao": "Conhecimento de idiomas",
+        "peso": 10
+      }
+    ],
+    "somenteNotaExpediente": false,
+    "titulacoes": {
+      "titulacoes": [
+        {
+          "nome": "GRADO EN ARQUEOLOGÍA",
+          "preferencia": "alta",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN CONSERVACIÓN Y RESTAURACIÓN DE BIENES CULTURALES",
+          "preferencia": "alta",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN CONSERVACIÓN Y RESTAURACIÓN DEL PATRIMONIO CULTURAL",
+          "preferencia": "alta",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HISTORIA",
+          "preferencia": "alta",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HISTORIA Y PATRIMONIO",
+          "preferencia": "alta",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HISTORIA Y PATRIMONIO HISTÓRICO",
+          "preferencia": "alta",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN HISTORIA",
+          "preferencia": "alta",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ANTROPOLOGÍA SOCIAL",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ANTROPOLOGÍA SOCIAL Y CULTURAL",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS CLÁSICOS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ESTUDIOS CLÁSICOS Y ROMÁNICOS",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN FILOLOGÍA CLÁSICA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN GEOGRAFÍA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN GEOGRAFÍA Y GESTIÓN DEL TERRITORIO",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN GEOGRAFÍA Y MEDIO AMBIENTE",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN GEOGRAFÍA Y ORDENACIÓN DEL TERRITORIO",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HISTORIA DEL ARTE",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HISTORIA DEL ARTE Y PATRIMONIO HISTÓRICO-ARTÍSTICO",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HUMANIDADES",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HUMANIDADES. ESTUDIOS INTERCULTURALES",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HUMANIDADES: HISTORIA CULTURAL",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HUMANIDADES Y ANTROPOLOGÍA SOCIAL",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HUMANIDADES Y ESTUDIOS CULTURALES",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HUMANIDADES Y ESTUDIOS SOCIALES",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN HUMANIDADES Y PATRIMONIO",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN FILOLOGÍA CLÁSICA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN GEOGRAFÍA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN HISTORIA DEL ARTE",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN HUMANIDADES",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN ANTROPOLOGÍA SOCIAL Y CULTURAL",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ARQUITECTURA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ARQUITECTURA TÉCNICA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN ARTE",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN BELLAS ARTES",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN BIOLOGÍA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN EDIFICACIÓN",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN FUNDAMENTOS DE ARQUITECTURA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN GEOLOGÍA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN INGENIERÍA EDIFICACIÓN/GRADO EN CIENCIA Y TECNOLOGÍA DE EDIFICACIÓN",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN QUÍMICA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN SOCIOLOGÍA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN SOCIOLOGÍA APLICADA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "ARQUITECTO TÉCNICO",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "TITULACIÓN EQUIVALENTE A ARQUITECTO TECNICO, DIPLOMADO O INGENIERO TECNICO",
+          "preferencia": "baixa",
+          "requisitos": [
+            "007"
+          ]
+        },
+        {
+          "nome": "ARQUITECTO",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN BELLAS ARTES",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN BIOLOGÍA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN CIENCIAS AMBIENTALES",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN GEOLOGÍA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN QUÍMICA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN SOCIOLOGÍA",
+          "preferencia": "baixa",
+          "requisitos": []
+        },
+        {
+          "nome": "TITULACIÓN EQUIVALENTE A ARQUITECTO, GRADUADO, INGENIERO O LICENCIADO",
+          "preferencia": "baixa",
+          "requisitos": [
+            "007"
+          ]
+        }
+      ],
+      "condicionadas": [],
+      "restoComAcesso": [],
+      "equivalentes": [
+        {
+          "nome": "TITULACIÓN EQUIVALENTE A ARQUITECTO TECNICO, DIPLOMADO O INGENIERO TECNICO",
+          "preferencia": "baixa",
+          "requisitos": [
+            "007"
+          ]
+        },
+        {
+          "nome": "TITULACIÓN EQUIVALENTE A ARQUITECTO, GRADUADO, INGENIERO O LICENCIADO",
+          "preferencia": "baixa",
+          "requisitos": [
+            "007"
+          ]
+        }
+      ]
+    },
+    "inicioCurso": "2026-10-01",
+    "fichaDuaUrl": "https://www.juntadeandalucia.es/economiaconocimientoempresasyuniversidad/sguit/?c_peticion=404605&d=mo_catalogo_top.php&q=masteres",
+    "duaCodigo": "404605",
+    "requisitosFicha": [
+      {
+        "codigo": "005",
+        "texto": "EL MASTER TIENE UNA DURACION DE UN CURSO ACADEMICO, AUNQUE ELLO NO OBLIGA AL ALUMNO A MATRICULARSE DE TODOS LOS CREDITOS DURANTE EL MISMO CURSO.",
+        "obrigatorio": false
+      },
+      {
+        "codigo": "006",
+        "texto": "LAS PRACTICAS OBLIGATORIAS DE CAMPO (PRACTICUM) SE DESARROLLARAN EN HORARIO DE MANANA (DE 8:00-16:00 HORAS)",
+        "obrigatorio": false
+      },
+      {
+        "codigo": "007",
+        "texto": "QUIENES POSEAN UN TÍTULO OFICIAL NO UNIVERSITARIO ESTARÁN SUJETOS A QUE LA LEGISLACIÓN VIGENTE LE PERMITA EL ACCESO A ESTUDIOS DE MÁSTER OFICIAL",
+        "obrigatorio": false
+      }
+    ],
+    "criteriosOriginais": [
+      {
+        "original": "NOTA MEDIA DEL EXPEDIENTE ACADEMICO",
+        "peso": 40
+      },
+      {
+        "original": "CURRICULUM VITAE",
+        "peso": 30
+      },
+      {
+        "original": "ENTREVISTA PERSONAL",
+        "peso": 20
+      },
+      {
+        "original": "CONOCIMIENTO DE IDIOMAS",
+        "peso": 10
+      }
+    ],
+    "fichaVerificadaEm": "2026-11-16T16:40:23.170Z",
+    "requisitos": [
+      {
+        "tipo": "acesso",
+        "descricao": "Título universitário que dê acesso à pós-graduação no país emissor",
+        "status": "requerido",
+        "fonte": "O1"
+      },
+      {
+        "tipo": "idioma",
+        "descricao": "A ficha do DUA não exige comprovação de espanhol",
+        "status": "nao-requerido",
+        "fonte": "O30"
+      }
+    ]
+  },
+  "ugr-master-universitario-dibujo-ilustracion-comic-creacion-audiovisual": {
+    "id": "ugr-master-universitario-dibujo-ilustracion-comic-creacion-audiovisual",
+    "universidadeId": "ugr",
+    "nome": "Máster Universitario en Dibujo - Ilustración, Cómic y Creación Audiovisual",
+    "area": "Artes y Humanidades",
+    "ciclo": "2026/27",
+    "duracaoMeses": 12,
+    "modalidade": "presencial",
+    "url": "https://masteres.ugr.es/informacion/titulaciones/master-universitario-dibujo-ilustracion-comic-creacion-audiovisual",
+    "radar": true,
+    "idioma": {
+      "status": "requerido",
+      "nivel": "B1",
+      "certificado": true,
+      "fonte": "O30",
+      "texto": "A AQUELLOS ESTUDIANTES QUE NOTENGAN EL ESPAÑOL COMO LENGUA MATERNA SE LES REQUERIRÁ AL MENOS UN NIVEL B1 ACRDITADO CONFORME AL \"MARCO COMÚN EUROPEO DE REFERENCIA PARA LAS LEGUAS\""
+    },
+    "outrosIdiomas": [],
+    "criterios": [
+      {
+        "descricao": "Nota média do histórico",
+        "peso": 100
+      }
+    ],
+    "somenteNotaExpediente": true,
+    "titulacoes": {
+      "titulacoes": [
+        {
+          "nome": "GRADO EN ARTE",
+          "preferencia": "alta",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN BELLAS ARTES",
+          "preferencia": "alta",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN BELLAS ARTES",
+          "preferencia": "alta",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN COMUNICACIÓN",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN COMUNICACIÓN AUDIOVISUAL",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN COMUNICACIÓN AUDIOVISUAL Y MULTIMEDIA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN COMUNICACIÓN Y PERIODISMO AUDIOVISUALES",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN INGENIERÍA SISTEMAS AUDIOVISUALES",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN INGENIERÍA SISTEMAS AUDIOVISUALES DE TELECOMUNICACIÓN",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "GRADO EN INGENIERÍA SISTEMAS AUDIOVISUALES Y MULTIMEDIA",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "LICENCIADO EN COMUNICACIÓN AUDIOVISUAL",
+          "preferencia": "media",
+          "requisitos": []
+        },
+        {
+          "nome": "TITULACIÓN EQUIVALENTE A ARQUITECTO, GRADUADO, INGENIERO O LICENCIADO",
+          "preferencia": "media",
+          "requisitos": []
+        }
+      ],
+      "condicionadas": [],
+      "restoComAcesso": [],
+      "equivalentes": [
+        {
+          "nome": "TITULACIÓN EQUIVALENTE A ARQUITECTO, GRADUADO, INGENIERO O LICENCIADO",
+          "preferencia": "media",
+          "requisitos": []
+        }
+      ]
+    },
+    "inicioCurso": "2026-10-01",
+    "fichaDuaUrl": "https://www.juntadeandalucia.es/economiaconocimientoempresasyuniversidad/sguit/?c_peticion=407101&d=mo_catalogo_top.php&q=masteres",
+    "duaCodigo": "407101",
+    "requisitosFicha": [
+      {
+        "codigo": "013",
+        "texto": "A AQUELLOS ESTUDIANTES QUE NOTENGAN EL ESPAÑOL COMO LENGUA MATERNA SE LES REQUERIRÁ AL MENOS UN NIVEL B1 ACRDITADO CONFORME AL \"MARCO COMÚN EUROPEO DE REFERENCIA PARA LAS LEGUAS\"",
+        "obrigatorio": true
+      }
+    ],
+    "criteriosOriginais": [
+      {
+        "original": "NOTA MEDIA DEL EXPEDIENTE ACADEMICO",
+        "peso": 100
+      }
+    ],
+    "fichaVerificadaEm": "2026-11-16T16:40:31.110Z",
+    "requisitos": [
+      {
+        "tipo": "acesso",
+        "descricao": "Título universitário que dê acesso à pós-graduação no país emissor",
+        "status": "requerido",
+        "fonte": "O1"
+      },
+      {
+        "tipo": "idioma",
+        "descricao": "Espanhol B1 comprovado (ficha do DUA)",
+        "status": "requerido",
+        "fonte": "O30"
+      }
+    ]
+  },
+  "dua-200300": {
+    "id": "dua-200300",
+    "universidadeId": "uca",
+    "nome": "ACUICULTURA Y PESCA",
+    "area": null,
+    "ciclo": "2026/27",
+    "duracaoMeses": null,
+    "modalidade": null,
+    "url": "https://www.juntadeandalucia.es/economiaconocimientoempresasyuniversidad/sguit/?c_peticion=200300&d=mo_catalogo_top.php&q=masteres",
+    "radar": true,
+    "idioma": {
+      "status": "verificar",
+      "fonte": "O10"
+    },
+    "outrosIdiomas": [],
+    "criterios": null,
+    "somenteNotaExpediente": null,
+    "titulacoes": null,
+    "inicioCurso": null,
+    "fichaDuaUrl": "https://www.juntadeandalucia.es/economiaconocimientoempresasyuniversidad/sguit/?c_peticion=200300&d=mo_catalogo_top.php&q=masteres",
+    "duaCodigo": "200300",
+    "requisitosFicha": null,
+    "criteriosOriginais": null,
+    "fichaVerificadaEm": null,
+    "requisitos": [
+      {
+        "tipo": "acesso",
+        "descricao": "Título universitário que dê acesso à pós-graduação no país emissor",
+        "status": "requerido",
+        "fonte": "O1"
+      },
+      {
+        "tipo": "idioma",
+        "descricao": "Exigência de idioma não informada na ficha coletada, confirme com a coordenação",
+        "status": "verificar",
+        "fonte": "O10"
+      }
+    ]
+  }
+}

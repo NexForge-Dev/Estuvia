@@ -180,14 +180,6 @@ export async function radarAdminView() {
         ),
       ),
 
-      o.ambiente === 'desenvolvimento' ? h('section', { class: 'rd-panel rd-dev' },
-        h('h2', {}, icon('wand', { size: 18 }), 'Simulação (somente desenvolvimento)'),
-        h('p', { class: 'small' }, 'Publica um calendário DEMONSTRATIVO para testar alertas e Agenda. Os registros ficam marcados como demonstrativos em toda a interface e nunca sobrescrevem um calendário oficial.'),
-        formOf([['anoAcademico', 'Ano acadêmico', { required: true, placeholder: '2027/2028' }], ['abertura', 'Abertura', { type: 'date', required: true }], ['encerramento', 'Encerramento', { type: 'date', required: true }]],
-          'Simular publicação', (d) => act(() => api.post('/radar/admin/dev/simulate', d), (r) => `Simulação publicada. ${r.alertas} alerta(s) demonstrativo(s).`)),
-        o.demo ? h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onClick: () => act(() => api.del('/radar/admin/dev/simulate'), 'Dados demonstrativos removidos.') }, icon('trash', { size: 14 }), 'Remover dados demonstrativos') : null,
-      ) : null,
-
       h('section', { class: 'rd-panel' },
         h('h2', {}, icon('clock', { size: 18 }), 'Verificações recentes'),
         h('div', { class: 'rd-table-wrap' }, h('table', { class: 'rd-table' },

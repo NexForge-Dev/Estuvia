@@ -189,7 +189,7 @@ input:disabled, select:disabled { opacity: .6; }
 .tag-pending { background: var(--pending-soft); color: var(--pending); }
 .tag-legend { list-style: none; padding: 0; }
 .tag-legend li { margin-bottom: 10px; }
-.chip-demo { display: inline-block; font-size: .68rem; font-weight: 800; padding: 3px 8px; border-radius: 999px; background: var(--pending-soft); color: var(--pending); text-transform: uppercase; letter-spacing: .05em; margin-left: 6px; vertical-align: middle; }
+.chip-note { display: inline-block; font-size: .68rem; font-weight: 800; padding: 3px 8px; border-radius: 999px; background: var(--pending-soft); color: var(--pending); text-transform: uppercase; letter-spacing: .05em; margin-left: 6px; vertical-align: middle; }
 .chip-status { display: inline-flex; align-items: center; gap: 5px; font-size: .74rem; font-weight: 800; padding: 4px 10px; border-radius: 999px; white-space: nowrap; background: var(--surface-3); color: var(--muted); }
 .st-concluida { background: var(--ok-soft); color: var(--ok); }
 .st-disponivel { background: var(--accent-soft); color: var(--accent); }
@@ -859,7 +859,7 @@ button.ck:hover:not(:disabled) { border-color: var(--accent); }
 .pc-media-logo img { max-width: 82%; max-height: 78%; object-fit: contain; }
 .pc-media-logo[data-university="us"] { background: #65001b; }
 .pc-media-logo[data-university="uhu"] { background: #263b59; }
-.pc-media .chip-demo { position: absolute; top: 10px; left: 4px; z-index: 1; }
+.pc-media .chip-note { position: absolute; top: 10px; left: 4px; z-index: 1; }
 .pc-body { padding: 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
 .pc-body h3 { margin: 0; }
 .pc-body .row { margin-top: auto; }

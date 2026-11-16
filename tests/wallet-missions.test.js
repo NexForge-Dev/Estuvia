@@ -13,6 +13,7 @@ process.env.MEDIA_DIR = path.join(tmp, 'media');
 process.env.DOCS_DIR = path.join(tmp, 'docfiles');
 process.env.RADAR_SCHEDULER = 'off';
 
+await import('./fixtures/programas-reais.js'); // mestrados reais do DUA (fixture)
 const { createApp } = await import('../server/app.js');
 const { flush, users } = await import('../server/store.js');
 
@@ -45,7 +46,7 @@ let jid;
 test('setup', async () => {
   uid = (await req('POST', '/auth/register', { nome: 'Davi Melo', email: 'davi@missoes.dev', senha: 'segura123', aceite: true, maiorIdade: true })).data.user.id;
   await req('PUT', '/me/profile', { paisResidencia: 'Brasil', estado: 'SP' });
-  jid = (await req('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2027/28', duracaoMeses: 12 })).data.journey.id;
+  jid = (await req('POST', '/journeys', { programaId: 'ugr-master-universitario-estudios-asia-oriental', anoAcademico: '2027/28', duracaoMeses: 12 })).data.journey.id;
   await req('POST', '/documents/consent', { aceito: true, versao: '2026-11-13' });
 });
 

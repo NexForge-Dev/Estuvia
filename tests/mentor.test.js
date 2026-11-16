@@ -14,6 +14,7 @@ delete process.env.ANTHROPIC_API_KEY;
 delete process.env.ANTHROPIC_AUTH_TOKEN;
 delete process.env.MENTOR_PROVIDER;
 
+await import('./fixtures/programas-reais.js'); // mestrados reais do DUA (fixture)
 const { createApp } = await import('../server/app.js');
 const { flush, users } = await import('../server/store.js');
 const { initRadar } = await import('../server/radar/service.js');
@@ -63,7 +64,7 @@ test('setup: estudante com perfil e jornada', async () => {
   assert.equal(r.status, 201);
   uid = r.data.user.id;
   await req('PUT', '/me/profile', { nacionalidade: 'Brasileira', paisResidencia: 'Brasil', estado: 'BA', formacao: 'Ciência da Computação', area: 'Computação', espanhol: 'B1', onboardingConcluido: true });
-  const j = await req('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2027/28' });
+  const j = await req('POST', '/journeys', { programaId: 'ugr-master-universitario-estudios-asia-oriental', anoAcademico: '2027/28' });
   assert.equal(j.status, 201);
   jid = j.data.journey.id;
   // Estudante que já escolheu o mestrado e fez o planejamento inicial: Rodada 2 (documentos) liberada.

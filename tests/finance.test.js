@@ -13,12 +13,13 @@ process.env.FX_PROVIDER = 'off';
 delete process.env.ANTHROPIC_API_KEY;
 delete process.env.ANTHROPIC_AUTH_TOKEN;
 
+await import('./fixtures/programas-reais.js'); // mestrados reais do DUA (fixture)
 const { computeFinance, financialDeadlines } = await import('../server/finance-engine.js');
 const { createApp } = await import('../server/app.js');
 const { flush } = await import('../server/store.js');
 
 const NOW = new Date('2026-10-24T12:00:00Z');
-const journey = (over = {}) => ({ id: 'j1', programaId: 'ugr-demo-eng', anoAcademico: '2027/28', duracaoMeses: 12, missions: {}, dados: {}, ...over });
+const journey = (over = {}) => ({ id: 'j1', programaId: 'ugr-master-universitario-estudios-asia-oriental', anoAcademico: '2027/28', duracaoMeses: 12, missions: {}, dados: {}, ...over });
 const user = (finance = {}, extra = {}) => ({ profile: {}, documents: {}, finance: { ...finance }, ...extra });
 const item = (f, id) => f.itens.find((i) => i.id === id);
 
@@ -104,7 +105,7 @@ test('12: moradia e viagem escolhidas alimentam o plano sem duplicar', () => {
 });
 
 test('destino sem premissa local: moradia desconhecida, alimentação com referência nacional', () => {
-  const f = computeFinance(user(), journey({ programaId: 'us-demo-adm' }), NOW);
+  const f = computeFinance(user(), journey({ programaId: 'dua-200300' }), NOW);
   assert.equal(f.destino.premissasLocais, false);
   assert.equal(item(f, 'moradia').valorEur, null);
   assert.equal(item(f, 'alimentacao').valorEur, 179);
@@ -146,7 +147,7 @@ function client() {
 test('2/7/14/15: API recupera a jornada, recalcula a cada alteração e guarda entre sessões', async () => {
   const c = client();
   await c('POST', '/auth/register', { nome: 'Lia Costa', email: 'lia@exemplo.com', senha: 'segura123', aceite: true, maiorIdade: true });
-  const jid = (await c('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2027/28' })).data.journey.id;
+  const jid = (await c('POST', '/journeys', { programaId: 'ugr-master-universitario-estudios-asia-oriental', anoAcademico: '2027/28' })).data.journey.id;
   let f = (await c('GET', `/finance?journeyId=${jid}`)).data;
   assert.equal(f.plano.destino.universidade.sigla, 'UGR');
   assert.equal(f.plano.destino.anoAcademico, '2027/28');

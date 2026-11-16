@@ -296,7 +296,7 @@ export function computeFinance(user, jr, now = new Date()) {
 
   return {
     ano, meses, perfil, perfis: SPEND_PROFILES,
-    destino: { cidade, pais, moeda: 'EUR', universidade: uni ? { id: uni.id, nome: uni.nome, sigla: uni.sigla } : null, programa: program ? { id: program.id, nome: program.nome, demo: Boolean(program.demo) } : null, anoAcademico: jr?.anoAcademico || null, premissasLocais: Boolean(cidade && DESTINATION_ASSUMPTIONS[cidade]) },
+    destino: { cidade, pais, moeda: 'EUR', universidade: uni ? { id: uni.id, nome: uni.nome, sigla: uni.sigla } : null, programa: program ? { id: program.id, nome: program.nome } : null, anoAcademico: jr?.anoAcademico || null, premissasLocais: Boolean(cidade && DESTINATION_ASSUMPTIONS[cidade]) },
     cambio: fx.taxa, cambioInfo: fx,
     iprem: { ...iprem, regra: VISA_RULE.descricao, fonteRegra: VISA_RULE.fonte, percentual: VISA_RULE.percentualEstudante },
     exigenciaVisto,

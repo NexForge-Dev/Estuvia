@@ -90,7 +90,7 @@ export function contextText(user, { journey, mission, finance }) {
   if (!journey) return `${lines[0]}\nO estudante ainda não criou nenhuma jornada.`;
   const d = journey.destino;
   const atual = journey.rodadas.find((r) => r.numero === journey.rodadaAtual);
-  lines.push(`Jornada: ${d.origem} → ${d.universidade?.nome || '-'} (${d.cidade || '-'}); mestrado ${d.programa?.nome || 'não definido'}${d.programa?.demo ? ' [DADO DEMONSTRATIVO]' : ''}; ano ${d.anoAcademico || '-'}; duração ${d.duracaoMeses || '-'} meses; progresso ${Math.round(journey.progresso * 100)}%; rodada atual ${atual.numero} - ${atual.titulo}.`);
+  lines.push(`Jornada: ${d.origem} → ${d.universidade?.nome || '-'} (${d.cidade || '-'}); mestrado ${d.programa?.nome || 'não definido'}; ano ${d.anoAcademico || '-'}; duração ${d.duracaoMeses || '-'} meses; progresso ${Math.round(journey.progresso * 100)}%; rodada atual ${atual.numero} - ${atual.titulo}.`);
   lines.push(`Situação registrada: adjudicação=${journey.situacao.adjudicacao}; matrícula=${journey.situacao.matricula}; visto=${journey.situacao.visto}.`);
   lines.push(`Próxima missão recomendada: ${journey.proximaMissao ? `${journey.proximaMissao.label} ${journey.proximaMissao.titulo} (${journey.proximaMissao.statusLabel})` : 'nenhuma'}.`);
   if (mission) {
@@ -274,7 +274,7 @@ export function quickAnswer(action, user, ctx, pergunta = '') {
       const det = missionDetail(user, jr, '1.4');
       const el = det.elegibilidade?.find((e) => e.requisito === 'Idioma');
       return {
-        texto: `${el ? `**${el.texto}**\n\n` : ''}${lang.status === 'nao-aplicavel' ? `Pela regra cadastrada do seu mestrado, a comprovação formal não é obrigatória: ${lang.motivoNaoAplicavel}` : lang.alertas.length ? 'A exigência não está confirmada: pergunte à coordenação antes de pagar uma prova.' : 'A Missão 2.5 está ativa na sua jornada: confirme qual certificado o programa aceita.'}${journey.destino.programa?.demo ? '\n\n_Seu mestrado é um dado demonstrativo: confirme na ficha oficial._' : ''}`,
+        texto: `${el ? `**${el.texto}**\n\n` : ''}${lang.status === 'nao-aplicavel' ? `Pela regra cadastrada do seu mestrado, a comprovação formal não é obrigatória: ${lang.motivoNaoAplicavel}` : lang.alertas.length ? 'A exigência não está confirmada: pergunte à coordenação antes de pagar uma prova.' : 'A Missão 2.5 está ativa na sua jornada: confirme qual certificado o programa aceita.'}`,
         fontes: [], acoes: [rota(mPath('1.4'), 'Ver minha elegibilidade')],
       };
     }

@@ -145,7 +145,6 @@ const pendingCalendarChange = (opp) => data().reviews.some((r) => r.status === '
 function verification(state, windows, health, opp) {
   const s = health.fonte;
   const base = { fonte: s?.rotuloPublico || 'Distrito Único Andaluz', url: s?.url, ultimaVerificacao: s?.ultimaVerificacaoOk || null, ultimaConsulta: s?.ultimaConsulta || null };
-  if (opp.demo) return { ...base, status: 'demonstrativo', texto: 'DADO DEMONSTRATIVO, ambiente de desenvolvimento. Não é informação oficial.' };
   if (state.estado === 'desatualizado') return { ...base, status: 'desatualizada', texto: `Não foi possível confirmar o estado atual: a última verificação bem-sucedida tem mais de ${STALE_AFTER_HOURS} h.` };
   if (!windows.length) return { ...base, status: 'nao-confirmada', texto: 'Não foi possível confirmar as datas deste ano acadêmico.' };
   if (windows.some((w) => w.confirmacao !== 'confirmado')) return { ...base, status: 'prevista', texto: 'Previsão institucional, ainda não confirmada em boletim oficial.' };
@@ -204,7 +203,6 @@ function card(opp, { user = null, now = Date.now() } = {}) {
     compatibilidade: user ? compatibility(user.profile, p) : null,
     acompanhando: following,
     naJornada: inJourney,
-    demo: Boolean(opp.demo),
   };
 }
 
@@ -598,7 +596,6 @@ export function programForJourney(id) {
     duracaoMeses: p.ficha?.duracaoEstimadaAnos ? Math.round(p.ficha.duracaoEstimadaAnos * 12) : null,
     modalidade: p.ficha?.modalidade || null,
     url: p.fichaUrl,
-    demo: false,
     radar: true,
     idioma: journeyLanguage(p),
     outrosIdiomas: fichaIdiomas(p.fichaDua).filter((i) => i.idioma !== 'espanhol').map(({ idioma, nivel, obrigatorio, texto }) => ({ idioma, nivel, obrigatorio, texto, fonte: 'O30' })),

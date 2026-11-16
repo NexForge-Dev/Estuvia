@@ -47,6 +47,7 @@ process.env.MENTOR_PROVIDER = 'anthropic';
 delete process.env.MENTOR_MODEL;
 delete process.env.AI_DAILY_TOKENS_PER_USER;
 
+await import('./fixtures/programas-reais.js'); // mestrados reais do DUA (fixture)
 const { createApp } = await import('../server/app.js');
 const { flush, users } = await import('../server/store.js');
 const { initRadar } = await import('../server/radar/service.js');
@@ -97,7 +98,7 @@ test('setup: duas contas (A com jornada, B sem jornada)', async () => {
   assert.equal(ra.status, 201);
   A.id = ra.data.user.id;
   await A.req('PUT', '/me/profile', { nacionalidade: 'Brasileira', paisResidencia: 'Brasil', estado: 'BA', formacao: 'Computação', espanhol: 'B1', onboardingConcluido: true });
-  const j = await A.req('POST', '/journeys', { programaId: 'ugr-demo-eng', anoAcademico: '2027/28' });
+  const j = await A.req('POST', '/journeys', { programaId: 'ugr-master-universitario-estudios-asia-oriental', anoAcademico: '2027/28' });
   assert.equal(j.status, 201);
   A.jid = j.data.journey.id;
   B.req = client();

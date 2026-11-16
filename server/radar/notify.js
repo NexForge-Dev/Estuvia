@@ -36,11 +36,9 @@ function push(sub, opportunity, evento, { titulo, corpo, dados = {}, chave }) {
   const dedupeKey = hash([sub.userId, opportunity.id, evento, chave]);
   if (d.alerts.some((a) => a.dedupeKey === dedupeKey)) return null;
   const ctx = context(opportunity);
-  // Oportunidade em simulação de desenvolvimento: o alerta nasce marcado e é removido junto.
-  const demo = Boolean(opportunity.demo);
   const alert = {
     id: newId(), userId: sub.userId, subscriptionId: sub.id, opportunityId: opportunity.id, evento,
-    titulo: demo ? `[DEMONSTRATIVO] ${titulo}` : titulo, corpo, ...(demo ? { demo: true } : {}), dados: { ...ctx, anoAcademico: opportunity.anoAcademico, ...dados },
+    titulo, corpo, dados: { ...ctx, anoAcademico: opportunity.anoAcademico, ...dados },
     canal: 'app', criadoEm: new Date().toISOString(), enviadoEm: new Date().toISOString(), lidoEm: null, estado: 'nova', dedupeKey,
   };
   d.alerts.push(alert);
