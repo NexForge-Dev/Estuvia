@@ -1,0 +1,177 @@
+[
+ {
+  "name": "cadastro",
+  "ok": true,
+  "extra": "201"
+ },
+ {
+  "name": "perfil (país/estado)",
+  "ok": true,
+  "extra": "200 "
+ },
+ {
+  "name": "criar jornada",
+  "ok": true,
+  "extra": "201 "
+ },
+ {
+  "name": "finanças salvas",
+  "ok": true,
+  "extra": "200 "
+ },
+ {
+  "name": "visto desconta matrícula não paga",
+  "ok": true,
+  "extra": "{\"d\":3000,\"r\":5000,\"f\":2200}"
+ },
+ {
+  "name": "missão 5.8 traz prazo oficial do visto",
+  "ok": false,
+  "extra": "200"
+ },
+ {
+  "name": "missão 8.1 traz regra da TIE",
+  "ok": false,
+  "extra": "200"
+ },
+ {
+  "name": "documentos carregam",
+  "ok": false,
+  "extra": "404"
+ },
+ {
+  "name": "seguro com regra oficial",
+  "ok": false,
+  "extra": ""
+ },
+ {
+  "name": "equivalência de nota com fonte O31",
+  "ok": false,
+  "extra": ""
+ },
+ {
+  "name": "página /",
+  "ok": true,
+  "extra": ""
+ },
+ {
+  "name": "página /jornadas",
+  "ok": true,
+  "extra": ""
+ },
+ {
+  "name": "página /j/3f222ff6-e564-4932-a139-c3a42950c9ba",
+  "ok": true,
+  "extra": ""
+ },
+ {
+  "name": "página /mestrados",
+  "ok": true,
+  "extra": ""
+ },
+ {
+  "name": "página /documentos",
+  "ok": true,
+  "extra": ""
+ },
+ {
+  "name": "página /financiamento",
+  "ok": true,
+  "extra": ""
+ },
+ {
+  "name": "página /agenda",
+  "ok": true,
+  "extra": ""
+ },
+ {
+  "name": "página /novo-lar",
+  "ok": true,
+  "extra": ""
+ },
+ {
+  "name": "página /viagem",
+  "ok": true,
+  "extra": ""
+ },
+ {
+  "name": "página /perfil",
+  "ok": true,
+  "extra": ""
+ },
+ {
+  "name": "página /fontes",
+  "ok": true,
+  "extra": ""
+ },
+ {
+  "name": "página /oportunidades",
+  "ok": true,
+  "extra": ""
+ },
+ {
+  "name": "página /conquistas",
+  "ok": true,
+  "extra": ""
+ },
+ {
+  "name": "página /comunidade",
+  "ok": true,
+  "extra": ""
+ },
+ {
+  "name": "página /mentor",
+  "ok": true,
+  "extra": ""
+ },
+ {
+  "name": "financiamento mostra desconto da matrícula",
+  "ok": false,
+  "extra": ""
+ },
+ {
+  "name": "celular sem rolagem horizontal /",
+  "ok": true,
+  "extra": "scrollWidth=390"
+ },
+ {
+  "name": "celular sem rolagem horizontal /documentos",
+  "ok": true,
+  "extra": "scrollWidth=390"
+ },
+ {
+  "name": "celular sem rolagem horizontal /financiamento",
+  "ok": true,
+  "extra": "scrollWidth=390"
+ },
+ {
+  "name": "celular sem rolagem horizontal /j/3f222ff6-e564-4932-a139-c3a42950c9ba",
+  "ok": true,
+  "extra": "scrollWidth=390"
+ },
+ {
+  "name": "outro estudante não lê a jornada alheia",
+  "ok": true,
+  "extra": "404"
+ },
+ {
+  "name": "estudante não acessa admin",
+  "ok": true,
+  "extra": "403"
+ },
+ {
+  "name": "anônimo não lê jornadas",
+  "ok": true,
+  "extra": "401"
+ },
+ {
+  "name": "POST sem cabeçalho anti-CSRF bloqueado",
+  "ok": true,
+  "extra": "403"
+ },
+ {
+  "name": "sem erro 5xx na API",
+  "ok": true,
+  "extra": ""
+ }
+]

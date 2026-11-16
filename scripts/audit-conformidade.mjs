@@ -124,7 +124,7 @@ for (const o of dump.detalhes) {
     // Produção (código publicado) ainda usa o idioma guardado: registra o que a correção local resolve.
     const prodEs = (a?.idiomas || []).find((l) => l.idioma === 'espanhol' && l.obrigatorio);
     if (maior && a && (!prodEs || NIV.indexOf(prodEs.nivel) < NIV.indexOf(maior.nivel))) {
-      corrigidos.push(`Idioma: produção orienta espanhol ${prodEs?.nivel || '(nenhum)'}, a ficha exige ${maior.nivel} (requisito ${maior.codigo}). Corrigido no código (interpretador e leitura), pendente de publicação.`);
+      corrigidos.push(`Idioma: produção orienta espanhol ${prodEs?.nivel || '(nenhum)'}, a ficha exige ${maior.nivel} (requisito ${maior.codigo}). Corrigido no código (interpretador e leitura).`);
     }
     if (maior) evid.push({ tipo: 'idioma', url: FICHA_URL(codigo), documento: `Requisito ${maior.codigo} da ficha ${codigo}`, consultadoEm: ficha.consultadoEm, trecho: maior.texto });
   }
@@ -139,8 +139,14 @@ for (const o of dump.detalhes) {
   };
   const proc = applicationProcess(programa, { calendario, profile: { nacionalidade: 'Brasileira' } });
   const regras = proc.regrasEspecificas.map((r) => r.id);
-  if (/PROFESORADO/i.test(o.programa.nome) && !regras.includes('profesorado')) corrigidos.push('A regra do Máster en Profesorado (prazo da acreditação de idioma) era aplicada a este máster, que não é o de Profesorado. Corrigido no código, pendente de publicação.');
-  if (canalCfg) corrigidos.push(`Canal: produção não tinha o canal deste máster (${canalCfg.tipo}). Configuração individual conferida nesta auditoria, pendente de publicação.`);
+  for (const r of (fd?.requisitos || []).filter((x) => x.obrigatorio && /TITUL[OA]S?[^.]{0,80}HOMOLOGAD|HOMOLOGAD[^.]{0,40}TITUL|ACCESO HOMOLOGADO/.test(up(x.texto)))) {
+    if (!proc.flags.exigeTituloHomologadoFicha) problemas.push(`Requisito ${r.codigo} exige título homologado, mas o sistema não sinaliza.`);
+    else corrigidos.push(`Homologação: produção só exibia o texto do requisito ${r.codigo} (título homologado), sem alerta nem item de elegibilidade. Corrigido no código LOCAL, ainda NÃO publicado.`);
+    evid.push({ tipo: 'homologacao', url: FICHA_URL(codigo), documento: `Requisito ${r.codigo} da ficha ${codigo}`, consultadoEm: ficha.consultadoEm, trecho: r.texto });
+  }
+  if (proc.etapasAdicionais?.length) corrigidos.push(`Etapa própria de seleção (${proc.etapasAdicionais.map((e) => e.codigo).join(', ')}): produção só exibe o texto, sem alerta. Corrigido no código LOCAL, ainda NÃO publicado.`);
+  if (/PROFESORADO/i.test(o.programa.nome) && !regras.includes('profesorado')) corrigidos.push('A regra do Máster en Profesorado (prazo da acreditação de idioma) era aplicada a este máster, que não é o de Profesorado. Corrigido e publicado (commit aa58269, origin/main).');
+  if (canalCfg) corrigidos.push(`Canal: configuração individual (${canalCfg.tipo}) conferida nesta auditoria e publicada (commit aa58269, origin/main).`);
   if (proc.canal.status === 'nao-confirmado') pendencias.push(proc.canal.texto);
   if (proc.canal.status === 'nao-dua-sem-canal') pendencias.push(proc.canal.texto);
   if (proc.canal.status === 'confirmado') pendencias.push('Oferta de vagas na Fase 1 (estrangeiros): nenhuma fonte oficial pública a informa por máster; confirmar no portal do DUA durante o prazo ou com a universidade.');
@@ -260,7 +266,7 @@ const md = [
   ``,
   `## Uma linha por mestrado`,
   ``,
-  `| # | Univ. | Mestrado (id) | Código DUA | Canal | Estado | Ficha oficial (status, consulta) | Regras do BOJA aplicadas | Fases | Acadêmicos | Idioma | Documentação obrigatória | Req. específicos (obrig.) | Regras específicas | Problemas / pendências | Corrigido no código (a publicar) | Evidência (consulta) |`,
+  `| # | Univ. | Mestrado (id) | Código DUA | Canal | Estado | Ficha oficial (status, consulta) | Regras do BOJA aplicadas | Fases | Acadêmicos | Idioma | Documentação obrigatória | Req. específicos (obrig.) | Regras específicas | Problemas / pendências | Correções (publicação) | Evidência (consulta) |`,
   `|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|`,
   ...linhas.map((l, i) => `| ${i + 1} | ${l.universidade} | ${esc(l.nome)} (${l.id}) | ${l.codigoDua || (l.variantes ? l.variantes.map((v) => v.codigo).join(', ') : '-')} | ${l.canal}${l.canalUrl ? ` ${l.canalUrl}` : ''} | ${l.classe} | ${l.fichaConsulta.status}${l.fichaConsulta.consultadoEm ? ` ${l.fichaConsulta.consultadoEm.slice(0, 16).replace('T', ' ')} UTC` : ''} | ${l.regrasAplicaveis.length ? `${l.regrasAplicaveis.length} regras (${l.regrasAplicaveis[0]}–${l.regrasAplicaveis.filter((r) => !REGRAS.find((x) => x.id === r)?.especifica).at(-1)}${l.regrasAplicaveis.filter((r) => REGRAS.find((x) => x.id === r)?.especifica).map((r) => ` + ${r}`).join('')})` : '-'} | ${esc(l.fases)} | ${esc(l.academicos || '-')} | ${esc(l.linguisticos || (l.variantes ? l.variantes.map((v) => `${v.codigo}: ${v.espanhol || '-'}`).join('; ') : '-'))} | ${esc(l.documentacao || '-')} | ${l.requisitos.filter((r) => r.obrigatorio).map((r) => `${r.codigo} [${r.categorias.join('/')}]`).join(', ') || '-'} | ${l.regrasEspecificas.join(', ') || '-'} | ${esc([...l.problemas, ...l.pendencias.filter((p) => !/^Oferta de vagas na Fase 1/.test(p))].join(' · ')) || (l.classe === 'PARTIALLY_VERIFIED' ? 'Só a oferta da Fase 1' : '-')} | ${esc(l.corrigidos.join(' · ')) || '-'} | ${l.evidencias.map((e) => `[${e.tipo}](${e.url}) ${e.consultadoEm?.slice(0, 10)}`).join(' ')} |`),
 ].join('\n');
