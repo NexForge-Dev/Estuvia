@@ -1835,6 +1835,40 @@ Ligados (verificados ponta a ponta em 24/10/2026):
 - Notificações apenas na plataforma (sem e-mail).
 - Bolsas: o indicador lê `server/content/scholarships.js`; hoje nenhuma tem edital aberto confirmado, então o número é 0.
 
+### Proteção de dados do Radar (hardening, 13/11/2026)
+
+#### Correções manuais protegidas (`server/radar/overrides.js`)
+- Corrigíveis pelo painel (com motivo e URL de evidência): **Programa** `nome`, `webPropria`, `duaCodigo`, `codigo`, `modalidade`; **Oportunidade** `suspensao`; **Janela** `abertura`, `encerramento`, `confirmacao`; **Evento** `inicio`, `fim`, `rotulo`.
+- Cada campo corrigido guarda em `overrides[campo]`: valor do admin, **último valor da fonte**, quem, quando, motivo e evidência. O campo da entidade é sempre o valor efetivo.
+- As coletas passam por `applyCollectedField`/`mergeCollected`/`collectFields` (pipeline): num campo corrigido, só atualizam o valor da fonte e registram a revisão `fonte-divergente`; nunca sobrescrevem o valor do admin. Janelas e eventos corrigidos não são removidos se a fonte deixar de listá-los (ficam `ausenteNaFonte`). No calendário, a detecção de "alteração crítica" compara com o valor da **fonte**, não com o corrigido.
+- Suspensão de oportunidade é uma correção como as outras: nenhuma coleta a remove; reativar só com "Remover correção".
+- Painel (`#/radar/admin`): seção "Correções manuais" (valor da fonte × valor do admin, quem/quando/motivo, histórico, remover), "Histórico de um registro" e invalidação de revisões.
+- API: `POST /api/radar/admin/corrections`, `DELETE /api/radar/admin/corrections`, `GET /api/radar/admin/corrections`, `GET /api/radar/admin/history?entidade=&id=`.
+
+#### Persistência confirmada
+- `save()` (`server/radar/db.js`) **rejeita** quando a gravação falha (antes, engolia o erro e a rota respondia 200). A falha vai para o log com o código do erro.
+- Toda execução (`runSource`) grava primeiro as evidências (Storage) e depois o banco; só então `persistido: true`. Em qualquer falha: a memória é **recarregada do banco** (`reloadRadarStore`), a execução é registrada com `resultado: 'erro'`, `persistido: false`, e a rota responde **503**. Ações do painel usam o mesmo princípio (`commit()` em `server/radar/admin.js`).
+- `POST /api/radar/admin/import` responde `persistido: true` só com o banco confirmado. O importador (`npm run radar:import`) exige essa confirmação, repete 5xx/rede com espera (5 s, 20 s) e termina com código de erro se um lote não for gravado.
+- Repetir é seguro: snapshots são deduplicados pelo hash do conteúdo, revisões só registram mudança real (antes ≠ depois, sem depender da ordem das chaves), alertas têm chave de deduplicação e a fila de revisão também.
+- Execuções: uma por vez por instância (fila única em `runSource`). Entre instâncias, a versão por linha do banco recusa gravação sobre dados velhos (conflito → recarga → repetir). Cada execução tem `id`, `inicio`, `fim`, `duracaoMs`, `alvos`, `itens`, `mudancas`, `evidencias`, `resultado`, `erro` e `persistido`.
+
+#### Reconciliação de identificadores
+- Os identificadores vêm da fonte (UGR: slug da página; DUA: código). Antes de criar um programa "novo", o catálogo procura o mesmo mestrado entre os da mesma universidade e do mesmo catálogo que **sumiram**: mesmo site oficial, mesmo código da universidade (não vale no DUA, onde o código é o próprio identificador) ou mesmo nome normalizado.
+- Evidência forte e única → é o mesmo: mantém o identificador antigo, o novo vira apelido (`aliases`), revisão `reconciliada`. Oportunidades, inscrições, jornadas e opções continuam no identificador antigo.
+- Só nome parecido, ou mais de um candidato → cria o novo e abre a revisão `possivel-renomeacao`. Aprovar (escolhendo o antigo) une: o novo ganha `aliasDe` e some das listas; quem guardou o id novo recebe o programa original (`programForJourney` resolve o apelido na leitura). Rejeitar não volta a sugerir o par.
+- Nenhuma reconciliação grava em contas de estudantes.
+
+#### Evidências duráveis
+- HTML original e conteúdo extraído de cada snapshot vão para o Storage (`putEvidence` em `server/storage.js`): bucket privado `estuvia-meta` (já existente), prefixo `radar-evidencias/`, gzip, nome = hash SHA-256 do conteúdo (gravar de novo é idempotente). Sem Supabase, em `RADAR_EVIDENCE_DIR` (padrão: `data/radar-evidencias`).
+- O snapshot no banco guarda `evidencia: { html, conteudo }` (as chaves) e fica leve. `GET /api/radar/admin/snapshots/:id/evidencia[?tipo=conteudo]` devolve a página original como texto puro (nunca renderizada).
+- Snapshots anteriores a esta mudança têm `referencia` para um arquivo da instância que já não existe e `conteudo` no próprio banco; a página original deles não é recuperável.
+
+#### Retenção (nada é apagado em silêncio: cada poda vai para o log)
+- **Revisões:** nunca apagadas. Revisões registradas por engano são **invalidadas** (`validacao: 'invalidada'`, com quem/quando/motivo) e continuam no histórico. `GET /api/radar/admin/revisions/suspeitas` lista as de antes = depois; `scripts/radar-invalidar-revisoes.mjs` as mostra e só invalida com `--aplicar`.
+- **Snapshots:** as 10 versões mais recentes de cada página, mais qualquer versão citada por uma revisão ou por um item aberto da fila (sem o antigo teto global de 600). Evidências no Storage não são apagadas.
+- **Alertas:** não lidos nunca são apagados. Lidos: ficam ao menos 365 dias e, além disso, até 500 por estudante (sem teto global).
+- **Execuções:** as 5.000 mais recentes.
+
 <a id="doc-24"></a>
 
 ## 24 — Tempo real, pesquisa na web, preços de passagens e anotações

@@ -215,6 +215,10 @@
 .rd-src-manual, .rd-src-nunca-verificada { color: var(--muted); }
 .rd-err { color: var(--danger); }
 .rd-row-err td { color: var(--danger); }
+.rd-row-invalid td { text-decoration: line-through; color: var(--muted); }
+.rd-row-override td:nth-child(4) strong { color: var(--warn); }
+.rd-invalidate { display: inline-flex; gap: 6px; align-items: center; }
+.rd-invalidate input { width: 190px; }
 .rd-td-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .rd-admin-form { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); align-items: end; margin: 10px 0; }
 .rd-dev { border: 2px dashed var(--danger); }

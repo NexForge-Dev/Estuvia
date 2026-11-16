@@ -31,14 +31,20 @@ export async function runScheduled({ budgetMs = Infinity, origem = 'agendada' } 
     for (const s of due) {
       if (executadas.length && Date.now() - started + longest * 1.2 > budgetMs) break;
       const t0 = Date.now();
-      const run = await runSource(s.id, { origem });
+      let run;
+      try {
+        run = await runSource(s.id, { origem });
+      } catch (err) {
+        // Falha ao gravar uma fonte não impede as outras; a execução fica registrada como erro (persistido: false).
+        run = err.run || { id: null, resultado: 'erro', mudancas: 0, erro: err.message, persistido: false };
+      }
       const ms = Date.now() - t0;
       longest = Math.max(longest, ms);
-      executadas.push({ fonte: s.id, resultado: run.resultado, mudancas: run.mudancas, erro: run.erro || null, ms });
+      executadas.push({ fonte: s.id, runId: run.id, resultado: run.resultado, mudancas: run.mudancas, erro: run.erro || null, persistido: run.persistido === true, ms });
       console.log(`[radar] ${s.id}: ${run.resultado}${run.erro ? ` - ${run.erro}` : ''}${run.mudancas ? ` (${run.mudancas} alteração/ões)` : ''}`);
     }
     const alertas = tick().length;
-    if (alertas) await save();
+    if (alertas) await save().catch(() => {}); // falha já registrada pelo save(); os alertas são recalculados na próxima
     return { executadas, pendentes: due.length - executadas.length, alertas };
   } finally {
     running = false;
@@ -57,7 +63,7 @@ export function startScheduler() {
   timers = [
     setTimeout(cycle, 10 * 1000),
     setInterval(cycle, CHECK_MS),
-    setInterval(() => { if (tick().length) save(); }, TICK_MS),
+    setInterval(() => { if (tick().length) save().catch(() => {}); }, TICK_MS), // falha já registrada pelo save()
   ];
   timers.forEach((t) => t.unref?.());
   return true;
