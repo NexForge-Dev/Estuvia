@@ -176,6 +176,9 @@ export const SOURCES = [
   // Conferida em 14/11/2026: art. 15 ("Toda persona que viva en España está obligada a inscribirse en el Padrón del
   // municipio en el que resida habitualmente"). O procedimento (cita, documentos) é de cada ayuntamiento.
   { id: 'O32', orgao: 'Boletín Oficial del Estado', titulo: 'Ley 7/1985, de Bases del Régimen Local, art. 15 (obrigação de inscrição no Padrón municipal)', url: 'https://www.boe.es/buscar/act.php?id=BOE-A-1985-5392#a15', revisadoEm: '2026-11-14', tipo: 'oficial' },
+  // 16/11/2026: obrigação (saída definitiva ou mais de 12 meses fora), prazo da comunicação e relação com a DSDP conferidos.
+  { id: 'O33', orgao: 'Receita Federal (gov.br)', titulo: 'Comunicação e Declaração de Saída Definitiva do País', url: 'https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/preenchimento/dsdp', revisadoEm: '2026-11-16', tipo: 'oficial' },
+  { id: 'O34', orgao: 'Receita Federal (gov.br)', titulo: 'Residente e não residente', url: 'https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/preenchimento/dsdp/nao-residente', revisadoEm: '2026-11-16', tipo: 'oficial' },
   {
     id: 'DEMO',
     orgao: 'Plataforma (protótipo)',
