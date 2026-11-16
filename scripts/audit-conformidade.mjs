@@ -141,10 +141,10 @@ for (const o of dump.detalhes) {
   const regras = proc.regrasEspecificas.map((r) => r.id);
   for (const r of (fd?.requisitos || []).filter((x) => x.obrigatorio && /TITUL[OA]S?[^.]{0,80}HOMOLOGAD|HOMOLOGAD[^.]{0,40}TITUL|ACCESO HOMOLOGADO/.test(up(x.texto)))) {
     if (!proc.flags.exigeTituloHomologadoFicha) problemas.push(`Requisito ${r.codigo} exige título homologado, mas o sistema não sinaliza.`);
-    else corrigidos.push(`Homologação: produção só exibia o texto do requisito ${r.codigo} (título homologado), sem alerta nem item de elegibilidade. Corrigido no código LOCAL, ainda NÃO publicado.`);
+    else corrigidos.push(`Homologação: produção só exibia o texto do requisito ${r.codigo} (título homologado), sem alerta nem item de elegibilidade. Corrigido e publicado (commit 956a064, origin/main, 16/11/2026).`);
     evid.push({ tipo: 'homologacao', url: FICHA_URL(codigo), documento: `Requisito ${r.codigo} da ficha ${codigo}`, consultadoEm: ficha.consultadoEm, trecho: r.texto });
   }
-  if (proc.etapasAdicionais?.length) corrigidos.push(`Etapa própria de seleção (${proc.etapasAdicionais.map((e) => e.codigo).join(', ')}): produção só exibe o texto, sem alerta. Corrigido no código LOCAL, ainda NÃO publicado.`);
+  if (proc.etapasAdicionais?.length) corrigidos.push(`Etapa própria de seleção (${proc.etapasAdicionais.map((e) => e.codigo).join(', ')}): produção só exibe o texto, sem alerta. Corrigido e publicado (commit 956a064, origin/main, 16/11/2026).`);
   if (/PROFESORADO/i.test(o.programa.nome) && !regras.includes('profesorado')) corrigidos.push('A regra do Máster en Profesorado (prazo da acreditação de idioma) era aplicada a este máster, que não é o de Profesorado. Corrigido e publicado (commit aa58269, origin/main).');
   if (canalCfg) corrigidos.push(`Canal: configuração individual (${canalCfg.tipo}) conferida nesta auditoria e publicada (commit aa58269, origin/main).`);
   if (proc.canal.status === 'nao-confirmado') pendencias.push(proc.canal.texto);
