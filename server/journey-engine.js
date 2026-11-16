@@ -405,6 +405,9 @@ export function missionState(mission, ctx, cache = new Map()) {
 // Missão opcional não iniciada não conta como pendência.
 const counts = (m) => m.status !== 'nao-aplicavel' && m.status !== 'ignorada' && !(m.opcional && m.status !== 'concluida' && m.objetivosFeitos === 0);
 
+// A rodada da escolha do mestrado mostra a foto da universidade de destino (a ilustração genérica fica nas demais).
+const roundBanner = (r, ctx) => (r.banner === "/img/rounds/academico.svg" ? ctx.university?.capa || "/img/cities/andaluzia.svg" : r.banner);
+
 // ---------- Jornada completa ----------
 
 export function computeJourney(user, jr, now = new Date()) {
@@ -431,7 +434,7 @@ export function computeJourney(user, jr, now = new Date()) {
     else status = 'bloqueada';
     return {
       numero: r.numero, sigla: r.sigla || null, transversal: Boolean(r.transversal),
-      titulo: r.titulo, etapa: r.etapa, banner: r.banner, resumo: r.resumo, conclusao: r.conclusao, icone: r.icone,
+      titulo: r.titulo, etapa: r.etapa, banner: roundBanner(r, ctx), resumo: r.resumo, conclusao: r.conclusao, icone: r.icone,
       status, progresso, concluidas: done, total: applicable.length,
       atencao: applicable.filter((m) => m.status === 'atencao').length,
       aguardando: applicable.filter((m) => m.status === 'aguardando').length,
@@ -739,7 +742,7 @@ export function missionDetail(user, jr, id, now = new Date()) {
       rodada: def.rodada,
       rodadaTitulo: round?.titulo,
       rodadaSigla: round?.sigla || null,
-      rodadaBanner: round?.banner,
+      rodadaBanner: round ? roundBanner(round, ctx) : undefined,
       titulo: def.titulo,
       resumo: def.resumo,
       objetivo: def.objetivo,

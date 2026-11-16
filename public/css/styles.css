@@ -249,6 +249,9 @@ input:disabled, select:disabled { opacity: .6; }
 .jc-logo-us { background: #65001b; }
 .jc-logo-uhu { background: #263b59; }
 .jc-media-top { position: absolute; top: 12px; left: 12px; z-index: 1; display: flex; gap: 6px; }
+/* Sobre a foto da universidade, os selos precisam de fundo sólido para continuarem legíveis. */
+.jc-media-top .chip-status, .rc-banner .chip-status { background: linear-gradient(var(--surface), var(--surface)) padding-box; box-shadow: 0 2px 8px rgb(0 0 0 / 35%); }
+.jc-media-top .chip-status.st-em-andamento, .rc-banner .chip-status.st-em-andamento { background: color-mix(in srgb, var(--info) 22%, var(--surface)); }
 .jc-route { position: absolute; left: 14px; bottom: 12px; z-index: 1; display: flex; gap: 8px; align-items: center; color: #fff; font-weight: 800; font-size: .9rem; text-shadow: 0 1px 6px rgb(0 0 0 / 50%); }
 .jc-remove { position: absolute; top: 10px; right: 10px; z-index: 2; border: 0; background: rgb(0 0 0 / 45%); color: #fff; border-radius: 10px; min-width: 32px; height: 32px; cursor: pointer; font: inherit; font-size: .75rem; font-weight: 700; display: grid; place-items: center; padding: 0 8px; opacity: 0; transition: opacity .2s; }
 .journey-card:hover .jc-remove, .jc-remove:focus, .jc-remove.confirm { opacity: 1; }
