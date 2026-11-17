@@ -126,15 +126,24 @@ test('gravação envia só a linha alterada e incrementa a versão dela', async 
   assert.equal(A.users.findById('u3').profile.apelido, 'Caio');
 });
 
-test('conflito: gravação sobre versão velha é recusada, desfeita na memória e a instância se recupera', async () => {
-  await A.users.update('u1', (u) => { u.profile.apelido = 'Ana A'; });
-  await assert.rejects(B.users.update('u1', (u) => { u.profile.apelido = 'Ana B'; }), (e) => e.code === 'ESTUVIA_CONFLICT');
-  assert.equal(B.users.findById('u1').profile.apelido, 'Ana', 'mudança recusada desfeita na memória de B');
-  await B.syncStore();
-  assert.equal(B.users.findById('u1').profile.apelido, 'Ana A');
-  await B.users.update('u1', (u) => { u.profile.cidade = 'Granada'; });
+test('conflito: gravação sobre versão velha traz a versão nova e reaplica a mudança (nada se perde, sem erro)', async () => {
+  await A.users.update('u1', (u) => { u.profile.cidade = 'Granada'; });
+  // B ainda tem a versão antiga de u1: o banco recusa, B sincroniza e aplica a mesma mutação sobre a versão de A.
+  const u = await B.users.update('u1', (x) => { x.profile.apelido = 'Ana B'; });
+  assert.deepEqual([u.profile.apelido, u.profile.cidade], ['Ana B', 'Granada']);
+  const row = await one(`select data->'profile'->>'apelido' as a, data->'profile'->>'cidade' as c from public.users where id = 'u1'`);
+  assert.deepEqual([row.a, row.c], ['Ana B', 'Granada'], 'as duas mudanças estão no banco');
   await A.syncStore();
-  assert.deepEqual([A.users.findById('u1').profile.apelido, A.users.findById('u1').profile.cidade], ['Ana A', 'Granada']);
+  assert.deepEqual([A.users.findById('u1').profile.apelido, A.users.findById('u1').profile.cidade], ['Ana B', 'Granada']);
+});
+
+test('duas instâncias curtindo o mesmo post ao mesmo tempo: as duas curtidas ficam', async () => {
+  await A.syncStore();
+  await B.syncStore();
+  const like = (inst, uid) => inst.community.mutate((c) => { const p = c.posts.find((x) => x.id === 'p1'); if (!p.curtidas.includes(uid)) p.curtidas.push(uid); });
+  await Promise.all([like(A, 'u1'), like(B, 'u3')]);
+  const { curtidas } = await one(`select data->'curtidas' as curtidas from public.community_posts where id = 'p1'`);
+  assert.deepEqual([...curtidas].sort(), ['u1', 'u2', 'u3']);
 });
 
 test('e-mail duplicado entre instâncias é barrado pelo banco', async () => {
@@ -277,21 +286,28 @@ test('chave estrangeira violada (post excluído por outra instância) vira confl
   assert.equal((await one(`select data->'profile'->>'fk' as v from public.users where id = 'u2'`)).v, 'ok');
 });
 
-test('conflito desfaz mudanças de outra requisição na fila: ela também recebe erro (não responde "salvo")', async () => {
+test('conflito desfaz mudanças de outra requisição na fila: as duas são reaplicadas e gravadas (nenhuma responde "salvo" sem estar salva)', async () => {
   await A.syncStore();
   await B.syncStore();
   await A.users.update('u1', (u) => { u.profile.fila = 'A'; });
-  // Duas requisições em B antes de a fila andar: a primeira conflita (u1 velho); a segunda mexe só em u2.
+  // Duas requisições em B antes de a fila andar: a primeira conflita (u1 velho) e desfaz também a segunda (u2).
   const p1 = B.users.update('u1', (u) => { u.profile.fila = 'B'; });
   const p2 = B.users.update('u2', (u) => { u.profile.fila = 'B2'; });
-  await assert.rejects(p1, (e) => e.code === 'ESTUVIA_CONFLICT');
-  await assert.rejects(p2, (e) => e.code === 'ESTUVIA_CONFLICT');
-  assert.equal(B.users.findById('u2').profile.fila, undefined, 'mudança desfeita na memória');
-  assert.equal((await one(`select data->'profile'->>'fila' as v from public.users where id = 'u2'`)).v, null);
-  // Requisições depois do conflito voltam a gravar normalmente.
+  await Promise.all([p1, p2]);
+  assert.equal((await one(`select data->'profile'->>'fila' as v from public.users where id = 'u1'`)).v, 'B');
+  assert.equal((await one(`select data->'profile'->>'fila' as v from public.users where id = 'u2'`)).v, 'B2');
+});
+
+test('conflito que persiste depois das novas tentativas chega como ESTUVIA_CONFLICT (a rota responde 409)', async () => {
+  await A.syncStore();
   await B.syncStore();
-  await B.users.update('u2', (u) => { u.profile.fila = 'B3'; });
-  assert.equal((await one(`select data->'profile'->>'fila' as v from public.users where id = 'u2'`)).v, 'B3');
+  await A.community.mutate((c) => { c.posts.push({ id: 'pgone', autorId: 'u1', curtidas: [], salvos: [] }); });
+  await B.syncStore();
+  await A.community.mutate((c) => { c.posts = c.posts.filter((p) => p.id !== 'pgone'); });
+  // Mutação "cega" (não confere se o post existe): toda tentativa viola a chave estrangeira.
+  await assert.rejects(B.community.mutate((c) => { c.comments.push({ id: 'cgone', postId: 'pgone', autorId: 'u2', texto: 'oi' }); }), (e) => e.code === 'ESTUVIA_CONFLICT');
+  await B.users.update('u2', (u) => { u.profile.depoisDoConflito = true; });
+  assert.ok(B.storeHealth);
 });
 
 test('Radar: conflito desfaz mudanças de outra chamada na fila: ela também recebe erro (não responde "salvo")', async () => {

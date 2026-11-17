@@ -59,12 +59,22 @@ e `data()`/`save()` do Radar (`server/radar/db.js`), com as coleções em memór
 
 - **Gravar** (`server/entities.js`): a cada gravação, cada item é comparado (JSON com chaves ordenadas) com a
   última versão salva; só inserções, atualizações e exclusões reais vão para `estuvia_apply`, numa transação.
-  Conflito de versão desfaz o lote inteiro no banco **e na memória**, e quem chamou recebe erro. Chave
+  Conflito de versão desfaz o lote inteiro no banco **e na memória**. Desde 17/11/2026 a base principal
+  (`store.js`, `writeWithRetry`) traz o que a outra instância gravou e **reaplica a mesma mutação** sobre os
+  dados novos, até 4 vezes (duas pessoas curtindo o mesmo post ao mesmo tempo: as duas curtidas ficam). Só se
+  o conflito persistir quem chamou recebe erro, e a rota responde 409 ("tente de novo"), não 500. O Radar
+  (`radar/db.js`, `save()`) ainda não reaplica: quem chamou recebe erro. Chave
   estrangeira violada (ex.: comentário num post que outra instância acabou de excluir) é tratada como conflito.
   Requisições cujas mudanças estavam no lote desfeito também recebem erro, mesmo que a vez delas na fila
   chegue depois (`store.js`, `revertedUpTo`). Texto com NUL (`\u0000`) ou surrogate solto, que o `jsonb`
   recusa, vai para o banco limpo (`pgSafe` em `entities.js`): sem isso, um único texto travaria todas as
   gravações da instância.
+- **Comparar só o que mudou**: cada escrita marca o que mexeu (`mark`/`markRow` em `store.js`):
+  `users.update(id)` marca só a linha daquele estudante, `community.mutate` as tabelas da comunidade,
+  `audit.log` só a linha nova. Antes, toda gravação serializava todas as coleções (medido em 17/11/2026:
+  uma curtida custava ~80 ms de CPU com 1.000 estudantes e ~350 ms com 5.000; agora ~7 ms e ~50 ms).
+  Uma comparação completa a cada 25 gravações pega mudanças feitas fora dessas funções. Quem altera um
+  objeto da base deve fazê-lo dentro de `users.update`/`community.mutate`/`analytics.mutate`.
 - **Sincronizar**: antes de cada requisição `/api`, `estuvia_changes` devolve o que outras instâncias
   gravaram desde a última leitura (por `txid` + xmin do snapshot, para não perder transações que
   confirmaram atrasadas). Resolve o caso da Vercel, com várias instâncias em paralelo.

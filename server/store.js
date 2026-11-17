@@ -131,18 +131,18 @@ export async function initStore() {
   entities = store;
   lastWriteError = null;
   if (importFrom) {
-    await persist();
+    await persist({ full: true });
     console.log(`[store] Importado de ${importFrom.origem} para as tabelas: ${db.users.length} usuário(s), ${db.audit.length} registro(s) de auditoria.`);
   }
   const semDemo = dropRemovedDemoPrograms(db);
   if (semDemo) {
-    await persist();
+    await persist({ full: true });
     console.log(`[store] ${semDemo} estudante(s) com mestrado de exemplo removido: jornada ficou com o mestrado a definir.`);
   }
   if (env.aviso) console.warn(`[store] ${env.aviso}`);
   if (env.marcar) {
     db.meta = { ...(db.meta || {}), ambiente: env.marcar, marcadoEm: new Date().toISOString() };
-    await persist();
+    await persist({ full: true });
     console.log(`[store] Banco ${ref} vazio marcado como "${env.marcar}".`);
   }
 }
@@ -170,7 +170,29 @@ let revertedUpTo = 0;
 const revertedError = () => Object.assign(new Error('Os dados mudaram em outra instância do servidor e esta alteração foi desfeita. Tente novamente.'), { code: 'ESTUVIA_CONFLICT' });
 export const storeHealth = () => ({ ok: !lastWriteError, erro: lastWriteError });
 
-function persist() {
+// ---------- Tabelas sujas ----------
+// Comparar TODAS as coleções a cada gravação custava ~80 ms de CPU com 1.000 estudantes e ~370 ms com 5.000
+// (cada curtida relia todos os usuários, posts e a auditoria). Cada escrita marca as tabelas que mexeu e a
+// gravação compara só essas. Uma comparação completa a cada FULL_DIFF_EVERY gravações pega qualquer mudança
+// feita fora destas funções (ex.: grupos iniciais semeados numa leitura).
+// dirty: tabela → null (a tabela toda) ou Set de ids (só essas linhas).
+const dirty = new Map();
+const FULL_DIFF_EVERY = 25;
+let sinceFullDiff = 0;
+const mark = (...tables) => { for (const t of tables) dirty.set(t, null); };
+const markRow = (table, id) => {
+  if (!dirty.has(table)) dirty.set(table, new Set());
+  dirty.get(table)?.add(String(id));
+};
+const mergeDirty = (from) => {
+  for (const [t, ids] of from) {
+    if (ids === null) dirty.set(t, null);
+    else ids.forEach((id) => markRow(t, id));
+  }
+};
+const COMMUNITY_TABLES = ['community_posts', 'community_comments', 'community_groups', 'community_reports', 'community_media'];
+
+function persist({ full: forceFull = false } = {}) {
   // Serializa as escritas. JSON: arquivo temporário + rename (evita JSON corrompido). Supabase: só as linhas
   // que mudaram, numa transação. A promessa devolvida REJEITA se a gravação falhar: quem chamou não pode responder "salvo".
   const snapshot = usesSupabase() ? null : JSON.stringify(db, null, 2);
@@ -178,10 +200,16 @@ function persist() {
   const run = writing.then(async () => {
     if (usesSupabase()) {
       if (!entities) throw new Error('Supabase store was not initialized before writing.');
+      const full = forceFull || ++sinceFullDiff >= FULL_DIFF_EVERY;
+      const only = full ? null : new Map([...dirty].map(([t, ids]) => [t, ids && new Set(ids)]));
+      if (full) sinceFullDiff = 0;
+      dirty.clear();
       try {
-        await entities.persist();
+        await entities.persist({ only });
       } catch (err) {
         if (err.code === 'ESTUVIA_CONFLICT') revertedUpTo = persistTick;
+        // Falha de rede: as mudanças continuam na memória e a próxima gravação precisa comparar estas tabelas de novo.
+        else if (only) mergeDirty(only); else sinceFullDiff = FULL_DIFF_EVERY;
         throw err;
       }
       if (revertedUpTo >= tick) throw revertedError();
@@ -202,6 +230,28 @@ function persist() {
 
 export const newId = () => crypto.randomUUID();
 
+// ---------- Conflito entre instâncias: tenta de novo ----------
+// Na Vercel, duas instâncias podem gravar a mesma linha quase ao mesmo tempo (duas pessoas curtindo o mesmo post).
+// O banco recusa a segunda (versão otimista) e a mudança é desfeita na memória. Antes isso virava "Algo deu errado"
+// para o estudante. Agora a instância traz o que a outra gravou e aplica a MESMA mutação de novo sobre os dados
+// atualizados (curtir continua sendo "alternar a curtida", agora sobre a lista certa). `apply` devolve
+// { skip: true } quando não há nada a gravar (ex.: usuário não existe mais).
+const CONFLICT_TRIES = 4;
+async function writeWithRetry(apply) {
+  for (let attempt = 1; ; attempt += 1) {
+    const result = apply();
+    if (result?.skip) return result.value;
+    try {
+      await persist();
+      return result?.value;
+    } catch (err) {
+      if (err.code !== 'ESTUVIA_CONFLICT' || attempt >= CONFLICT_TRIES) throw err;
+      await new Promise((r) => setTimeout(r, 15 * attempt + Math.random() * 25));
+      await syncStore();
+    }
+  }
+}
+
 export const users = {
   findByEmail(email) {
     return db.users.find((u) => u.email === email.toLowerCase()) || null;
@@ -210,39 +260,50 @@ export const users = {
     return db.users.find((u) => u.id === id) || null;
   },
   async create(user) {
-    db.users.push(user);
-    await persist();
-    return user;
+    return writeWithRetry(() => {
+      if (!db.users.some((u) => u.id === user.id)) db.users.push(user);
+      markRow('users', user.id);
+      return { value: user };
+    });
   },
   async update(id, mutate) {
-    const user = this.findById(id);
-    if (!user) return null;
-    mutate(user);
-    user.updatedAt = new Date().toISOString();
-    await persist();
-    return user;
+    return writeWithRetry(() => {
+      const user = this.findById(id);
+      if (!user) return { skip: true, value: null };
+      mutate(user);
+      user.updatedAt = new Date().toISOString();
+      markRow('users', id);
+      return { value: user };
+    });
   },
   // Aplica a mesma mutação a vários estudantes (ex.: prazo de edital confirmado pela moderação).
   async updateWhere(predicate, mutate) {
-    const touched = db.users.filter(predicate);
-    touched.forEach((u) => { mutate(u); u.updatedAt = new Date().toISOString(); });
-    if (touched.length) await persist();
-    return touched.length;
+    return writeWithRetry(() => {
+      const touched = db.users.filter(predicate);
+      if (!touched.length) return { skip: true, value: 0 };
+      touched.forEach((u) => { mutate(u); u.updatedAt = new Date().toISOString(); });
+      mark('users');
+      return { value: touched.length };
+    });
   },
   all() {
     return db.users;
   },
   // Registra atividade (último acesso, IP, dias ativos) sem mexer em updatedAt.
   async touch(id, mutate) {
-    const user = this.findById(id);
-    if (!user) return null;
-    mutate(user);
-    await persist();
-    return user;
+    return writeWithRetry(() => {
+      const user = this.findById(id);
+      if (!user) return { skip: true, value: null };
+      mutate(user);
+      markRow('users', id);
+      return { value: user };
+    });
   },
   async remove(id) {
-    db.users = db.users.filter((u) => u.id !== id);
-    await persist();
+    await writeWithRetry(() => {
+      db.users = db.users.filter((u) => u.id !== id);
+      mark('users');
+    });
   },
 };
 
@@ -253,17 +314,22 @@ export const community = {
     return fn(db.community);
   },
   async mutate(fn) {
-    const result = fn(db.community);
-    await persist();
-    return result;
+    return writeWithRetry(() => {
+      const value = fn(db.community);
+      mark(...COMMUNITY_TABLES);
+      return { value };
+    });
   },
 };
 
 export const audit = {
   async log(event) {
-    db.audit.push({ id: newId(), at: new Date().toISOString(), ...event });
-    if (db.audit.length > 5000) db.audit = db.audit.slice(-5000);
-    await persist();
+    const entry = { id: newId(), at: new Date().toISOString(), ...event };
+    await writeWithRetry(() => {
+      if (!db.audit.some((e) => e.id === entry.id)) db.audit.push(entry);
+      if (db.audit.length > 5000) { db.audit = db.audit.slice(-5000); mark('audit_log'); } // poda: exclusões
+      else markRow('audit_log', entry.id);
+    });
   },
   recent(limit = 200, predicate = () => true) {
     const out = [];
@@ -282,6 +348,8 @@ export const analytics = {
   },
   mutate(fn) {
     const result = fn(db.analytics);
+    // O uso de IA por estudante (ai-health.js) é anotado no próprio usuário dentro desta mutação.
+    mark('analytics', 'users');
     if (!analyticsTimer) {
       analyticsTimer = setTimeout(() => { analyticsTimer = null; persist().catch(() => {}); }, 5000);
       analyticsTimer.unref?.();

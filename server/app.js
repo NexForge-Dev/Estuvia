@@ -108,6 +108,8 @@ export function createApp() {
   app.use((err, req, res, _next) => {
     if (err.type === 'entity.parse.failed') return res.status(400).json({ error: 'JSON inválido.' });
     if (err.type === 'entity.too.large') return res.status(413).json({ error: 'Conteúdo grande demais.' });
+    // Conflito entre instâncias que sobreviveu às novas tentativas (store.js): nada foi gravado; o estudante repete.
+    if (err.code === 'ESTUVIA_CONFLICT' && !res.headersSent) return res.status(409).json({ error: 'Outra pessoa mexeu nisto ao mesmo tempo. Tente de novo.' });
     console.error('[erro]', err);
     if (res.headersSent) return;
     res.status(500).json({ error: 'Algo deu errado do nosso lado. Tente novamente.' });

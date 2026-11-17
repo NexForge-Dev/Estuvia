@@ -221,13 +221,27 @@ export function createEntityStore(collections, { label }) {
     }
   }
 
-  function diff() {
+  // `only`: Map tabela → null (comparar a tabela toda) ou Set de ids (só essas linhas). Sem ele, compara tudo.
+  // Comparar uma linha custa serializá-la; com milhares de estudantes, serializar todos a cada gravação pesava.
+  function diff(only) {
     const upserts = [];
     const deletes = [];
-    for (const t of tables) {
+    for (const t of only ? tables.filter((x) => only.has(x)) : tables) {
       const col = byTable.get(t);
       const known = saved.get(t);
       const current = col.entries();
+      const ids = only?.get(t);
+      if (ids) {
+        for (const id of ids) {
+          const prev = known.get(id);
+          if (!current.has(id)) { if (prev) deletes.push({ op: { t, id, v: prev.version, del: true }, size: 64 }); continue; }
+          const json = stable(current.get(id));
+          if (prev && prev.json === json) continue;
+          const data = BAD_TEXT.test(json) ? pgSafe(JSON.parse(json)) : JSON.parse(json);
+          upserts.push({ op: { t, id, v: prev ? prev.version : null, row: { ...COLUMNS[t](data, id), data } }, json, size: json.length });
+        }
+        continue;
+      }
       for (const [id, obj] of current) {
         const json = stable(obj);
         const prev = known.get(id);
@@ -244,8 +258,8 @@ export function createEntityStore(collections, { label }) {
   }
 
   /** Grava tudo o que difere da última versão salva. Rejeita em conflito (nada do lote é gravado). */
-  async function persist() {
-    const pending = diff();
+  async function persist({ only } = {}) {
+    const pending = diff(only);
     if (!pending.length) return 0;
     const batches = [];
     let cur = [];
