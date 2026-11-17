@@ -331,6 +331,19 @@ test('Radar: conflito desfaz mudanças de outra chamada na fila: ela também rec
   assert.equal((await one(`select nome from public.radar_programs where id = 'prog2'`)).nome, 'Máster Y2');
 });
 
+test('Radar: escrita de estudante (mutateRadar) sobre versão velha traz a nova e reaplica, sem erro', async () => {
+  const R1 = await import('../server/radar/db.js');
+  const R2 = await import('../server/radar/db.js?instancia=r2');
+  await R1.syncRadarStore();
+  await R2.syncRadarStore();
+  R1.data().programs.find((p) => p.id === 'prog1').nome = 'Máster X (R1 de novo)';
+  await R1.save();
+  // R2 ainda tem prog1 velho: a primeira tentativa conflita, a segunda grava sobre a versão de R1.
+  await R2.mutateRadar((d) => { d.programs.find((p) => p.id === 'prog1').descricaoEstudante = 'nota de R2'; });
+  const row = await one(`select nome, data->>'descricaoEstudante' as nota from public.radar_programs where id = 'prog1'`);
+  assert.deepEqual([row.nome, row.nota], ['Máster X (R1 de novo)', 'nota de R2'], 'as duas mudanças ficaram');
+});
+
 test('Radar lido em paralelo com a base principal: gravações só liberadas depois dela, e falha nela barra o Radar', async () => {
   // Base principal ainda carregando: a leitura do Radar termina, mas initRadarStore só resolve depois dela.
   const R3 = await import('../server/radar/db.js?instancia=r3');

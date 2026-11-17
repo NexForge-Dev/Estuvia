@@ -2,7 +2,7 @@
 // Tudo aqui lê a base VERIFICADA (db.js). Nada é inferido de anos anteriores: um ciclo sem
 // calendário publicado mostra o anterior apenas como "referência histórica".
 
-import { data, save, newId } from './db.js';
+import { data, save, newId, mutateRadar } from './db.js';
 import { opportunityState, upcoming, STATES, STALE_AFTER_HOURS } from './status.js';
 import { APPLICATION_CHANNEL, UNIVERSITY_INFO } from './registry.js';
 import { EVENT_TYPES, tick } from './notify.js';
@@ -460,13 +460,13 @@ export async function addToAgenda(user, oppId, items, usersStore) {
   const suggestions = agendaSuggestions(opp, windows, events);
   const journey = (user.journeys || []).find((j) => j.programaId === opp.programId);
   const created = [];
+  const links = [];
   for (const item of items) {
     const s = suggestions.find((x) => x.id === item.id);
     if (!s) continue;
     // Já está na Agenda só se o evento ainda existe: apagado pelo estudante, a sugestão pode voltar.
     const prev = d.agendaLinks.filter((l) => l.userId === user.id && l.suggestionId === s.id && l.ativo);
     if (prev.some((l) => (user.planner || []).some((e) => e.id === l.plannerEventId))) continue;
-    prev.forEach((l) => { l.ativo = false; });
     const event = {
       // origem/oportunidade* são preservados pela Agenda quando o estudante edita o evento;
       // o "replan" da Agenda só remove origem 'agenda-ai', então estes ficam.
@@ -480,11 +480,17 @@ export async function addToAgenda(user, oppId, items, usersStore) {
     };
     if (event.fim <= event.inicio) continue;
     created.push(event);
-    d.agendaLinks.push({ id: newId(), userId: user.id, plannerEventId: event.id, opportunityId: opp.id, suggestionId: s.id, oficial: s.oficial, base: s.base, dataOficialNaCriacao: s.base.data, ativo: true, criadoEm: event.criadoEm });
+    links.push({ id: newId(), userId: user.id, plannerEventId: event.id, opportunityId: opp.id, suggestionId: s.id, oficial: s.oficial, base: s.base, dataOficialNaCriacao: s.base.data, ativo: true, criadoEm: event.criadoEm });
   }
   if (created.length) {
     await usersStore.update(user.id, (u) => { (u.planner ??= []).push(...created); });
-    await save();
+    await mutateRadar((rd) => {
+      for (const link of links) {
+        // Vínculos antigos da mesma sugestão (evento apagado pelo estudante) deixam de valer.
+        rd.agendaLinks.filter((l) => l.userId === user.id && l.suggestionId === link.suggestionId && l.ativo && l.id !== link.id).forEach((l) => { l.ativo = false; });
+        if (!rd.agendaLinks.some((l) => l.id === link.id)) rd.agendaLinks.push(link);
+      }
+    });
   }
   return created;
 }
@@ -508,35 +514,36 @@ export async function confirmAgendaChange(user, linkId, aceitar, usersStore) {
   const d = data();
   const change = agendaChanges(user).find((c) => c.linkId === linkId);
   if (!change) throw Object.assign(new Error('Alteração não encontrada.'), { status: 404 });
-  const link = d.agendaLinks.find((l) => l.id === linkId);
   if (aceitar) await usersStore.update(user.id, (u) => { const e = u.planner.find((x) => x.id === change.plannerEventId); if (e) e.data = change.sugestao; });
-  link.dataOficialNaCriacao = change.dataOficialNova;
-  await save();
+  await mutateRadar((rd) => {
+    const link = rd.agendaLinks.find((l) => l.id === linkId);
+    if (link) link.dataOficialNaCriacao = change.dataOficialNova;
+  });
   return change;
 }
 
 // ---------- Acompanhamento e alertas ----------
 
 export async function subscribe(user, oppId, { eventos, canal = 'app' } = {}) {
-  const d = data();
-  if (!d.opportunities.some((o) => o.id === oppId)) throw Object.assign(new Error('Oportunidade não encontrada.'), { status: 404 });
   const list = (eventos?.length ? eventos : Object.keys(EVENT_TYPES)).filter((e) => EVENT_TYPES[e]);
-  let sub = d.subscriptions.find((s) => s.userId === user.id && s.opportunityId === oppId);
-  if (sub) Object.assign(sub, { eventos: list, canal, ativa: true });
-  else {
-    if (d.subscriptions.filter((s) => s.userId === user.id && s.ativa !== false).length >= 50) throw Object.assign(new Error('Você pode acompanhar até 50 oportunidades.'), { status: 409 });
-    sub = { id: newId(), userId: user.id, opportunityId: oppId, eventos: list, canal, ativa: true, criadaEm: new Date().toISOString() };
-    d.subscriptions.push(sub);
-  }
-  tick();
-  await save();
-  return sub;
+  const id = newId();
+  const criadaEm = new Date().toISOString();
+  return mutateRadar((d) => {
+    if (!d.opportunities.some((o) => o.id === oppId)) throw Object.assign(new Error('Oportunidade não encontrada.'), { status: 404 });
+    let sub = d.subscriptions.find((s) => s.userId === user.id && s.opportunityId === oppId);
+    if (sub) Object.assign(sub, { eventos: list, canal, ativa: true });
+    else {
+      if (d.subscriptions.filter((s) => s.userId === user.id && s.ativa !== false).length >= 50) throw Object.assign(new Error('Você pode acompanhar até 50 oportunidades.'), { status: 409 });
+      sub = { id, userId: user.id, opportunityId: oppId, eventos: list, canal, ativa: true, criadaEm };
+      d.subscriptions.push(sub);
+    }
+    tick();
+    return sub;
+  });
 }
 
 export async function unsubscribe(user, oppId) {
-  const d = data();
-  d.subscriptions = d.subscriptions.filter((s) => !(s.userId === user.id && s.opportunityId === oppId));
-  await save();
+  await mutateRadar((d) => { d.subscriptions = d.subscriptions.filter((s) => !(s.userId === user.id && s.opportunityId === oppId)); });
 }
 
 export function myRadar(user) {
@@ -555,17 +562,18 @@ export function myRadar(user) {
 
 export async function markAlertsRead(user, ids) {
   const now = new Date().toISOString();
-  for (const a of data().alerts) if (a.userId === user.id && !a.lidoEm && (!ids || ids.includes(a.id))) { a.lidoEm = now; a.estado = 'lida'; }
-  await save();
+  await mutateRadar((d) => {
+    for (const a of d.alerts) if (a.userId === user.id && !a.lidoEm && (!ids || ids.includes(a.id))) { a.lidoEm = now; a.estado = 'lida'; }
+  });
 }
 
 /** Exclusão de conta / exportação de dados do estudante. */
 export async function forgetUser(userId) {
-  const d = data();
-  d.subscriptions = d.subscriptions.filter((s) => s.userId !== userId);
-  d.alerts = d.alerts.filter((a) => a.userId !== userId);
-  d.agendaLinks = d.agendaLinks.filter((l) => l.userId !== userId);
-  await save();
+  await mutateRadar((d) => {
+    d.subscriptions = d.subscriptions.filter((s) => s.userId !== userId);
+    d.alerts = d.alerts.filter((a) => a.userId !== userId);
+    d.agendaLinks = d.agendaLinks.filter((l) => l.userId !== userId);
+  });
 }
 export const exportUser = (userId) => {
   const d = data();

@@ -62,8 +62,9 @@ e `data()`/`save()` do Radar (`server/radar/db.js`), com as coleções em memór
   Conflito de versão desfaz o lote inteiro no banco **e na memória**. Desde 17/11/2026 a base principal
   (`store.js`, `writeWithRetry`) traz o que a outra instância gravou e **reaplica a mesma mutação** sobre os
   dados novos, até 4 vezes (duas pessoas curtindo o mesmo post ao mesmo tempo: as duas curtidas ficam). Só se
-  o conflito persistir quem chamou recebe erro, e a rota responde 409 ("tente de novo"), não 500. O Radar
-  (`radar/db.js`, `save()`) ainda não reaplica: quem chamou recebe erro. Chave
+  o conflito persistir quem chamou recebe erro, e a rota responde 409 ("tente de novo"), não 500. No Radar, as
+  escritas de estudante (acompanhar, alertas lidos, vínculos com a Agenda) usam `mutateRadar` com a mesma
+  lógica; as do painel e do coletor (`save()` direto) ainda devolvem erro em conflito. Chave
   estrangeira violada (ex.: comentário num post que outra instância acabou de excluir) é tratada como conflito.
   Requisições cujas mudanças estavam no lote desfeito também recebem erro, mesmo que a vez delas na fila
   chegue depois (`store.js`, `revertedUpTo`). Texto com NUL (`\u0000`) ou surrogate solto, que o `jsonb`

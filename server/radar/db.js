@@ -214,6 +214,27 @@ export function save() {
 }
 
 /**
+ * Escrita de estudante no Radar (acompanhar, alertas lidos, vínculos com a Agenda) com nova tentativa em conflito,
+ * como writeWithRetry em store.js: duas instâncias gravando ao mesmo tempo não devolvem erro ao estudante. Num
+ * conflito o lote é desfeito na memória; aqui trazemos o que a outra instância gravou e aplicamos `fn` de novo
+ * sobre os dados atualizados. `fn` recebe data() e precisa poder rodar mais de uma vez (sem efeito fora da base).
+ */
+const CONFLICT_TRIES = 4;
+export async function mutateRadar(fn) {
+  for (let attempt = 1; ; attempt += 1) {
+    const value = fn(data());
+    try {
+      await save();
+      return value;
+    } catch (err) {
+      if (err.code !== 'ESTUVIA_CONFLICT' || attempt >= CONFLICT_TRIES) throw err;
+      await new Promise((r) => setTimeout(r, 15 * attempt + Math.random() * 25));
+      await syncRadarStore();
+    }
+  }
+}
+
+/**
  * Descarta o que está em memória e recarrega do banco (ou do arquivo). Usado depois de uma falha de gravação:
  * sem isto, a memória ficaria com mudanças que o banco não tem, e a próxima gravação as enviaria fora de contexto.
  */
