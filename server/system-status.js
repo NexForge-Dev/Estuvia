@@ -12,6 +12,7 @@ import { schedulerRunning, lastScheduledRun } from './radar/scheduler.js';
 import { overview as radarOverview } from './radar/admin.js';
 import { importHealth, importHealthText } from './radar/import-health.js';
 import { requestStats, uptimeMs, startedAtIso } from './ops.js';
+import { emailEnabled } from './email.js';
 
 // Lido direto do .env (sem importar os módulos de vídeos/preços: o Status não depende deles).
 const UGR_FEED = 'https://canal.ugr.es/feed/?post_type=noticia';
@@ -109,6 +110,11 @@ export async function systemStatus({ check = false } = {}) {
       : check ? await timed(async () => { const r = await ping(`https://api.travelpayouts.com/aviasales/v3/prices_for_dates?origin=GRU&destination=MAD&one_way=true&limit=1&currency=brl`, { headers: { 'X-Access-Token': tpToken } }); return r.ok ? { estado: 'ok', detalhe: 'Token válido.' } : { estado: 'erro', detalhe: r.status === 401 || r.status === 403 ? 'Token inválido (401/403).' : r.status === 429 ? 'Limite gratuito atingido (429).' : `A API respondeu ${r.status}.` }; })
         : { estado: 'ok', detalhe: 'Token definido. Use "Verificar agora" para testar.' }) });
 
+  // E-mail (recuperação de senha): sem a chave, em produção a recuperação de senha fica indisponível.
+  add({ id: 'email', nome: 'E-mail (Resend)', grupo: 'Integrações', chave: emailEnabled() ? mask(process.env.RESEND_API_KEY) : null,
+    estado: emailEnabled() ? 'ok' : config.isProd ? 'erro' : 'aviso',
+    detalhe: emailEnabled() ? `Remetente: ${process.env.EMAIL_FROM}.` : `Defina RESEND_API_KEY e EMAIL_FROM. ${config.isProd ? 'Sem eles a recuperação de senha não funciona.' : 'Em desenvolvimento os e-mails vão para o console.'}` });
+
   // Segurança (só configuração)
   const jwtOk = (process.env.JWT_SECRET || '').length >= 32;
   add({ id: 'sessoes', nome: 'Segredo das sessões (JWT_SECRET)', grupo: 'Segurança', chave: jwtOk ? mask(process.env.JWT_SECRET) : null,
@@ -116,6 +122,9 @@ export async function systemStatus({ check = false } = {}) {
   const docsOk = (process.env.DOCUMENTS_KEY || '').length >= 32;
   add({ id: 'docs', nome: 'Chave dos documentos (DOCUMENTS_KEY)', grupo: 'Segurança', chave: docsOk ? mask(process.env.DOCUMENTS_KEY) : null,
     estado: docsOk ? 'ok' : config.isProd ? 'aviso' : 'ok', detalhe: docsOk ? 'Definida: arquivos cifrados com chave própria.' : 'Não definida: a chave é derivada do JWT_SECRET. Em produção, defina uma chave própria com backup.' });
+  const cronOk = (process.env.CRON_SECRET || '').length >= 16;
+  add({ id: 'cron', nome: 'Segredo das tarefas agendadas (CRON_SECRET)', grupo: 'Segurança', chave: cronOk ? mask(process.env.CRON_SECRET) : null,
+    estado: cronOk ? 'ok' : config.isProd ? 'erro' : 'aviso', detalhe: cronOk ? 'Definido: as tarefas agendadas (Radar) podem rodar.' : 'Não definido (ou curto demais): as tarefas agendadas do Radar não rodam.' });
   add({ id: 'admin', nome: 'Conta de administrador', grupo: 'Segurança',
     estado: config.adminEmail && (config.adminPassword || '').length >= (config.isProd ? 12 : 8) ? 'ok' : 'aviso', detalhe: config.adminEmail ? `ADMIN_EMAIL = ${config.adminEmail}` : 'ADMIN_EMAIL não definido.' });
 

@@ -100,39 +100,49 @@ router.delete('/events/:id', async (req, res) => {
 
 // ---------- Agenda ----------
 
-router.put('/availability', async (req, res) => {
-  const parsed = z.object({
+const availabilitySchema = z.object({
     dias: z.array(z.number().int().min(1).max(7)).min(1, 'Escolha ao menos um dia.').max(7),
     janelas: z.array(z.object({ inicio: time, fim: time }).strict().refine((w) => w.fim > w.inicio, 'Janela inválida.')).min(1).max(4),
     horasSemanais: z.number().min(0.5).max(60),
     preferencia: z.enum(['curtas', 'longas']),
     fuso: z.enum(['America/Sao_Paulo', 'America/Manaus', 'America/Fortaleza', 'America/Noronha', 'America/Rio_Branco', 'Europe/Madrid']),
-  }).strict().safeParse(req.body);
+  }).strict();
+
+router.put('/availability', async (req, res) => {
+  const parsed = availabilitySchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
   const user = await updateUser(req.user.id, (u) => { u.agenda = { ...(u.agenda || {}), disponibilidade: parsed.data }; });
   res.json(reply(user));
 });
 
 const weekQuery = z.object({ semana: isoDate() }).strict();
-const suggestQuery = weekQuery.extend({ journeyId: z.string().max(60).optional(), missaoId: z.string().regex(/^\d\.\d{1,2}$/).optional() }).strict();
+// `disponibilidade` opcional: horário só para esta proposta (atalho da missão), sem gravar nos ajustes da Agenda.
+const suggestQuery = weekQuery.extend({ journeyId: z.string().max(60).optional(), missaoId: z.string().regex(/^\d\.\d{1,2}$/).optional(), disponibilidade: availabilitySchema.optional() }).strict();
 
 router.post('/suggest', (req, res) => {
   const parsed = suggestQuery.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Semana inválida.' });
-  const { semana, ...focus } = parsed.data;
-  res.json(suggestWeek(req.user, semana, todayFor(req.user), focus));
+  const { semana, disponibilidade, ...focus } = parsed.data;
+  const user = disponibilidade ? { ...req.user, agenda: { ...(req.user.agenda || {}), disponibilidade } } : req.user;
+  res.json(suggestWeek(user, semana, todayFor(req.user), focus));
 });
 
 // Aprovação: a proposta (editada ou não) vira eventos "agenda-ai" do estudante.
 router.post('/approve', async (req, res) => {
-  const parsed = z.object({ itens: z.array(eventSchema).min(1).max(80) }).strict().safeParse(req.body);
+  const parsed = z.object({ itens: z.array(eventSchema).min(1).max(80), substituir: z.array(z.string().max(60)).max(200).optional() }).strict().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Proposta inválida.' });
   if (!ownsJourneys(req.user, parsed.data.itens)) return res.status(400).json({ error: 'Jornada inválida.' });
-  const seen = new Set((req.user.planner || []).map(slotKey));
+  // Replanejamento aprovado: remove os blocos automáticos (não editados) que a nova proposta substitui.
+  const drop = new Set(parsed.data.substituir || []);
+  const keep = (req.user.planner || []).filter((e) => !(drop.has(e.id) && e.origem === 'agenda-ai' && !e.editadoEm));
+  const seen = new Set(keep.map(slotKey));
   const fresh = parsed.data.itens.filter((e) => !seen.has(slotKey(e)) && seen.add(slotKey(e)));
-  if ((req.user.planner || []).length + fresh.length > MAX_EVENTS) return res.status(409).json({ error: 'Limite de atividades atingido.' });
+  if (keep.length + fresh.length > MAX_EVENTS) return res.status(409).json({ error: 'Limite de atividades atingido.' });
   const created = fresh.map((e) => ({ id: newId(), origem: 'agenda-ai', ...e, criadoEm: new Date().toISOString() }));
-  const user = await updateUser(req.user.id, (u) => { (u.planner ??= []).push(...created); });
+  const user = await updateUser(req.user.id, (u) => {
+    u.planner = (u.planner || []).filter((e) => !(drop.has(e.id) && e.origem === 'agenda-ai' && !e.editadoEm));
+    u.planner.push(...created);
+  });
   res.status(201).json(reply(user, { criados: created.length, repetidos: parsed.data.itens.length - created.length }));
 });
 
@@ -144,12 +154,15 @@ router.post('/replan', async (req, res) => {
   const stale = staleSuggestions(req.user, today);
   const ids = new Set(stale.map((s) => s.id));
   const start = mondayOf(parsed.data.semana);
-  // Também libera os blocos futuros desta semana criados pela Agenda, para redistribuí-los.
-  // Compromissos do estudante e blocos que ele editou (editadoEm) ficam onde ele os colocou.
-  const user = await updateUser(req.user.id, (u) => {
-    u.planner = (u.planner || []).filter((e) => !ids.has(e.id) && !(e.origem === 'agenda-ai' && !e.editadoEm && e.data >= today && e.data >= start && e.data <= addDays(start, 6)));
-  });
-  res.json(reply(user, { removidos: stale, ...suggestWeek(user, start, today) }));
+  // Os blocos futuros desta semana criados pela Agenda (e não editados) só são substituídos quando o
+  // estudante APROVA a nova proposta: aqui a proposta é calculada como se eles não existissem e a
+  // lista vai em `substituir`. Descartar a proposta mantém tudo como estava.
+  const end = addDays(start, 6);
+  const replaceable = (e) => e.origem === 'agenda-ai' && !e.editadoEm && e.data >= today && e.data >= start && e.data <= end;
+  const user = stale.length ? await updateUser(req.user.id, (u) => { u.planner = (u.planner || []).filter((e) => !ids.has(e.id)); }) : req.user;
+  const substituir = (user.planner || []).filter(replaceable).map((e) => e.id);
+  const draft = { ...user, planner: (user.planner || []).filter((e) => !replaceable(e)) };
+  res.json(reply(user, { removidos: stale, substituir, ...suggestWeek(draft, start, today) }));
 });
 
 function addDays(iso, n) { const d = new Date(`${iso}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }

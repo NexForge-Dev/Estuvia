@@ -1,3 +1,6 @@
+/* O atributo hidden sempre vence classes que definem display (ex.: .btn { display: inline-flex }). */
+[hidden] { display: none !important; }
+
 /* =========================================================================
    Estuvia — design system (dark-first)
    ========================================================================= */

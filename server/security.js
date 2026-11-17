@@ -193,8 +193,14 @@ const limiter = (windowMin, limit, message, opts = {}) =>
 // Rotas autenticadas: limite por conta (várias pessoas atrás do mesmo IP não se bloqueiam; trocar de IP não burla).
 const perUser = { keyGenerator: (req) => (req.user ? `u:${req.user.id}` : `ip:${req.ip}`) };
 
-export const authLimiter = limiter(15, 20, 'Muitas tentativas. Aguarde alguns minutos e tente de novo.');
+// Rotas sem login (cadastro, login, recuperação): por IP, com folga para redes compartilhadas
+// (Wi-Fi de universidade, NAT de operadora). O login ainda tem o bloqueio por conta (routes/auth.js).
+export const authLimiter = limiter(15, 60, 'Muitas tentativas. Aguarde alguns minutos e tente de novo.');
+// Ações sensíveis de quem já está logado (trocar senha, excluir conta): por conta.
+export const authUserLimiter = limiter(15, 20, 'Muitas tentativas. Aguarde alguns minutos e tente de novo.', perUser);
 export const assistantLimiter = limiter(60, 40, 'Você atingiu o limite de perguntas por hora. Volte daqui a pouco!', perUser);
-export const communityWriteLimiter = limiter(10, 60, 'Você está publicando rápido demais. Aguarde alguns minutos.');
-export const documentUploadLimiter = limiter(10, 30, 'Muitos envios de arquivo seguidos. Aguarde alguns minutos.');
-export const apiLimiter = limiter(1, 120, 'Muitas requisições. Respire fundo e tente de novo em instantes.');
+export const communityWriteLimiter = limiter(10, 60, 'Você está publicando rápido demais. Aguarde alguns minutos.', perUser);
+export const documentUploadLimiter = limiter(10, 30, 'Muitos envios de arquivo seguidos. Aguarde alguns minutos.', perUser);
+// Limite geral, antes da autenticação (por IP): alto o bastante para várias pessoas no mesmo IP,
+// já que cada tela faz várias chamadas; as escritas sensíveis têm limites próprios por conta.
+export const apiLimiter = limiter(1, 600, 'Muitas requisições. Respire fundo e tente de novo em instantes.');

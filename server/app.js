@@ -1,3 +1,4 @@
+import './zod-pt.js'; // mensagens de validação em português (antes de qualquer rota)
 import { requestMetrics } from './ops.js';
 import express from 'express';
 import Layer from 'express/lib/router/layer.js';

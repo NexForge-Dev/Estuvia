@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { users, audit } from '../store.js';
-import { requireAuth, clearSession, verifyPassword, isModerator, isAdmin, authLimiter } from '../security.js';
+import { requireAuth, clearSession, verifyPassword, isModerator, isAdmin, authUserLimiter } from '../security.js';
 import { updateUser, accountGone } from './guards.js';
 import { communityExport, purgeCommunityUser } from './community.js';
 import { forgetUser, exportUser } from '../radar/service.js';
@@ -76,12 +76,15 @@ const profileSchema = z.object({
   orcamentoDisponivel: z.number().min(0).max(10_000_000).nullable().optional(),
   // "Ainda não sei" é explícito: sem ele, orçamento ausente não vira zero.
   orcamentoSituacao: z.enum(['informado', 'nao-sei']).optional(),
+  // Aceito por compatibilidade, mas IGNORADO: só POST /me/onboarding/complete marca a conclusão,
+  // depois de conferir as lacunas no servidor.
   onboardingConcluido: z.boolean().optional(),
 }).strict();
 
 router.put('/profile', async (req, res) => {
   const parsed = profileSchema.safeParse(req.body);
   if (!parsed.success) return bad(res, parsed);
+  delete parsed.data.onboardingConcluido;
   const merged = { ...req.user.profile, ...parsed.data };
   const grade = [merged.notaMedia, merged.notaMaxima, merged.notaMinima];
   if (grade.some((v) => v != null)) {
@@ -130,7 +133,7 @@ router.get('/choices/compare', (req, res) => res.json({ opcoes: compareChoices(r
 
 router.put('/choices', async (req, res) => {
   // IDs dos mestrados do Radar passam de 60 caracteres (mesmo limite de 120 da criação de jornada).
-  const parsed = z.object({ choices: z.array(z.string().max(120)).max(6, 'O DUA 2026/27 permite até 6 opções.') }).safeParse(req.body);
+  const parsed = z.object({ choices: z.array(z.string().max(120)).max(6, 'O DUA permite até 6 opções por pedido.') }).safeParse(req.body);
   if (!parsed.success) return bad(res, parsed);
   const unique = [...new Set(parsed.data.choices)];
   if (unique.some((id) => !programById(id))) return res.status(400).json({ error: 'Programa desconhecido.' });
@@ -170,7 +173,7 @@ router.get('/export', (req, res) => {
 });
 
 // Exclusão definitiva da conta, com reconfirmação de senha.
-router.delete('/', authLimiter, async (req, res) => {
+router.delete('/', authUserLimiter, async (req, res) => {
   const parsed = z.object({ senha: z.string().min(1).max(128) }).safeParse(req.body);
   if (!parsed.success || !(await verifyPassword(parsed.data.senha, req.user.passwordHash))) {
     return res.status(401).json({ error: 'Senha incorreta.' });

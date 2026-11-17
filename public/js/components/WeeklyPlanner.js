@@ -450,14 +450,14 @@ export function WeeklyPlanner({ initialWeek, autoOrganize = false } = {}) {
       data = r;
       proposal = r;
       if (view === 'dia') view = 'semana';
-      toast(r.removidos.length ? `${r.removidos.length} bloco(s) que perderam sentido foram removidos. Revise a nova proposta.` : 'Nova proposta gerada com o estado atual das missões.', 'info');
+      toast(r.removidos.length ? `${r.removidos.length} bloco(s) que perderam sentido foram removidos. Revise a nova proposta.` : (r.substituir?.length ? `Nova proposta gerada. Seus ${r.substituir.length} bloco(s) automáticos desta semana só serão trocados se você aprovar.` : 'Nova proposta gerada com o estado atual das missões.'), 'info');
       draw();
     } catch (e) { toast(e.message, 'err'); }
   }
   async function approve() {
     try {
       const itens = proposal.proposta.map(({ prioridadeLabel, ...p }) => Object.fromEntries(Object.entries(p).filter(([, v]) => v !== undefined && v !== null)));
-      data = await api.post('/planner/approve', { itens });
+      data = await api.post('/planner/approve', proposal.substituir?.length ? { itens, substituir: proposal.substituir } : { itens });
       toast(data.repetidos && !data.criados ? 'Esses horários já estavam na sua agenda.' : `${data.criados} atividade(s) adicionadas à sua agenda.`, 'ok');
       proposal = null;
       draw();

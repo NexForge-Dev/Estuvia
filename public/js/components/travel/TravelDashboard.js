@@ -403,7 +403,7 @@ export async function travelDashboardView() {
     try { prices = await api.get(`/travel/prices${jq()}`); } catch (e) { prices = { erroGeral: e.message, rotas: [] }; }
     draw();
   };
-  const IATA_ROUTE = { MAD: 'via-madri', AGP: 'via-malaga', GRX: 'via-granada' };
+  const IATA_ROUTE = { MAD: 'via-madri', AGP: 'via-malaga', GRX: 'via-granada', SVQ: 'via-sevilla', XRY: 'via-jerez', LEI: 'via-almeria' };
   const saveOffer = (o) => call('post', '/quotes', {
     rota: `${o.origem} → ${o.destino}${o.companhia ? ` (${o.companhia})` : ''}`, percursoId: IATA_ROUTE[o.destino] || null,
     voo: o.preco, moeda: 'BRL', ...(o.link ? { link: o.link } : {}), fonte: 'Aviasales (preço visto, a confirmar)',

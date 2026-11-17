@@ -23,8 +23,9 @@ export function QuickPlan({ journeyId, missaoId, onDone } = {}) {
   async function propose(slot) {
     mount(host, h('p', { class: 'muted' }, icon('calendar', { size: 14 }), ' Montando sua semana…'));
     try {
-      await api.put('/planner/availability', { dias: slot.dias, janelas: [slot.janela], horasSemanais: 4, preferencia: 'curtas', fuso: 'America/Sao_Paulo' });
-      const p = await api.post('/planner/suggest', { semana: defaultWeek(), ...(journeyId ? { journeyId } : {}), ...(missaoId ? { missaoId } : {}) });
+      // O horário escolhido vale só para esta proposta: não sobrescreve a disponibilidade salva na Agenda.
+      const disponibilidade = { dias: slot.dias, janelas: [slot.janela], horasSemanais: 4, preferencia: 'curtas', fuso: 'America/Sao_Paulo' };
+      const p = await api.post('/planner/suggest', { semana: defaultWeek(), disponibilidade, ...(journeyId ? { journeyId } : {}), ...(missaoId ? { missaoId } : {}) });
       const items = p.proposta.filter((x) => x.missaoId || x.bolsaId);
       if (!items.length) {
         return mount(host, h('p', {}, 'Não encontrei tarefas liberadas para esta semana nesse horário.'),

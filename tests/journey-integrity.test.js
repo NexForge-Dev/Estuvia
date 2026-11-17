@@ -209,9 +209,14 @@ test('Agenda: aprovar duas vezes não duplica; replanejar preserva o que o estud
   const ids = new Set(rp.data.events.map((e) => e.id));
   assert.ok(ids.has(manual.id), 'compromisso manual preservado');
   assert.ok(ids.has(editado.id), 'bloco editado pelo estudante preservado');
-  assert.ok(rp.data.events.filter((e) => e.origem === 'agenda-ai').length < itens.length, 'blocos não editados liberados para replanejar');
+  // Replanejar não apaga nada antes da aprovação: os blocos não editados vêm em `substituir`.
+  assert.equal(rp.data.events.filter((e) => e.origem === 'agenda-ai').length, itens.length, 'nada some antes de aprovar');
+  assert.ok(rp.data.substituir.length > 0 && !rp.data.substituir.includes(editado.id), 'blocos não editados liberados para replanejar');
   const again = rp.data.proposta.map(({ prioridadeLabel, ...x }) => Object.fromEntries(Object.entries(x).filter(([, v]) => v != null)));
-  await c('POST', '/planner/approve', { itens: again });
+  await c('POST', '/planner/approve', { itens: again, substituir: rp.data.substituir });
+  const after = users.findById(uid).planner;
+  assert.ok(after.some((e) => e.id === editado.id) && after.some((e) => e.id === manual.id), 'aprovar mantém o manual e o editado');
+  assert.ok(!rp.data.substituir.some((id) => after.some((e) => e.id === id)), 'aprovar troca os blocos antigos pela nova proposta');
   const keys = users.findById(uid).planner.map((e) => `${e.data}|${e.inicio}`);
   assert.equal(new Set(keys).size, keys.length, 'nenhum horário duplicado após replanejar e aprovar');
 });

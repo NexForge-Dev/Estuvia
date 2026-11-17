@@ -106,7 +106,9 @@ export function toolsFor(m) {
   out.push({ id: 'guia', painel: 'guia', titulo: stepsTitle, desc: level === 'simples' ? `Leva ${def.tempoEstimado}.` : `${m.objetivosTotal} passo(s), um de cada vez.`, ic: 'target', cor: 'turquesa', destaque: true, objetivos: '*' });
   // Processo oficial do mestrado: sempre visível nas missões de candidatura (não conta no limite da grade).
   const processo = m.processo ? [tool('processo', { desc: m.processo.verificacao === 'confirmado' ? 'Fases, documentos e regras oficiais do seu mestrado.' : 'Fases, documentos e o que ainda não está confirmado.' })] : [];
-  if (def.ferramenta && TOOL_LABEL[def.ferramenta] && level !== 'simples') {
+  // A ferramenta é o meio de cumprir a missão: aparece em qualquer nível (também nas "simples",
+  // como o catálogo da 1.2 e o guia da cidade das 7.x).
+  if (def.ferramenta && TOOL_LABEL[def.ferramenta]) {
     const [titulo, desc, ic] = TOOL_LABEL[def.ferramenta];
     out.push({ id: 'ferramenta', painel: 'ferramenta', titulo, desc, ic, cor: 'ciano' });
   }
@@ -115,6 +117,6 @@ export function toolsFor(m) {
   if (level !== 'simples' && (m.prazo || def.prazo || (def.duracaoMin || 0) >= 45)) out.push(tool('agenda', { desc: m.prazo ? 'Prazo e horários desta missão.' : 'Reserve um horário para esta missão.' }));
   if (level === 'complexa' && (def.porque || m.errosComuns?.length)) out.push(tool('entender'));
   if (level === 'simples') out.push(tool('ajuda'));
-  const max = { simples: 3, guiada: 5, complexa: 8 }[level] || 5;
+  const max = { simples: def.ferramenta ? 4 : 3, guiada: 5, complexa: 8 }[level] || 5;
   return { descricao: null, ferramentas: [...out.slice(0, 1), ...processo, ...out.slice(1, max)] };
 }

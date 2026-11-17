@@ -9,7 +9,7 @@ import { requireAuth } from '../security.js';
 import { updateUser, accountGone } from './guards.js';
 import { ensureFinance, computeFinance } from '../finance-engine.js';
 import { computeTravel, ensureTravel, agendaSuggestions, agendaChanges } from '../travel-engine.js';
-import { BR_AIRPORTS } from '../content/travel.js';
+import { BR_AIRPORTS, ROUTE_BY_IATA, ROUTE_IDS } from '../content/travel.js';
 import { pricesForUser } from '../flight-prices.js';
 
 const router = Router();
@@ -74,7 +74,7 @@ export function parseFlightLink(link) {
   if (out.origem) out.extraido.push('origem');
   if (out.destino) out.extraido.push('destino');
   if (out.data) out.extraido.push('data');
-  out.percursoId = out.destino === 'MAD' ? 'via-madri' : out.destino === 'AGP' ? 'via-malaga' : out.destino === 'GRX' ? 'via-granada' : null;
+  out.percursoId = ROUTE_BY_IATA[out.destino] || null; // conferido contra a cidade da jornada em computeTravel
   return out;
 }
 
@@ -88,7 +88,7 @@ router.post('/quotes/parse-link', (req, res) => {
 
 const quoteSchema = z.object({
   rota: z.string().trim().min(3).max(120),
-  percursoId: z.enum(['via-madri', 'via-malaga', 'via-granada']).nullable().optional(),
+  percursoId: z.enum(ROUTE_IDS).nullable().optional(),
   link: https.optional().or(z.literal('')),
   voo: money.nullable().optional(), bagagem: money.nullable().optional(), terrestre: money.nullable().optional(),
   transporteLocal: money.nullable().optional(), pernoite: money.nullable().optional(), outros: money.nullable().optional(),

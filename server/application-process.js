@@ -51,7 +51,15 @@ function foreignNationality(profile) {
  * @param opts.requisitos respostas "o que eu já tenho" (diploma: tenho|aguardando|nao|verificar)
  * @param opts.faseDeclarada fase escolhida pelo estudante na Missão 3.2 (1, 2 ou 3)
  */
-export function applicationProcess(program, { calendario = { windows: [], events: [] }, profile = {}, requisitos = {}, faseDeclarada = null, cicloJornada = null } = {}) {
+/** Próximo curso em que ainda dá para se candidatar: a Fase 1 do curso Y/Y+1 fecha no fim de janeiro de Y. */
+export function planningCycle(now = new Date()) {
+  const y = now.getUTCFullYear() + (now.getUTCMonth() >= 1 ? 1 : 0);
+  return `${y}/${y + 1}`;
+}
+/** O curso das regras cadastradas já começou (as aulas começam entre setembro e outubro do 1º ano). */
+const cycleStarted = (ciclo, now) => { const y = Number(String(ciclo).slice(0, 4)); return Number.isFinite(y) && now >= new Date(Date.UTC(y, 9, 31)); };
+
+export function applicationProcess(program, { calendario = { windows: [], events: [] }, profile = {}, requisitos = {}, faseDeclarada = null, cicloJornada = null, now = new Date() } = {}) {
   if (!program) return null;
   const proc = DUA_MASTERES;
   const pendencias = [];
@@ -59,8 +67,15 @@ export function applicationProcess(program, { calendario = { windows: [], events
   const canalInfo = programChannel(program);
 
   // Ciclo: as regras cadastradas são as do curso dos acordos publicados. Outro ciclo = referência, não regra.
-  const ciclo2 = normCiclo(cicloJornada);
-  if (ciclo2 && ciclo2 !== proc.ciclo) {
+  // Sem ano escolhido na jornada, o planejado é o próximo curso com candidatura aberta: assim um ciclo
+  // já encerrado nunca aparece como se fosse o vigente.
+  const ciclo2 = normCiclo(cicloJornada) || (cycleStarted(proc.ciclo, now) ? planningCycle(now) : null);
+  const referencia = Boolean(ciclo2 && ciclo2 !== proc.ciclo);
+  if (referencia && cycleStarted(proc.ciclo, now)) {
+    const t = `As regras e datas abaixo são do curso ${proc.ciclo}, que já começou: servem só de referência. Para o curso ${ciclo2}, confira os acordos do DUA no BOJA assim que forem publicados (normalmente a Fase 1 sai em dezembro do ano anterior). Datas já passadas não valem para a sua candidatura.`;
+    pendencias.push({ id: 'ciclo', texto: t });
+    alertas.ciclo = t;
+  } else if (referencia) {
     const t = `Você planeja o curso ${ciclo2}, mas os acordos do DUA publicados até agora são do curso ${proc.ciclo}. As regras abaixo são a referência mais recente: confira os acordos de ${ciclo2} no BOJA assim que forem publicados (normalmente a Fase 1 sai em dezembro do ano anterior).`;
     pendencias.push({ id: 'ciclo', texto: t });
     alertas.ciclo = t;
@@ -128,7 +143,7 @@ export function applicationProcess(program, { calendario = { windows: [], events
     };
   });
   if (canal.status === 'confirmado') pendencias.push({ id: 'fase1', texto: 'Se este máster oferta vagas na Fase 1 (estrangeiros): nenhuma fonte oficial pública lista isso por máster. Confirme no portal do DUA ou com a universidade antes de contar só com a Fase 1.' });
-  if (!(calendario.windows || []).length) pendencias.push({ id: 'calendario', texto: `Calendário oficial do curso ${ciclo} ainda não publicado ou não coletado.` });
+  if (!(calendario.windows || []).length) pendencias.push({ id: 'calendario', texto: `Calendário oficial do curso ${ciclo2 || ciclo} ainda não publicado ou não coletado.` });
 
   const f1 = fases[0];
   const elegiveis = fases.filter((f) => f.perfil.status !== 'nao');

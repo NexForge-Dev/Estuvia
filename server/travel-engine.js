@@ -5,7 +5,7 @@
 import { computeJourney } from './journey-engine.js';
 import { programById, universityById } from './content/catalog.js';
 import { chosenHousing } from './finance-engine.js';
-import { TRAVEL_STATUS, ROUTE_TEMPLATES, BR_AIRPORTS, STATE_AIRPORT, searchLinks, destinationAirports } from './content/travel.js';
+import { TRAVEL_STATUS, ROUTE_TEMPLATES, ROUTE_BY_IATA, BR_AIRPORTS, STATE_AIRPORT, searchLinks, destinationAirports } from './content/travel.js';
 
 const num = (v) => (v === null || v === undefined || v === '' || !Number.isFinite(Number(v)) ? null : Number(v));
 const PARTS = [['voo', 'Voo'], ['bagagem', 'Bagagem'], ['terrestre', 'Transporte até a cidade'], ['transporteLocal', 'Transporte local'], ['pernoite', 'Pernoite'], ['outros', 'Outros']];
@@ -19,26 +19,35 @@ export function ensureTravel(user) {
   return user.travel;
 }
 
-/** Custo de uma cotação: partes conhecidas, total conhecido e o que ainda falta saber. */
-export function quoteCost(o) {
+/** Custo de uma cotação: partes conhecidas, total conhecido e o que ainda falta saber.
+ *  `cidade` é a cidade de destino da jornada (o percurso depende dela). Sem preço do voo, a cotação
+ *  nunca é "completa": um total só com bagagem e trecho por terra não pode ganhar de uma cotação real. */
+export function quoteCost(o, cidade = 'Granada') {
   const partes = PARTS.map(([id, rotulo]) => ({ id, rotulo, valor: num(o[id]) }));
   const conhecidas = partes.filter((p) => p.valor !== null);
   const total = conhecidas.length ? conhecidas.reduce((s, p) => s + p.valor, 0) : null;
   const desconhecidas = [];
+  if (num(o.voo) === null) desconhecidas.push('voo');
   if (num(o.bagagem) === null && !(Number(o.malasIncluidas) > 0)) desconhecidas.push('bagagem');
-  const tpl = templateOf(o);
+  const tpl = templateOf(o, cidade);
   if (tpl?.terrestre && num(o.terrestre) === null) desconhecidas.push('terrestre');
   return { partes, total, moeda: o.moeda || 'EUR', completo: desconhecidas.length === 0, desconhecidas };
 }
 
 const templateOf = (o, cidade = 'Granada') => (ROUTE_TEMPLATES[cidade] || []).find((t) => t.id === o.percursoId) || null;
 
+// Percurso de uma cotação: só entre os percursos da cidade de destino. Chegar ao aeroporto da própria
+// cidade (ex.: Málaga para quem estuda em Málaga) é o percurso direto, sem trecho por terra.
 function guessTemplate(o, cidade) {
-  if (o.percursoId) return o.percursoId;
+  const ids = new Set((ROUTE_TEMPLATES[cidade || 'Granada'] || []).map((t) => t.id));
+  if (o.percursoId && ids.has(o.percursoId)) return o.percursoId;
   const t = `${o.rota || ''} ${o.aeroportoChegada || ''}`.toLowerCase();
-  if (/m[aá]laga|agp/.test(t)) return 'via-malaga';
-  if (/madri|madrid|mad\b/.test(t)) return 'via-madri';
-  if (cidade && new RegExp(cidade.toLowerCase()).test(t) || /grx/.test(t)) return 'via-granada';
+  // O destino é o último trecho da rota ("Recife → Madrid → Sevilla" chega em Sevilla).
+  const last = t.split(/→|->|>|\/|,/).map((x) => x.trim()).filter(Boolean).pop() || t;
+  const NAMES = [[/m[aá]laga|\bagp\b/, 'AGP'], [/madri|madrid|\bmad\b/, 'MAD'], [/granada|\bgrx\b/, 'GRX'], [/sevil|\bsvq\b/, 'SVQ'], [/jerez|\bxry\b/, 'XRY'], [/almer[ií]a|\blei\b/, 'LEI']];
+  for (const text of [o.aeroportoChegada ? String(o.aeroportoChegada).toLowerCase() : '', last, t]) {
+    for (const [re, iata] of NAMES) if (re.test(text) && ids.has(ROUTE_BY_IATA[iata])) return ROUTE_BY_IATA[iata];
+  }
   return null;
 }
 
@@ -57,7 +66,7 @@ function considerations(o, tpl) {
   const out = [];
   const conex = num(o.conexoes);
   if (conex !== null && conex >= 2) out.push({ nivel: 'atencao', texto: `${conex} conexões: mais chances de atraso e de extravio de bagagem.` });
-  if (tpl?.terrestre) out.push({ nivel: 'info', texto: 'Inclui um trecho por terra até Granada (ônibus ou trem).' });
+  if (tpl?.terrestre) out.push({ nivel: 'info', texto: 'Inclui um trecho por terra até a cidade de destino (ônibus ou trem).' });
   if (o.bilhetesSeparados) out.push({ nivel: 'risco', texto: 'Bilhetes separados: se o primeiro voo atrasar, a companhia não garante o próximo trecho.' });
   if (o.horarioChegada) {
     const h = Number(o.horarioChegada.slice(0, 2));
@@ -88,7 +97,7 @@ export function computeTravel(user, jid, now = new Date()) {
   const cotacoes = tr.opcoes.map((o) => {
     const percursoId = guessTemplate(o, cidade);
     const tpl = templateOf({ ...o, percursoId }, cidade);
-    return { ...o, percursoId, percursoNome: tpl?.nome || null, custo: quoteCost({ ...o, percursoId }), consideracoes: considerations(o, tpl) };
+    return { ...o, percursoId, percursoNome: tpl?.nome || null, custo: quoteCost({ ...o, percursoId }, cidade), consideracoes: considerations(o, tpl) };
   });
   // Só cotações completas (com bagagem e trecho por terra conhecidos) disputam o "menor custo".
   // Moedas diferentes não se comparam: a referência é a moeda da primeira cotação completa.
@@ -154,7 +163,7 @@ export function computeTravel(user, jid, now = new Date()) {
     moradia: moradia ? { id: moradia.id, nome: moradia.nome, bairro: moradia.bairro || null, entrada: moradia.entrada || null } : null,
     endereco: tr.chegada.enderecoInicial || null,
     registrada: Boolean(tr.chegada.aeroporto),
-    frase: chosenTpl ? (chosenTpl.terrestre ? `Você vai chegar a ${chosenTpl.aeroportos[0] === 'MAD' ? 'Madri' : 'Málaga'} e precisa seguir até ${cidade}.` : `Você vai chegar ao aeroporto de ${cidade} e precisa ir até a cidade.`) : null,
+    frase: chosenTpl ? (chosenTpl.terrestre ? `Você vai chegar a ${chosenTpl.etapas.find((e) => e.meio !== 'aviao').de.replace(/ \(\w{3}\)$/, '')} e precisa seguir até ${cidade}.` : `Você vai chegar ao aeroporto de ${cidade} e precisa ir até a cidade.`) : null,
     opcoes: chosenTpl ? chosenTpl.etapas.filter((e) => e.meio !== 'aviao').map((e) => ({ rotulo: e.rotulo, de: e.de, para: e.para })) : [],
     fontes: chosenTpl?.fontes || [],
   };

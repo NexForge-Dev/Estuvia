@@ -27,6 +27,10 @@ const S = {
   mad: { titulo: 'Aeropuerto Adolfo Suárez Madrid-Barajas (Aena)', url: 'https://www.aena.es/es/adolfo-suarez-madrid-barajas.html', verificadoEm: '2026-10-25' },
   agp: { titulo: 'Aeropuerto de Málaga-Costa del Sol (Aena)', url: 'https://www.aena.es/es/malaga-costa-del-sol.html', verificadoEm: '2026-10-25' },
   grx: { titulo: 'Aeropuerto F.G.L. Granada-Jaén (Aena)', url: 'https://www.aena.es/es/f.g.l.-granada-jaen.html', verificadoEm: '2026-10-25' },
+  // Acrescentadas em 18/11/2026 para as demais cidades; ainda não reconferidas (verificadoEm: null).
+  svq: { titulo: 'Aeropuerto de Sevilla (Aena)', url: 'https://www.aena.es/es/sevilla.html', verificadoEm: null },
+  xry: { titulo: 'Aeropuerto de Jerez (Aena)', url: 'https://www.aena.es/es/jerez.html', verificadoEm: null },
+  lei: { titulo: 'Aeropuerto de Almería (Aena)', url: 'https://www.aena.es/es/almeria.html', verificadoEm: null },
   renfe: { titulo: 'Renfe, trens na Espanha', url: 'https://www.renfe.com/es/es', verificadoEm: '2026-10-25' },
   alsa: { titulo: 'ALSA, ônibus de média e longa distância (confira no site)', url: 'https://www.alsa.es/', verificadoEm: null },
 };
@@ -73,7 +77,56 @@ export const ROUTE_TEMPLATES = {
   ],
 };
 
-const IATA_DEST = { Granada: ['GRX', 'MAD', 'AGP'] };
+
+// Demais cidades: mesmos tipos de percurso, montados a partir do aeroporto de chegada.
+// Nada de horário, duração ou preço: só o caminho e as fontes oficiais.
+const AIRPORT = {
+  MAD: { nome: 'Madri', fonte: S.mad }, AGP: { nome: 'Málaga', fonte: S.agp }, GRX: { nome: 'Granada-Jaén', fonte: S.grx },
+  SVQ: { nome: 'Sevilha', fonte: S.svq }, XRY: { nome: 'Jerez', fonte: S.xry }, LEI: { nome: 'Almería', fonte: S.lei },
+};
+function viaHub(id, iata, cidade, { nome, resumo, terrestreRotulo } = {}) {
+  const a = AIRPORT[iata];
+  const madri = iata === 'MAD';
+  return {
+    id, nome: nome || `Via ${a.nome}`, imagem: madri ? '/img/travel/madri.svg' : iata === 'AGP' ? '/img/travel/malaga.svg' : '/img/travel/granada.svg',
+    resumo: resumo || `Voo até ${a.nome} (${iata}) e depois trem ou ônibus até ${cidade}.`,
+    aeroportos: [iata], conexoesAereasTipicas: madri ? 'Diretos ou com uma conexão, conforme a sua cidade.' : 'Normalmente uma conexão em outro aeroporto europeu.', terrestre: true,
+    etapas: [
+      { de: 'origem', para: `${a.nome} (${iata})`, meio: 'aviao', rotulo: madri ? 'Voo internacional' : 'Voo internacional com conexão' },
+      { de: `${a.nome} (${iata})`, para: cidade, meio: madri ? 'trem' : 'onibus', rotulo: terrestreRotulo || 'Trem (Renfe) ou ônibus de longa distância' },
+    ],
+    atencao: ['Inclui troca de meio de transporte: deixe folga entre a chegada do voo e o trem/ônibus.', 'Se comprar voo e trem/ônibus separados, um atraso do voo não garante remarcação.'],
+    fontes: [a.fonte, S.renfe, S.alsa],
+  };
+}
+function direto(id, iata, cidade) {
+  const a = AIRPORT[iata];
+  return {
+    id, nome: `Direto ao aeroporto de ${a.nome}`, imagem: iata === 'AGP' ? '/img/travel/malaga.svg' : '/img/travel/granada.svg',
+    resumo: `Voo com conexão até o aeroporto de ${a.nome} (${iata}) e transporte local até ${cidade}.`,
+    aeroportos: [iata], conexoesAereasTipicas: 'Em geral com conexão: confira se há voo direto da sua cidade.', terrestre: false,
+    etapas: [
+      { de: 'origem', para: `${a.nome} (${iata})`, meio: 'aviao', rotulo: 'Voo internacional (com ou sem conexão)' },
+      { de: `${a.nome} (${iata})`, para: `${cidade}, centro`, meio: 'onibus', rotulo: 'Ônibus do aeroporto, trem ou táxi' },
+    ],
+    atencao: ['Compare o horário de chegada: à noite pode faltar transporte do aeroporto.'],
+    fontes: [a.fonte],
+  };
+}
+Object.assign(ROUTE_TEMPLATES, {
+  Sevilla: [direto('via-sevilla', 'SVQ', 'Sevilla'), viaHub('via-madri', 'MAD', 'Sevilla'), viaHub('via-malaga', 'AGP', 'Sevilla')],
+  Málaga: [direto('via-malaga', 'AGP', 'Málaga'), viaHub('via-madri', 'MAD', 'Málaga')],
+  Córdoba: [viaHub('via-madri', 'MAD', 'Córdoba'), viaHub('via-sevilla', 'SVQ', 'Córdoba'), viaHub('via-malaga', 'AGP', 'Córdoba')],
+  Cádiz: [viaHub('via-jerez', 'XRY', 'Cádiz', { terrestreRotulo: 'Trem (Renfe Cercanías) ou ônibus' }), viaHub('via-sevilla', 'SVQ', 'Cádiz'), viaHub('via-madri', 'MAD', 'Cádiz')],
+  Huelva: [viaHub('via-sevilla', 'SVQ', 'Huelva'), viaHub('via-madri', 'MAD', 'Huelva')],
+  Jaén: [viaHub('via-granada', 'GRX', 'Jaén', { terrestreRotulo: 'Ônibus ou táxi até Jaén' }), viaHub('via-madri', 'MAD', 'Jaén'), viaHub('via-malaga', 'AGP', 'Jaén')],
+  Almería: [direto('via-almeria', 'LEI', 'Almería'), viaHub('via-madri', 'MAD', 'Almería'), viaHub('via-malaga', 'AGP', 'Almería')],
+});
+// Id do percurso pelo aeroporto de chegada (usado ao ler cotações e links de busca).
+export const ROUTE_BY_IATA = { MAD: 'via-madri', AGP: 'via-malaga', GRX: 'via-granada', SVQ: 'via-sevilla', XRY: 'via-jerez', LEI: 'via-almeria' };
+export const ROUTE_IDS = Object.values(ROUTE_BY_IATA);
+
+const IATA_DEST = Object.fromEntries(Object.entries(ROUTE_TEMPLATES).map(([c, ts]) => [c, ts.flatMap((t) => t.aeroportos)]));
 
 /** Links de pesquisa (o estudante vê os preços reais no site; a Estuvia não lê nem inventa preços). */
 export function searchLinks({ origem, destinoIata, data }) {

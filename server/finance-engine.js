@@ -178,7 +178,8 @@ function summarize(items, meses) {
   const mensal = sum(men);
   const mensalTotal = mensal * meses;
   const reembolsavel = sum(inst.filter((i) => i.reembolsavel));
-  const jaPago = sum(items.filter((i) => i.pago).map((i) => ({ ...i, valorEur: i.grupo === 'mensal' ? i.valorEur * meses : i.valorEur })));
+  // Custo mensal marcado como "pago" = a mensalidade em curso (normalmente o 1º mês), não a estadia inteira.
+  const jaPago = sum(items.filter((i) => i.pago));
   const orcamento = instalacao + mensalTotal;
   return {
     instalacao, mensal, mensalTotal, reembolsavel,

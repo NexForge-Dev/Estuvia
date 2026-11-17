@@ -311,7 +311,7 @@ export async function financeView() {
       }
       const input = h('input', { type: 'number', min: 0, step: 10, class: 'fp-input', value: ov && ov.valor !== null && ov.valor !== undefined ? ov.valor : i.origemTipo === 'premissa' ? Math.round(i.valorEur) : '', placeholder: 'Informe', 'aria-label': i.label, dataset: { key: `v-${i.id}` } });
       const cur = moneySelect(ov?.moeda, `m-${i.id}`);
-      const status = h('select', { class: 'fp-status', 'aria-label': `Situação de ${i.label}`, dataset: { key: `s-${i.id}` } }, STATUS.map(([v, l]) => h('option', { value: v, selected: v === (ov?.status || 'estimado') }, l)));
+      const status = h('select', { class: 'fp-status', 'aria-label': `Situação de ${i.label}`, dataset: { key: `s-${i.id}` } }, STATUS.map(([v, l]) => h('option', { value: v, selected: v === (ov?.status || 'estimado') }, v === 'pago' && i.grupo === 'mensal' ? 'Pago (1º mês)' : l)));
       const due = i.grupo === 'instalacao' ? h('input', { type: 'date', class: 'fp-due', value: ov?.vencimento || '', 'aria-label': `Data de pagamento de ${i.label}`, title: 'Data de pagamento (vai para a Agenda)', dataset: { key: `d-${i.id}` } }) : null;
       const send = () => {
         const valor = input.value === '' ? null : Number(input.value);

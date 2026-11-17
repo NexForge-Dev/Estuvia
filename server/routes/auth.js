@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import { Router } from 'express';
 import { z } from 'zod';
 import { users, audit, newId } from '../store.js';
-import { hashPassword, verifyPassword, needsRehash, issueSession, clearSession, requireAuth, authLimiter, dummyHash, clientInfo } from '../security.js';
+import { hashPassword, verifyPassword, needsRehash, issueSession, clearSession, requireAuth, authLimiter, authUserLimiter, dummyHash, clientInfo } from '../security.js';
 import { publicUser } from './me.js';
 import { config } from '../config.js';
 import { LEGAL_VERSION, MIN_AGE } from '../content/legal.js';
@@ -165,7 +165,7 @@ router.post('/logout-all', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
-router.post('/change-password', requireAuth, authLimiter, async (req, res) => {
+router.post('/change-password', requireAuth, authUserLimiter, async (req, res) => {
   const parsed = z.object({ atual: z.string().min(1).max(128), nova: password }).safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: firstError(parsed) });
   if (!(await verifyPassword(parsed.data.atual, req.user.passwordHash))) {

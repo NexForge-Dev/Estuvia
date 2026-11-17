@@ -29,7 +29,8 @@ export function ApplicationProcess(p) {
   return h('div', { class: 'stack ap' },
     h('div', { class: 'ap-head' },
       h('span', { class: `chip-status t-${verif[1]}` }, verif[0]),
-      h('p', { class: 'small muted' }, `${p.procedimento.titulo} · curso ${p.procedimento.ciclo}. Regras conferidas em ${fmt(p.procedimento.revisadoEm)}${p.programa.fichaVerificadaEm ? `; ficha do mestrado coletada em ${fmt(p.programa.fichaVerificadaEm)}` : ''}.`)),
+      h('p', { class: 'small muted' }, `${p.procedimento.titulo} · curso ${p.procedimento.ciclo}. Regras conferidas em ${fmt(p.procedimento.revisadoEm)}${p.programa.fichaVerificadaEm ? `; ficha do mestrado coletada em ${fmt(p.programa.fichaVerificadaEm)}` : ''}.`),
+      p.alertas?.ciclo ? h('p', { class: 'notice', role: 'note' }, p.alertas.ciclo) : null),
 
     section('Onde a candidatura é feita',
       h('p', {}, h('span', { class: `chip-status t-${canalTone}` }, canalLabel), ' ', p.canal.texto),
