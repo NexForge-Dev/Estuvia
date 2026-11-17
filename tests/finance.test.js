@@ -29,7 +29,7 @@ test('1/6/18: sem conhecer preços, o plano já tem estimativas com fonte — e 
   assert.equal(item(f, 'moradia').valorEur, 300, 'perfil equilibrado: meio da faixa publicada pela UGR');
   assert.equal(item(f, 'moradia').fonte.id, 'O15');
   assert.equal(item(f, 'moradia').origemTipo, 'premissa');
-  assert.equal(item(f, 'alimentacao').valorEur, 179, 'INE EPF 2024: 15,8% de €13.626 ÷ 12');
+  assert.equal(item(f, 'alimentacao').valorEur, 188, 'INE EPF 2025: 16,0% de €14.066 ÷ 12');
   assert.equal(item(f, 'alimentacao').fonte.id, 'O17');
   assert.equal(item(f, 'transporte').valorEur, null, 'sem fonte confiável: não inventamos preço');
   assert.ok(f.faltamInformar.includes('transporte') && f.faltamInformar.includes('matricula'));
@@ -41,13 +41,13 @@ test('1/6/18: sem conhecer preços, o plano já tem estimativas com fonte — e 
 
 test('4/5: instalação e mensal separados; visto calculado à parte e fora do custo', () => {
   const f = computeFinance(user(), journey(), NOW);
-  assert.equal(f.mensal, 300 + 179);
-  assert.equal(f.mensalTotal, (300 + 179) * 12);
+  assert.equal(f.mensal, 300 + 188);
+  assert.equal(f.mensalTotal, (300 + 188) * 12);
   assert.equal(f.orcamento, f.instalacao + f.mensalTotal);
   assert.equal(f.preparar, f.instalacao + f.mensal, 'A: instalação + primeiro mês');
   assert.equal(f.exigenciaVisto, 600 * 12, 'C: IPREM 2026 × 12 meses');
   const longer = computeFinance(user(), journey({ duracaoMeses: 18 }), NOW);
-  assert.equal(longer.mensalTotal, (300 + 179) * 18, 'duração muda o recorrente');
+  assert.equal(longer.mensalTotal, (300 + 188) * 18, 'duração muda o recorrente');
   assert.equal(longer.orcamento - longer.exigenciaVisto !== f.orcamento - f.exigenciaVisto, true);
   assert.equal(f.orcamento, f.itens.reduce((s, i) => s + (i.valorEur ?? 0) * (i.grupo === 'mensal' ? 12 : 1), 0), 'nada de dupla contagem com o visto');
 });
@@ -57,8 +57,8 @@ test('8: três cenários comparáveis a partir das premissas transparentes', () 
   const [eco, eq, conf] = f.cenarios;
   assert.deepEqual(f.cenarios.map((c) => c.perfil), ['economico', 'equilibrado', 'confortavel']);
   assert.ok(eco.orcamento < eq.orcamento && eq.orcamento < conf.orcamento);
-  assert.equal(eco.mensal, 250 + Math.round(179 * 0.85));
-  assert.equal(conf.mensal, 350 + Math.round(179 * 1.25));
+  assert.equal(eco.mensal, 250 + Math.round(188 * 0.85));
+  assert.equal(conf.mensal, 350 + Math.round(188 * 1.25));
 });
 
 test('reembolsável, já pago e zero ≠ desconhecido', () => {
@@ -108,7 +108,7 @@ test('destino sem premissa local: moradia desconhecida, alimentação com refer�
   const f = computeFinance(user(), journey({ programaId: 'dua-200300' }), NOW);
   assert.equal(f.destino.premissasLocais, false);
   assert.equal(item(f, 'moradia').valorEur, null);
-  assert.equal(item(f, 'alimentacao').valorEur, 179);
+  assert.equal(item(f, 'alimentacao').valorEur, 188);
 });
 
 test('9/13: economia mensal até a partida e pagamentos com data na Agenda', () => {

@@ -34,13 +34,14 @@ export const SPEND_PROFILES = {
 export const PROFILE_IDS = Object.keys(SPEND_PROFILES);
 
 // Premissas por destino. Cada valor traz fonte e data de consulta; o que não tem fonte fica de fora.
-const INE_ALIMENTACAO_MES = Math.round((13626 * 0.158) / 12); // €179: média nacional por pessoa (todas as idades)
+// INE, EPF 2025 (publicada em 25/06/2026, https://ine.es/dyngs/Prensa/EPF2025.htm): €14.066/pessoa/ano; alimentos 16,0%.
+const INE_ALIMENTACAO_MES = Math.round((14066 * 0.16) / 12); // €188: média nacional por pessoa (todas as idades)
 export const DESTINATION_ASSUMPTIONS = {
   // Espanha inteira: só alimentação tem referência oficial nacional.
   ES: {
     alimentacao: {
-      base: INE_ALIMENTACAO_MES, fonte: 'O17', consultadoEm: '2026-10-24',
-      nota: 'Cálculo da Estuvia: 15,8% do gasto médio anual por pessoa na Espanha (INE, 2024), dividido por 12. É uma média nacional, não um valor de estudante.',
+      base: INE_ALIMENTACAO_MES, fonte: 'O17', consultadoEm: '2026-11-17',
+      nota: 'Cálculo da Estuvia: 16,0% do gasto médio anual por pessoa na Espanha (INE, 2025), dividido por 12. É uma média nacional, não um valor de estudante.',
     },
   },
   Granada: {

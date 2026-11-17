@@ -98,7 +98,7 @@ export const CATEGORY_DEFAULTS = {
   trabalho: { ...ES, quando: 'Antes de começar a trabalhar ou estagiar.', fontes: ['O6', 'O25'] },
   familiares: { ...BR, quando: 'Junto com o seu pedido de visto.', fontes: ['O6', 'O21'] },
   complementar: { apostila: 'talvez', traducao: 'talvez', quando: 'Quando o caso se aplicar a você.', fontes: ['M'] },
-  renovacao: { ...ES, onde: 'Por meios eletrônicos, dirigido à Oficina de Extranjería da província onde você obteve a autorização inicial (Ministerio de Inclusión).', quando: 'Nos dois meses antes ou nos três meses depois do vencimento da autorização. Cada prorrogação vale pelo curso matriculado, até um ano; são permitidas até duas por autorização (Ministerio de Inclusión, conferido em 14/11/2026). Confira o prazo na fonte oficial).', fontes: ['O6'] },
+  renovacao: { ...ES, onde: 'Por meios eletrônicos, dirigido à Oficina de Extranjería da província onde você obteve a autorização inicial (Ministerio de Inclusión).', quando: 'Nos dois meses antes ou nos três meses depois do vencimento da autorização. Cada prorrogação vale pelo curso matriculado, até um ano; são permitidas até duas por autorização (Ministerio de Inclusión, conferido em 14/11/2026). Confira o prazo na fonte oficial.', fontes: ['O6'] },
 };
 
 // ---------------------------------------------------------------------------
@@ -109,11 +109,11 @@ export const DOC_TYPES = [];
 const T = (id, categoria, nome, o = {}) => DOC_TYPES.push({ id, categoria, nome, ...o });
 
 // ===== 1. Documentos pessoais =====
-T('passaporte', 'pessoais', 'Passaporte válido', { icone: 'passport', validade: 'data', fontes: ['O23', 'O21', 'O6'],
+T('passaporte', 'pessoais', 'Passaporte válido', { icone: 'passport', validade: 'data', fontes: ['O23', 'O21', 'O6', 'O7'],
   oque: 'Seu documento de viagem, emitido pela Polícia Federal. Ele identifica você na candidatura, no visto, na viagem e na TIE.',
   para: 'Identificar você em todos os procedimentos e receber o visto colado nele.',
   onde: 'Na Polícia Federal: agende pelo gov.br, pague a taxa (GRU) e compareça ao atendimento.',
-  quando: 'O quanto antes: a emissão leva algumas semanas. Para o visto de estudos, a regra oficial pede passaporte em vigor com vigência mínima de um ano (Ministerio de Inclusión). Confirme também páginas em branco e eventual limite para a data de emissão na página do seu consulado.',
+  quando: 'O quanto antes: a emissão leva algumas semanas. Para o visto de estudos, a regra oficial pede passaporte em vigor com vigência mínima de um ano (Ministerio de Inclusión). A lista do Consulado em Salvador também pede pelo menos duas páginas em branco e não aceita passaporte emitido há mais de 10 anos (conferido em 17/11/2026): confirme na página do seu consulado.',
   apostila: 'nao', traducao: 'nao' });
 T('rg-cin', 'pessoais', 'RG ou Carteira de Identidade Nacional (CIN)', { icone: 'user', partes: ['frente', 'verso'], apostila: 'nao', traducao: 'nao',
   oque: 'Seu documento de identidade brasileiro.', para: 'Identificação complementar quando um procedimento pedir.', onde: 'No órgão de identificação do seu estado.' });
@@ -283,7 +283,7 @@ T('formulario', 'visto', 'Formulário oficial de visto nacional', { icone: 'edit
 T('antecedentes', 'visto', 'Certidão de antecedentes criminais da Polícia Federal', { icone: 'shield', validade: 'recencia', fontes: ['O6', 'O22'],
   oque: 'A certidão de que você não tem antecedentes criminais no Brasil.', para: 'Regra oficial: exigida quando a estadia passa de seis meses, para maiores de idade penal, emitida pelo país de origem ou pelos países onde você residiu nos últimos cinco anos (Ministerio de Inclusión). O consulado pode ter limite próprio de duração e de data de emissão: confira a lista vigente dele.',
   onde: 'Emita gratuitamente no gov.br (Polícia Federal). Confira se o consulado também pede a estadual.',
-  quando: 'Perto do pedido do visto: o consulado pode aceitar só certidões recentes.',
+  quando: 'Perto do pedido do visto: a certidão da Polícia Federal vale 90 dias a partir da emissão (gov.br, conferido em 17/11/2026), e o consulado pode aceitar só certidões recentes. Conte o tempo da apostila e da tradução dentro desse prazo.',
   apostilaNota: 'Costuma ser exigida para uso na Espanha: confira na lista do seu consulado.', traducaoNota: 'Confira na lista do seu consulado.' });
 T('antecedentes-outros-paises', 'visto', 'Certidões criminais de outros países de residência', { icone: 'shield', validade: 'recencia', multiplos: true,
   fontes: ['O6'], oque: 'Certidões dos países onde você morou nos últimos cinco anos.', para: 'Regra oficial: estadia acima de seis meses exige certidão de cada país onde você residiu nos últimos cinco anos (Ministerio de Inclusión).', onde: 'Nos órgãos de cada país (geralmente pelo consulado dele).' });
@@ -465,8 +465,8 @@ T('ta1', 'trabalho', 'Formulário TA.1', { icone: 'edit', fontes: ['O25'],
   oque: 'Formulário de pedido do número de Seguridad Social.', para: 'Quando usado para pedir o NUSS.', onde: 'No portal da Seguridad Social.' });
 T('contrato-trabalho-es', 'trabalho', 'Contrato de trabalho na Espanha', { icone: 'file',
   oque: 'O contrato com o empregador espanhol.', para: 'Formalizar o trabalho.' });
-T('compatibilidade-trabalho', 'trabalho', 'Comprovante de compatibilidade entre trabalho e estudos', { icone: 'scale', fontes: ['O6'],
-  oque: 'Documento que mostra que o trabalho é compatível com os estudos.', para: 'A autorização de estudos permite trabalho com limites: confira as regras na fonte oficial.' });
+T('compatibilidade-trabalho', 'trabalho', 'Comprovante de compatibilidade entre trabalho e estudos', { icone: 'scale', fontes: ['O35', 'O6'],
+  oque: 'Documento que mostra que o trabalho é compatível com os estudos.', para: 'Regra oficial (RD 1155/2024, art. 57): a autorização de estudos superiores já permite trabalhar por conta própria ou alheia, sem trâmite adicional, desde que o trabalho seja compatível com os estudos; o limite geral é de 30 horas semanais (passar dele é causa de extinção da autorização), e o trabalho fica limitado à comunidade autônoma onde a autorização foi concedida (Andaluzia), salvo localidades limítrofes. Estágios curriculares não precisam de outra autorização.' });
 T('certificados-profissionais', 'trabalho', 'Diplomas e certificados profissionais', { icone: 'trophy', multiplos: true,
   oque: 'Certificados da sua formação profissional.', para: 'Candidaturas a vagas.' });
 T('reconhecimento-profissional', 'trabalho', 'Reconhecimento profissional (profissões regulamentadas)', { icone: 'shield',

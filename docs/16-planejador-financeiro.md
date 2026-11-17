@@ -24,7 +24,7 @@ Cada item (ExpenseItem) tem:
 | Item | Estimativa automática | Fonte |
 |---|---|---|
 | Moradia (quarto compartilhado, Granada) | 250 / 300 / 350 € conforme o perfil | UGR: O15 (€200–300) e O16 (€300–350). As páginas divergem e não têm data. |
-| Alimentação (Espanha) | 179 € × perfil (0,85 / 1 / 1,25) | INE EPF 2024 (O17): 15,8% de €13.626/ano ÷ 12. Média nacional, não de estudante. |
+| Alimentação (Espanha) | 188 € × perfil (0,85 / 1 / 1,25) | INE EPF 2025 (O17): 16,0% de €14.066/ano ÷ 12. Média nacional, não de estudante. |
 | Caução | 1 mês de aluguel | Premissa explícita da Estuvia (confirme no contrato) |
 | Reserva | 1 mês de custo de vida | Premissa explícita da Estuvia |
 | Matrícula, documentos, taxa do visto, seguro, transporte, contas, despesas pessoais | **sem valor** (desconhecido) | Não há fonte confiável: o estudante informa |

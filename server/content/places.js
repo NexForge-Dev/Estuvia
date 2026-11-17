@@ -27,7 +27,7 @@ const office = (o) => {
     ...o,
     site,
     vistoEstudosUrl: `${site}${VISTO_ESTUDOS}`,
-    demarcacaoUrl: `${site}/es/${pagina}/Paginas/Demarcaci%C3%B3n.aspx`,
+    demarcacaoUrl: o.demarcacaoUrl || `${site}/es/${pagina}/Paginas/Demarcaci%C3%B3n.aspx`,
     contatoUrl: `${site}/es/${pagina}/Paginas/Horario,-localizaci%C3%B3n-y-contacto.aspx`,
     emailContato: o.emailVistos || o.emailContato,
     emailContatoTipo: o.emailVistos ? 'vistos' : o.emailContatoTipo,
@@ -67,6 +67,9 @@ export const CONSULATES = [
     id: 'brasilia', nome: 'Seção Consular da Embaixada da Espanha em Brasília', cidade: 'Brasília', uf: 'DF', caminho: '/Embajadas/brasilia',
     endereco: 'SES Av. das Nações, Quadra 811, Lote 44, 70429-900 Brasília (DF)', telefone: '+55 61 3701-1600',
     emailContato: 'sc.brasilia@maec.es', emailContatoTipo: 'consular',
+    // A Embaixada não publica página de Demarcación (404 em 17/11/2026): a jurisdição sai da página das repartições
+    // consulares, e os 10 estados são os que não estão nas demarcações publicadas de Salvador, São Paulo, Rio e Porto Alegre.
+    demarcacaoUrl: `${MAEC}/Embajadas/brasilia/es/Embajada/Paginas/Consulados.aspx`,
     estadosConfirmados: ['DF', 'GO', 'AM', 'PA', 'MT', 'TO', 'RO', 'RR', 'AC', 'AP'],
   }),
 ];

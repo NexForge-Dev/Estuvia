@@ -36,9 +36,9 @@
 ## Fase 4 — Visto de estudos 🛂
 
 1. **Descubra seu consulado** (pode adiantar): é o consulado espanhol que atende o estado onde você mora. [O7]
-2. **Monte o dossiê** (pode adiantar). As referências oficiais incluem admissão/matrícula, meios econômicos, seguro saúde, documentos pessoais e, quando aplicável, antecedentes criminais e atestado médico. Apostila e tradução **só quando exigidas**. Use a lista do **seu** consulado. [O6][O7]
+2. **Monte o dossiê** (pode adiantar). As referências oficiais incluem admissão/matrícula, meios econômicos, seguro saúde, documentos pessoais, **atestado médico** (exigido em todo pedido feito no consulado) e, quando a estadia passa de seis meses, **antecedentes criminais** (a certidão da Polícia Federal vale 90 dias). Documentos brasileiros vão apostilados e traduzidos conforme a lista do consulado. Use a lista do **seu** consulado. [O6][O7]
 3. **Meios econômicos** (pode adiantar): o valor mínimo segue a norma vigente e é conferido pelo consulado. Nenhum valor "garante" o visto. [O6]
-4. **Agende e solicite** com o dossiê completo.
+4. **Agende e solicite** com o dossiê completo, **pelo menos dois meses antes do início das aulas** (regra oficial; o consulado tem até um mês para responder). [O6][O7]
 5. **Confira o visto** ao receber: nome, número do passaporte, datas e tipo.
 
 ## Fase 5 — Mudança 🧳
@@ -60,7 +60,8 @@
 | 12–9 meses antes | Escolher área e programas, verificar idioma, pedir documentos acadêmicos |
 | 9–6 meses antes | Cadastro DUA, 6 opções, envio na fase correta |
 | 6–3 meses antes | Adjudicações, confirmação, matrícula; iniciar o dossiê do visto |
-| 3–1 mês antes | Pedido de visto, moradia segura, passagem conforme o status do visto |
+| 3–2 meses antes | Pedido de visto (regra oficial: pelo menos 2 meses antes do início dos estudos) |
+| 2–1 mês antes | Moradia segura, passagem conforme o status do visto |
 | 1º mês na Espanha | Universidade, empadronamiento, TIE |
 
 ## Erros mais comuns

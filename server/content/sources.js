@@ -66,7 +66,7 @@ export const SOURCES = [
     orgao: 'Consulado da Espanha em Salvador',
     titulo: 'Visto nacional de estudos',
     url: 'https://www.exteriores.gob.es/Consulados/salvadordebahia/es/ServiciosConsulares/Paginas/index.aspx?scca=Visados&scco=Brasil&scd=250&scs=Visados+Nacionales+-+Visado+de+estudios',
-    revisadoEm: '2026-10-24',
+    revisadoEm: '2026-11-17',
     tipo: 'oficial',
   },
   {
@@ -137,7 +137,7 @@ export const SOURCES = [
     orgao: 'Universidad de Granada',
     titulo: 'Living in Granada, custos aproximados (quarto em apartamento compartilhado: €200–300/mês)',
     url: 'https://www.ugr.es/en/study/living-in-granada',
-    revisadoEm: '2026-10-24',
+    revisadoEm: '2026-11-17',
     tipo: 'oficial',
   },
   {
@@ -145,23 +145,23 @@ export const SOURCES = [
     orgao: 'Universidad de Granada: Vicerrectorado de Internacionalización',
     titulo: 'Accommodation, quarto em apartamento compartilhado: €300–350/mês; contas geralmente à parte',
     url: 'https://internacional.ugr.es/en/students/ugr-services/acommodation',
-    revisadoEm: '2026-10-24',
+    revisadoEm: '2026-11-17',
     tipo: 'oficial',
   },
   {
     id: 'O17',
     orgao: 'INE: Instituto Nacional de Estadística',
-    titulo: 'Encuesta de Presupuestos Familiares 2024 (gasto médio por pessoa: €13.626/ano; alimentos e bebidas não alcoólicas: 15,8%)',
-    url: 'https://ine.es/dyngs/Prensa/EPF2024.htm',
-    revisadoEm: '2026-10-24',
+    titulo: 'Encuesta de Presupuestos Familiares 2025 (gasto médio por pessoa: €14.066/ano; alimentos e bebidas não alcoólicas: 16,0%)',
+    url: 'https://ine.es/dyngs/Prensa/EPF2025.htm',
+    revisadoEm: '2026-11-17',
     tipo: 'oficial',
   },
   // ---------- Carteira de documentos (links conferidos em 27/10/2026) ----------
-  { id: 'O18', orgao: 'Conselho Nacional de Justiça (CNJ)', titulo: 'Apostila da Haia, o que é e onde providenciar', url: 'https://www.cnj.jus.br/poder-judiciario/relacoes-internacionais/apostila-da-haia/', revisadoEm: '2026-10-27', tipo: 'oficial' },
+  { id: 'O18', orgao: 'Conselho Nacional de Justiça (CNJ)', titulo: 'Apostila da Haia, o que é e onde providenciar', url: 'https://www.cnj.jus.br/poder-judiciario/relacoes-internacionais/apostila-da-haia/', revisadoEm: '2026-11-17', tipo: 'oficial' },
   { id: 'O19', orgao: 'Policía Nacional (Espanha)', titulo: 'Sede eletrônica, trâmites de documentação de estrangeiros (TIE)', url: 'https://sede.policia.gob.es/', revisadoEm: '2026-10-27', tipo: 'oficial' },
   { id: 'O20', orgao: 'Governo da Espanha: Administración Electrónica', titulo: 'Cita previa para trâmites de estrangeiros (ICP)', url: 'https://icp.administracionelectronica.gob.es/icpplus/index.html', revisadoEm: '2026-10-27', tipo: 'oficial' },
   { id: 'O21', orgao: 'Ministerio de Asuntos Exteriores (Espanha)', titulo: 'Portal oficial, consulados e serviços consulares', url: 'https://www.exteriores.gob.es/', revisadoEm: '2026-10-27', tipo: 'oficial' },
-  { id: 'O22', orgao: 'Governo Federal (gov.br): Polícia Federal', titulo: 'Emitir certidão de antecedentes criminais', url: 'https://www.gov.br/pt-br/servicos/emitir-certidao-de-antecedentes-criminais', revisadoEm: '2026-10-27', tipo: 'oficial' },
+  { id: 'O22', orgao: 'Governo Federal (gov.br): Polícia Federal', titulo: 'Emitir certidão de antecedentes criminais', url: 'https://www.gov.br/pt-br/servicos/emitir-certidao-de-antecedentes-criminais', revisadoEm: '2026-11-17', tipo: 'oficial' },
   { id: 'O23', orgao: 'Governo Federal (gov.br): Polícia Federal', titulo: 'Obter passaporte comum para brasileiro', url: 'https://www.gov.br/pt-br/servicos/obter-passaporte-comum-para-brasileiro', revisadoEm: '2026-10-27', tipo: 'oficial' },
   { id: 'O24', orgao: 'Ministerio de Asuntos Exteriores (Espanha)', titulo: 'Tradutores e intérpretes juramentados (traductores jurados)', url: 'https://www.exteriores.gob.es/es/ServiciosAlCiudadano/Paginas/Traductores-Interpretes-Jurados.aspx', revisadoEm: '2026-10-27', tipo: 'oficial' },
   { id: 'O25', orgao: 'Seguridad Social (Espanha)', titulo: 'Portal da Seguridad Social, número de afiliação (NUSS)', url: 'https://www.seg-social.es/', revisadoEm: '2026-10-27', tipo: 'oficial' },
@@ -179,6 +179,9 @@ export const SOURCES = [
   // 16/11/2026: obrigação (saída definitiva ou mais de 12 meses fora), prazo da comunicação e relação com a DSDP conferidos.
   { id: 'O33', orgao: 'Receita Federal (gov.br)', titulo: 'Comunicação e Declaração de Saída Definitiva do País', url: 'https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/preenchimento/dsdp', revisadoEm: '2026-11-16', tipo: 'oficial' },
   { id: 'O34', orgao: 'Receita Federal (gov.br)', titulo: 'Residente e não residente', url: 'https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/preenchimento/dsdp/nao-residente', revisadoEm: '2026-11-16', tipo: 'oficial' },
+  // Conferida em 17/11/2026: art. 57 (trabalho automático e compatível com os estudos superiores, até 30 h semanais,
+  // limitado à comunidade autônoma da autorização; estágios curriculares cobertos).
+  { id: 'O35', orgao: 'Boletín Oficial del Estado', titulo: 'Real Decreto 1155/2024 (Reglamento de Extranjería), art. 57: trabalho de quem tem autorização de estudos', url: 'https://www.boe.es/buscar/act.php?id=BOE-A-2024-24099', revisadoEm: '2026-11-17', tipo: 'oficial' },
 ];
 
 export const sourceById = (id) => SOURCES.find((s) => s.id === id) || null;

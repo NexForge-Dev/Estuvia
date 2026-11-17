@@ -42,7 +42,7 @@ export const FAQ = [
   },
   {
     q: 'Quais documentos o visto de estudos costuma pedir?',
-    a: 'Comece com pelo menos dois meses de antecedência da data de início prevista. A lista do consulado competente costuma incluir formulário, foto, passaporte, prova de residência consular, admissão/matrícula, meios econômicos, seguro e taxa/agendamento. Antecedentes criminais e atestado médico dependem das regras e do período aplicável; apostila e tradução também variam. Use a lista do seu consulado.',
+    a: 'Comece com pelo menos dois meses de antecedência da data de início prevista. A lista do consulado competente costuma incluir formulário, foto, passaporte, prova de residência consular, admissão/matrícula, meios econômicos, seguro e taxa/agendamento. O atestado médico é exigido em todo pedido feito pelo consulado; antecedentes criminais, quando a estadia passa de seis meses (a lista do consulado fala em mais de 180 dias). Documentos estrangeiros vão apostilados e traduzidos ao espanhol. Use a lista do seu consulado.',
     tag: 'verificado',
     fontes: ['O6', 'O7'],
     keywords: ['visto', 'consulado', 'seguro', 'antecedentes', 'atestado', 'apostila', 'tradução', 'traducao', 'meios', 'financeiro'],
