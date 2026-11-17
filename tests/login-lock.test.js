@@ -59,3 +59,28 @@ test('o bloqueio vence sozinho e o login certo limpa o registro', async () => {
 test('e-mail sem conta continua respondendo 401 (sem bloqueio a revelar)', async () => {
   for (let i = 0; i < 12; i++) assert.equal((await post('/auth/login', { email: 'ninguem@lock.dev', senha: `x${i}errada` })).status, 401);
 });
+
+// Teste de invasão 2026-11-17: errar a senha de propósito travava o dono da conta (inclusive o admin).
+test('dispositivo onde a pessoa já entrou continua entrando durante o bloqueio; cookie copiado não dá tentativas infinitas', async () => {
+  const email = 'rui@lock.dev';
+  const reg = await fetch(`${base}/auth/register`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'travessia' }, body: JSON.stringify({ nome: 'Rui Alves', email, senha: SENHA, aceite: true, maiorIdade: true }) });
+  const device = reg.headers.getSetCookie().find((c) => c.startsWith('tv_device='))?.split(';')[0];
+  assert.ok(device, 'cadastro marca o dispositivo');
+  const withDevice = async (senha) => {
+    const res = await fetch(`${base}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'travessia', Cookie: device }, body: JSON.stringify({ email, senha }) });
+    return res.status;
+  };
+  for (let i = 0; i < 10; i++) await post('/auth/login', { email, senha: `atacante${i}x` });
+  assert.equal((await post('/auth/login', { email, senha: SENHA })).status, 429, 'navegador desconhecido continua bloqueado');
+  assert.equal(await withDevice(SENHA), 200, 'o dono, no próprio navegador, entra');
+  assert.equal(users.findByEmail(email).loginLock, undefined);
+
+  // Cookie de dispositivo forjado não dispensa o bloqueio.
+  for (let i = 0; i < 10; i++) await post('/auth/login', { email, senha: `atacante${i}z` });
+  const forged = await fetch(`${base}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'travessia', Cookie: 'tv_device=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' }, body: JSON.stringify({ email, senha: SENHA }) });
+  assert.equal(forged.status, 429);
+
+  // Com o cookie verdadeiro, mas senha errada: depois de 10 erros o dispositivo também é bloqueado.
+  for (let i = 0; i < 10; i++) assert.equal(await withDevice(`chute${i}x`), 401);
+  assert.equal(await withDevice(SENHA), 429);
+});

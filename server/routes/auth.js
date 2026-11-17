@@ -38,9 +38,36 @@ const LOCK_FAILS = 10;
 const LOCK_WINDOW_MS = 15 * 60 * 1000;
 const LOCK_MS = 15 * 60 * 1000;
 const lockedUntil = (u) => (u?.loginLock?.ate && Date.parse(u.loginLock.ate) > Date.now() ? Date.parse(u.loginLock.ate) : 0);
-async function registerFailure(user) {
+
+// Dispositivo conhecido (OWASP, "device cookies"): o bloqueio acima também travava o dono da conta. Qualquer um
+// que soubesse o e-mail errava a senha 10 vezes e deixava o estudante (ou o admin) sem entrar por 15 min, sem fim.
+// Quem já entrou neste navegador recebe um cookie assinado e, com a senha certa, entra mesmo durante o bloqueio.
+// O cookie não autentica nada sozinho: só dispensa o bloqueio por excesso de tentativas.
+export const DEVICE_COOKIE = 'tv_device';
+const DEVICE_DAYS = 180;
+const deviceToken = (user) => crypto.createHmac('sha256', config.jwtSecret).update(`device:${user.id}:${user.createdAt || ''}`).digest('base64url');
+// Erros a partir de um dispositivo conhecido têm contador próprio: um cookie copiado não dá tentativas infinitas.
+const deviceFails = (u) => (u?.loginFalhasDispositivo && Date.now() - Date.parse(u.loginFalhasDispositivo.desde) < LOCK_WINDOW_MS ? u.loginFalhasDispositivo.n : 0);
+function knownDevice(req, user) {
+  const got = req.cookies?.[DEVICE_COOKIE];
+  if (!user || typeof got !== 'string' || deviceFails(user) >= LOCK_FAILS) return false;
+  const want = deviceToken(user);
+  return got.length === want.length && crypto.timingSafeEqual(Buffer.from(got), Buffer.from(want));
+}
+function rememberDevice(res, user) {
+  res.cookie(DEVICE_COOKIE, deviceToken(user), {
+    httpOnly: true, secure: config.isProd, sameSite: 'strict', maxAge: DEVICE_DAYS * 24 * 3600 * 1000, path: '/api/auth',
+  });
+}
+
+async function registerFailure(user, { trusted = false } = {}) {
   const now = Date.now();
   await users.touch(user.id, (u) => {
+    if (trusted) {
+      const d = deviceFails(u) ? u.loginFalhasDispositivo : { n: 0, desde: new Date(now).toISOString() };
+      d.n += 1;
+      u.loginFalhasDispositivo = d;
+    }
     const f = u.loginFalhas && now - Date.parse(u.loginFalhas.desde) < LOCK_WINDOW_MS ? u.loginFalhas : { n: 0, desde: new Date(now).toISOString() };
     f.n += 1;
     if (f.n >= LOCK_FAILS) { u.loginLock = { ate: new Date(now + LOCK_MS).toISOString() }; delete u.loginFalhas; }
@@ -82,6 +109,7 @@ router.post('/register', authLimiter, async (req, res) => {
   });
   await audit.log({ action: 'register', userId: user.id, ...clientInfo(req) });
   issueSession(res, user);
+  rememberDevice(res, user);
   res.status(201).json({ user: publicUser(user) });
 });
 
@@ -92,7 +120,8 @@ router.post('/login', authLimiter, async (req, res) => {
 
   const user = users.findByEmail(email);
   const until = lockedUntil(user);
-  if (until) {
+  const trusted = knownDevice(req, user);
+  if (until && !trusted) {
     await audit.log({ action: 'login-locked', userId: user.id, ...clientInfo(req) });
     const min = Math.max(1, Math.ceil((until - Date.now()) / 60000));
     return res.status(429).json({ error: `Muitas tentativas erradas nesta conta. Tente de novo em ${min} min ou use "Esqueci minha senha".` });
@@ -100,10 +129,10 @@ router.post('/login', authLimiter, async (req, res) => {
   const ok = await verifyPassword(senha, user ? user.passwordHash : await dummyHash());
   if (!user || !ok) {
     await audit.log({ action: 'login-failed', email: email.toLowerCase(), ...clientInfo(req) });
-    if (user) await registerFailure(user);
+    if (user) await registerFailure(user, { trusted });
     return res.status(401).json({ error: 'E-mail ou senha incorretos.' });
   }
-  if (user.loginFalhas || user.loginLock) await users.touch(user.id, (u) => { delete u.loginFalhas; delete u.loginLock; });
+  if (user.loginFalhas || user.loginLock || user.loginFalhasDispositivo) await users.touch(user.id, (u) => { delete u.loginFalhas; delete u.loginLock; delete u.loginFalhasDispositivo; });
   // Hash antigo (parâmetros mais fracos): refaz agora que temos a senha correta. Não muda tokenVersion,
   // então nenhuma sessão aberta cai. Uma falha aqui não impede o login.
   if (needsRehash(user.passwordHash)) {
@@ -118,8 +147,9 @@ router.post('/login', authLimiter, async (req, res) => {
     await audit.log({ action: 'login-blocked', userId: user.id, ...clientInfo(req) });
     return res.status(403).json({ error: 'Sua conta está suspensa. Fale com a equipe Estuvia.' });
   }
-  await audit.log({ action: 'login', userId: user.id, ...clientInfo(req) });
+  await audit.log({ action: 'login', userId: user.id, ...clientInfo(req), ...(until ? { durante: 'bloqueio', dispositivo: 'conhecido' } : {}) });
   issueSession(res, user);
+  rememberDevice(res, user);
   res.json({ user: publicUser(user) });
 });
 
@@ -201,7 +231,7 @@ router.post('/reset-password', authLimiter, async (req, res) => {
   if (users.findById(user.id)?.passwordReset?.hash !== hash) {
     return res.status(400).json({ error: 'Este link é inválido ou expirou. Peça um novo em "Esqueci minha senha".' });
   }
-  await users.update(user.id, (u) => { u.passwordHash = passwordHash; u.tokenVersion += 1; delete u.passwordReset; delete u.loginFalhas; delete u.loginLock; });
+  await users.update(user.id, (u) => { u.passwordHash = passwordHash; u.tokenVersion += 1; delete u.passwordReset; delete u.loginFalhas; delete u.loginLock; delete u.loginFalhasDispositivo; });
   await audit.log({ action: 'password-reset', userId: user.id, ...clientInfo(req) });
   clearSession(res);
   res.json({ ok: true });

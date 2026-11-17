@@ -277,3 +277,43 @@ test('oportunidade de programa que já está no Radar oficial recebe o link ofic
   assert.match(r.data.post.radarOficial.url, /^#\/oportunidades\//);
   assert.ok(r.data.avisos.some((a) => a.includes('Radar oficial')));
 });
+
+// ---------- Teste de invasão 2026-11-17 ----------
+
+test('denúncias de contas recém-criadas não tiram post do ar sozinhas (vão para a fila)', async () => {
+  const p = await ana('POST', '/community/posts', { tipo: 'publicacao', categoria: 'experiencias', texto: 'Post alvo de contas falsas' });
+  const id = p.data.post.id;
+  for (const n of [1, 2, 3, 4]) {
+    const fake = client();
+    assert.equal((await fake('POST', '/auth/register', { nome: `Falsa ${n}`, email: `falsa${n}@exemplo.com`, senha: 'segura123', aceite: true, maiorIdade: true })).status, 201);
+    assert.equal((await fake('POST', `/community/posts/${id}/report`, { motivo: 'spam' })).status, 201);
+  }
+  assert.equal((await bia('GET', `/community/posts/${id}`)).status, 200, 'continua no ar');
+  assert.equal((await mod('GET', '/community/mod/queue')).data.denuncias.filter((d) => d.alvoId === id).length, 4, 'moderação vê as denúncias');
+});
+
+test('compartilhar conta uma vez por pessoa', async () => {
+  const p = await ana('POST', '/community/posts', { tipo: 'publicacao', categoria: 'experiencias', texto: 'Post para compartilhar' });
+  for (let i = 0; i < 5; i++) await bia('POST', `/community/posts/${p.data.post.id}/share`);
+  await caio('POST', `/community/posts/${p.data.post.id}/share`);
+  assert.equal((await ana('GET', `/community/posts/${p.data.post.id}`)).data.post.compartilhamentos, 2);
+});
+
+test('editar um post inocente para spam manda para revisão', async () => {
+  const p = await bia('POST', '/community/posts', { tipo: 'publicacao', categoria: 'experiencias', texto: 'Alguém em Sevilha?' });
+  assert.equal(p.data.post.moderacao.estado, 'publicado');
+  const e = await bia('PUT', `/community/posts/${p.data.post.id}`, { tipo: 'publicacao', categoria: 'experiencias', texto: 'VISTO GARANTIDO! clique aqui https://bit.ly/visto-rapido e chama no zap' });
+  assert.equal(e.status, 200);
+  assert.equal(e.data.post.moderacao.estado, 'em-revisao');
+  assert.equal((await caio('GET', `/community/posts/${p.data.post.id}`)).status, 404);
+});
+
+test('filtros de cidade não revelam posts em revisão; publicar num grupo torna membro', async () => {
+  await caio('POST', '/community/posts', { tipo: 'publicacao', categoria: 'experiencias', texto: 'VISTO GARANTIDO! clique aqui https://bit.ly/visto-cidade e chama no zap', local: { cidade: 'CidadeOcultaXyz' } });
+  assert.ok(!(await bia('GET', '/community/meta')).data.cidades.includes('CidadeOcultaXyz'));
+  assert.ok((await caio('GET', '/community/meta')).data.cidades.includes('CidadeOcultaXyz'), 'o autor vê a própria');
+  const g = await ana('POST', '/community/groups', { nome: 'Mestrandos em Jaén', tipo: 'pais', pais: 'Espanha' });
+  const r = await caio('POST', '/community/posts', { tipo: 'publicacao', categoria: 'experiencias', texto: 'Oi, grupo!', grupoId: g.data.grupo.id });
+  assert.equal(r.status, 201);
+  assert.ok((await caio('GET', '/community/groups')).data.grupos.find((x) => x.id === g.data.grupo.id).participo);
+});

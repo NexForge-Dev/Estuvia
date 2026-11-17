@@ -128,8 +128,10 @@ const findPost = (c, id) => c.posts.find((p) => p.id === id);
 // ---------- Metadados ----------
 
 router.get('/meta', (req, res) => {
-  const cidades = [...new Set([...UNIVERSITIES.map((u) => u.cidade), ...community.read((c) => c.posts.map((p) => p.local?.cidade).filter(Boolean))])].sort();
-  const paises = [...new Set(['Espanha', ...community.read((c) => c.posts.map((p) => p.local?.pais).filter(Boolean))])].sort();
+  // Só publicações que quem pede pode ver: uma cidade digitada num post em revisão ou removido não vira filtro público.
+  const visiveis = community.read((c) => c.posts.filter((p) => p.moderacao.estado === 'publicado' || p.autorId === req.user.id));
+  const cidades = [...new Set([...UNIVERSITIES.map((u) => u.cidade), ...visiveis.map((p) => p.local?.cidade).filter(Boolean)])].sort();
+  const paises = [...new Set(['Espanha', ...visiveis.map((p) => p.local?.pais).filter(Boolean)])].sort();
   res.json({
     categorias: COMMUNITY_CATEGORIES, naturezas: NATURE, verificacao: VERIFICATION, motivosDenuncia: REPORT_REASONS,
     universidades: UNIVERSITIES.map(({ id, sigla, nome, cidade, pais }) => ({ id, sigla, nome, cidade, pais })),
@@ -280,6 +282,12 @@ function preparePost(c, user, data, { editingId } = {}) {
   };
 }
 
+// Quem publica num grupo passa a ser membro dele (não há publicação "de fora" num grupo).
+function joinOnPost(c, grupoId, userId) {
+  const g = grupoId && c.groups.find((x) => x.id === grupoId);
+  if (g && !g.membros.includes(userId)) g.membros.push(userId);
+}
+
 function findDuplicate(c, op, exceptId) {
   const fp = opportunityFingerprint(op);
   return c.posts.find((p) => p.id !== exceptId && p.tipo === 'oportunidade' && p.moderacao.estado !== 'removido'
@@ -315,6 +323,7 @@ router.post('/posts', communityWriteLimiter, async (req, res) => {
       criadoEm: now(),
     };
     c.posts.push(post);
+    joinOnPost(c, post.grupoId, user.id);
     c.media.filter((m) => post.imagens.includes(m.id)).forEach((m) => { m.postId = post.id; });
     if (spam.revisar) prep.avisos.push('Sua publicação ficou em revisão pela moderação antes de aparecer no feed.');
     return { post, avisos: prep.avisos };
@@ -333,7 +342,15 @@ router.put('/posts/:id', communityWriteLimiter, async (req, res) => {
     if (parsed.data.tipo !== post.tipo) return { erro: [400, 'Não é possível mudar o tipo da publicação.'] };
     const prep = preparePost(c, user, parsed.data, { editingId: post.id });
     if (prep.erro) return prep;
-    if (prep.campos.links.some((l) => l.nivel === 'suspeito')) post.moderacao = { estado: 'em-revisao', motivos: ['Contém link suspeito.'] };
+    // Mesmo filtro da criação: sem isto, publicava-se um texto inocente e depois se editava para spam.
+    const recentes = c.posts.filter((p) => p.id !== post.id && p.autorId === user.id && Date.now() - new Date(p.criadoEm) < 86400000);
+    const spam = spamSignals({ texto: prep.campos.texto, links: prep.campos.links, autor: user, recentes });
+    if (spam.repetida) return { erro: [409, 'Você já publicou este mesmo texto nas últimas 24 horas.'] };
+    if (spam.revisar && post.moderacao.estado === 'publicado') {
+      post.moderacao = { estado: 'em-revisao', motivos: spam.motivos };
+      prep.avisos.push('Sua publicação ficou em revisão pela moderação antes de aparecer no feed.');
+    }
+    joinOnPost(c, prep.campos.grupoId, user.id);
     // Qualquer mudança em algo já verificado exige nova conferência: sai do Radar até lá.
     const changed = !sameJson(post.oportunidade, prep.campos.oportunidade) || post.texto !== prep.campos.texto;
     if (post.verificacao && ['verificada', 'desatualizada'].includes(post.verificacao.status) && changed) {
@@ -390,7 +407,12 @@ router.post('/posts/:id/share', async (req, res) => {
   const out = await community.mutate((c) => {
     const post = findPost(c, req.params.id);
     if (!post || post.moderacao.estado !== 'publicado') return null;
-    post.compartilhamentos = (post.compartilhamentos || 0) + 1;
+    // Uma pessoa conta uma vez: o contador entra na relevância do feed e não pode ser inflado com cliques repetidos.
+    post.compartilhadoPor ??= [];
+    if (!post.compartilhadoPor.includes(req.user.id)) {
+      post.compartilhadoPor.push(req.user.id);
+      post.compartilhamentos = (post.compartilhamentos || 0) + 1;
+    }
     return postView(c, post, req.user);
   });
   if (!out) return res.status(404).json({ error: 'Só publicações visíveis no feed podem ser compartilhadas.' });
@@ -438,6 +460,13 @@ router.delete('/comments/:id', async (req, res) => {
 
 const reportSchema = z.object({ motivo: z.enum(Object.keys(REPORT_REASONS)), detalhe: z.string().trim().max(500).optional() }).strict();
 const AUTO_REVIEW_REPORTS = 3;
+// Conta criada há menos que isto não conta para tirar conteúdo do ar sozinha (a denúncia fica registrada e vai
+// para a fila da moderação). Sem isto, três contas criadas na hora censuravam qualquer publicação.
+export const REPORT_TRUST_MS = 3 * 24 * 3600000;
+const trustedReporter = (id) => {
+  const u = id && users.findById(id);
+  return Boolean(u && !u.blocked && (isModerator(u) || Date.now() - Date.parse(u.createdAt) >= REPORT_TRUST_MS));
+};
 
 async function report(req, res, alvo) {
   const parsed = reportSchema.safeParse(req.body);
@@ -453,10 +482,10 @@ async function report(req, res, alvo) {
       && (alvo === 'post' || target.moderacao.estado === 'publicado' || isModerator(req.user));
     if (!visible) return { erro: [404, 'Conteúdo não encontrado.'] };
     c.reports.push({ id: newId(), alvo, alvoId: target.id, postId: alvo === 'post' ? target.id : target.postId, autorId: req.user.id, ...parsed.data, status: 'aberta', criadoEm: now() });
-    const abertas = c.reports.filter((r) => r.alvoId === target.id && r.status === 'aberta').length;
-    if (alvo === 'post') target.denuncias = abertas;
-    // Várias denúncias independentes tiram o conteúdo do ar até a moderação decidir.
-    if (abertas >= AUTO_REVIEW_REPORTS && target.moderacao.estado === 'publicado') {
+    const abertas = c.reports.filter((r) => r.alvoId === target.id && r.status === 'aberta');
+    if (alvo === 'post') target.denuncias = abertas.length;
+    // Várias denúncias independentes, de contas com histórico, tiram o conteúdo do ar até a moderação decidir.
+    if (abertas.filter((r) => trustedReporter(r.autorId)).length >= AUTO_REVIEW_REPORTS && target.moderacao.estado === 'publicado') {
       target.moderacao = { estado: 'em-revisao', motivos: [...(target.moderacao.motivos || []), 'Várias denúncias da comunidade.'] };
     }
     return { ok: true };
@@ -920,7 +949,7 @@ router.get('/media/:id', async (req, res) => {
 export function communityExport(userId) {
   return community.read((c) => ({
     // Sem dados de terceiros: quem curtiu/salvou vira contagem e o id de quem moderou/verificou sai.
-    publicacoes: c.posts.filter((p) => p.autorId === userId).map(({ curtidas, salvos, moderacao, verificacao, ...p }) => ({
+    publicacoes: c.posts.filter((p) => p.autorId === userId).map(({ curtidas, salvos, compartilhadoPor, moderacao, verificacao, ...p }) => ({
       ...p, curtidas: curtidas.length, salvos: salvos.length, moderacao: moderationView(moderacao, false),
       verificacao: verificacao && { ...verificacao, historico: verificacao.historico.map(({ por, ...h }) => ({ ...h, por: ['sistema', 'comunidade'].includes(por) ? por : 'equipe' })) },
     })),
@@ -938,7 +967,11 @@ export async function purgeCommunityUser(userId) {
   await community.mutate((c) => {
     c.posts.filter((p) => p.autorId === userId).forEach((p) => removePost(c, p.id));
     c.comments = c.comments.filter((x) => x.autorId !== userId);
-    c.posts.forEach((p) => { p.curtidas = p.curtidas.filter((id) => id !== userId); p.salvos = p.salvos.filter((id) => id !== userId); });
+    c.posts.forEach((p) => {
+      p.curtidas = p.curtidas.filter((id) => id !== userId);
+      p.salvos = p.salvos.filter((id) => id !== userId);
+      if (p.compartilhadoPor) p.compartilhadoPor = p.compartilhadoPor.filter((id) => id !== userId);
+    });
     c.groups.forEach((g) => { g.membros = g.membros.filter((id) => id !== userId); if (g.criadoPor === userId) g.criadoPor = null; });
     c.reports.filter((r) => r.autorId === userId).forEach((r) => { r.autorId = null; });
     c.media.filter((m) => m.ownerId === userId).forEach((m) => deleteMediaFile(m));
