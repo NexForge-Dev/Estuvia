@@ -508,10 +508,11 @@ export function WeeklyPlanner({ initialWeek, autoOrganize = false } = {}) {
       h('div', { class: 'modal-card wp-modal' },
         h('div', { class: 'wp-modal-head' }, h('h3', {}, isNew ? 'Novo compromisso' : 'Editar atividade'), h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Fechar', onClick: () => close() }, icon('x', { size: 16 }))),
         f));
-    const close = () => { dlg.remove(); document.removeEventListener('keydown', esc); };
+    const close = () => { dlg.remove(); document.removeEventListener('keydown', esc); window.removeEventListener('hashchange', close); };
     const esc = (k) => { if (k.key === 'Escape') close(); };
     dlg.addEventListener('click', (ev) => { if (ev.target === dlg) close(); });
     document.addEventListener('keydown', esc);
+    window.addEventListener('hashchange', close); // trocar de tela fecha o diálogo
     document.body.append(dlg);
     f.titulo.focus();
   }

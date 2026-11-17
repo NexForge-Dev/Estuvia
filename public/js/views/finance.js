@@ -384,8 +384,11 @@ export async function financeView() {
   function view() {
     const p = d.plano;
     const picker = journeys.length > 1 ? (() => {
-      const s = h('select', { 'aria-label': 'Jornada' }, journeys.map((j) => h('option', { value: j.id, selected: j.id === jid }, `${j.destino.universidade?.sigla} - ${j.destino.programa?.nome || ''}`)));
-      s.addEventListener('change', async () => { jid = s.value; d = await api.get(qs('/finance')); draw(); });
+      const s = h('select', { 'aria-label': 'Jornada' }, journeys.map((j) => h('option', { value: j.id, selected: j.id === jid }, `${j.destino.universidade?.sigla || j.destino.universidade?.nome || 'Jornada'} - ${j.destino.programa?.nome || 'mestrado a definir'}`)));
+      s.addEventListener('change', async () => {
+        jid = s.value;
+        try { d = await api.get(qs('/finance')); draw(); } catch (e) { toast(e.message, 'err'); }
+      });
       return s;
     })() : null;
     if (!p.planoIniciado) return intro(p);

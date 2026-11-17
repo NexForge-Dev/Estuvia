@@ -64,7 +64,7 @@ export async function ProofPanel(m) {
       h('div', { class: 'mh-abc-item a' }, h('span', { class: 'mh-abc-tag' }, 'A'), h('small', {}, 'Precisa comprovar (visto)'), h('strong', {}, eur(v.valor)),
         h('p', {}, `${Math.round(f.iprem.percentual * 100)}% do IPREM (€ ${f.iprem.mensal}/mês${f.iprem.aproximado ? ', valor aproximado' : ''}) × ${f.meses} meses.`)),
       h('div', { class: 'mh-abc-item b' }, h('span', { class: 'mh-abc-tag' }, 'B'), h('small', {}, 'Custo real da mudança'), h('strong', {}, f.planoIniciado ? eur(f.orcamento) : '-'),
-        h('p', {}, f.planoIniciado ? `Sua estimativa${f.parcial ? ' (ainda parcial)' : ''}. Pode ser maior ou menor que A.` : 'Ainda não calculado no simulador.')),
+        h('p', {}, ...(f.planoIniciado ? ['Sua estimativa', f.parcial ? ' (ainda parcial)' : '', '. ', 'Pode ser maior ou menor que A.'] : ['Ainda não calculado no simulador.']))),
       h('div', { class: 'mh-abc-item c' }, h('span', { class: 'mh-abc-tag' }, 'C'), h('small', {}, 'Seu dinheiro garantido'), h('strong', {}, f.informouRecursos ? eur(f.confirmados) : '-'),
         h('p', {}, f.informouRecursos ? (f.previstos ? `+ ${eur(f.previstos)} prometidos ou solicitados (não contam).` : 'Só conta o que já é seu ou foi concedido.') : 'Você ainda não informou.'))),
     f.informouRecursos

@@ -164,7 +164,14 @@ export function AIJourneyAssistant({ compact = false } = {}) {
   );
 
   const consume = () => { if (pending) { const p = pending; pending = null; if (p.acao || p.pergunta) ask(p); } };
-  document.addEventListener('padapal:ask', () => { if (root.isConnected) { Object.assign(ctx, pending || {}); consume(); } });
+  let seen = false;
+  const onAsk = () => {
+    if (!root.isConnected) { if (seen) document.removeEventListener('padapal:ask', onAsk); return; }
+    seen = true;
+    Object.assign(ctx, pending || {}); consume();
+  };
+  document.addEventListener('padapal:ask', onAsk);
+  queueMicrotask(() => { seen = seen || root.isConnected; });
   queueMicrotask(consume);
   return root;
 }

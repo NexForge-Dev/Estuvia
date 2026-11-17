@@ -25,15 +25,22 @@ export async function openDocumentPanel(docId, opts = {}) {
   let flow = null;
   const opened = new Set(); // seções recolhíveis abertas (mantidas entre redesenhos)
 
-  const close = () => {
+  let closed = false;
+  const close = (byNavigation = false) => {
+    if (closed) return;
+    closed = true;
     overlay.classList.remove('open');
     document.body.classList.remove('dp-lock');
     document.removeEventListener('keydown', onKey);
+    window.removeEventListener('hashchange', onNav);
     setTimeout(() => overlay.remove(), 220);
-    opts.onClose?.();
+    if (byNavigation !== true) opts.onClose?.(); // ao navegar, não reescreve o endereço novo
   };
   const onKey = (e) => { if (e.key === 'Escape') close(); };
+  // Voltar/avançar no navegador ou trocar de tela fecha o painel e destrava a rolagem da página.
+  const onNav = () => close(true);
   document.addEventListener('keydown', onKey);
+  window.addEventListener('hashchange', onNav);
   overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 
   let doc;

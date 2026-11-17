@@ -249,7 +249,7 @@ export async function housingView() {
       s.nivel === 'alerta' ? h('p', { class: 'notice' }, icon('alert', { size: 14 }), ` Há ${s.alertas.length} sinal(is) de alerta: ${s.alertas.join(' · ')}`) : null,
       s.nivel !== 'conferido' ? h('p', { class: 'small muted' }, `Você conferiu ${s.confirmadas} de ${s.total} itens de "Conferir antes de pagar". Não envie dinheiro antes de conferir.`) : h('p', { class: 'small muted' }, 'Conferências feitas, isso ajuda, mas não garante que o anúncio é seguro.'),
       h('div', { class: 'row wrap' },
-        h('button', { class: 'btn btn-cta', type: 'button', onClick: async () => { closeSheet(); await put(id, { status: 'escolhida' }); toast('Moradia escolhida. Seu planejamento financeiro foi atualizado.', 'ok'); } }, icon('check', { size: 16 }), 'Sim, escolher'),
+        h('button', { class: 'btn btn-cta', type: 'button', onClick: async () => { closeSheet(); if (await put(id, { status: 'escolhida' })) toast('Moradia escolhida. Seu planejamento financeiro foi atualizado.', 'ok'); } }, icon('check', { size: 16 }), 'Sim, escolher'),
         s.nivel !== 'conferido' ? h('button', { class: 'btn btn-ghost', type: 'button', onClick: () => openDetail(id, 'seguranca') }, 'Conferir antes') : null,
         h('button', { class: 'guide-secondary', type: 'button', onClick: () => { closeSheet(); draw(); } }, 'Cancelar')));
     openSheet(body, 'Escolher moradia');
@@ -282,7 +282,7 @@ export async function housingView() {
       const ps = await photosOf(id);
       const file = h('input', { type: 'file', accept: 'image/png,image/jpeg,image/webp', hidden: true });
       file.addEventListener('change', async () => { try { for (const f of file.files) await addFile(photoScope(id), await shrink(f)); await drawPhotos(); draw(); } catch (e) { toast(e.message, 'err'); } });
-      mount(photos, ps.length ? ps.map((p) => h('figure', {}, h('img', { src: p.url, alt: `Foto de ${x.nome}` }), h('button', { type: 'button', class: 'icon-btn sm', 'aria-label': 'Remover foto', onClick: async () => { await removeFile(p.id); await drawPhotos(); draw(); } }, icon('trash', { size: 12 })))) : photoSlot(x, 'hs-photo big'),
+      mount(photos, ps.length ? ps.map((p) => h('figure', {}, h('img', { src: p.url, alt: `Foto de ${x.nome}` }), h('button', { type: 'button', class: 'icon-btn sm', 'aria-label': 'Remover foto', onClick: async () => { try { await removeFile(p.id); await drawPhotos(); draw(); } catch { toast('Não foi possível remover a foto deste navegador.', 'err'); } } }, icon('trash', { size: 12 })))) : photoSlot(x, 'hs-photo big'),
         h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onClick: () => file.click() }, icon('edit', { size: 13 }), 'Adicionar foto (fica só neste dispositivo)'), file);
     };
     drawPhotos();
@@ -380,7 +380,11 @@ export async function housingView() {
     if (scrollY) card.scrollTop = scrollY; else card.focus();
   }
   function closeSheet() { st.detail = null; mount(sheetHost); lastFocus?.focus?.(); lastFocus = null; }
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && sheetHost.firstChild) closeSheet(); });
+  const onEsc = (e) => {
+    if (!root.isConnected) return document.removeEventListener('keydown', onEsc); // saiu da tela: não acumula ouvintes
+    if (e.key === 'Escape' && sheetHost.firstChild) closeSheet();
+  };
+  document.addEventListener('keydown', onEsc);
 
   function draw() {
     mount(root, header(), actions(), wizard(), importer(), compareBar(), comparison(), listing(), sheetHost);

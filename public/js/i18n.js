@@ -1143,7 +1143,7 @@ const TRANSLATIONS = {
 
   'Objetivos concluídos': ['Objetivos completados', 'Objectives completed'],
   'Conta para o progresso da missão': ['Cuenta para el progreso de la misión', 'Counts towards mission progress'],
-  ' objetivo': [' objetivo', ' objective'],
+  'objetivo': ['objetivo', 'objective'],
   'Ferramentas da missão': ['Herramientas de la misión', 'Mission tools'],
   'Reabrir': ['Reabrir', 'Reopen'],
   'Tudo pronto para concluir': ['Todo listo para completar', 'Everything ready to complete'],
@@ -1288,7 +1288,7 @@ const TRANSLATIONS = {
   'Custo real da mudança': ['Coste real de la mudanza', 'Real cost of the move'],
   'Seu dinheiro garantido': ['Tu dinero garantizado', 'Your confirmed money'],
   'Sua estimativa': ['Tu estimación', 'Your estimate'],
-  ' (ainda parcial)': [' (aún parcial)', ' (still partial)'],
+  '(ainda parcial)': ['(aún parcial)', '(still partial)'],
   'Pode ser maior ou menor que A.': ['Puede ser mayor o menor que A.', 'It may be higher or lower than A.'],
   'Ainda não calculado no simulador.': ['Aún no calculado en el simulador.', 'Not calculated in the simulator yet.'],
   'prometidos ou solicitados (não contam).': ['prometidos o solicitados (no cuentan).', 'promised or requested (they do not count).'],

@@ -384,7 +384,15 @@ export function MentorPanel({ compact = false, onClose = null } = {}) {
   const consume = () => { if (pending) { const p = pending; pending = null; if (p.mensagem || p.acao) send(p.mensagem || null, p.rotulo || p.mensagem, p.acao); } };
   if (info) queueMicrotask(() => start(info));
   api.get('/mentor').then(start).catch(() => { modeBadge.textContent = 'offline'; });
-  document.addEventListener('padapal:mentor-ask', () => { if (root.isConnected) { Object.assign(ctx, pending || {}); consume(); } });
+  // Um ouvinte por painel: sai sozinho quando o painel deixa a tela (evita acumular a cada abertura).
+  let seen = false;
+  const onAsk = () => {
+    if (!root.isConnected) { if (seen) document.removeEventListener('padapal:mentor-ask', onAsk); return; }
+    seen = true;
+    Object.assign(ctx, pending || {}); consume();
+  };
+  document.addEventListener('padapal:mentor-ask', onAsk);
+  queueMicrotask(() => { seen = seen || root.isConnected; });
   return root;
 }
 
@@ -460,7 +468,7 @@ export async function mentorMemoryView() {
       h('section', { class: 'mt-card' }, h('div', { class: 'mt-card-head' }, icon('target', { size: 15 }), h('strong', {}, 'O que o Mentor vê agora (resumo)')), h('pre', { class: 'mt-ctx' }, d.contexto)),
       h('section', { class: 'mt-card' }, h('div', { class: 'mt-card-head' }, icon('clock', { size: 15 }), h('strong', {}, 'Ações do Mentor (registro)')),
         d.historico.length ? h('ul', { class: 'mt-list small' }, d.historico.slice(0, 30).map((x) => h('li', {}, h('strong', {}, new Date(x.em).toLocaleString(locale())), ` · ${x.resultado} · ${x.resumo}`, x.erro ? h('span', { class: 'muted' }, ` (${x.erro})`) : null))) : h('p', { class: 'muted' }, 'Nenhuma ação ainda.')),
-      h('button', { type: 'button', class: 'btn btn-ghost', onClick: async () => { await api.del('/mentor/memory'); toast('Memória e registro apagados.', 'ok'); load(); } }, icon('trash', { size: 14 }), ' Apagar pendências e registro'),
+      h('button', { type: 'button', class: 'btn btn-ghost', onClick: async () => { try { await api.del('/mentor/memory'); toast('Memória e registro apagados.', 'ok'); load(); } catch (e) { toast(e.message, 'err'); } } }, icon('trash', { size: 14 }), ' Apagar pendências e registro'),
     );
   };
   await load();

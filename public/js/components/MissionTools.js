@@ -87,16 +87,16 @@ export function MissionTool(m, { journey, onChange }) {
           c.email ? h('p', { class: 'small' }, icon('mail', { size: 12 }), ' ', c.email) : null,
           h('a', { class: 'small', href: c.fonteUrl, target: '_blank', rel: 'noopener noreferrer' }, 'Fonte oficial', icon('external', { size: 11 }))),
         h('label', { class: 'field sm' }, h('span', { class: 'field-label' }, 'Enviei em'), sent),
-        h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Remover contato', onClick: async () => { await api.del(`/journeys/${journey.id}/contacts/${c.id}`); onChange(); } }, icon('trash', { size: 14 })));
+        h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Remover contato', onClick: async () => { try { await api.del(`/journeys/${journey.id}/contacts/${c.id}`); onChange(); } catch (e) { toast(e.message, 'err'); } } }, icon('trash', { size: 14 })));
     }) : [h('li', { class: 'muted small' }, 'Nenhum contato registrado ainda.')]));
     draw(m.contatos || []);
     const f = h('form', { class: 'stack' },
       h('div', { class: 'grid-2 tight' },
-        h('input', { name: 'nome', placeholder: 'Nome (ex.: coordenação do máster)', required: true, maxlength: 100 }),
-        h('input', { name: 'cargo', placeholder: 'Cargo (coordenador, professor…)', maxlength: 100 }),
-        h('input', { name: 'email', type: 'email', placeholder: 'E-mail institucional (do diretório oficial)', maxlength: 120 }),
-        h('input', { name: 'fonteUrl', type: 'url', placeholder: 'Link da página oficial onde encontrou', required: true, maxlength: 300 })),
-      h('input', { name: 'duvida', placeholder: 'Sua dúvida específica (vai para o rascunho)', maxlength: 500 }),
+        h('input', { 'aria-label': 'Nome do contato', name: 'nome', placeholder: 'Nome (ex.: coordenação do máster)', required: true, maxlength: 100 }),
+        h('input', { 'aria-label': 'Cargo', name: 'cargo', placeholder: 'Cargo (coordenador, professor…)', maxlength: 100 }),
+        h('input', { 'aria-label': 'E-mail institucional', name: 'email', type: 'email', placeholder: 'E-mail institucional (do diretório oficial)', maxlength: 120 }),
+        h('input', { 'aria-label': 'Link da página oficial', name: 'fonteUrl', type: 'url', placeholder: 'Link da página oficial onde encontrou', required: true, maxlength: 300 })),
+      h('input', { 'aria-label': 'Sua dúvida específica', name: 'duvida', placeholder: 'Sua dúvida específica (vai para o rascunho)', maxlength: 500 }),
       h('button', { class: 'btn btn-ghost', type: 'submit' }, icon('users', { size: 16 }), 'Registrar contato'));
     const draftHost = h('div');
     const renderDraft = (duvida) => {

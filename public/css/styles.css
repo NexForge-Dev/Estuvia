@@ -89,7 +89,7 @@ img { max-width: 100%; display: block; }
 .grid-2, .grid-3 { display: grid; gap: 16px; grid-template-columns: 1fr; }
 .grid-2.tight, .grid-3.tight { gap: 10px; }
 @media (min-width: 760px) { .grid-2 { grid-template-columns: 1fr 1fr; } .grid-3 { grid-template-columns: repeat(3, 1fr); } }
-.layout-2 { display: grid; gap: 24px; grid-template-columns: 1fr; align-items: start; }
+.layout-2 { display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr); align-items: start; } /* minmax(0,…): conteúdo largo não estoura a tela no celular */
 @media (min-width: 1100px) { .layout-2 { grid-template-columns: minmax(0, 1fr) 340px; } }
 .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
 .section-head h2 { margin: 0; }
