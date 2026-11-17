@@ -73,6 +73,9 @@ test('falha ao gravar a base vira erro 500 (nunca "salvo"), o servidor segue de 
   const health = await c('GET', '/health');
   assert.equal(health.status, 503);
   assert.equal(health.data.ok, false);
+  // /health é pública: não repassa a mensagem crua do erro (caminho do arquivo, código do sistema).
+  assert.equal(health.data.stores.principal.ok, false);
+  assert.doesNotMatch(JSON.stringify(health.data), /EISDIR|EPERM|rename|db\.json|mensagem/);
 
   fs.rmSync(process.env.DATA_FILE, { recursive: true });
   assert.equal((await c('PUT', '/me/profile', { nome: 'Caio Novo' })).status, 200);

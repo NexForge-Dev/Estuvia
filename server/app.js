@@ -70,8 +70,11 @@ export function createApp() {
     next();
   });
   // 503 quando a última gravação da base falhou (monitoramento externo deve alertar).
+  // Rota pública: diz só qual base falhou e quando. A mensagem crua do erro (caminhos de arquivo, restrições
+  // e ids vindos do banco) fica nos logs do painel admin.
   api.get('/health', (req, res) => {
-    const stores = { principal: storeHealth(), radar: radarStoreHealth() };
+    const view = ({ ok, erro }) => ({ ok, ...(erro?.em ? { em: erro.em } : {}) });
+    const stores = { principal: view(storeHealth()), radar: view(radarStoreHealth()) };
     const ok = stores.principal.ok && stores.radar.ok;
     res.status(ok ? 200 : 503).json({ ok, ...(ok ? {} : { erro: 'Falha ao gravar uma das bases de dados.', stores }) });
   });

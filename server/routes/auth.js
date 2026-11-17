@@ -6,7 +6,7 @@ import { hashPassword, verifyPassword, issueSession, clearSession, requireAuth, 
 import { publicUser } from './me.js';
 import { config } from '../config.js';
 import { LEGAL_VERSION, MIN_AGE } from '../content/legal.js';
-import { sendEmail } from '../email.js';
+import { sendEmail, emailEnabled } from '../email.js';
 
 const router = Router();
 
@@ -58,11 +58,15 @@ router.post('/register', authLimiter, async (req, res) => {
     return res.status(409).json({ error: 'Já existe uma conta com este e-mail. Tente entrar.' });
   }
 
+  // O hash é assíncrono: dois envios simultâneos (duplo clique) passavam pela checagem acima e criavam
+  // duas contas com o mesmo e-mail. Confere de novo logo antes de gravar (sem await entre os dois).
+  const passwordHash = await hashPassword(senha);
+  if (users.findByEmail(email)) return res.status(409).json({ error: 'Já existe uma conta com este e-mail. Tente entrar.' });
   const now = new Date().toISOString();
   const user = await users.create({
     id: newId(),
     email: email.toLowerCase(),
-    passwordHash: await hashPassword(senha),
+    passwordHash,
     tokenVersion: 1,
     createdAt: now,
     updatedAt: now,
@@ -138,6 +142,7 @@ router.post('/change-password', requireAuth, authLimiter, async (req, res) => {
 // Resposta sempre igual (não revela se o e-mail tem conta). O token vale 1 hora, só é guardado como hash
 // e é de uso único; redefinir a senha encerra todas as sessões abertas.
 const RESET_TTL_MS = 60 * 60 * 1000;
+const RESET_COOLDOWN_MS = 60 * 1000;
 const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
 const RESET_SENT = 'Se houver uma conta com este e-mail, enviamos um link para criar uma nova senha. Confira também o spam.';
 
@@ -146,10 +151,15 @@ router.post('/forgot-password', authLimiter, async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: firstError(parsed) });
   // Em produção o link usa só a origem configurada (nunca o Host da requisição, que pode ser forjado).
   const origin = config.allowedOrigin || (config.isProd ? null : `${req.protocol}://${req.get('host')}`);
-  if (!origin) return res.status(503).json({ error: 'Recuperação de senha indisponível no momento. Fale com a equipe.' });
+  // Sem provedor de e-mail em produção o envio sempre falharia: responde 503 para TODOS os e-mails, antes de
+  // procurar a conta. (Antes, só e-mails com conta recebiam 503, o que revelava quem está cadastrado.)
+  if (!origin || (config.isProd && !emailEnabled())) return res.status(503).json({ error: 'Recuperação de senha indisponível no momento. Fale com a equipe.' });
   const user = users.findByEmail(parsed.data.email);
   // A senha do administrador vem do .env (admin-seed.js): não é redefinida por e-mail.
   if (!user || user.blocked || user.role === 'admin') return res.json({ ok: true, message: RESET_SENT });
+  // No máximo um e-mail por minuto por conta (o limite por IP não impede encher a caixa de alguém trocando de IP).
+  // O link anterior continua valendo; a resposta é a mesma.
+  if (user.passwordReset && user.passwordReset.expiresAt - RESET_TTL_MS > Date.now() - RESET_COOLDOWN_MS) return res.json({ ok: true, message: RESET_SENT });
   const token = crypto.randomBytes(32).toString('base64url');
   await users.update(user.id, (u) => { u.passwordReset = { hash: hashToken(token), expiresAt: Date.now() + RESET_TTL_MS }; });
   const link = `${origin}/#/redefinir-senha/${token}`;
@@ -177,6 +187,10 @@ router.post('/reset-password', authLimiter, async (req, res) => {
     return res.status(400).json({ error: 'Este link é inválido ou expirou. Peça um novo em "Esqueci minha senha".' });
   }
   const passwordHash = await hashPassword(parsed.data.senha);
+  // Uso único: outro pedido com o mesmo link pode ter terminado enquanto o hash era calculado.
+  if (users.findById(user.id)?.passwordReset?.hash !== hash) {
+    return res.status(400).json({ error: 'Este link é inválido ou expirou. Peça um novo em "Esqueci minha senha".' });
+  }
   await users.update(user.id, (u) => { u.passwordHash = passwordHash; u.tokenVersion += 1; delete u.passwordReset; delete u.loginFalhas; delete u.loginLock; });
   await audit.log({ action: 'password-reset', userId: user.id, ...clientInfo(req) });
   clearSession(res);
