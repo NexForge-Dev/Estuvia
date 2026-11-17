@@ -133,6 +133,9 @@ function Filters({ meta }, onChange) {
 async function PostDetail(ctx, id) {
   const { post, comentarios } = await api.get(`/community/posts/${id}`);
   const list = h('ol', { class: 'cm-comments' });
+  // O título acompanha a lista: antes ficava "Comentários (0)" depois de comentar.
+  const heading = h('h2', {});
+  const setCount = () => { heading.textContent = `Comentários (${list.children.length})`; };
   const draw = (cm) => {
     const li = h('li', { class: `cm-comment ${cm.moderacao.estado !== 'publicado' ? 'cm-held' : ''}` },
       h('span', { class: 'cm-avatar sm', 'aria-hidden': 'true' }, cm.autor.avatar),
@@ -141,11 +144,12 @@ async function PostDetail(ctx, id) {
           cm.moderacao.estado !== 'publicado' ? h('span', { class: 'muted' }, ' · em revisão') : null),
         h('p', { class: 'cm-text' }, cm.texto),
         h('div', { class: 'row' }, cm.meu
-          ? h('button', { type: 'button', class: 'cm-link-btn', onClick: async () => { try { await api.del(`/community/comments/${cm.id}`); li.remove(); } catch (e) { toast(e.message, 'err'); } } }, 'Excluir')
+          ? h('button', { type: 'button', class: 'cm-link-btn', onClick: async () => { try { await api.del(`/community/comments/${cm.id}`); li.remove(); setCount(); } catch (e) { toast(e.message, 'err'); } } }, 'Excluir')
           : h('button', { type: 'button', class: 'cm-link-btn', onClick: () => ReportForm(li, ctx.meta, `/community/comments/${cm.id}/report`) }, 'Denunciar'))));
     list.append(li);
   };
   comentarios.forEach(draw);
+  setCount();
 
   const form = h('form', { class: 'cm-comment-form' },
     h('label', { class: 'sr-only', for: 'cm-new-comment' }, 'Comentário'),
@@ -157,6 +161,7 @@ async function PostDetail(ctx, id) {
       const r = await api.post(`/community/posts/${id}/comments`, { texto: form.texto.value });
       (r.avisos || []).forEach((a) => toast(a, 'info'));
       draw(r.comentario);
+      setCount();
       form.reset();
     } catch (err) { toast(err.message, 'err'); }
   });
@@ -164,7 +169,7 @@ async function PostDetail(ctx, id) {
   return h('div', { class: 'cm-detail stack-lg' },
     h('a', { href: '#/comunidade', class: 'cm-back' }, icon('back', { size: 16 }), 'Voltar ao feed'),
     PostCard(post, { ...ctx, detail: true, onEdit: () => go('/comunidade'), onDeleted: () => go('/comunidade') }),
-    h('section', { class: 'card stack', 'aria-label': 'Comentários' }, h('h2', {}, `Comentários (${comentarios.length})`), list, form));
+    h('section', { class: 'card stack', 'aria-label': 'Comentários' }, heading, list, form));
 }
 
 // ---------- Grupos ----------
