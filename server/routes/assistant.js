@@ -3,7 +3,7 @@
 
 import { Router } from 'express';
 import { z } from 'zod';
-import Anthropic from '@anthropic-ai/sdk';
+import { loadAnthropic } from '../anthropic-sdk.js';
 import { recordAI, recordTokens, aiBudget } from '../ai-health.js';
 import { config } from '../config.js';
 import { requireAuth, assistantLimiter } from '../security.js';
@@ -14,7 +14,9 @@ import { radarContext } from '../radar/service.js';
 
 const router = Router();
 // Prazo explícito: o padrão do SDK é 10 min por chamada, com 2 novas tentativas.
-const client = config.aiEnabled ? new Anthropic({ timeout: 60_000, maxRetries: 1 }) : null;
+// Criado na primeira pergunta (o SDK é carregado sob demanda: ver anthropic-sdk.js).
+let clientPromise = null;
+const getClient = () => (clientPromise ??= loadAnthropic().then((Anthropic) => new Anthropic({ timeout: 60_000, maxRetries: 1 })));
 
 // System prompt estável (sem dados do usuário) para aproveitar cache de prompt.
 const SYSTEM = `Você é o "Guia", mentor da jornada na plataforma ${config.appName}, que ajuda estudantes brasileiros a conquistar uma vaga em Máster Universitario oficial em universidades públicas da Andaluzia (Espanha), via Distrito Único Andaluz (DUA).
@@ -124,8 +126,8 @@ router.post('/ask', requireAuth, assistantLimiter, async (req, res) => {
   };
 
   // Sem credencial, ou com o teto diário de tokens do estudante atingido: base verificada, sem IA generativa.
-  const semCota = client && aiBudget(req.user).esgotado;
-  if (!client || semCota) {
+  const semCota = config.aiEnabled && aiBudget(req.user).esgotado;
+  if (!config.aiEnabled || semCota) {
     recordAI('assistente', 'offline', { user: req.user });
     const ans = safeLocal(localAnswer, send);
     if (!ans) return res.end();
@@ -149,6 +151,7 @@ router.post('/ask', requireAuth, assistantLimiter, async (req, res) => {
   res.on('close', () => abort.abort());
 
   try {
+    const client = await getClient();
     const stream = client.beta.messages.stream(
       {
         model: config.anthropicModel,
@@ -181,10 +184,12 @@ router.post('/ask', requireAuth, assistantLimiter, async (req, res) => {
     }
   } catch (err) {
     if (abort.signal.aborted) return res.end();
-    recordAI('assistente', 'erro', { erro: err instanceof Anthropic.APIError ? `erro da API ${err.status}` : err.message, user: req.user });
-    if (err instanceof Anthropic.RateLimitError) console.warn('[assistant] rate limit da API');
-    else if (err instanceof Anthropic.AuthenticationError) console.error('[assistant] credencial Anthropic inválida');
-    else if (err instanceof Anthropic.APIError) console.error(`[assistant] erro da API ${err.status}: ${err.message}`);
+    const Anthropic = await loadAnthropic().catch(() => null);
+    const is = (cls) => Boolean(Anthropic?.[cls]) && err instanceof Anthropic[cls];
+    recordAI('assistente', 'erro', { erro: is('APIError') ? `erro da API ${err.status}` : err.message, user: req.user });
+    if (is('RateLimitError')) console.warn('[assistant] rate limit da API');
+    else if (is('AuthenticationError')) console.error('[assistant] credencial Anthropic inválida');
+    else if (is('APIError')) console.error(`[assistant] erro da API ${err.status}: ${err.message}`);
     else console.error('[assistant] falha:', err.message);
     // Degrada para a base local em vez de deixar o estudante sem resposta.
     // Se até a base local falhar, o fluxo SSE (cabeçalhos já enviados) termina com um evento de erro

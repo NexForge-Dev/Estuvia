@@ -1,6 +1,6 @@
 // Saúde da IA (painel admin): configuração das chaves, contadores de uso/erros e teste de conexão.
 // O teste usa a listagem de modelos do provedor: confirma chave + modelo sem gastar tokens.
-import Anthropic from '@anthropic-ai/sdk';
+import { loadAnthropic } from './anthropic-sdk.js';
 import { config } from './config.js';
 import { analytics } from './store.js';
 import { getProvider } from './mentor/providers/index.js';
@@ -101,6 +101,7 @@ const withTimeout = (ms) => AbortSignal.timeout(ms);
 async function checkAnthropic(model) {
   if (!anthropicKey()) return { ok: false, detalhe: 'ANTHROPIC_API_KEY não definida no .env.' };
   const started = Date.now();
+  const Anthropic = await loadAnthropic();
   try {
     const client = new Anthropic({ maxRetries: 0, timeout: 10_000 });
     const m = await client.models.retrieve(model);

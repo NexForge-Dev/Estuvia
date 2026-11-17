@@ -82,13 +82,19 @@ const TABLE_OF = {
 const radarCollections = () => COLLECTIONS.map((c) => arrayCollection(TABLE_OF[c], () => data()[c], (l) => { data()[c] = l; }));
 const USER_OWNED = ['subscriptions', 'alerts', 'agendaLinks'];
 
-/** Run before Radar initialization when DB_PROVIDER=supabase (depois de initStore: as inscrições referenciam usuários). */
-export async function initRadarStore() {
-  if (!usesSupabase()) return;
+/**
+ * Run before Radar initialization when DB_PROVIDER=supabase. A leitura das tabelas radar_* pode correr em paralelo
+ * com initStore: passe a promessa de initStore em `mainReady`. A leitura não espera; liberar as gravações e a
+ * importação inicial (tabelas vazias, que confere os usuários das inscrições) esperam a base principal pronta.
+ */
+export async function initRadarStore(mainReady = Promise.resolve()) {
+  if (!usesSupabase()) return void await mainReady;
   const local = data();
   db = empty();
   const store = createEntityStore(radarCollections(), { label: 'radar' });
   await store.load();
+  // Gravações do Radar só são liberadas depois que a base principal passou pelas barreiras (ambiente, esquema).
+  await mainReady;
   db = normalize(db);
   entities = store;
   lastWriteError = null;
@@ -217,6 +223,8 @@ export async function reloadRadarStore() {
   db = empty();
   const store = createEntityStore(radarCollections(), { label: 'radar' });
   await store.load();
+  // Gravações do Radar só são liberadas depois que a base principal passou pelas barreiras (ambiente, esquema).
+  await mainReady;
   db = normalize(db);
   entities = store;
 }

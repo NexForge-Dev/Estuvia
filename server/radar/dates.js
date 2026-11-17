@@ -84,8 +84,23 @@ export function parseSpanishDateExpr(text, academicYear) {
 // ---------- Fuso horário oficial ----------
 // Uma janela "de 13 a 29 de janeiro" vale de 00:00 do dia 13 até 23:59:59 do dia 29 no horário de Madri.
 
+// Formatadores reaproveitados: criar um Intl.DateTimeFormat custa dezenas de microssegundos, e a listagem do Radar
+// chamava isto milhares de vezes por requisição (era ~70% do tempo de CPU de /api/radar).
+const offsetFormat = new Intl.DateTimeFormat('en-US', { timeZone: TIMEZONE, timeZoneName: 'longOffset' });
+const dayFormats = new Map();
+
+/** Data (AAAA-MM-DD) de um instante no fuso `tz`. Fuso inválido lança RangeError (como o Intl). */
+export function isoDayIn(tz, now = new Date()) {
+  let f = dayFormats.get(tz);
+  if (!f) {
+    f = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' });
+    if (dayFormats.size < 64) dayFormats.set(tz, f); // fusos vêm do perfil: limite contra crescimento sem fim
+  }
+  return f.format(now);
+}
+
 function madridOffsetMinutes(date) {
-  const parts = new Intl.DateTimeFormat('en-US', { timeZone: TIMEZONE, timeZoneName: 'longOffset' }).formatToParts(date);
+  const parts = offsetFormat.formatToParts(date);
   const tz = parts.find((p) => p.type === 'timeZoneName')?.value || 'GMT';
   const m = /GMT([+-])(\d{2}):?(\d{2})?/.exec(tz);
   if (!m) return 0;
@@ -103,7 +118,7 @@ export const endOfDayMadrid = (iso) => madridInstant(iso, '23:59:59');
 
 /** Data de hoje (AAAA-MM-DD) no horário de Madri. */
 export function todayMadrid(now = new Date()) {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: TIMEZONE, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+  return isoDayIn(TIMEZONE, now);
 }
 
 export const daysBetween = (fromIso, toIso) => Math.round((Date.parse(`${toIso}T12:00:00Z`) - Date.parse(`${fromIso}T12:00:00Z`)) / 86400000);

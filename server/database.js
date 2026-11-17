@@ -98,6 +98,15 @@ export async function readEntityPage(table, afterInsSeq, limit) {
   return data;
 }
 
+/**
+ * Confere, com uma única chamada barata, que o banco responde (estuvia_changes com p_since no futuro devolve só o
+ * cursor, sem linhas). Usado pelo /api/health numa instância que ainda está carregando as tabelas. Sem Supabase: ok.
+ */
+export async function pingDatabase() {
+  if (!usesSupabase()) return;
+  await rpc('estuvia_changes', { p_since: Number.MAX_SAFE_INTEGER, p_tables: ['estuvia_meta'] });
+}
+
 let legacyOverride = null;
 /** Apenas para testes. */
 export function setLegacyReaderForTests(fn) { legacyOverride = fn; }

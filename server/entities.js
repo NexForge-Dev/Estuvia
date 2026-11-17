@@ -10,6 +10,7 @@ import { rpc, readEntityPage } from './database.js';
 
 // ~1 a 5 MB por página no Radar (programas com ficha do DUA, snapshots). ENTITY_PAGE_ROWS só para testes.
 const pageRows = () => Number(process.env.ENTITY_PAGE_ROWS) || 200;
+const LOAD_PARALLEL = 8; // tabelas lidas ao mesmo tempo na carga inicial
 const FAR_FUTURE = Number.MAX_SAFE_INTEGER; // p_since além de qualquer txid: estuvia_changes devolve só o cursor
 
 // ---------------------------------------------------------------- conversões para colunas tipadas
@@ -165,17 +166,26 @@ export function createEntityStore(collections, { label }) {
     const head = await rpc('estuvia_changes', { p_since: FAR_FUTURE, p_tables: tables });
     const rows = {};
     let n = 0;
-    for (const t of tables) {
-      rows[t] = [];
+    // Tabelas lidas em paralelo (cada uma em páginas sequenciais, pela chave ins_seq): na Vercel cada página é
+    // uma ida e volta ao Supabase, e lê-las uma de cada vez dominava a partida a frio. Tudo é lido depois do
+    // cursor (head), como antes; a aplicação abaixo continua na ordem de seq, então o resultado é o mesmo.
+    let fallback = false;
+    const readTable = async (t) => {
+      const list = [];
       for (let after = -1; ;) {
         const page = await readEntityPage(t, after, pageRows());
-        if (page === null) return loadAllAtOnce();
-        rows[t].push(...page);
-        n += page.length;
+        if (page === null) { fallback = true; return; }
+        list.push(...page);
         if (page.length < pageRows()) break;
         after = Number(page.at(-1).ins_seq);
       }
-    }
+      rows[t] = list;
+      n += list.length;
+    };
+    const queue = [...tables];
+    const worker = async () => { while (queue.length && !fallback) await readTable(queue.shift()); };
+    await Promise.all(Array.from({ length: Math.min(LOAD_PARALLEL, tables.length) }, worker));
+    if (fallback) return loadAllAtOnce();
     // Recarga (replace): o que a memória conhece e o banco não tem mais foi excluído por outra instância.
     const deleted = [];
     if (replace) {

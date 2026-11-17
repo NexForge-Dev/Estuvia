@@ -4,9 +4,9 @@
 import { normalize, tokens } from './knowledge.js';
 import { DOCUMENTS } from '../content/documents.js';
 import { allMissions, missionLabel } from '../content/rounds.js';
+import { isoDayIn } from '../radar/dates.js';
 
-export const todayIn = (tz = 'America/Sao_Paulo', now = new Date()) =>
-  new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+export const todayIn = (tz = 'America/Sao_Paulo', now = new Date()) => isoDayIn(tz, now);
 export const addDays = (iso, n) => { const d = new Date(`${iso}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 export const weekday = (iso) => ((new Date(`${iso}T12:00:00Z`).getUTCDay() + 6) % 7) + 1; // 1 = segunda
 const WEEKDAYS = { segunda: 1, terca: 2, quarta: 3, quinta: 4, sexta: 5, sabado: 6, domingo: 7 };

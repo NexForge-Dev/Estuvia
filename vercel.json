@@ -1,14 +1,19 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": ["dub1"],
   "functions": {
     "api/index.js": {
       "memory": 1024,
       "maxDuration": 60,
-      "includeFiles": "{public,server/radar/seed}/**"
+      "includeFiles": "{public/index.html,server/radar/seed/**}"
     }
   },
   "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
   "headers": [
+    {
+      "source": "/(img|video)/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }]
+    },
     {
       "source": "/((?!api/).*)",
       "headers": [

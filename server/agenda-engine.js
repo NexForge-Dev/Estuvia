@@ -5,6 +5,7 @@
 // o calendário nunca desbloqueia nada).
 
 import { computeJourney } from './journey-engine.js';
+import { isoDayIn } from './radar/dates.js';
 import { missionById } from './content/rounds.js';
 
 export const CATEGORY_BY_ROUND = { 1: 'academico', 2: 'documentacao', 3: 'academico', 4: 'financeiro', 5: 'visto', 6: 'viagem', 7: 'pessoal', 8: 'documentacao', 9: 'financeiro' };
@@ -20,7 +21,7 @@ export const DEFAULT_AVAILABILITY = {
 // "Hoje" no fuso escolhido pelo estudante (à noite no Brasil o UTC já está no dia seguinte).
 export function todayFor(user, now = new Date()) {
   const fuso = user?.agenda?.disponibilidade?.fuso || DEFAULT_AVAILABILITY.fuso;
-  try { return new Intl.DateTimeFormat('en-CA', { timeZone: fuso, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now); } catch { return now.toISOString().slice(0, 10); }
+  try { return isoDayIn(fuso, now); } catch { return now.toISOString().slice(0, 10); }
 }
 
 const toMin = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));

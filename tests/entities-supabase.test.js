@@ -314,3 +314,24 @@ test('Radar: conflito desfaz mudanças de outra chamada na fila: ela também rec
   await R2.save(); // depois do conflito, volta a gravar
   assert.equal((await one(`select nome from public.radar_programs where id = 'prog2'`)).nome, 'Máster Y2');
 });
+
+test('Radar lido em paralelo com a base principal: gravações só liberadas depois dela, e falha nela barra o Radar', async () => {
+  // Base principal ainda carregando: a leitura do Radar termina, mas initRadarStore só resolve depois dela.
+  const R3 = await import('../server/radar/db.js?instancia=r3');
+  let liberar;
+  const main = new Promise((r) => { liberar = r; });
+  let pronto = false;
+  const radar = R3.initRadarStore(main).then(() => { pronto = true; });
+  await new Promise((r) => setTimeout(r, 50));
+  assert.equal(pronto, false, 'não libera o Radar antes da base principal');
+  liberar();
+  await radar;
+  assert.equal(R3.data().programs.find((p) => p.id === 'prog2')?.nome, 'Máster Y2', 'leu as tabelas radar_*');
+
+  // Base principal falhou (ex.: barreira DEV × PROD): o Radar falha junto e não grava nada.
+  const R4 = await import('../server/radar/db.js?instancia=r4');
+  await assert.rejects(R4.initRadarStore(Promise.reject(new Error('barreira'))), /barreira/);
+  R4.data().programs.find((p) => p.id === 'prog2').nome = 'não pode gravar';
+  await R4.save().catch(() => {}); // sem sincronizador liberado: nada vai ao banco
+  assert.equal((await one(`select nome from public.radar_programs where id = 'prog2'`)).nome, 'Máster Y2');
+});

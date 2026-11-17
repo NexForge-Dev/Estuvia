@@ -1,12 +1,14 @@
 // Provedor Anthropic (Claude) via SDK oficial. Só é carregado com MENTOR_PROVIDER=anthropic
 // e credencial no backend (ANTHROPIC_API_KEY / ANTHROPIC_AUTH_TOKEN). As chaves nunca vão ao navegador.
-import Anthropic from '@anthropic-ai/sdk';
+import { loadAnthropic } from '../../anthropic-sdk.js';
 import { providerTimeoutMs } from './index.js';
 
 export function anthropicProvider({ model } = {}) {
   if (!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_AUTH_TOKEN) throw new Error('credencial Anthropic ausente');
   // Sem isso o SDK espera até 10 min por chamada (com 2 novas tentativas): o laço do Mentor faz até 6.
-  const client = new Anthropic({ timeout: providerTimeoutMs(), maxRetries: 1 });
+  // SDK carregado na primeira conversa (anthropic-sdk.js), não na partida do servidor.
+  let clientPromise = null;
+  const getClient = () => (clientPromise ??= loadAnthropic().then((Anthropic) => new Anthropic({ timeout: providerTimeoutMs(), maxRetries: 1 })));
   const MODEL = model || 'claude-opus-5-5';
 
   const toAnthropic = (messages) => messages.map((m) => {
@@ -23,6 +25,8 @@ export function anthropicProvider({ model } = {}) {
     nome: `Claude (${MODEL})`,
     disponivel: true,
     async chat({ system, messages, tools, signal }) {
+      const Anthropic = await loadAnthropic();
+      const client = await getClient();
       try {
         const res = await client.beta.messages.create({
           model: MODEL,

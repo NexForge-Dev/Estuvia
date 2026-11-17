@@ -27,7 +27,10 @@ export async function verifyPassword(password, stored) {
 }
 
 // Hash fixo para gastar o mesmo tempo quando o e-mail não existe (evita enumeração por tempo).
-export const DUMMY_HASH = await hashPassword(crypto.randomBytes(16).toString('hex'));
+// Calculado em segundo plano (o scrypt roda no pool de threads): a partida não espera por ele, e o login aguarda
+// a mesma promessa, já resolvida muito antes da primeira tentativa.
+const dummyHashPromise = hashPassword(crypto.randomBytes(16).toString('hex'));
+export const dummyHash = () => dummyHashPromise;
 
 // ---------- Sessão (JWT em cookie httpOnly) ----------
 

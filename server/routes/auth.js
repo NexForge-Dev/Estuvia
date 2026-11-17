@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import { Router } from 'express';
 import { z } from 'zod';
 import { users, audit, newId } from '../store.js';
-import { hashPassword, verifyPassword, issueSession, clearSession, requireAuth, authLimiter, DUMMY_HASH, clientInfo } from '../security.js';
+import { hashPassword, verifyPassword, issueSession, clearSession, requireAuth, authLimiter, dummyHash, clientInfo } from '../security.js';
 import { publicUser } from './me.js';
 import { config } from '../config.js';
 import { LEGAL_VERSION, MIN_AGE } from '../content/legal.js';
@@ -97,7 +97,7 @@ router.post('/login', authLimiter, async (req, res) => {
     const min = Math.max(1, Math.ceil((until - Date.now()) / 60000));
     return res.status(429).json({ error: `Muitas tentativas erradas nesta conta. Tente de novo em ${min} min ou use "Esqueci minha senha".` });
   }
-  const ok = await verifyPassword(senha, user ? user.passwordHash : DUMMY_HASH);
+  const ok = await verifyPassword(senha, user ? user.passwordHash : await dummyHash());
   if (!user || !ok) {
     await audit.log({ action: 'login-failed', email: email.toLowerCase(), ...clientInfo(req) });
     if (user) await registerFailure(user);
