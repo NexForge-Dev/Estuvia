@@ -24,7 +24,7 @@ export const SOURCES = [
     orgao: 'Junta de Andalucía (BOJA)',
     titulo: 'Procedimento geral DUA 2026/27',
     url: 'https://www.juntadeandalucia.es/boja/2026/84/46',
-    revisadoEm: '2026-10-24',
+    revisadoEm: '2026-11-17',
     tipo: 'oficial',
   },
   {
@@ -32,7 +32,7 @@ export const SOURCES = [
     orgao: 'Distrito Único Andaluz',
     titulo: 'Requisitos e fases do procedimento',
     url: 'https://www.juntadeandalucia.es/economiaconocimientoempresasyuniversidad/sguit/mo_requisitos_procedimiento.php',
-    revisadoEm: '2026-10-24',
+    revisadoEm: '2026-11-17',
     tipo: 'oficial',
   },
   {
@@ -40,7 +40,7 @@ export const SOURCES = [
     orgao: 'Universidad de Granada',
     titulo: 'Catálogo de másteres (Engenharia e Arquitetura)',
     url: 'https://masteres.ugr.es/ramas/ingenieria-arquitectura',
-    revisadoEm: '2026-10-24',
+    revisadoEm: '2026-11-17',
     tipo: 'oficial',
   },
   {
@@ -48,7 +48,7 @@ export const SOURCES = [
     orgao: 'Distrito Único Andaluz',
     titulo: 'Portal de másteres',
     url: 'https://www.juntadeandalucia.es/economiaconocimientoempresasyuniversidad/sguit/?q=masteres',
-    revisadoEm: '2026-10-24',
+    revisadoEm: '2026-11-17',
     tipo: 'oficial',
   },
   {
@@ -78,7 +78,7 @@ export const SOURCES = [
     // título é "Distrito Único Andaluz". Usamos o endereço de destino, não o encurtador.
     url: 'https://www.juntadeandalucia.es/economiaconocimientoempresasyuniversidad/sguit',
     linkCurto: 'https://lajunta.es/portaldua',
-    revisadoEm: '2026-10-28',
+    revisadoEm: '2026-11-17',
     tipo: 'oficial',
   },
   {
@@ -86,7 +86,7 @@ export const SOURCES = [
     orgao: 'Universidad de Granada',
     titulo: 'Diretório oficial de pessoal da UGR',
     url: 'https://directorio.ugr.es/',
-    revisadoEm: '2026-10-24',
+    revisadoEm: '2026-11-17',
     tipo: 'oficial',
   },
   {
@@ -94,7 +94,7 @@ export const SOURCES = [
     orgao: 'Universidad de Granada',
     titulo: 'Portal de másteres da UGR',
     url: 'https://masteres.ugr.es/',
-    revisadoEm: '2026-10-24',
+    revisadoEm: '2026-11-17',
     tipo: 'oficial',
   },
   {
@@ -102,9 +102,9 @@ export const SOURCES = [
     orgao: 'Consulado Geral da Espanha em Salvador da Bahia',
     titulo: 'Site oficial do consulado',
     url: 'https://www.exteriores.gob.es/Consulados/salvadordebahia',
-    // Endereço, telefone e e-mail de vistos conferidos em 28/10/2026 na página oficial
+    // Endereço, telefone e e-mail de vistos conferidos em 28/10/2026 e de novo em 17/11/2026 na página oficial
     // "Horario, localización y contacto" (exteriores.gob.es).
-    revisadoEm: '2026-10-28',
+    revisadoEm: '2026-11-17',
     tipo: 'oficial',
   },
   {
@@ -112,7 +112,7 @@ export const SOURCES = [
     orgao: 'AUIP: Asociación Universitaria Iberoamericana de Postgrado',
     titulo: 'Programas de bolsas da AUIP (incl. Programa Federico García Lorca)',
     url: 'https://auip.org/',
-    revisadoEm: '2026-10-24',
+    revisadoEm: '2026-11-17',
     tipo: 'oficial',
   },
   {
@@ -120,7 +120,7 @@ export const SOURCES = [
     orgao: 'Fundación Carolina',
     titulo: 'Bolsas de pós-graduação da Fundación Carolina',
     url: 'https://www.fundacioncarolina.es/',
-    revisadoEm: '2026-10-24',
+    revisadoEm: '2026-11-17',
     tipo: 'oficial',
   },
   {
@@ -128,7 +128,7 @@ export const SOURCES = [
     orgao: 'Comissão Europeia (EACEA)',
     titulo: 'Catálogo de mestrados Erasmus Mundus',
     url: 'https://www.eacea.ec.europa.eu/scholarships/erasmus-mundus-catalogue_en',
-    revisadoEm: '2026-10-24',
+    revisadoEm: '2026-11-17',
     tipo: 'oficial',
   },
   // Custo de vida: só o que tem fonte institucional. As páginas não trazem data de atualização.
@@ -158,15 +158,15 @@ export const SOURCES = [
   },
   // ---------- Carteira de documentos (links conferidos em 27/10/2026) ----------
   { id: 'O18', orgao: 'Conselho Nacional de Justiça (CNJ)', titulo: 'Apostila da Haia, o que é e onde providenciar', url: 'https://www.cnj.jus.br/poder-judiciario/relacoes-internacionais/apostila-da-haia/', revisadoEm: '2026-11-17', tipo: 'oficial' },
-  { id: 'O19', orgao: 'Policía Nacional (Espanha)', titulo: 'Sede eletrônica, trâmites de documentação de estrangeiros (TIE)', url: 'https://sede.policia.gob.es/', revisadoEm: '2026-10-27', tipo: 'oficial' },
-  { id: 'O20', orgao: 'Governo da Espanha: Administración Electrónica', titulo: 'Cita previa para trâmites de estrangeiros (ICP)', url: 'https://icp.administracionelectronica.gob.es/icpplus/index.html', revisadoEm: '2026-10-27', tipo: 'oficial' },
-  { id: 'O21', orgao: 'Ministerio de Asuntos Exteriores (Espanha)', titulo: 'Portal oficial, consulados e serviços consulares', url: 'https://www.exteriores.gob.es/', revisadoEm: '2026-10-27', tipo: 'oficial' },
+  { id: 'O19', orgao: 'Policía Nacional (Espanha)', titulo: 'Sede eletrônica, trâmites de documentação de estrangeiros (TIE)', url: 'https://sede.policia.gob.es/', revisadoEm: '2026-11-17', tipo: 'oficial' },
+  { id: 'O20', orgao: 'Governo da Espanha: Administración Electrónica', titulo: 'Cita previa para trâmites de estrangeiros (ICP)', url: 'https://icp.administracionelectronica.gob.es/icpplus/index.html', revisadoEm: '2026-11-17', tipo: 'oficial' },
+  { id: 'O21', orgao: 'Ministerio de Asuntos Exteriores (Espanha)', titulo: 'Portal oficial, consulados e serviços consulares', url: 'https://www.exteriores.gob.es/', revisadoEm: '2026-11-17', tipo: 'oficial' },
   { id: 'O22', orgao: 'Governo Federal (gov.br): Polícia Federal', titulo: 'Emitir certidão de antecedentes criminais', url: 'https://www.gov.br/pt-br/servicos/emitir-certidao-de-antecedentes-criminais', revisadoEm: '2026-11-17', tipo: 'oficial' },
-  { id: 'O23', orgao: 'Governo Federal (gov.br): Polícia Federal', titulo: 'Obter passaporte comum para brasileiro', url: 'https://www.gov.br/pt-br/servicos/obter-passaporte-comum-para-brasileiro', revisadoEm: '2026-10-27', tipo: 'oficial' },
-  { id: 'O24', orgao: 'Ministerio de Asuntos Exteriores (Espanha)', titulo: 'Tradutores e intérpretes juramentados (traductores jurados)', url: 'https://www.exteriores.gob.es/es/ServiciosAlCiudadano/Paginas/Traductores-Interpretes-Jurados.aspx', revisadoEm: '2026-10-27', tipo: 'oficial' },
-  { id: 'O25', orgao: 'Seguridad Social (Espanha)', titulo: 'Portal da Seguridad Social, número de afiliação (NUSS)', url: 'https://www.seg-social.es/', revisadoEm: '2026-10-27', tipo: 'oficial' },
-  { id: 'O26', orgao: 'Receita Federal (gov.br)', titulo: 'Meu CPF', url: 'https://www.gov.br/receitafederal/pt-br/assuntos/meu-cpf', revisadoEm: '2026-10-27', tipo: 'oficial' },
-  { id: 'O27', orgao: 'Ministério da Saúde (gov.br)', titulo: 'Vacinação', url: 'https://www.gov.br/saude/pt-br/vacinacao', revisadoEm: '2026-10-27', tipo: 'oficial' },
+  { id: 'O23', orgao: 'Governo Federal (gov.br): Polícia Federal', titulo: 'Obter passaporte comum para brasileiro', url: 'https://www.gov.br/pt-br/servicos/obter-passaporte-comum-para-brasileiro', revisadoEm: '2026-11-17', tipo: 'oficial' },
+  { id: 'O24', orgao: 'Ministerio de Asuntos Exteriores (Espanha)', titulo: 'Tradutores e intérpretes juramentados (traductores jurados)', url: 'https://www.exteriores.gob.es/es/ServiciosAlCiudadano/Paginas/Traductores-Interpretes-Jurados.aspx', revisadoEm: '2026-11-17', tipo: 'oficial' },
+  { id: 'O25', orgao: 'Seguridad Social (Espanha)', titulo: 'Portal da Seguridad Social, número de afiliação (NUSS)', url: 'https://www.seg-social.es/', revisadoEm: '2026-11-17', tipo: 'oficial' },
+  { id: 'O26', orgao: 'Receita Federal (gov.br)', titulo: 'Meu CPF', url: 'https://www.gov.br/receitafederal/pt-br/assuntos/meu-cpf', revisadoEm: '2026-11-17', tipo: 'oficial' },
+  { id: 'O27', orgao: 'Ministério da Saúde (gov.br)', titulo: 'Vacinação', url: 'https://www.gov.br/saude/pt-br/vacinacao', revisadoEm: '2026-11-17', tipo: 'oficial' },
   { id: 'O28', orgao: 'Ministerio de Inclusión, Seguridad Social y Migraciones', titulo: 'Guía para estudiantes extranjeros: meios econômicos e IPREM', url: 'https://www.inclusion.gob.es/documents/410169/6828741/Gu%C3%ADa%2BEstudiantes.pdf/b6a0c88d-c689-6ce4-9888-6f198b32f513?t=1752143214552', revisadoEm: '2026-11-09', tipo: 'oficial' },
   { id: 'O29', orgao: 'Boletín Oficial del Estado', titulo: 'Real Decreto-ley 3/2026: prorrogação dos Orçamentos Gerais do Estado', url: 'https://www.boe.es/eli/es/rdl/2026/02/03/3', revisadoEm: '2026-11-09', tipo: 'oficial' },
   // A ficha de cada máster é coletada pelo Radar (fonte "dua-fichas"); esta é a entrada geral do catálogo.
