@@ -7,23 +7,52 @@ import { config } from './config.js';
 import { users } from './store.js';
 
 const scrypt = promisify(crypto.scrypt);
-const SCRYPT_PARAMS = { N: 16384, r: 8, p: 1, maxmem: 64 * 1024 * 1024 };
 export const COOKIE = 'tv_session';
 
 // ---------- Senhas (scrypt + sal individual + comparação em tempo constante) ----------
+// Parâmetros atuais: N=2^15, r=8, p=3 — uma das combinações mínimas da OWASP (Password Storage Cheat Sheet),
+// escolhida por usar 32 MiB por hash (cabe com folga numa função da Vercel) em vez dos 128 MiB de N=2^17, p=1.
+// Formato novo: scrypt$ln=15,r=8,p=3$<sal>$<hash>. O formato antigo, scrypt$<sal>$<hash>, é N=2^14, r=8, p=1:
+// continua sendo aceito e é refeito com os parâmetros atuais no próximo login (needsRehash).
+const CURRENT = { ln: 15, r: 8, p: 3 };
+const LEGACY = { ln: 14, r: 8, p: 1 };
+const MAXMEM = 128 * 1024 * 1024;
+const scryptOpts = ({ ln, r, p }) => ({ N: 2 ** ln, r, p, maxmem: MAXMEM });
+
+function parseHash(stored) {
+  const parts = String(stored).split('$');
+  if (parts[0] !== 'scrypt') return null;
+  if (parts.length === 3) return { params: LEGACY, saltHex: parts[1], hashHex: parts[2] };
+  if (parts.length !== 4) return null;
+  const m = /^ln=(\d{1,2}),r=(\d{1,2}),p=(\d{1,2})$/.exec(parts[1]);
+  if (!m) return null;
+  const params = { ln: Number(m[1]), r: Number(m[2]), p: Number(m[3]) };
+  // Limites para um hash adulterado no banco não travar o servidor.
+  if (params.ln < 10 || params.ln > 17 || params.r < 1 || params.r > 16 || params.p < 1 || params.p > 16) return null;
+  return { params, saltHex: parts[2], hashHex: parts[3] };
+}
 
 export async function hashPassword(password) {
   const salt = crypto.randomBytes(16);
-  const hash = await scrypt(password, salt, 64, SCRYPT_PARAMS);
-  return `scrypt$${salt.toString('hex')}$${hash.toString('hex')}`;
+  const hash = await scrypt(password, salt, 64, scryptOpts(CURRENT));
+  return `scrypt$ln=${CURRENT.ln},r=${CURRENT.r},p=${CURRENT.p}$${salt.toString('hex')}$${hash.toString('hex')}`;
 }
 
 export async function verifyPassword(password, stored) {
-  const [alg, saltHex, hashHex] = String(stored).split('$');
-  if (alg !== 'scrypt' || !saltHex || !hashHex) return false;
-  const expected = Buffer.from(hashHex, 'hex');
-  const actual = await scrypt(password, Buffer.from(saltHex, 'hex'), expected.length, SCRYPT_PARAMS);
+  const parsed = parseHash(stored);
+  if (!parsed || !parsed.saltHex || !parsed.hashHex) return false;
+  const expected = Buffer.from(parsed.hashHex, 'hex');
+  if (!expected.length) return false;
+  const actual = await scrypt(password, Buffer.from(parsed.saltHex, 'hex'), expected.length, scryptOpts(parsed.params));
   return crypto.timingSafeEqual(expected, actual);
+}
+
+// true quando o hash guardado usa parâmetros diferentes dos atuais (refazer depois de um login correto).
+export function needsRehash(stored) {
+  const parsed = parseHash(stored);
+  if (!parsed) return false;
+  const { ln, r, p } = parsed.params;
+  return ln !== CURRENT.ln || r !== CURRENT.r || p !== CURRENT.p;
 }
 
 // Hash fixo para gastar o mesmo tempo quando o e-mail não existe (evita enumeração por tempo).

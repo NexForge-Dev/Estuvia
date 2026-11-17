@@ -7,6 +7,7 @@ Aplique em ordem, no SQL Editor do projeto (desenvolvimento e produção são pr
 | `0001_estuvia_state.sql` | Tabela `estuvia_state` (linhas `main` e `radar`): modelo antigo, hoje só lido uma vez para importar e mantido como cópia de segurança. |
 | `0002_entidades.sql` | Uma tabela por entidade (`users`, `community_*`, `audit_log`, `analytics`, `estuvia_meta`, `radar_*`), triggers de versão/sequência, `estuvia_deleted` e as funções `estuvia_apply` e `estuvia_changes`. RLS ligada e acesso só para `service_role`. |
 | `0003_permissoes.sql` | Revoga das chaves públicas (`anon`, `authenticated`) o que a 0002 deixou: a sequência `estuvia_seq` e as funções auxiliares (`estuvia_entity_*`). Só `revoke`/`grant`. |
+| `0004_email_unico.sql` | Índice **único** em `lower(email)` na tabela `users` (antes era só um índice comum). Para com uma mensagem, sem mudar nada, se já houver e-mails duplicados ignorando maiúsculas. |
 
 **Aplique a `0002` antes de publicar o código que a usa**: sem ela o servidor recusa subir e diz qual arquivo aplicar.
 Na primeira subida com as tabelas vazias, o servidor importa sozinho o conteúdo de `estuvia_state`.

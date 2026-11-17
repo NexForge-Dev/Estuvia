@@ -5,7 +5,7 @@
 // sessões dessa conta caem: o operador assume a conta. A senha nunca é registrada em log.
 import { config } from './config.js';
 import { users, audit, newId } from './store.js';
-import { hashPassword, verifyPassword } from './security.js';
+import { hashPassword, verifyPassword, needsRehash } from './security.js';
 
 // Executa uma única vez por processo (chamadas concorrentes não criam duas contas).
 let pending = null;
@@ -49,12 +49,15 @@ async function syncAdmin() {
   }
 
   const passwordChanged = !(await verifyPassword(senha, existing.passwordHash));
-  const passwordHash = passwordChanged ? await hashPassword(senha) : existing.passwordHash;
-  if (passwordChanged || existing.role !== 'admin' || existing.blocked) {
+  // Mesma senha com hash antigo: refaz o hash sem derrubar sessões.
+  const rehash = !passwordChanged && needsRehash(existing.passwordHash);
+  const passwordHash = passwordChanged || rehash ? await hashPassword(senha) : existing.passwordHash;
+  if (passwordChanged || rehash || existing.role !== 'admin' || existing.blocked) {
     await users.update(existing.id, (u) => {
       u.role = 'admin';
       u.blocked = false;
-      if (passwordChanged) { u.passwordHash = passwordHash; u.tokenVersion += 1; }
+      if (passwordChanged || rehash) u.passwordHash = passwordHash;
+      if (passwordChanged) u.tokenVersion += 1;
     });
     if (passwordChanged) await audit.log({ action: 'admin-password-synced', userId: existing.id });
   }

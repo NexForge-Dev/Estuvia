@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import { Router } from 'express';
 import { z } from 'zod';
 import { users, audit, newId } from '../store.js';
-import { hashPassword, verifyPassword, issueSession, clearSession, requireAuth, authLimiter, dummyHash, clientInfo } from '../security.js';
+import { hashPassword, verifyPassword, needsRehash, issueSession, clearSession, requireAuth, authLimiter, dummyHash, clientInfo } from '../security.js';
 import { publicUser } from './me.js';
 import { config } from '../config.js';
 import { LEGAL_VERSION, MIN_AGE } from '../content/legal.js';
@@ -104,6 +104,16 @@ router.post('/login', authLimiter, async (req, res) => {
     return res.status(401).json({ error: 'E-mail ou senha incorretos.' });
   }
   if (user.loginFalhas || user.loginLock) await users.touch(user.id, (u) => { delete u.loginFalhas; delete u.loginLock; });
+  // Hash antigo (parâmetros mais fracos): refaz agora que temos a senha correta. Não muda tokenVersion,
+  // então nenhuma sessão aberta cai. Uma falha aqui não impede o login.
+  if (needsRehash(user.passwordHash)) {
+    try {
+      const passwordHash = await hashPassword(senha);
+      await users.touch(user.id, (u) => { u.passwordHash = passwordHash; });
+    } catch (err) {
+      console.error('[auth] rehash falhou:', err?.message || err);
+    }
+  }
   if (user.blocked) {
     await audit.log({ action: 'login-blocked', userId: user.id, ...clientInfo(req) });
     return res.status(403).json({ error: 'Sua conta está suspensa. Fale com a equipe Estuvia.' });

@@ -149,3 +149,21 @@ test('Radar: radar.json ilegível é copiado antes de seguir vazio, e a gravaç�
   assert.equal(JSON.parse(fs.readFileSync(path.join(tmp, 'radar.json'), 'utf8')).programs[0].id, 'p-novo');
   assert.deepEqual(fs.readdirSync(tmp).filter((f) => f.endsWith('.tmp')), []);
 });
+
+test('0004: e-mail é único ignorando maiúsculas, e a migration recusa base com duplicados', async () => {
+  const pg = await migratedDatabase();
+  const ins = (id, email) => pg.transaction(async (tx) => {
+    await tx.query('set local role service_role');
+    await tx.query(`select public.estuvia_apply($1::jsonb)`, [JSON.stringify([{ t: 'users', id, v: null, row: { ...COLUMNS.users({ email }), data: { id } } }])]);
+  });
+  await ins('u1', 'ana@x.com');
+  await assert.rejects(ins('u2', 'Ana@X.com'), /estuvia_conflict/);
+
+  // Base antiga com duplicado: a 0004 para com mensagem clara e não muda nada.
+  const old = new PGlite();
+  await old.exec(SUPABASE_DEFAULTS);
+  for (const f of MIGRATIONS.filter((f) => f < '0004')) await old.exec(sqlFile(`migrations/${f}`));
+  await old.exec(`insert into public.users (id, email, data) values ('a', 'bia@x.com', '{}'), ('b', 'BIA@x.com', '{}')`);
+  await assert.rejects(old.exec(sqlFile('migrations/0004_email_unico.sql')), /duplicados.*bia@x\.com/);
+  assert.equal((await rows(old, `select count(*)::int as n from pg_indexes where indexname = 'users_email_lower_idx'`))[0].n, 1, 'índice antigo continua lá');
+});
