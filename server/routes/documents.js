@@ -8,9 +8,12 @@ import crypto from 'node:crypto';
 import zlib from 'node:zlib';
 import express, { Router } from 'express';
 import { z } from 'zod';
+import { isoDate } from './validators.js';
 import { users, audit, newId } from '../store.js';
 import { config } from '../config.js';
 import { requireAuth, documentUploadLimiter } from '../security.js';
+import { updateUser, accountGone } from './guards.js';
+import { todayFor } from '../agenda-engine.js';
 import { DOCUMENTS, DOC_STATUS, PROCEDURES, DOC_STAGES, DOC_STATES, FILE_ROLES, CONDITIONS, DOC_CATEGORIES } from '../content/documents.js';
 import { dashboard, documentDetail, docsForMission, docsForRound, missionSyncChanges, applyMissionSync, publicFile, docById, listDocuments } from '../document-engine.js';
 import { putDocument, getDocument, deleteDocument, purgeDocuments } from '../storage.js';
@@ -24,10 +27,11 @@ const MAX_FILES = 80;
 const MAX_TOTAL = 200 * 1024 * 1024;
 const LINK_TTL_S = 15 * 60;
 export const CONSENT_VERSION = '2026-11-13';
-const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida.');
+const date = isoDate();
 const pickJourney = (user, id) => (user.journeys || []).find((j) => j.id === id) || (user.journeys || [])[0] || null;
 const now = () => new Date().toISOString();
-const today = () => new Date().toISOString().slice(0, 10);
+// "Hoje" no fuso do estudante (o mesmo da Agenda): em UTC, depois das 21h no Brasil já era amanhã.
+const today = (user) => todayFor(user);
 const addDays = (iso, n) => { const d = new Date(`${iso}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 
 // "Minha pasta": arquivos que não são do catálogo. Só guardam arquivo, sem status nem etapa.
@@ -62,7 +66,7 @@ function knownDoc(req, res) {
 async function syncMissions(user) {
   const changes = missionSyncChanges(user);
   if (!changes.length) return user;
-  return users.update(user.id, (u) => applyMissionSync(u, changes));
+  return updateUser(user.id, (u) => applyMissionSync(u, changes));
 }
 
 const rec = (u, id) => { u.docRecords ??= {}; return (u.docRecords[id] ??= {}); };
@@ -133,7 +137,7 @@ router.get('/rounds/:jid/:n', async (req, res) => {
 router.put('/conditions', async (req, res) => {
   const parsed = z.partialRecord(z.enum(Object.keys(CONDITIONS)), z.boolean().nullable()).safeParse(req.body);
   if (!parsed.success || !Object.keys(parsed.data).length) return res.status(400).json({ error: 'Condição inválida.' });
-  const user = await users.update(req.user.id, (u) => {
+  const user = await updateUser(req.user.id, (u) => {
     u.docConditions ??= {};
     // null = voltar ao que a Estuvia detecta pela jornada.
     for (const [k, v] of Object.entries(parsed.data)) { if (v === null) delete u.docConditions[k]; else u.docConditions[k] = v; }
@@ -144,7 +148,7 @@ router.put('/conditions', async (req, res) => {
 router.post('/consent', async (req, res) => {
   const parsed = z.object({ aceito: z.literal(true), versao: z.literal(CONSENT_VERSION) }).strict().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Para guardar arquivos, confirme que leu como eles são tratados.' });
-  const user = await users.update(req.user.id, (u) => { u.docConsent = { versao: CONSENT_VERSION, em: now() }; });
+  const user = await updateUser(req.user.id, (u) => { u.docConsent = { versao: CONSENT_VERSION, em: now() }; });
   audit.log({ action: 'documents.consent', userId: req.user.id, versao: CONSENT_VERSION }).catch(() => {});
   res.json({ consentimento: user.docConsent });
 });
@@ -156,7 +160,7 @@ router.delete('/consent', async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: 'Digite REVOGAR para confirmar.' });
   const n = (req.user.docFiles || []).length;
   await purgeUserDocuments(req.user.id);
-  await users.update(req.user.id, (u) => { u.docFiles = []; u.docConsent = null; });
+  await updateUser(req.user.id, (u) => { u.docFiles = []; u.docConsent = null; });
   audit.log({ action: 'documents.consent.revoked', userId: req.user.id, n }).catch(() => {});
   res.json({ excluidos: n, consentimento: null });
 });
@@ -164,7 +168,7 @@ router.delete('/consent', async (req, res) => {
 router.put('/prefs', async (req, res) => {
   const parsed = z.object({ versoes: z.boolean() }).strict().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Preferência inválida.' });
-  const user = await users.update(req.user.id, (u) => { u.docPrefs = { ...(u.docPrefs || {}), ...parsed.data }; });
+  const user = await updateUser(req.user.id, (u) => { u.docPrefs = { ...(u.docPrefs || {}), ...parsed.data }; });
   res.json({ prefs: user.docPrefs });
 });
 
@@ -206,7 +210,7 @@ router.put('/:docId', async (req, res) => {
   const b = parsed.data;
   if (b.validade !== undefined && doc.tipoValidade !== 'data') return res.status(400).json({ error: 'Este documento não tem data de validade.' });
   if (b.atendidoPor && !(doc.atendidoPor || []).includes(b.atendidoPor)) return res.status(400).json({ error: 'Este documento não pode ser atendido por esse outro.' });
-  const user = await users.update(req.user.id, (u) => {
+  const user = await updateUser(req.user.id, (u) => {
     const r = rec(u, doc.id);
     const setStatus = (s) => { u.documents = { ...(u.documents || {}), [doc.id]: s }; };
     if (b.status) {
@@ -219,13 +223,13 @@ router.put('/:docId', async (req, res) => {
       const base = DOC_STATES[b.estado].base;
       setStatus(base);
       Object.assign(r, { estado: b.estado, estadoBase: base, origem: b.declarado ? 'declarado' : 'manual', aguardando: b.estado === 'aguardando' });
-      if (b.estado === 'aguardando') r.aguardandoDesde ??= today();
+      if (b.estado === 'aguardando') r.aguardandoDesde ??= today(u);
       // Marcar como pronto confirma apostila/tradução que estavam pendentes.
       if (b.estado === 'pronto') { if (['precisa', 'solicitada'].includes(r.apostila)) r.apostila = 'pronta'; if (['precisa', 'solicitada'].includes(r.traducao)) r.traducao = 'pronta'; }
     }
     if (b.aguardando !== undefined) {
       r.aguardando = b.aguardando;
-      r.aguardandoDesde = b.aguardando ? today() : undefined;
+      r.aguardandoDesde = b.aguardando ? today(u) : undefined;
       if (b.aguardando && u.documents?.[doc.id] !== 'em-preparacao') setStatus('em-preparacao');
       if (b.aguardando) Object.assign(r, { estado: 'aguardando', estadoBase: 'em-preparacao' });
     }
@@ -250,7 +254,7 @@ router.put('/:docId', async (req, res) => {
 router.post('/declare', async (req, res) => {
   const parsed = z.object({ itens: z.partialRecord(z.enum(DOC_IDS), z.enum(['tenho', 'nao-tenho'])) }).strict().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Declaração inválida.' });
-  const user = await users.update(req.user.id, (u) => {
+  const user = await updateUser(req.user.id, (u) => {
     for (const [id, v] of Object.entries(parsed.data.itens)) {
       if (docById(id)?.agregado) continue;
       const cur = u.documents?.[id] || 'pendente';
@@ -288,9 +292,9 @@ router.post('/:docId/submissions', async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
   if ((req.user.docRecords?.[doc.id]?.envios || []).length >= 20) return res.status(409).json({ error: 'Limite de registros de envio atingido.' });
   const home = DOC_STAGES.find((s) => s.id === doc.etapa)?.procedimento;
-  const user = await users.update(req.user.id, (u) => {
+  const user = await updateUser(req.user.id, (u) => {
     const r = rec(u, doc.id);
-    const e = { id: newId(), ...parsed.data, em: parsed.data.em || today(), registradoEm: now() };
+    const e = { id: newId(), ...parsed.data, em: parsed.data.em || today(u), registradoEm: now() };
     r.envios = [...(r.envios || []), e];
     // O status geral só muda pelo procedimento da própria etapa do documento.
     if (parsed.data.procedimento === home || (!home && parsed.data.procedimento)) {
@@ -306,7 +310,7 @@ router.delete('/:docId/submissions/:sid', async (req, res) => {
   const doc = knownDoc(req, res);
   if (!doc) return;
   if (!(req.user.docRecords?.[doc.id]?.envios || []).some((e) => e.id === req.params.sid)) return res.status(404).json({ error: 'Registro não encontrado.' });
-  const user = await users.update(req.user.id, (u) => { const r = rec(u, doc.id); r.envios = r.envios.filter((e) => e.id !== req.params.sid); });
+  const user = await updateUser(req.user.id, (u) => { const r = rec(u, doc.id); r.envios = r.envios.filter((e) => e.id !== req.params.sid); });
   detailReply(res, user, req);
 });
 
@@ -329,13 +333,14 @@ router.post('/:docId/reminder', async (req, res) => {
   const parsed = reminderSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
   const t = REMINDERS[parsed.data.tipo];
-  const data = parsed.data.data || addDays(today(), t.dias);
-  if (data < today()) return res.status(400).json({ error: 'Escolha uma data a partir de hoje.' });
+  const hoje = today(req.user);
+  const data = parsed.data.data || addDays(hoje, t.dias);
+  if (data < hoje) return res.status(400).json({ error: 'Escolha uma data a partir de hoje.' });
   const evento = { titulo: t.titulo(doc).slice(0, 120), data, inicio: '09:00', fim: '09:30', categoria: CATEGORY[doc.etapa] || 'documentacao', prioridade: t.prioridade, motivo: t.motivo };
   if (!parsed.data.confirmar) return res.json({ previa: evento, confirmado: false });
   if ((req.user.planner || []).length >= 500) return res.status(409).json({ error: 'Sua agenda está cheia.' });
   const e = { id: newId(), origem: 'documentos', documentoId: doc.id, ...evento, nota: `Carteira de documentos: ${doc.nome}`.slice(0, 300), criadoEm: now() };
-  const user = await users.update(req.user.id, (u) => {
+  const user = await updateUser(req.user.id, (u) => {
     u.planner = [...(u.planner || []), e];
     const r = rec(u, doc.id);
     r.lembretes = [...(r.lembretes || []), e.id].slice(-10);
@@ -407,8 +412,16 @@ const cleanName = (s, ext) => {
   if (name && !/\.[a-z0-9]{2,4}$/i.test(name)) name = `${name}.${ext}`;
   return name || `documento.${ext}`;
 };
-async function removeFile(userId, meta) {
-  await deleteDocument(userId, meta.id);
+// Falha ao apagar no Storage não derruba a requisição, mas fica visível (log + auditoria storage.purge-pending).
+export async function removeFile(userId, meta, { del = deleteDocument } = {}) {
+  try {
+    await del(userId, meta.id);
+    return true;
+  } catch (err) {
+    console.error(`[documentos] exclusão PENDENTE do arquivo ${meta.id}: ${err?.message || err}`);
+    await audit.log({ action: 'storage.purge-pending', tipo: 'documento', userId, fileId: meta.id, erro: String(err?.message || err).slice(0, 300) }).catch(() => {});
+    return false;
+  }
 }
 
 router.post('/:docId/files', documentUploadLimiter, express.raw({ type: ['application/pdf', 'image/png', 'image/jpeg', 'image/webp', 'application/octet-stream'], limit: MAX_BYTES }), async (req, res) => {
@@ -422,7 +435,7 @@ router.post('/:docId/files', documentUploadLimiter, express.raw({ type: ['applic
   if (personal && !rotulo && !req.query.serie) return res.status(400).json({ error: 'Dê um nome ao documento (ex.: RG, CNH, carteira de vacinação).' });
   if (personal && CREDENTIAL.test(rotulo)) return res.status(400).json({ error: 'A carteira não guarda senhas ou códigos.' });
   const papel = typeof req.query.papel === 'string' ? req.query.papel : 'original';
-  if (!FILE_ROLES[papel]) return res.status(400).json({ error: 'Tipo de arquivo inválido.' });
+  if (!Object.hasOwn(FILE_ROLES, papel)) return res.status(400).json({ error: 'Tipo de arquivo inválido.' });
   if (!Buffer.isBuffer(req.body) || !req.body.length) return res.status(400).json({ error: 'Envie um arquivo PDF, PNG, JPG ou WEBP.' });
   const sig = SIGNATURES.find((s) => s.test(req.body));
   if (!sig) return res.status(415).json({ error: 'Formato não aceito. Use PDF, PNG, JPG ou WEBP.' });
@@ -455,6 +468,16 @@ router.post('/:docId/files', documentUploadLimiter, express.raw({ type: ['applic
     nome: cleanName(req.get('X-File-Name'), sig.ext), mime: sig.mime, ext: sig.ext, tamanho: req.body.length, papel: serie ? prev[0].papel || papel : papel,
     iv: enc.iv, tag: enc.tag, criadoEm: now(), ...(missaoId ? { missaoId } : {}), ...(personal ? { rotulo: rotulo || prev[0]?.rotulo || PERSONAL.nome } : {}),
   };
+  // Confere de novo com a cópia atual: outro envio pode ter sido gravado enquanto este cifrava e subia
+  // (envios simultâneos furavam o limite de arquivos e de espaço). Entre esta conferência e a gravação
+  // abaixo não há await.
+  const current = users.findById(req.user.id);
+  const freedIds = new Set(freed.map((f) => f.id));
+  const kept = (current?.docFiles || []).filter((f) => !freedIds.has(f.id));
+  if (current && (kept.length >= MAX_FILES || kept.reduce((t, f) => t + f.tamanho, 0) + meta.tamanho > MAX_TOTAL)) {
+    await removeFile(req.user.id, meta);
+    return res.status(409).json({ error: `Você pode guardar até ${MAX_FILES} arquivos (200 MB). Exclua versões antigas.` });
+  }
   const user = await users.update(req.user.id, (u) => {
     const ids = new Set(freed.map((f) => f.id));
     u.docFiles = [...(u.docFiles || []).filter((f) => !ids.has(f.id)), meta];
@@ -483,7 +506,7 @@ router.patch('/files/:fid', async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: 'Dados inválidos.' });
   const meta = (req.user.docFiles || []).find((f) => f.id === req.params.fid);
   if (!meta) return res.status(404).json({ error: 'Arquivo não encontrado.' });
-  const user = await users.update(req.user.id, (u) => {
+  const user = await updateUser(req.user.id, (u) => {
     for (const f of u.docFiles || []) {
       if (f.serie !== meta.serie) continue;
       if (parsed.data.papel) f.papel = parsed.data.papel;
@@ -513,7 +536,7 @@ router.delete('/files/:fid', async (req, res) => {
   const meta = (req.user.docFiles || []).find((f) => f.id === req.params.fid);
   if (!meta) return res.status(404).json({ error: 'Arquivo não encontrado.' });
   await removeFile(req.user.id, meta);
-  const user = await users.update(req.user.id, (u) => { u.docFiles = (u.docFiles || []).filter((f) => f.id !== meta.id); });
+  const user = await updateUser(req.user.id, (u) => { u.docFiles = (u.docFiles || []).filter((f) => f.id !== meta.id); });
   audit.log({ action: 'documents.file.deleted', userId: req.user.id, docId: meta.docId }).catch(() => {});
   res.json({ documento: meta.docId === PERSONAL.id ? null : detail(user, req, meta.docId) });
 });
@@ -524,14 +547,24 @@ router.delete('/files', async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: 'Digite EXCLUIR para confirmar.' });
   const n = (req.user.docFiles || []).length;
   await purgeUserDocuments(req.user.id);
-  await users.update(req.user.id, (u) => { u.docFiles = []; });
+  await updateUser(req.user.id, (u) => { u.docFiles = []; });
   audit.log({ action: 'documents.files.purged', userId: req.user.id, n }).catch(() => {});
   res.json({ excluidos: n });
 });
 
 /** Exclusão de conta (LGPD): remove todos os arquivos do estudante. */
-export async function purgeUserDocuments(userId) {
-  await purgeDocuments(userId).catch(() => {});
+// Falha do Storage não pode sumir em silêncio (LGPD: a conta seria apagada e os arquivos ficariam): tenta de novo
+// uma vez e, se ainda falhar, registra no log do servidor (painel admin → Logs) e na auditoria como exclusão
+// pendente (storage.purge-pending), para a equipe concluir. A exclusão pedida pelo estudante segue normalmente.
+export async function purgeUserDocuments(userId, { purge = purgeDocuments } = {}) {
+  let erro;
+  for (let tentativa = 0; tentativa < 2; tentativa++) {
+    try { await purge(userId); return true; } catch (err) { erro = err; }
+  }
+  console.error(`[documentos] exclusão PENDENTE dos arquivos do estudante ${userId}: ${erro?.message || erro}`);
+  await audit.log({ action: 'storage.purge-pending', tipo: 'documentos', userId, erro: String(erro?.message || erro).slice(0, 300) }).catch(() => {});
+  return false;
 }
 
+router.use(accountGone);
 export default router;

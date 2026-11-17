@@ -2,8 +2,11 @@
 // integração com missões e Agenda, denúncias e moderação.
 import express, { Router } from 'express';
 import { z } from 'zod';
+import { isoDate } from './validators.js';
 import { users, community, audit, newId } from '../store.js';
 import { requireAuth, requireModerator, isModerator, communityWriteLimiter } from '../security.js';
+import { updateUser, accountGone } from './guards.js';
+import { todayFor } from '../agenda-engine.js';
 import { UNIVERSITIES, universityById } from '../content/catalog.js';
 import {
   COMMUNITY_CATEGORIES, NATURE, VERIFICATION, VERIFICATION_FLOW, REPORT_REASONS, SEED_GROUPS,
@@ -30,10 +33,11 @@ const router = Router();
 router.use(requireAuth);
 
 const PAGE = 20;
-const today = () => new Date().toISOString().slice(0, 10);
+// "Hoje" no fuso de quem pede (o mesmo da Agenda), não em UTC.
+const today = (user) => todayFor(user);
 const now = () => new Date().toISOString();
 const bad = (res, parsed) => res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
-const daysUntil = (iso) => Math.round((new Date(`${iso}T12:00:00Z`) - new Date(`${today()}T12:00:00Z`)) / 86400000);
+const daysUntil = (iso, user) => Math.round((new Date(`${iso}T12:00:00Z`) - new Date(`${today(user)}T12:00:00Z`)) / 86400000);
 const addDays = (iso, n) => { const d = new Date(`${iso}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 
 // Grupos iniciais entram na base na primeira carga (persistem na próxima escrita).
@@ -178,7 +182,7 @@ router.get('/posts', (req, res) => {
     const comments = (p) => c.comments.filter((x) => x.postId === p.id && x.moderacao.estado === 'publicado').length;
     if (f.ordem === 'recentes') list.sort((a, b) => b.criadoEm.localeCompare(a.criadoEm));
     else if (f.ordem === 'prazo') {
-      const key = (p) => (p.oportunidade?.prazo && p.oportunidade.prazo >= today() ? p.oportunidade.prazo : '9999');
+      const key = (p) => (p.oportunidade?.prazo && p.oportunidade.prazo >= today(viewer) ? p.oportunidade.prazo : '9999');
       list.sort((a, b) => key(a).localeCompare(key(b)) || b.criadoEm.localeCompare(a.criadoEm));
     } else {
       const score = new Map(list.map((p) => [p.id, relevance(p, { viewer, grupos, commentsCount: comments(p) })]));
@@ -204,7 +208,7 @@ router.get('/posts/:id', (req, res) => {
 
 // ---------- Publicar ----------
 
-const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida.');
+const date = isoDate();
 const httpsUrl = z.url('Informe o link oficial completo (https://…).').max(400).refine((u) => u.startsWith('https://'), 'O link oficial precisa ser https.');
 
 const opportunitySchema = z.object({
@@ -556,7 +560,7 @@ router.post('/groups/:id/join', async (req, res) => {
 
 const radarItems = (viewer) => communityRadarFeed().map((item) => ({
   ...item,
-  diasRestantes: daysUntil(item.prazo),
+  diasRestantes: daysUntil(item.prazo, viewer),
   naJornada: (viewer.opportunities || []).some((o) => o.postId === item.postId),
   naAgenda: (viewer.planner || []).some((e) => e.oportunidadeId === item.postId),
 }));
@@ -611,7 +615,7 @@ router.post('/posts/:id/journey', async (req, res) => {
     missao: { titulo: `Avaliar oportunidade: ${op.titulo}`, objetivos: evaluationObjectives(op) },
     atividades: [], alteracao: null,
   };
-  const user = await users.update(req.user.id, (u) => { (u.opportunities ??= []).push(item); });
+  const user = await updateUser(req.user.id, (u) => { (u.opportunities ??= []).push(item); });
   res.status(201).json({ oportunidade: opportunityView(item, user), oportunidades: myOpportunities(user) });
 });
 
@@ -627,7 +631,7 @@ router.put('/my-opportunities/:id', async (req, res) => {
   if (!o) return res.status(404).json({ error: 'Oportunidade não encontrada.' });
   const { objetivo, feito, decisao, cienteAlteracao } = parsed.data;
   if (objetivo && ![...o.missao.objetivos, ...o.atividades].some((x) => x.id === objetivo)) return res.status(404).json({ error: 'Objetivo não encontrado.' });
-  const user = await users.update(req.user.id, (u) => {
+  const user = await updateUser(req.user.id, (u) => {
     const t = u.opportunities.find((x) => x.id === req.params.id);
     if (objetivo) [...t.missao.objetivos, ...t.atividades].find((x) => x.id === objetivo).feito = Boolean(feito);
     if (decisao) {
@@ -644,7 +648,7 @@ router.put('/my-opportunities/:id', async (req, res) => {
 router.delete('/my-opportunities/:id', async (req, res) => {
   const o = (req.user.opportunities || []).find((x) => x.id === req.params.id);
   if (!o) return res.status(404).json({ error: 'Oportunidade não encontrada.' });
-  const user = await users.update(req.user.id, (u) => { u.opportunities = u.opportunities.filter((x) => x.id !== o.id); });
+  const user = await updateUser(req.user.id, (u) => { u.opportunities = u.opportunities.filter((x) => x.id !== o.id); });
   res.json({ oportunidades: myOpportunities(user) });
 });
 
@@ -657,7 +661,7 @@ export const AGENDA_CATEGORY = {
 
 const REVIEW_DAYS_BEFORE = 7;
 
-function agendaEvents(post) {
+function agendaEvents(post, user) {
   const op = post.oportunidade;
   const verified = effectiveVerification(post).status === 'verificada';
   const base = {
@@ -667,7 +671,7 @@ function agendaEvents(post) {
   };
   const events = [{ ...base, id: newId(), oportunidadeTipo: 'prazo', titulo: `Prazo: ${op.titulo}`.slice(0, 120), data: op.prazo, inicio: '09:00', fim: '09:30', prioridade: 'critica', criadoEm: now() }];
   const review = addDays(op.prazo, -REVIEW_DAYS_BEFORE);
-  if (review >= today()) {
+  if (review >= today(user)) {
     events.push({ ...base, id: newId(), oportunidadeTipo: 'revisao', titulo: `Revisar requisitos e documentos: ${op.titulo}`.slice(0, 120), data: review, inicio: '19:00', fim: '20:00', prioridade: 'alta', criadoEm: now() });
   }
   return events;
@@ -677,10 +681,10 @@ router.post('/posts/:id/agenda', async (req, res) => {
   const post = community.read((c) => findPost(c, req.params.id));
   if (!post || !canSee(post, req.user) || post.tipo !== 'oportunidade') return res.status(404).json({ error: 'Oportunidade não encontrada.' });
   if (!post.oportunidade.prazo) return res.status(400).json({ error: 'Esta oportunidade não tem prazo informado.' });
-  if (post.oportunidade.prazo < today()) return res.status(409).json({ error: 'O prazo desta oportunidade já passou.' });
+  if (post.oportunidade.prazo < today(req.user)) return res.status(409).json({ error: 'O prazo desta oportunidade já passou.' });
   if ((req.user.planner || []).some((e) => e.oportunidadeId === post.id)) return res.status(409).json({ error: 'Os prazos desta oportunidade já estão na sua agenda.' });
-  const events = agendaEvents(post);
-  await users.update(req.user.id, (u) => { (u.planner ??= []).push(...events); });
+  const events = agendaEvents(post, req.user);
+  await updateUser(req.user.id, (u) => { (u.planner ??= []).push(...events); });
   const verified = effectiveVerification(post).status === 'verificada';
   res.status(201).json({
     criados: events.length,
@@ -735,7 +739,7 @@ mod.post('/posts/:id/verification', async (req, res) => {
       if (official.nivel !== 'institucional' && nota.length < 10) return { erro: [400, 'O link não é de um domínio institucional conhecido: registre na nota como confirmou a autenticidade.'] };
       if (post.tipo === 'oportunidade') {
         if (!post.oportunidade.prazo) return { erro: [400, 'Registre o prazo confirmado no edital antes de verificar (editar dados do edital).'] };
-        if (post.oportunidade.prazo < today()) return { erro: [400, 'O prazo já passou: marque como desatualizada.'] };
+        if (post.oportunidade.prazo < today(req.user)) return { erro: [400, 'O prazo já passou: marque como desatualizada.'] };
         const dup = c.posts.find((p) => p.id !== post.id && p.tipo === 'oportunidade' && p.verificacao?.status === 'verificada'
           && isDuplicate(opportunityFingerprint(p.oportunidade), opportunityFingerprint(post.oportunidade)));
         if (dup) return { erro: [409, `Já existe uma oportunidade verificada equivalente ("${dup.titulo}"). Rejeite esta como duplicada.`] };
@@ -849,14 +853,22 @@ const SIGNATURES = [
   { ext: 'webp', mime: 'image/webp', test: (b) => b.subarray(0, 4).toString('latin1') === 'RIFF' && b.subarray(8, 12).toString('latin1') === 'WEBP' },
 ];
 
-function deleteMediaFile(m) { deleteMedia(m.id, m.ext).catch(() => {}); }
+// Falha ao apagar a imagem no Storage fica visível (log do servidor + auditoria storage.purge-pending), em vez de
+// sumir em silêncio: na exclusão de conta (LGPD) a equipe precisa saber que restou um arquivo.
+export function deleteMediaFile(m, { del = deleteMedia } = {}) {
+  return Promise.resolve().then(() => del(m.id, m.ext)).then(() => true).catch((err) => {
+    console.error(`[comunidade] exclusão PENDENTE da imagem ${m.id}.${m.ext}: ${err?.message || err}`);
+    return audit.log({ action: 'storage.purge-pending', tipo: 'midia', mediaId: m.id, ext: m.ext, ownerId: m.ownerId || null, erro: String(err?.message || err).slice(0, 300) })
+      .catch(() => {}).then(() => false);
+  });
+}
 // Imagem enviada e nunca publicada (composição abandonada, removida da prévia ou tirada de um post na edição)
 // expira depois de 24 h: não fica guardada para sempre nem trava o limite de pendentes.
 const PENDING_MEDIA_MS = 24 * 3600000;
 const expiredPending = (m, at = Date.now()) => !m.postId && at - new Date(m.soltaEm || m.criadoEm) > PENDING_MEDIA_MS;
 function dropMedia(c, pred) {
   const gone = c.media.filter(pred);
-  gone.forEach(deleteMediaFile);
+  gone.forEach((m) => deleteMediaFile(m));
   if (gone.length) c.media = c.media.filter((m) => !gone.includes(m));
   return gone.length;
 }
@@ -929,10 +941,11 @@ export async function purgeCommunityUser(userId) {
     c.posts.forEach((p) => { p.curtidas = p.curtidas.filter((id) => id !== userId); p.salvos = p.salvos.filter((id) => id !== userId); });
     c.groups.forEach((g) => { g.membros = g.membros.filter((id) => id !== userId); if (g.criadoPor === userId) g.criadoPor = null; });
     c.reports.filter((r) => r.autorId === userId).forEach((r) => { r.autorId = null; });
-    c.media.filter((m) => m.ownerId === userId).forEach(deleteMediaFile);
+    c.media.filter((m) => m.ownerId === userId).forEach((m) => deleteMediaFile(m));
     c.media = c.media.filter((m) => m.ownerId !== userId);
   });
 }
 
 export { communityRadarFeed };
+router.use(accountGone);
 export default router;

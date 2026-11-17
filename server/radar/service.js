@@ -463,7 +463,10 @@ export async function addToAgenda(user, oppId, items, usersStore) {
   for (const item of items) {
     const s = suggestions.find((x) => x.id === item.id);
     if (!s) continue;
-    if (d.agendaLinks.some((l) => l.userId === user.id && l.suggestionId === s.id && l.ativo)) continue;
+    // Já está na Agenda só se o evento ainda existe: apagado pelo estudante, a sugestão pode voltar.
+    const prev = d.agendaLinks.filter((l) => l.userId === user.id && l.suggestionId === s.id && l.ativo);
+    if (prev.some((l) => (user.planner || []).some((e) => e.id === l.plannerEventId))) continue;
+    prev.forEach((l) => { l.ativo = false; });
     const event = {
       // origem/oportunidade* são preservados pela Agenda quando o estudante edita o evento;
       // o "replan" da Agenda só remove origem 'agenda-ai', então estes ficam.

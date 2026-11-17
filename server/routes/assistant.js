@@ -72,6 +72,26 @@ export function offlineAnswer(question) {
   };
 }
 
+// A API exige que a conversa comece com "user". Antes só o 1º item era descartado: com duas respostas
+// do assistente no início (ou um item vazio antes delas) a chamada falhava e caía no modo offline.
+export function cleanHistory(historico = []) {
+  const msgs = historico.filter((m) => m.content.trim());
+  const first = msgs.findIndex((m) => m.role === 'user');
+  return first < 0 ? [] : msgs.slice(first);
+}
+
+// Resposta da base local dentro do fluxo SSE: os cabeçalhos já foram enviados, então uma exceção aqui
+// deixava a conexão aberta (o tratador central não responde mais). Em caso de falha, encerra com "error".
+export function safeLocal(build, send) {
+  try {
+    return build();
+  } catch (err) {
+    console.error('[assistant] falha na base local:', err?.message || err);
+    send('error', { error: 'Não consegui responder agora. Tente novamente em instantes.' });
+    return null;
+  }
+}
+
 function citedSources(text) {
   const ids = [...new Set([...text.matchAll(/\[(O\d{1,2}|M)\]/g)].map((m) => m[1]))];
   return ids.map(sourceById).filter(Boolean);
@@ -107,14 +127,14 @@ router.post('/ask', requireAuth, assistantLimiter, async (req, res) => {
   const semCota = client && aiBudget(req.user).esgotado;
   if (!client || semCota) {
     recordAI('assistente', 'offline', { user: req.user });
-    const ans = localAnswer();
+    const ans = safeLocal(localAnswer, send);
+    if (!ans) return res.end();
     send('delta', { text: semCota ? `_(Você atingiu o limite diário de uso da IA: resposta da base verificada, sem IA generativa. A IA volta amanhã.)_\n\n${ans.texto}` : ans.texto });
     send('done', { fontes: ans.fontes, acoes: ans.acoes || [], modo: 'offline', ...(semCota ? { limiteDiario: true } : {}) });
     return res.end();
   }
 
-  // Histórico precisa começar com "user" e alternar papéis.
-  const history = historico.filter((m, i) => !(i === 0 && m.role !== 'user') && m.content.trim());
+  const history = cleanHistory(historico);
   const computed = acao ? quickAnswer(acao, req.user, ctx, parsed.data.pergunta) : null;
   const content = [
     'CONTEXTO DA JORNADA (dados declarados pelo estudante e calculados pela plataforma, use-os, não invente outros):',
@@ -167,9 +187,13 @@ router.post('/ask', requireAuth, assistantLimiter, async (req, res) => {
     else if (err instanceof Anthropic.APIError) console.error(`[assistant] erro da API ${err.status}: ${err.message}`);
     else console.error('[assistant] falha:', err.message);
     // Degrada para a base local em vez de deixar o estudante sem resposta.
-    const ans = localAnswer();
-    send('replace', { text: `_(A IA está indisponível agora, resposta da base verificada.)_\n\n${ans.texto}` });
-    send('done', { fontes: ans.fontes, acoes: ans.acoes || [], modo: 'offline' });
+    // Se até a base local falhar, o fluxo SSE (cabeçalhos já enviados) termina com um evento de erro
+    // em vez de ficar aberto: o tratador central não consegue mais responder.
+    const ans = safeLocal(localAnswer, send);
+    if (ans) {
+      send('replace', { text: `_(A IA está indisponível agora, resposta da base verificada.)_\n\n${ans.texto}` });
+      send('done', { fontes: ans.fontes, acoes: ans.acoes || [], modo: 'offline' });
+    }
   }
   res.end();
 });

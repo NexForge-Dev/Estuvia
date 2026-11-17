@@ -2,6 +2,7 @@
 // Acesso: usuário com role "admin" (a conta ADMIN_EMAIL do .env recebe esse papel na inicialização).
 import { Router } from 'express';
 import { z } from 'zod';
+import { isoDate } from './validators.js';
 import { users, audit, newId } from '../store.js';
 import { requireAuth, requireAdmin, isAdmin, ROLES } from '../security.js';
 import { usageReport, userUsage, moduleLabel } from '../usage.js';
@@ -116,7 +117,7 @@ const FILTERS = {
 
 router.get('/users', (req, res) => {
   const q = String(req.query.q || '').trim().toLowerCase().slice(0, 80);
-  const filtro = FILTERS[req.query.filtro] ? req.query.filtro : 'todos';
+  const filtro = typeof req.query.filtro === 'string' && Object.hasOwn(FILTERS, req.query.filtro) ? req.query.filtro : 'todos';
   const ordem = ['ultimo-acesso', 'inatividade', 'progresso', 'alertas', 'cadastro'].includes(req.query.ordem) ? req.query.ordem : 'ultimo-acesso';
   const list = users.all()
     .filter((u) => !isAdmin(u))
@@ -182,6 +183,7 @@ router.post('/users/:id/block', async (req, res) => {
   if (!target) return res.status(404).json({ error: 'Usuário não encontrado.' });
   if (isAdmin(target)) return res.status(400).json({ error: 'Não é possível suspender um administrador.' });
   const user = await users.update(target.id, (u) => { u.blocked = parsed.data.bloqueado; if (u.blocked) u.tokenVersion += 1; });
+  if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' }); // excluído durante a requisição
   await audit.log({ action: parsed.data.bloqueado ? 'admin-block' : 'admin-unblock', userId: req.user.id, targetId: user.id });
   res.json({ user: summary(user) });
 });
@@ -199,6 +201,7 @@ router.post('/users/:id/role', async (req, res) => {
     if (parsed.data.papel === 'estudante') delete u.role; else u.role = parsed.data.papel;
     if (anterior !== parsed.data.papel) u.tokenVersion += 1; // a sessão aberta passa a refletir o novo papel
   });
+  if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' }); // excluído durante a requisição
   await audit.log({ action: 'admin-role', userId: req.user.id, targetId: user.id, de: anterior, para: parsed.data.papel });
   res.json({ user: summary(user) });
 });
@@ -210,11 +213,13 @@ router.post('/users/:id/notes', async (req, res) => {
   if (!users.findById(req.params.id)) return res.status(404).json({ error: 'Usuário não encontrado.' });
   const note = { id: newId(), texto: parsed.data.texto, em: new Date().toISOString(), por: req.user.email };
   const user = await users.touch(req.params.id, (u) => { u.adminNotes = [...(u.adminNotes || []), note].slice(-200); });
+  if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' }); // excluído durante a requisição
   res.status(201).json({ notas: user.adminNotes.slice().reverse() });
 });
 router.delete('/users/:id/notes/:noteId', async (req, res) => {
   if (!users.findById(req.params.id)) return res.status(404).json({ error: 'Usuário não encontrado.' });
   const user = await users.touch(req.params.id, (u) => { u.adminNotes = (u.adminNotes || []).filter((n) => n.id !== req.params.noteId); });
+  if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' }); // excluído durante a requisição
   res.json({ notas: user.adminNotes.slice().reverse() });
 });
 
@@ -223,6 +228,7 @@ router.post('/users/:id/logout', async (req, res) => {
   const target = users.findById(req.params.id);
   if (!target) return res.status(404).json({ error: 'Usuário não encontrado.' });
   const user = await users.update(target.id, (u) => { u.tokenVersion += 1; });
+  if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' }); // excluído durante a requisição
   await audit.log({ action: 'admin-logout-user', userId: req.user.id, targetId: user.id });
   res.json({ user: summary(user) });
 });
@@ -241,7 +247,7 @@ router.put('/document-rules/:docId', async (req, res) => {
   if (!DOCUMENTS.some((d) => d.id === req.params.docId)) return res.status(404).json({ error: 'Documento desconhecido.' });
   const parsed = z.object({
     aviso: z.string().trim().max(400).optional(),
-    revisadoEm: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    revisadoEm: isoDate().optional(),
     fontes: z.array(z.string().max(10)).max(6).optional(),
     remover: z.literal(true).optional(),
   }).strict().safeParse(req.body);

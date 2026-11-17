@@ -104,6 +104,7 @@ router.put('/preferences', async (req, res) => {
   }).strict().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Preferências inválidas.' });
   const user = await setPreferences(req.user.id, parsed.data);
+  if (!user) return res.status(401).json({ error: 'Sua conta não foi encontrada. Entre de novo.' });
   const st = mentorState(user);
   res.json({ permissoes: st.permissoes, preferencias: st.preferencias, notas: st.notas });
 });

@@ -2,8 +2,10 @@
 // Todos os cálculos são do motor determinístico (finance-engine.js); esta rota só valida e persiste.
 import { Router } from 'express';
 import { z } from 'zod';
+import { isoDate } from './validators.js';
 import { users, newId } from '../store.js';
 import { requireAuth } from '../security.js';
+import { updateUser, accountGone } from './guards.js';
 import { computeFinance, ensureFinance } from '../finance-engine.js';
 import { RESOURCE_TYPES } from '../content/finance.js';
 import { EXPENSE_ITEMS, PROFILE_IDS, CATEGORY_LABEL, RESOURCE_GROUPS } from '../content/costs.js';
@@ -15,7 +17,7 @@ router.use(requireAuth);
 
 const money = z.number().min(0).max(10_000_000);
 const moeda = z.enum(['EUR', 'BRL']);
-const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida.');
+const date = isoDate();
 const ITEM_IDS = EXPENSE_ITEMS.map((i) => i.id);
 
 const pickJourney = (user, jid) => (user.journeys || []).find((j) => j.id === jid) || (user.journeys || [])[0] || null;
@@ -37,7 +39,7 @@ function payload(user, jid) {
 }
 
 const save = async (req, mutate) => {
-  const user = await users.update(req.user.id, (u) => { ensureFinance(u); mutate(u); });
+  const user = await updateUser(req.user.id, (u) => { ensureFinance(u); mutate(u); });
   return payload(user, req.query.journeyId);
 };
 
@@ -210,4 +212,5 @@ router.delete('/scholarships/:id', async (req, res) => {
   res.json(await save(req, (u) => { u.scholarshipApps = u.scholarshipApps.filter((a) => a.id !== req.params.id); }));
 });
 
+router.use(accountGone);
 export default router;

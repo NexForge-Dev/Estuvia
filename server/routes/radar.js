@@ -2,6 +2,7 @@
 // Leitura pública (catálogo e calendário verificados); acompanhamento, alertas e Agenda exigem login.
 import { Router } from 'express';
 import { z } from 'zod';
+import { isoDate } from './validators.js';
 import { users } from '../store.js';
 import { requireAuth } from '../security.js';
 import {
@@ -87,7 +88,7 @@ router.post('/alerts/read', requireAuth, (req, res) => {
 const time = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 router.post('/opportunities/:id/agenda', requireAuth, (req, res) => {
   const parsed = z.object({
-    itens: z.array(z.object({ id: z.string().max(200), data: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), inicio: time.optional(), fim: time.optional() }).strict()).min(1).max(30),
+    itens: z.array(z.object({ id: z.string().max(200), data: isoDate().optional(), inicio: time.optional(), fim: time.optional() }).strict()).min(1).max(30),
   }).strict().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Selecione as atividades a adicionar.' });
   return send(res, async () => {

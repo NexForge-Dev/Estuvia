@@ -1,6 +1,7 @@
 // Ferramentas da Agenda: disponibilidade, eventos, proposta de semana e criação/alteração de eventos.
 // Usa o mesmo motor da Agenda (agenda-engine) e as mesmas regras de validação da rota /planner.
 import { z } from 'zod';
+import { isoDate } from '../../routes/validators.js';
 import { users, newId } from '../../store.js';
 import { computeJourney } from '../../journey-engine.js';
 import { suggestWeek, staleSuggestions, DEFAULT_AVAILABILITY, mondayOf, CATEGORY_BY_ROUND } from '../../agenda-engine.js';
@@ -11,7 +12,7 @@ import { addDays, addMinutes, toMin, dateLabel, timeLabel, weekday } from '../pa
 
 export const CATEGORIES = ['academico', 'documentacao', 'financeiro', 'visto', 'viagem', 'pessoal'];
 const time = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Horário inválido.');
-const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida.');
+const date = isoDate();
 export const eventInput = z.object({
   titulo: z.string().trim().min(1).max(120),
   categoria: z.enum(CATEGORIES),

@@ -82,10 +82,18 @@ function cardFor(name, d) {
   }
 }
 
+// Últimas 10 mensagens, começando sempre por "user" (exigência da API). O corte em 10 podia deixar
+// uma resposta do assistente na frente, e a conversa caía no modo guiado por erro do provedor.
+export function recentHistory(historico = []) {
+  const msgs = historico.filter((m) => m.content?.trim()).slice(-10);
+  const first = msgs.findIndex((m) => m.role === 'user');
+  return (first < 0 ? [] : msgs.slice(first)).map((m) => ({ role: m.role, content: m.content }));
+}
+
 async function agentReply(provider, user, { mensagem, contexto, historico }, signal) {
   const ctx = makeCtx(user, contexto);
   const tools = catalog().filter((t) => can(ctx.user, t.permissao));
-  const history = historico.filter((m, i) => !(i === 0 && m.role !== 'user') && m.content?.trim()).slice(-10).map((m) => ({ role: m.role, content: m.content }));
+  const history = recentHistory(historico);
   const messages = [...history, { role: 'user', content: `CONTEXTO DA JORNADA (dados da plataforma; não invente outros):\n${buildContext(ctx.user, contexto, ctx.now)}\n\nMensagem do estudante: ${mensagem}` }];
   const usadas = [];
   const cartoes = [];

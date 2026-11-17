@@ -4,6 +4,8 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { users, newId, audit } from '../store.js';
 import { requireAuth } from '../security.js';
+import { updateUser, accountGone } from './guards.js';
+import { isoDate } from './validators.js';
 import { UNIVERSITIES, programById, registerProgramSource } from '../content/catalog.js';
 import { programForJourney, officialDeadlines, processCalendar } from '../radar/service.js';
 import { registerOfficialDeadlines, registerProcessCalendar } from '../journey-engine.js';
@@ -26,7 +28,7 @@ router.use(requireAuth);
 export const MAX_JOURNEYS = 6;
 export const MAX_CONTACTS = 30;
 const missionId = z.string().regex(/^\d\.\d{1,2}$/);
-const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida.');
+const date = isoDate();
 // missoes: quantas missões a etapa (somada às anteriores) registra como "declaradas por mim" — teto, sem contar as já concluídas.
 const STAGES = PRIOR_STAGES.map(({ id, rotulo, exigeDataEntrada }, i) => ({ id, rotulo, exigeDataEntrada: Boolean(exigeDataEntrada), missoes: PRIOR_STAGES.slice(0, i + 1).reduce((n, s) => n + s.missoes.length, 0) }));
 
@@ -77,7 +79,7 @@ router.put('/requirements', async (req, res) => {
   const parsed = z.object({ respostas: z.object(shape).strict() }).strict().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Respostas inválidas.' });
   const novos = [];
-  const user = await users.update(req.user.id, (u) => {
+  const user = await updateUser(req.user.id, (u) => {
     u.requisitos = { ...(u.requisitos || {}), ...parsed.data.respostas };
     for (const r of REQUIREMENTS) {
       if (r.documento && u.requisitos[r.id] === 'tenho' && !['pronto', 'enviado'].includes(u.documents?.[r.documento])) { u.documents = { ...(u.documents || {}), [r.documento]: 'pronto' }; u.docRecords = { ...(u.docRecords || {}), [r.documento]: { ...(u.docRecords?.[r.documento] || {}), origem: 'declarado' } }; }
@@ -118,7 +120,7 @@ router.post('/', async (req, res) => {
   };
   if (!program) delete jr.programaId;
   if (!jr.inicioAulas) { delete jr.inicioAulas; delete jr.inicioAulasAproximado; }
-  const user = await users.update(req.user.id, (u) => {
+  const user = await updateUser(req.user.id, (u) => {
     (u.journeys ??= []).push(jr);
     if (program && !(u.choices || []).includes(jr.programaId)) u.choices = [...(u.choices || []), jr.programaId].slice(0, 6);
     const saved = findJourney(u, jr.id);
@@ -138,7 +140,7 @@ router.put('/:jid/program', async (req, res) => {
   if (jr.universidadeId && program.universidadeId !== jr.universidadeId) return res.status(400).json({ error: 'Este mestrado é de outra universidade. Crie uma nova jornada para ele.' });
   if ((req.user.journeys || []).some((j) => j.id !== jr.id && j.programaId === program.id)) return res.status(409).json({ error: 'Você já tem uma jornada para este mestrado.' });
   const novos = [];
-  const user = await users.update(req.user.id, (u) => {
+  const user = await updateUser(req.user.id, (u) => {
     const t = findJourney(u, req.params.jid);
     t.programaId = program.id;
     t.universidadeId = program.universidadeId;
@@ -161,7 +163,7 @@ router.get('/:jid', async (req, res) => {
   const changed = JSON.stringify(draft.missions) !== JSON.stringify(jr.missions);
   const novos = recordUnlocks(draft, computeJourney(req.user, draft));
   if (!novos.length && !changed) return res.json({ journey: view(req.user, jr), events: [] });
-  const saved = await users.update(req.user.id, (u) => { const t = findJourney(u, req.params.jid); t.desbloqueios = draft.desbloqueios; t.missions = draft.missions; });
+  const saved = await updateUser(req.user.id, (u) => { const t = findJourney(u, req.params.jid); t.desbloqueios = draft.desbloqueios; t.missions = draft.missions; });
   logUnlocks(req.user.id, req.params.jid, novos);
   const journey = view(saved, findJourney(saved, req.params.jid));
   const events = novos.filter((e) => e.tipo === 'rodada' && e.motivo !== 'inicio').map((e) => {
@@ -174,16 +176,25 @@ router.get('/:jid', async (req, res) => {
 router.put('/:jid', async (req, res) => {
   const parsed = journeyFields.omit({ programaId: true, universidadeId: true }).safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
-  if (!findJourney(req.user, req.params.jid)) return res.status(404).json({ error: 'Jornada não encontrada.' });
-  const user = await users.update(req.user.id, (u) => { Object.assign(findJourney(u, req.params.jid), parsed.data); });
+  const jr = findJourney(req.user, req.params.jid);
+  if (!jr) return res.status(404).json({ error: 'Jornada não encontrada.' });
+  // Mesma regra da criação: uma só jornada "mestrado a definir" por universidade e ano acadêmico.
+  if (!jr.programaId && parsed.data.anoAcademico !== undefined
+    && (req.user.journeys || []).some((j) => j.id !== jr.id && sameOpenDestination(j, jr.universidadeId, parsed.data.anoAcademico))) {
+    return res.status(409).json({ error: 'Você já tem uma jornada para esta universidade neste ano acadêmico com o mestrado a definir.' });
+  }
+  const user = await updateUser(req.user.id, (u) => { Object.assign(findJourney(u, req.params.jid), parsed.data); });
   res.json({ journey: view(user, findJourney(user, req.params.jid)) });
 });
 
 router.delete('/:jid', async (req, res) => {
   if (!findJourney(req.user, req.params.jid)) return res.status(404).json({ error: 'Jornada não encontrada.' });
-  await users.update(req.user.id, (u) => {
+  await updateUser(req.user.id, (u) => {
     u.journeys = u.journeys.filter((j) => j.id !== req.params.jid);
     u.planner = (u.planner || []).filter((e) => e.journeyId !== req.params.jid);
+    // Referências à jornada apagada não podem ficar apontando para o nada.
+    for (const o of u.opportunities || []) if (o.journeyId === req.params.jid) o.journeyId = null;
+    if (u.travel?.alertaPreco?.journeyId === req.params.jid) u.travel.alertaPreco.journeyId = null;
   });
   res.json({ ok: true });
 });
@@ -215,7 +226,7 @@ async function mutate(req, res, apply, { mission = true } = {}) {
   applyRequirements(req.user, draft);
   const novos = recordUnlocks(draft, computeJourney(req.user, draft));
   let carteira = [];
-  const saved = await users.update(req.user.id, (u) => {
+  const saved = await updateUser(req.user.id, (u) => {
     const target = findJourney(u, jid);
     for (const k of ['missions', 'dados', 'situacao', 'situacaoRegistro', 'desbloqueios', 'progressoAnterior']) if (draft[k] !== undefined) target[k] = draft[k];
     // Missão de preparo concluída → o documento entra na Carteira como pronto (na mesma gravação).
@@ -266,7 +277,7 @@ const contactSchema = z.object({
   email: z.email('E-mail inválido.').max(120).optional().or(z.literal('')),
   fonteUrl: z.url('Informe o link da página oficial onde encontrou o contato.').max(300).refine((u) => u.startsWith('https://'), 'Use um link https da fonte oficial.'),
   duvida: z.string().trim().max(500).optional(),
-  enviadoEm: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().or(z.literal('')),
+  enviadoEm: date.optional().or(z.literal('')),
   resposta: z.string().trim().max(500).optional(),
 }).strict();
 
@@ -277,7 +288,7 @@ router.post('/:jid/contacts', async (req, res) => {
   if (!jr) return res.status(404).json({ error: 'Jornada não encontrada.' });
   if ((jr.contatos || []).length >= MAX_CONTACTS) return res.status(409).json({ error: `Limite de ${MAX_CONTACTS} contatos nesta jornada. Apague os que não usa mais.` });
   const contact = { id: newId(), ...parsed.data, registradoEm: new Date().toISOString() };
-  const user = await users.update(req.user.id, (u) => { const j = findJourney(u, req.params.jid); (j.contatos ??= []).push(contact); });
+  const user = await updateUser(req.user.id, (u) => { const j = findJourney(u, req.params.jid); (j.contatos ??= []).push(contact); });
   res.status(201).json({ contatos: findJourney(user, req.params.jid).contatos });
 });
 
@@ -286,13 +297,13 @@ router.put('/:jid/contacts/:cid', async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
   const jr = findJourney(req.user, req.params.jid);
   if (!jr?.contatos?.some((c) => c.id === req.params.cid)) return res.status(404).json({ error: 'Contato não encontrado.' });
-  const user = await users.update(req.user.id, (u) => { Object.assign(findJourney(u, req.params.jid).contatos.find((c) => c.id === req.params.cid), parsed.data); });
+  const user = await updateUser(req.user.id, (u) => { Object.assign(findJourney(u, req.params.jid).contatos.find((c) => c.id === req.params.cid), parsed.data); });
   res.json({ contatos: findJourney(user, req.params.jid).contatos });
 });
 
 router.delete('/:jid/contacts/:cid', async (req, res) => {
   if (!findJourney(req.user, req.params.jid)) return res.status(404).json({ error: 'Jornada não encontrada.' });
-  const user = await users.update(req.user.id, (u) => { const j = findJourney(u, req.params.jid); j.contatos = (j.contatos || []).filter((c) => c.id !== req.params.cid); });
+  const user = await updateUser(req.user.id, (u) => { const j = findJourney(u, req.params.jid); j.contatos = (j.contatos || []).filter((c) => c.id !== req.params.cid); });
   res.json({ contatos: findJourney(user, req.params.jid).contatos });
 });
 
@@ -343,4 +354,5 @@ router.delete('/:jid/missions/:id/notes/:noteId', (req, res) => {
   return mutate(req, res, (jr) => { deleteNote(jr, req.params.id, req.params.noteId); });
 });
 
+router.use(accountGone);
 export default router;

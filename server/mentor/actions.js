@@ -52,7 +52,8 @@ async function take(user, id) {
   let taken = null;
   await users.update(user.id, (u) => {
     const b = sweep(u);
-    if (b[id]) { taken = b[id]; delete b[id]; }
+    // Object.hasOwn: um id como "__proto__" não pode devolver o protótipo como se fosse proposta.
+    if (Object.hasOwn(b, id)) { taken = b[id]; delete b[id]; }
   });
   return taken;
 }

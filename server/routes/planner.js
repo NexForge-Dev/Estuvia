@@ -4,6 +4,8 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { users, newId } from '../store.js';
 import { requireAuth } from '../security.js';
+import { updateUser, accountGone } from './guards.js';
+import { isoDate } from './validators.js';
 import { computeJourney } from '../journey-engine.js';
 import { financialDeadlines } from '../finance-engine.js';
 import { missionById } from '../content/rounds.js';
@@ -16,11 +18,10 @@ export const CATEGORIES = ['academico', 'documentacao', 'financeiro', 'visto', '
 export const MAX_EVENTS = 500;
 
 const time = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Horário inválido.');
-const dateRe = /^\d{4}-\d{2}-\d{2}$/;
 const eventSchema = z.object({
   titulo: z.string().trim().min(1, 'Dê um título à atividade.').max(120),
   categoria: z.enum(CATEGORIES),
-  data: z.string().regex(dateRe, 'Data inválida.'),
+  data: isoDate(),
   inicio: time,
   fim: time,
   nota: z.string().max(300).optional(),
@@ -74,7 +75,7 @@ router.post('/', async (req, res) => {
   if ((req.user.planner || []).length >= MAX_EVENTS) return res.status(409).json({ error: 'Limite de atividades atingido.' });
   if (!ownsJourneys(req.user, [parsed.data])) return res.status(400).json({ error: 'Jornada inválida.' });
   const event = { id: newId(), origem: 'estudante', ...parsed.data, criadoEm: new Date().toISOString() };
-  const user = await users.update(req.user.id, (u) => { (u.planner ??= []).push(event); });
+  const user = await updateUser(req.user.id, (u) => { (u.planner ??= []).push(event); });
   res.status(201).json(reply(user, { event }));
 });
 
@@ -83,7 +84,7 @@ router.put('/events/:id', async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
   if (!(req.user.planner || []).some((e) => e.id === req.params.id)) return res.status(404).json({ error: 'Atividade não encontrada.' });
   if (!ownsJourneys(req.user, [parsed.data])) return res.status(400).json({ error: 'Jornada inválida.' });
-  const user = await users.update(req.user.id, (u) => {
+  const user = await updateUser(req.user.id, (u) => {
     const e = u.planner.find((x) => x.id === req.params.id);
     Object.keys(e).forEach((k) => { if (!['id', 'origem', 'criadoEm', 'oportunidadeId', 'oportunidadeTipo', 'documentoId'].includes(k)) delete e[k]; });
     Object.assign(e, parsed.data, { editadoEm: new Date().toISOString() });
@@ -93,7 +94,7 @@ router.put('/events/:id', async (req, res) => {
 
 router.delete('/events/:id', async (req, res) => {
   if (!(req.user.planner || []).some((e) => e.id === req.params.id)) return res.status(404).json({ error: 'Atividade não encontrada.' });
-  const user = await users.update(req.user.id, (u) => { u.planner = u.planner.filter((e) => e.id !== req.params.id); });
+  const user = await updateUser(req.user.id, (u) => { u.planner = u.planner.filter((e) => e.id !== req.params.id); });
   res.json(reply(user));
 });
 
@@ -108,11 +109,11 @@ router.put('/availability', async (req, res) => {
     fuso: z.enum(['America/Sao_Paulo', 'America/Manaus', 'America/Fortaleza', 'America/Noronha', 'America/Rio_Branco', 'Europe/Madrid']),
   }).strict().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
-  const user = await users.update(req.user.id, (u) => { u.agenda = { ...(u.agenda || {}), disponibilidade: parsed.data }; });
+  const user = await updateUser(req.user.id, (u) => { u.agenda = { ...(u.agenda || {}), disponibilidade: parsed.data }; });
   res.json(reply(user));
 });
 
-const weekQuery = z.object({ semana: z.string().regex(dateRe) }).strict();
+const weekQuery = z.object({ semana: isoDate() }).strict();
 const suggestQuery = weekQuery.extend({ journeyId: z.string().max(60).optional(), missaoId: z.string().regex(/^\d\.\d{1,2}$/).optional() }).strict();
 
 router.post('/suggest', (req, res) => {
@@ -131,7 +132,7 @@ router.post('/approve', async (req, res) => {
   const fresh = parsed.data.itens.filter((e) => !seen.has(slotKey(e)) && seen.add(slotKey(e)));
   if ((req.user.planner || []).length + fresh.length > MAX_EVENTS) return res.status(409).json({ error: 'Limite de atividades atingido.' });
   const created = fresh.map((e) => ({ id: newId(), origem: 'agenda-ai', ...e, criadoEm: new Date().toISOString() }));
-  const user = await users.update(req.user.id, (u) => { (u.planner ??= []).push(...created); });
+  const user = await updateUser(req.user.id, (u) => { (u.planner ??= []).push(...created); });
   res.status(201).json(reply(user, { criados: created.length, repetidos: parsed.data.itens.length - created.length }));
 });
 
@@ -145,7 +146,7 @@ router.post('/replan', async (req, res) => {
   const start = mondayOf(parsed.data.semana);
   // Também libera os blocos futuros desta semana criados pela Agenda, para redistribuí-los.
   // Compromissos do estudante e blocos que ele editou (editadoEm) ficam onde ele os colocou.
-  const user = await users.update(req.user.id, (u) => {
+  const user = await updateUser(req.user.id, (u) => {
     u.planner = (u.planner || []).filter((e) => !ids.has(e.id) && !(e.origem === 'agenda-ai' && !e.editadoEm && e.data >= today && e.data >= start && e.data <= addDays(start, 6)));
   });
   res.json(reply(user, { removidos: stale, ...suggestWeek(user, start, today) }));
@@ -153,4 +154,5 @@ router.post('/replan', async (req, res) => {
 
 function addDays(iso, n) { const d = new Date(`${iso}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
 
+router.use(accountGone);
 export default router;

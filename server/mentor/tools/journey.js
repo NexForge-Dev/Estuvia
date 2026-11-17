@@ -1,5 +1,6 @@
 // Ferramentas da jornada: leitura do estado e atualização de missões pelas regras do motor.
 import { z } from 'zod';
+import { isoDate } from '../../routes/validators.js';
 import {
   computeJourney, missionForClient, setObjective, completeMission, setMissionFlags, registerArrival,
 } from '../../journey-engine.js';
@@ -168,7 +169,7 @@ export const updateMissionProgress = defineTool({
 export const registerArrivalTool = defineTool({
   name: 'register_arrival', efeito: 'escrita', permissao: 'jornada',
   descricao: 'Registra a data de entrada na Espanha (ativa as Rodadas 7 e 8; prazos como o da TIE contam dessa data). Exige o visto aprovado registrado.',
-  entrada: z.object({ journeyId: jid, dataEntrada: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }).strict(),
+  entrada: z.object({ journeyId: jid, dataEntrada: isoDate() }).strict(),
   saida: '{ resumo, eventos[] }',
   preview: (ctx, input) => {
     const jr = requireJourney(ctx, input.journeyId);

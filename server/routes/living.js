@@ -3,8 +3,10 @@
 // um anúncio é seguro e não inventa preços ou horários.
 import { Router } from 'express';
 import { z } from 'zod';
+import { isoDate } from './validators.js';
 import { users, newId } from '../store.js';
 import { requireAuth } from '../security.js';
+import { updateUser, accountGone } from './guards.js';
 import { ensureFinance, routeTotal } from '../finance-engine.js';
 import { programById, universityById } from '../content/catalog.js';
 import { DESTINATION_ASSUMPTIONS } from '../content/costs.js';
@@ -16,7 +18,7 @@ const router = Router();
 router.use(requireAuth);
 
 const money = z.number().min(0).max(1_000_000);
-const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida.');
+const date = isoDate();
 const https = z.url('Link inválido.').max(400).refine((u) => u.startsWith('https://'), 'Use um link https.');
 
 export { ANTIFRAUDE };
@@ -74,7 +76,7 @@ router.get('/', (req, res) => { ensureFinance(req.user); res.json(reply(req.user
 router.put('/search', async (req, res) => {
   const parsed = z.object({ tipo: z.enum(Object.keys(HOUSING_TYPES)).nullable().optional(), orcamentoMax: money.nullable().optional(), preferencias: z.array(z.enum(Object.keys(PREFERENCES))).max(10).optional() }).strict().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Preferências inválidas.' });
-  const user = await users.update(req.user.id, (u) => { u.housingSearch = { ...(u.housingSearch || {}), ...parsed.data, atualizadoEm: new Date().toISOString() }; });
+  const user = await updateUser(req.user.id, (u) => { u.housingSearch = { ...(u.housingSearch || {}), ...parsed.data, atualizadoEm: new Date().toISOString() }; });
   res.json(reply(user, req.query.journeyId));
 });
 
@@ -94,7 +96,7 @@ router.post('/housing', async (req, res) => {
   const { respostas, ...data } = parsed.data;
   const item = { id: newId(), moeda: 'EUR', checklist: {}, sinais: {}, ...data, status: normStatus(data.status), fonte: data.link ? siteOf(data.link) : null, criadoEm: new Date().toISOString() };
   applyAnswers(item, respostas);
-  const user = await users.update(req.user.id, (u) => { ensureFinance(u); u.housing.push(item); });
+  const user = await updateUser(req.user.id, (u) => { ensureFinance(u); u.housing.push(item); });
   res.status(201).json({ ...reply(user, req.query.journeyId), criado: item.id });
 });
 
@@ -102,7 +104,7 @@ router.put('/housing/:id', async (req, res) => {
   const parsed = housingSchema.partial().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
   if (!(req.user.housing || []).some((x) => x.id === req.params.id)) return res.status(404).json({ error: 'Opção não encontrada.' });
-  const user = await users.update(req.user.id, (u) => {
+  const user = await updateUser(req.user.id, (u) => {
     const { checklist, respostas, ...rest } = parsed.data;
     if (rest.status) rest.status = normStatus(rest.status);
     // Só uma moradia escolhida por vez: o custo dela alimenta o planejamento financeiro.
@@ -118,7 +120,7 @@ router.put('/housing/:id', async (req, res) => {
 });
 
 router.delete('/housing/:id', async (req, res) => {
-  const user = await users.update(req.user.id, (u) => { ensureFinance(u); u.housing = u.housing.filter((x) => x.id !== req.params.id); });
+  const user = await updateUser(req.user.id, (u) => { ensureFinance(u); u.housing = u.housing.filter((x) => x.id !== req.params.id); });
   res.json(reply(user, req.query.journeyId));
 });
 
@@ -129,7 +131,7 @@ router.post('/compare', async (req, res) => {
   const list = parsed.data.ids.map((id) => (req.user.housing || []).find((x) => x.id === id)).filter(Boolean);
   if (list.length < 2) return res.status(404).json({ error: 'Opções não encontradas.' });
   const dest = destination(req.user, req.query.journeyId);
-  await users.update(req.user.id, (u) => { u.housingSearch = { ...(u.housingSearch || {}), comparadoEm: new Date().toISOString() }; });
+  await updateUser(req.user.id, (u) => { u.housingSearch = { ...(u.housingSearch || {}), comparadoEm: new Date().toISOString() }; });
   res.json({ comparacao: compareHousing(list, dest.meses) });
 });
 
@@ -150,7 +152,7 @@ router.post('/travel/routes', async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
   // Mesmo limite das cotações em /travel/quotes (as duas rotas gravam em user.travel.opcoes).
   if ((req.user.travel?.opcoes || []).length >= 20) return res.status(409).json({ error: 'Limite de cotações atingido.' });
-  const user = await users.update(req.user.id, (u) => { ensureFinance(u); u.travel.opcoes.push({ id: newId(), moeda: 'EUR', escolhida: false, cotadoEm: new Date().toISOString().slice(0, 10), ...parsed.data }); });
+  const user = await updateUser(req.user.id, (u) => { ensureFinance(u); u.travel.opcoes.push({ id: newId(), moeda: 'EUR', escolhida: false, cotadoEm: new Date().toISOString().slice(0, 10), ...parsed.data }); });
   res.status(201).json(reply(user));
 });
 
@@ -158,7 +160,7 @@ router.put('/travel/routes/:id', async (req, res) => {
   const parsed = routeSchema.partial().extend({ escolhida: z.boolean().optional() }).strict().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
   if (!(req.user.travel?.opcoes || []).some((o) => o.id === req.params.id)) return res.status(404).json({ error: 'Rota não encontrada.' });
-  const user = await users.update(req.user.id, (u) => {
+  const user = await updateUser(req.user.id, (u) => {
     if (parsed.data.escolhida) u.travel.opcoes.forEach((o) => { o.escolhida = false; });
     Object.assign(u.travel.opcoes.find((o) => o.id === req.params.id), parsed.data);
   });
@@ -166,7 +168,7 @@ router.put('/travel/routes/:id', async (req, res) => {
 });
 
 router.delete('/travel/routes/:id', async (req, res) => {
-  const user = await users.update(req.user.id, (u) => { ensureFinance(u); u.travel.opcoes = u.travel.opcoes.filter((o) => o.id !== req.params.id); });
+  const user = await updateUser(req.user.id, (u) => { ensureFinance(u); u.travel.opcoes = u.travel.opcoes.filter((o) => o.id !== req.params.id); });
   res.json(reply(user));
 });
 
@@ -179,9 +181,10 @@ router.put('/travel/arrival', async (req, res) => {
     data: date.optional().or(z.literal('')),
   }).strict().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
-  const user = await users.update(req.user.id, (u) => { ensureFinance(u); u.travel.chegada = { ...u.travel.chegada, ...parsed.data }; });
+  const user = await updateUser(req.user.id, (u) => { ensureFinance(u); u.travel.chegada = { ...u.travel.chegada, ...parsed.data }; });
   res.json(reply(user));
 });
 
 export { routeTotal };
+router.use(accountGone);
 export default router;

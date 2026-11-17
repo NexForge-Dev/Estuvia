@@ -2,6 +2,7 @@
 // Acesso: usuários com role "admin" ou "radar" (RADAR_ADMIN_EMAILS só fora de produção).
 import { Router } from 'express';
 import { z } from 'zod';
+import { isoDate } from './validators.js';
 import { requireAuth } from '../security.js';
 import { audit } from '../store.js';
 import { importCollected } from '../radar/replay.js';
@@ -30,7 +31,7 @@ const send = (res, fn) => Promise.resolve().then(fn).then((body) => res.json(bod
 });
 const bad = (res, parsed) => res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
 const who = (req) => req.user.email;
-const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data no formato AAAA-MM-DD.');
+const date = isoDate('Data no formato AAAA-MM-DD.');
 
 router.get('/', (req, res) => res.json({ ...overview(), ambiente: config.isProd ? 'producao' : 'desenvolvimento' }));
 

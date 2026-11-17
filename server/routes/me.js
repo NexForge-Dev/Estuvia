@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { users, audit } from '../store.js';
-import { requireAuth, clearSession, verifyPassword, isModerator, isAdmin } from '../security.js';
+import { requireAuth, clearSession, verifyPassword, isModerator, isAdmin, authLimiter } from '../security.js';
+import { updateUser, accountGone } from './guards.js';
 import { communityExport, purgeCommunityUser } from './community.js';
 import { forgetUser, exportUser } from '../radar/service.js';
 import { purgeUserDocuments } from './documents.js';
@@ -88,7 +89,7 @@ router.put('/profile', async (req, res) => {
     const g = duaGrade({ nota: merged.notaMedia, max: merged.notaMaxima, min: merged.notaMinima });
     if (!g.ok) return res.status(400).json({ error: g.erro });
   }
-  const user = await users.update(req.user.id, (u) => { u.profile = { ...u.profile, ...parsed.data }; });
+  const user = await updateUser(req.user.id, (u) => { u.profile = { ...u.profile, ...parsed.data }; });
   reply(res, user);
 });
 
@@ -119,7 +120,7 @@ router.post('/onboarding/complete', async (req, res) => {
   if (req.user.profile?.onboardingConcluido) return reply(res, req.user);
   const gaps = onboardingGaps(req.user);
   if (gaps.length) return res.status(422).json({ error: `Faltam informações para concluir: ${gaps.join(', ')}.`, faltam: gaps });
-  const user = await users.update(req.user.id, (u) => { u.profile = { ...u.profile, onboardingConcluido: true, onboardingConcluidoEm: new Date().toISOString() }; });
+  const user = await updateUser(req.user.id, (u) => { u.profile = { ...u.profile, onboardingConcluido: true, onboardingConcluidoEm: new Date().toISOString() }; });
   audit.log({ action: 'onboarding.completed', userId: req.user.id }).catch(() => {});
   reply(res, user);
 });
@@ -133,7 +134,7 @@ router.put('/choices', async (req, res) => {
   if (!parsed.success) return bad(res, parsed);
   const unique = [...new Set(parsed.data.choices)];
   if (unique.some((id) => !programById(id))) return res.status(400).json({ error: 'Programa desconhecido.' });
-  const user = await users.update(req.user.id, (u) => { u.choices = unique; });
+  const user = await updateUser(req.user.id, (u) => { u.choices = unique; });
   reply(res, user);
 });
 
@@ -142,7 +143,7 @@ router.put('/documents', async (req, res) => {
   const parsed = z.record(z.string(), z.enum(DOC_STATUS)).safeParse(req.body);
   if (!parsed.success) return bad(res, parsed);
   if (Object.keys(parsed.data).some((k) => !ids.includes(k))) return res.status(400).json({ error: 'Documento desconhecido.' });
-  const user = await users.update(req.user.id, (u) => { u.documents = { ...u.documents, ...parsed.data }; });
+  const user = await updateUser(req.user.id, (u) => { u.documents = { ...u.documents, ...parsed.data }; });
   reply(res, user);
 });
 
@@ -160,14 +161,16 @@ router.get('/export', (req, res) => {
     ...publicUser(u),
     journeys: u.journeys || [], requisitos: u.requisitos || {}, mentor: u.mentor || {}, planner: u.planner || [], agenda: u.agenda || {}, finance: u.finance || {}, scholarshipApps: u.scholarshipApps || [], housing: u.housing || [], travel: u.travel || {}, opportunities: u.opportunities || [],
     docFiles: (docFiles || []).map(({ iv, tag, ...f }) => f), docRecords: u.docRecords || {}, docConditions: u.docConditions || {}, docConsent: u.docConsent || null, docPrefs: u.docPrefs || {},
-    // Registros de segurança da própria conta (acessos, IP e dispositivo).
-    atividade: audit.recent(5000, (e) => e.userId === u.id || (e.email && e.email === u.email)),
+    // Registros de segurança da própria conta (acessos, IP e dispositivo). Eventos ligados só pelo e-mail
+    // (ex.: "login-failed" de quem digitou este e-mail) foram causados por terceiros: saem sem IP e navegador deles.
+    atividade: audit.recent(5000, (e) => e.userId === u.id || (e.email && e.email === u.email))
+      .map((e) => { if (e.userId === u.id) return e; const { ip, ua, ...rest } = e; return rest; }),
     comunidade: communityExport(u.id), radar: exportUser(u.id),
   });
 });
 
 // Exclusão definitiva da conta, com reconfirmação de senha.
-router.delete('/', async (req, res) => {
+router.delete('/', authLimiter, async (req, res) => {
   const parsed = z.object({ senha: z.string().min(1).max(128) }).safeParse(req.body);
   if (!parsed.success || !(await verifyPassword(parsed.data.senha, req.user.passwordHash))) {
     return res.status(401).json({ error: 'Senha incorreta.' });
@@ -181,4 +184,5 @@ router.delete('/', async (req, res) => {
   res.json({ ok: true });
 });
 
+router.use(accountGone);
 export default router;

@@ -14,6 +14,7 @@ import { ROUND_UNLOCK, PARALLEL_TRACKS, trackOf, EVIDENCE, PRIOR_STAGES, situaca
 import { todayMadrid, daysBetween } from './radar/dates.js';
 import { profileGrade, usesGrade, fmtNota } from '../public/js/data/grade.js';
 import { matchDegree } from '../public/js/data/degree.js';
+import { isCalendarDate } from './routes/validators.js';
 
 export const STATUS = {
   bloqueada: 'Bloqueada',
@@ -858,7 +859,7 @@ export function setObjective(user, jr, missionId, objId, { feito, valor }) {
   mp.iniciadaEm ??= new Date().toISOString();
 
   if (obj.tipo === 'data') {
-    if (valor && !/^\d{4}-\d{2}-\d{2}$/.test(valor)) throw new JourneyError(400, 'Data inválida.');
+    if (valor && !isCalendarDate(valor)) throw new JourneyError(400, 'Data inválida.');
     if (valor) journey.dados[obj.campo] = valor;
     else delete journey.dados[obj.campo];
   } else if (obj.tipo === 'escolha') {
@@ -947,7 +948,7 @@ export function setMissionFlags(user, jr, missionId, { aguardando, naoAplicavel,
   }
   if (prazo !== undefined) {
     if (def.prazo?.tipo !== 'usuario') throw new JourneyError(400, 'Esta missão não aceita prazo declarado.');
-    if (prazo && !/^\d{4}-\d{2}-\d{2}$/.test(prazo)) throw new JourneyError(400, 'Data inválida.');
+    if (prazo && !isCalendarDate(prazo)) throw new JourneyError(400, 'Data inválida.');
     if (prazo) mp.prazo = prazo;
     else delete mp.prazo;
   }
@@ -1022,7 +1023,7 @@ export function deleteNote(jr, missionId, noteId) {
 
 // A entrada acontece na Espanha: "hoje" é a data de Madri (à frente do UTC e do Brasil).
 function validEntry(dataEntrada, now) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dataEntrada || '')) throw new JourneyError(400, 'Informe a data de entrada na Espanha.');
+  if (!isCalendarDate(dataEntrada || '')) throw new JourneyError(400, 'Informe a data de entrada na Espanha.');
   if (dataEntrada > todayMadrid(now)) throw new JourneyError(400, 'A data de entrada não pode estar no futuro.');
 }
 

@@ -10,7 +10,7 @@
 // Erros de regra de negócio usam ToolError (o motor da jornada já lança JourneyError com status).
 
 import { users } from '../../store.js';
-import { computeJourney, recordUnlocks, diffEvents, journeyForClient, JourneyError } from '../../journey-engine.js';
+import { computeJourney, recordUnlocks, diffEvents, journeyForClient, JourneyError, applyRequirements } from '../../journey-engine.js';
 import { DEFAULT_AVAILABILITY } from '../../agenda-engine.js';
 import { todayIn } from '../parse.js';
 import { syncDocumentsFromMissions } from '../../document-engine.js';
@@ -65,10 +65,12 @@ export async function mutateJourney(ctx, jid, apply, { missionId = null } = {}) 
     if (err instanceof JourneyError) throw new ToolError('regra', err.message, err.status);
     throw err;
   }
+  // Como em routes/journey.js: requisitos declarados ("já tenho a TIE") valem assim que a mudança os libera.
+  applyRequirements(ctx.user, draft);
   recordUnlocks(draft, computeJourney(ctx.user, draft));
   const saved = await users.update(ctx.user.id, (u) => {
     const target = u.journeys.find((j) => j.id === original.id);
-    for (const k of ['missions', 'dados', 'situacao', 'desbloqueios', 'progressoAnterior']) if (draft[k] !== undefined) target[k] = draft[k];
+    for (const k of ['missions', 'dados', 'situacao', 'situacaoRegistro', 'desbloqueios', 'progressoAnterior']) if (draft[k] !== undefined) target[k] = draft[k];
     syncDocumentsFromMissions(u); // missão de preparo concluída → documento pronto na Carteira
   });
   ctx.user = saved;

@@ -237,6 +237,19 @@ test('critérios 11–14: jornada, missões, Agenda AI e assistente', async () =
   assert.ok(service.findOfficialMatch({ link: target.programa.fichaUrl }).match);
 });
 
+test('atividade do Radar apagada da Agenda pode ser adicionada de novo; data inexistente é recusada', async () => {
+  const req = await student('reagenda@exemplo.com');
+  const target = (await req('GET', '/radar/opportunities?ano=2027/2028&q=desarrollo%20software')).data.items[0];
+  const prep = (await req('GET', `/radar/opportunities/${target.id}`)).data.opportunity.agenda.find((s) => !s.oficial);
+  assert.equal((await req('POST', `/radar/opportunities/${target.id}/agenda`, { itens: [{ id: prep.id, data: '2027-13-45' }] })).status, 400);
+  const first = await req('POST', `/radar/opportunities/${target.id}/agenda`, { itens: [{ id: prep.id }] });
+  assert.equal(first.data.criadas, 1);
+  assert.equal((await req('POST', `/radar/opportunities/${target.id}/agenda`, { itens: [{ id: prep.id }] })).data.criadas, 0, 'sem duplicar enquanto o evento existe');
+  assert.equal((await req('DELETE', `/planner/events/${first.data.eventos[0].id}`)).status, 200);
+  const again = await req('POST', `/radar/opportunities/${target.id}/agenda`, { itens: [{ id: prep.id }] });
+  assert.equal(again.data.criadas, 1, 'o vínculo antigo não pode travar a sugestão para sempre');
+});
+
 // ---------- Ficha do máster no DUA (HTML oficial real, capturado em 12/11/2026) ----------
 
 const duaProgram = await import('../server/radar/connectors/dua-program.js');

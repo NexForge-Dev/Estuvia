@@ -3,8 +3,10 @@
 // Trabalha sobre o mesmo user.travel das rotas /living/travel/* (que continuam válidas).
 import { Router } from 'express';
 import { z } from 'zod';
+import { isoDate } from './validators.js';
 import { users, newId } from '../store.js';
 import { requireAuth } from '../security.js';
+import { updateUser, accountGone } from './guards.js';
 import { ensureFinance, computeFinance } from '../finance-engine.js';
 import { computeTravel, ensureTravel, agendaSuggestions, agendaChanges } from '../travel-engine.js';
 import { BR_AIRPORTS } from '../content/travel.js';
@@ -14,7 +16,7 @@ const router = Router();
 router.use(requireAuth);
 
 const money = z.number().min(0).max(100_000);
-const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida.');
+const date = isoDate();
 const time = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Horário inválido.');
 const https = z.url('Link inválido.').max(600).refine((u) => u.startsWith('https://'), 'Use um link https.');
 const iata = z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/, 'Use o código do aeroporto (3 letras).');
@@ -34,7 +36,7 @@ function payload(user, jid) {
   };
 }
 const save = async (req, res, mutate, status = 200) => {
-  const user = await users.update(req.user.id, (u) => { ensureFinance(u); ensureTravel(u); mutate(u); });
+  const user = await updateUser(req.user.id, (u) => { ensureFinance(u); ensureTravel(u); mutate(u); });
   res.status(status).json(payload(user, jidOf(req)));
 };
 const bad = (res, parsed) => res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
@@ -216,4 +218,5 @@ router.post('/agenda/changes', (req, res) => {
   });
 });
 
+router.use(accountGone);
 export default router;
