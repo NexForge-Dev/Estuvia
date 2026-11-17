@@ -5,7 +5,7 @@ export const SCHOLARSHIP_STATUS = {
   aberta: 'Edital aberto',
   futura: 'Edital futuro',
   encerrada: 'Encerrada',
-  'sem-edital': 'Sem edital confirmado',
+  'sem-edital': 'Aguardando edital',
 };
 
 export const SCHOLARSHIPS = [

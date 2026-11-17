@@ -49,6 +49,7 @@ export async function catalogView() {
     return h('section', { class: 'panel' },
       h('h2', { class: 'panel-title' }, icon('flag', { size: 18 }), `Minhas opções (${choices.length}/6 na Estuvia)`),
       h('p', { class: 'muted small' }, 'A Estuvia guarda até 6 opções. Esse limite interno não confirma quantas o edital vigente aceita. Confira o edital e faça o envio oficial no DUA.'),
+      h('p', { class: 'muted small' }, icon('alert', { size: 12 }), ' Fase 1 (só estrangeiros): nenhuma fonte pública diz quais mestrados abrem vagas nela. Antes de contar com a Fase 1, confirme com a universidade; a Missão 3.2 traz um modelo de e-mail.'),
       choices.length ? h('ol', { class: 'choices' }, choices.map((id, i) => h('li', { class: 'choice' },
         h('span', { class: 'choice-pos' }, String(i + 1)),
         h('span', { class: 'choice-name' }, ...label(id)),

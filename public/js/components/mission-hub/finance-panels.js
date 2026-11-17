@@ -177,6 +177,7 @@ export async function ScholarshipsPanel(m, ctx, hub) {
         return h('div', { class: `mh-schol-item ${s.status === 'encerrada' ? 'off' : ''}` },
           h('div', { class: 'mh-schol-top' }, h('strong', {}, s.nome), h('span', { class: `mh-pill ${tone}` }, d.statusBolsa[s.status])),
           h('small', { class: 'muted' }, s.entidade), h('p', {}, s.financia || s.abrangencia),
+          s.status === 'sem-edital' ? h('small', { class: 'muted' }, `Edital ainda não publicado${s.verificadoEm ? ` (conferido em ${s.verificadoEm.split('-').reverse().join('/')})` : ''}.`) : null,
           h('div', { class: 'row wrap' },
             s.status === 'encerrada' ? null : h('button', { type: 'button', class: 'btn btn-ghost btn-sm', disabled: Boolean(app), onClick: async () => { try { await api.post('/finance/scholarships', { catalogId: s.id }); hub.dirty(); toast('Bolsa salva, tarefas criadas na Agenda.', 'ok'); draw(); } catch (e) { toast(e.message, 'err'); } } }, app ? `Acompanhando (${app.status})` : 'Acompanhar'),
             s.url ? h('a', { class: 'btn btn-ghost btn-sm', href: s.url, target: '_blank', rel: 'noopener noreferrer' }, 'Site oficial ', icon('external', { size: 12 })) : null));

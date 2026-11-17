@@ -268,7 +268,8 @@ export async function financeView() {
         return h('article', { class: 'sch' },
           h('div', { class: 'row between' }, h('strong', {}, s.nome), h('span', { class: 'tag tag-pending' }, d.statusBolsa[s.status])),
           h('p', { class: 'small muted' }, s.entidade),
-          h('details', {}, h('summary', { class: 'small' }, 'Ver detalhes'), h('dl', { class: 'sch-dl' }, h('dt', {}, 'Elegibilidade'), h('dd', {}, s.elegibilidade), h('dt', {}, 'Abrange'), h('dd', {}, s.abrangencia), h('dt', {}, 'Financia'), h('dd', {}, s.financia), h('dt', {}, 'Cobertura'), h('dd', {}, s.cobertura), h('dt', {}, 'Prazo'), h('dd', {}, s.prazo || 'Sem edital confirmado'))),
+          h('details', {}, h('summary', { class: 'small' }, 'Ver detalhes'), h('dl', { class: 'sch-dl' }, h('dt', {}, 'Elegibilidade'), h('dd', {}, s.elegibilidade), h('dt', {}, 'Abrange'), h('dd', {}, s.abrangencia), h('dt', {}, 'Financia'), h('dd', {}, s.financia), h('dt', {}, 'Cobertura'), h('dd', {}, s.cobertura), h('dt', {}, 'Prazo'), h('dd', {}, s.prazo || 'Aguardando edital'))),
+          s.status === 'sem-edital' ? h('p', { class: 'small muted' }, `Edital ainda não publicado${s.verificadoEm ? `: conferimos o site oficial em ${s.verificadoEm.split('-').reverse().join('/')}` : ''}. Não conte com esta bolsa até o edital sair.`) : null,
           h('div', { class: 'row wrap' },
             app ? h('span', { class: 'chip-status st-concluida' }, `Salva · ${APP_STATUS.find(([v]) => v === app.status)?.[1]}`) : h('button', { class: 'btn btn-cta btn-sm', type: 'button', onClick: () => call('post', '/finance/scholarships', { catalogId: s.id }) }, 'Acompanhar esta bolsa'),
             h('a', { class: 'btn btn-ghost btn-sm', href: s.url, target: '_blank', rel: 'noopener noreferrer' }, 'Site oficial', icon('external', { size: 12 }))));

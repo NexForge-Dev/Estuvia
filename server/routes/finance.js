@@ -11,6 +11,7 @@ import { RESOURCE_TYPES } from '../content/finance.js';
 import { EXPENSE_ITEMS, PROFILE_IDS, CATEGORY_LABEL, RESOURCE_GROUPS } from '../content/costs.js';
 import { SCHOLARSHIPS, SCHOLARSHIP_STATUS, APPLICATION_STATUS } from '../content/scholarships.js';
 import { refreshRate } from '../fx.js';
+import { sourceById } from '../content/sources.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -29,7 +30,8 @@ function payload(user, jid) {
     plano: computeFinance(user, jr),
     entrada: { itens: user.finance.itens, cambio: user.finance.cambio || null, spreadPct: user.finance.spreadPct ?? null, partida: user.finance.partida || null, nenhumaBolsaAplicavel: Boolean(user.finance.nenhumaBolsaAplicavel) },
     candidaturas: user.scholarshipApps,
-    catalogo: SCHOLARSHIPS,
+    // verificadoEm = última leitura da fonte oficial da bolsa: o estudante vê há quanto tempo conferimos.
+    catalogo: SCHOLARSHIPS.map((s) => ({ ...s, verificadoEm: sourceById(s.fonte)?.revisadoEm || null })),
     statusBolsa: SCHOLARSHIP_STATUS,
     tiposRecurso: RESOURCE_TYPES,
     gruposRecurso: RESOURCE_GROUPS,

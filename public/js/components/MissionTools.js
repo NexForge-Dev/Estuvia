@@ -147,7 +147,7 @@ export function MissionTool(m, { journey, onChange }) {
 
   if (t === 'guia-cidade') {
     const g = state.content.cityGuides?.[journey.destino.cidade];
-    if (!g) return wrap('Guia da cidade', 'pin', h('p', { class: 'muted' }, `O guia de ${journey.destino.cidade || 'sua cidade'} ainda não está disponível, começamos por Granada.`));
+    if (!g) return wrap('Guia da cidade', 'pin', h('p', { class: 'muted' }, `Guia de ${journey.destino.cidade || 'sua cidade'}: em breve. Por enquanto só o guia de Granada está pronto. Enquanto isso, procure a página de acolhida de estudantes internacionais da sua universidade.`));
     return wrap(`Guia de ${g.cidade}`, 'pin', h('p', {}, g.intro), ...g.secoes.map((s) => h('details', { class: 'md-expand' }, h('summary', {}, h('span', {}, s.titulo), icon('chevron', { size: 16, cls: 'chev' })), h('ul', { class: 'md-expand-body' }, s.itens.map((i) => h('li', {}, i))))), h('span', { class: 'tag tag-info' }, 'Orientação prática'));
   }
   return null;
