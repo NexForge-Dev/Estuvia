@@ -23,6 +23,7 @@ import { sourcesView } from './views/sources.js';
 import { resetChat } from './components/AIJourneyAssistant.js';
 import { startLive, stopLive } from './live.js';
 import { initI18n, languageSwitcher } from './i18n.js';
+import { swapView, enter } from './motion.js';
 
 // Estado global: conteúdo público, estudante logado e caches das jornadas calculadas no servidor.
 export const state = { app: null, content: null, me: null, journeys: null, jcache: new Map(), route: { path: '/', params: [] } };
@@ -199,17 +200,19 @@ async function render() {
     const el = await route.view(...params);
     clearTimeout(slow);
     if (currentPath() !== path) return; // o usuário já navegou para outra tela
-    el.classList?.add('page-enter');
-    mount(main, el);
+    // Troca de tela com transição suave (View Transitions quando houver; ver js/motion.js).
+    // A rolagem vai para o topo junto com a troca, para o "depois" já nascer no lugar certo.
+    const anchor = currentAnchor();
+    await swapView(() => { mount(main, el); if (!anchor) window.scrollTo(0, 0); });
+    if (anchor) requestAnimationFrame(() => document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    else enter(el);
   } catch (err) {
     clearTimeout(slow);
     if (err.status === 401) { state.me = null; return go('/entrar'); }
     mount(main, emptyState(err.status === 404 ? 'Não encontrado' : 'Não foi possível carregar', err.message,
       h('button', { class: 'btn', type: 'button', onClick: render }, icon('refresh', { size: 16 }), 'Tentar novamente'), 'alert'));
+    window.scrollTo(0, 0);
   }
-  const anchor = currentAnchor();
-  if (anchor) requestAnimationFrame(() => document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
-  else window.scrollTo(0, 0);
   main.focus({ preventScroll: true });
 }
 

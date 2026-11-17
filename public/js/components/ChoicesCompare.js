@@ -1,6 +1,7 @@
 // Comparação lado a lado das opções salvas (Missão 3.4). Os dados vêm de GET /me/choices/compare,
 // que reaproveita a elegibilidade da Missão 1.4 para cada opção. A comparação não ordena: a ordem é do estudante.
 import { h } from '../ui.js';
+import { skeletonLines } from '../motion.js';
 import { icon } from '../icons.js';
 import { api } from '../api.js';
 
@@ -43,7 +44,7 @@ const ROWS = [
 
 /** Tabela com uma coluna por opção salva. Carrega os dados sozinha. */
 export function ChoicesCompare() {
-  const box = h('div', { class: 'stack' }, h('p', { class: 'muted small' }, 'Carregando a comparação…'));
+  const box = h('div', { class: 'stack' }, skeletonLines(3));
   api.get('/me/choices/compare').then(({ opcoes }) => {
     box.replaceChildren();
     const validas = opcoes.filter((o) => !o.indisponivel);

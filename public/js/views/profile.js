@@ -2,6 +2,7 @@
 // idiomas, planos, nota média, o que já tenho, aparência, conta) e uma barra de salvar que só aparece
 // quando há alterações. Os campos e o formato enviado a PUT /me/profile são os mesmos de antes.
 import { h, field, toast } from '../ui.js';
+import { skeletonLines } from '../motion.js';
 import { icon } from '../icons.js';
 import { api } from '../api.js';
 import { state, setMe, logout, invalidate } from '../app.js';
@@ -98,7 +99,7 @@ const Section = (id, titulo, desc, iconName, ...body) => h('section', { class: '
 
 // "O que eu já tenho": corrigir as respostas do onboarding. Quem já tem um documento não refaz a missão dele.
 function HavePanel() {
-  const host = h('div', { class: 'stack' }, h('p', { class: 'muted small' }, 'Carregando…'));
+  const host = h('div', { class: 'stack' }, skeletonLines(4));
   api.get('/journeys/requirements').then(({ perguntas, respostas }) => {
     host.replaceChildren(h('div', { class: 'grid-2' }, perguntas.map((q) => {
       const sel = Select({

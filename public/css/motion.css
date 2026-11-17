@@ -1,0 +1,213 @@
+/* =========================================================================
+   Estuvia — movimento e acabamento
+   Carregado por js/motion.js (depois das outras folhas). Calmo, fluido e discreto:
+   tokens de duração/curva, transição entre telas, microinterações, vidro fosco
+   em barras e painéis, folhas que sobem com mola e skeletons com brilho.
+   Só anima transform/opacity (e backdrop-filter nas camadas). Com
+   prefers-reduced-motion: reduce, nada se move (ver styles.css e o fim deste arquivo).
+   Seletores com `html` vencem o CSS dos módulos carregados sob demanda.
+   ========================================================================= */
+:root {
+  --dur-1: 150ms;
+  --dur-2: 250ms;
+  --dur-3: 400ms;
+  --ease-standard: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --glass-bg: color-mix(in srgb, var(--bg) 72%, transparent);
+  --glass-border: color-mix(in srgb, var(--border) 70%, transparent);
+  --glass-filter: saturate(180%) blur(20px);
+  --lift-shadow: 0 10px 28px -14px rgb(0 0 0 / 70%), 0 2px 6px -2px rgb(0 0 0 / 35%);
+  --float-shadow: 0 24px 60px -20px rgb(0 0 0 / 70%), 0 4px 14px -6px rgb(0 0 0 / 40%);
+  --ring-halo: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent);
+  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, system-ui, sans-serif;
+}
+:root[data-theme="light"] {
+  --glass-bg: color-mix(in srgb, var(--bg) 74%, transparent);
+  --lift-shadow: 0 10px 28px -14px rgb(15 23 42 / 22%), 0 2px 6px -2px rgb(15 23 42 / 8%);
+  --float-shadow: 0 24px 60px -20px rgb(15 23 42 / 28%), 0 4px 14px -6px rgb(15 23 42 / 10%);
+}
+
+/* ---------- Tipografia: texto um pouco mais nítido ---------- */
+html body { font-family: var(--font); text-rendering: optimizeLegibility; -moz-osx-font-smoothing: grayscale; }
+
+/* ---------- Vidro fosco: barra do topo, barra inferior, navegação da landing ---------- */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  @media (max-width: 960px) {
+    html .topbar, html .tabbar:not([hidden]) {
+      background: var(--glass-bg);
+      -webkit-backdrop-filter: var(--glass-filter);
+      backdrop-filter: var(--glass-filter);
+      border-color: var(--glass-border);
+    }
+  }
+  html .lp-nav, html .lp-sticky {
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+  html .toast {
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+}
+
+/* ---------- Skeleton: brilho que atravessa (transform), sem repintar o fundo ---------- */
+html .skeleton {
+  position: relative; overflow: hidden; isolation: isolate;
+  background: var(--surface-2); animation: sk-appear var(--dur-3) var(--ease-standard) both;
+}
+html .skeleton::after {
+  content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--text) 6%, transparent), transparent);
+  animation: sk-sweep 1.5s var(--ease-standard) infinite;
+}
+@keyframes sk-sweep { to { transform: translateX(100%); } }
+@keyframes sk-appear { from { opacity: 0; } }
+.sk-lines { display: grid; gap: 10px; padding: 4px 0; }
+html .sk-line { display: block; height: 14px; border-radius: 7px; }
+.sk-line:nth-child(2) { width: 86%; }
+.sk-line:nth-child(3) { width: 64%; }
+.sk-line:nth-child(4) { width: 78%; }
+html .loading { animation: m-breathe 1.6s var(--ease-standard) infinite; }
+@keyframes m-breathe { 50% { opacity: .45; } }
+
+/* ---------- Foco: anel que "assenta" suavemente ---------- */
+html :focus-visible { outline-color: var(--accent); }
+html :is(input, select, textarea):focus:not(.cw-search-box input, .wp-title-input, [type="checkbox"], [type="radio"], [type="range"], [type="file"]) {
+  outline-color: transparent;
+  box-shadow: var(--ring-halo) !important;
+}
+html input, html select, html textarea {
+  transition: border-color var(--dur-2) var(--ease-standard), box-shadow var(--dur-2) var(--ease-standard), background-color var(--dur-2) var(--ease-standard);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* ---------- Transição entre telas (View Transitions API) ---------- */
+  #app { view-transition-name: app-main; }
+  ::view-transition-group(app-main) { animation: none; }
+  ::view-transition-old(app-main) { animation: vt-out var(--dur-1) var(--ease-standard) both; }
+  ::view-transition-new(app-main) { animation: vt-in var(--dur-3) var(--ease-spring) both; }
+  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: var(--dur-2); animation-timing-function: var(--ease-standard); }
+  @keyframes vt-out { to { opacity: 0; transform: scale(.992); } }
+  @keyframes vt-in { from { opacity: 0; transform: translateY(6px); } }
+
+  /* ---------- Botões, chips e atalhos: toque com leve compressão ---------- */
+  html :is(.btn, .chip, .lp-chip, .ob-chip, .icon-btn, .toast-close, .prf-missing-item, .tabbar a, .tabbar button, .mt-fab, .ai-fab) {
+    transition: transform var(--dur-1) var(--ease-standard), background-color var(--dur-2) var(--ease-standard),
+      border-color var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard),
+      box-shadow var(--dur-2) var(--ease-standard), filter var(--dur-2) var(--ease-standard), opacity var(--dur-2) var(--ease-standard);
+  }
+  html :is(.btn, .chip, .lp-chip, .ob-chip, .icon-btn, .toast-close, .prf-missing-item, .tabbar a, .tabbar button, .mt-fab, .ai-fab):active:not(:disabled, [aria-disabled="true"]) {
+    transform: scale(.97); transition-duration: 80ms;
+  }
+  html .tabbar .active .icon { animation: m-pop var(--dur-3) var(--ease-spring); }
+  @keyframes m-pop { 40% { transform: scale(1.14); } }
+
+  /* ---------- Cards clicáveis: sobem 2px com sombra macia (só com mouse) ---------- */
+  html :is(.journey-card, .round-card, .program-card, .mc-card, .alert-item, .dc-card, .cw-tile, .cw-cat, .lp-feature) {
+    transition: transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out),
+      border-color var(--dur-2) var(--ease-standard), background-color var(--dur-2) var(--ease-standard);
+  }
+  html :is(.jc-cover, .rc-banner img) { transition: transform 600ms var(--ease-out); }
+
+  /* Barra lateral (celular), gavetas e folhas laterais: entram da borda com mola */
+  html .sidebar { transition: transform var(--dur-3) var(--ease-spring); }
+  html .sidebar-scrim:not([hidden]) { animation: m-fade var(--dur-2) var(--ease-standard); }
+  html :is(.mt-drawer, .ai-drawer, .mh-sheet-card, .tv-sheet-card) { transition: transform 460ms var(--ease-spring); }
+  html .dp { transition: transform 460ms var(--ease-spring), opacity var(--dur-2) var(--ease-standard); }
+  html :is(.dp-overlay, .mh-sheet, .tv-sheet) { transition: background-color var(--dur-3) var(--ease-standard), backdrop-filter var(--dur-3) var(--ease-standard); }
+  html .hs-sheet { animation: m-fade var(--dur-2) var(--ease-standard); }
+  html .hs-sheet-card { animation: m-from-right 460ms var(--ease-spring); }
+  @keyframes m-from-right { from { transform: translateX(100%); } }
+
+  /* Modais e folhas centrais: fundo desfoca, cartão cresce de 96% com mola (como uma folha do sistema) */
+  html :is(.modal, .sheet, .celebrate) { animation: m-fade var(--dur-2) var(--ease-standard); }
+  html :is(.modal-card, .sheet-card, .celebrate-card) { animation: m-sheet-in 420ms var(--ease-spring); }
+  @keyframes m-fade { from { opacity: 0; } }
+  @keyframes m-sheet-in { from { opacity: 0; transform: translateY(12px) scale(.96); } }
+
+  /* Toasts: entram de baixo com mola, saem deslizando */
+  html .toast { transform: translateY(14px) scale(.96); transition: opacity var(--dur-2) var(--ease-standard), transform var(--dur-3) var(--ease-spring); }
+  html .toast.in { transform: none; }
+  html .toast.out { transform: translateX(16px) scale(.98); transition-duration: 200ms; }
+
+  /* Interruptores e caixas de seleção: bolinha desliza com mola, marcação "estala" */
+  html .ob-switch::after { transition: transform var(--dur-2) var(--ease-spring), background-color var(--dur-2) var(--ease-standard); }
+  html .ob-switch { transition: background-color var(--dur-2) var(--ease-standard); }
+  html input[type="checkbox"]:checked, html input[type="radio"]:checked { animation: m-check var(--dur-2) var(--ease-spring); }
+  @keyframes m-check { 50% { transform: scale(.86); } }
+
+  /* Menus e listas que abrem (Select, "Mais" da lateral, FAQ, painéis recolhíveis) */
+  html .ui-select-pop { animation: m-pop-in var(--dur-2) var(--ease-spring); transform-origin: top center; }
+  @keyframes m-pop-in { from { opacity: 0; transform: translateY(-4px) scale(.98); } }
+  html :is(.pf-chev, .chev) { transition: transform var(--dur-3) var(--ease-spring); }
+  @supports selector(::details-content) {
+    html { interpolate-size: allow-keywords; }
+    html :is(.lp-qa, .panel-fold, .nav-more)::details-content {
+      block-size: 0; overflow: clip; overflow-clip-margin: 6px;
+      transition: block-size var(--dur-3) var(--ease-spring), content-visibility var(--dur-3) allow-discrete;
+    }
+    html :is(.lp-qa, .panel-fold, .nav-more)[open]::details-content { block-size: auto; }
+  }
+
+  /* Navegação lateral: realce desliza de cor */
+  html #nav a { transition: background-color var(--dur-2) var(--ease-standard), color var(--dur-2) var(--ease-standard); }
+
+  /* Landing: "aparecer ao rolar" com a curva da casa, cards em sequência */
+  html .lp-anim .lp-reveal { transform: translateY(12px); transition: opacity 600ms var(--ease-standard), transform 700ms var(--ease-spring); }
+  html .lp-anim .lp-reveal.is-in { transform: none; }
+  html .lp-anim .lp-features > .lp-reveal:nth-child(3n + 2), html .lp-anim .lp-trust > .lp-reveal:nth-child(2) { transition-delay: 70ms; }
+  html .lp-anim .lp-features > .lp-reveal:nth-child(3n), html .lp-anim .lp-trust > .lp-reveal:nth-child(3) { transition-delay: 140ms; }
+}
+
+/* Elevação no hover só com mouse (no toque, o "hover" fica preso) */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  html :is(.journey-card, .round-card:not(.is-locked), .mc-card, .program-card, .dc-card, .cw-tile, .cw-cat):hover {
+    transform: translateY(-2px); box-shadow: var(--lift-shadow) !important;
+  }
+  html .alert-item:hover, html .lp-feature:hover { transform: translateY(-1px); box-shadow: var(--lift-shadow) !important; }
+  html :is(.journey-card:hover .jc-cover, .round-card:hover .rc-banner img) { transform: scale(1.03); }
+  html .btn-cta:hover:not(:disabled) { box-shadow: 0 6px 18px -8px color-mix(in srgb, var(--accent) 70%, transparent) !important; }
+}
+
+/* Camadas flutuantes: vidro no fundo e sombra suave no cartão (vale também sem movimento) */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  html :is(.modal, .sheet, .celebrate, .hs-sheet) {
+    -webkit-backdrop-filter: saturate(140%) blur(10px);
+    backdrop-filter: saturate(140%) blur(10px);
+  }
+  html :is(.dp-overlay.open, .mh-sheet.open, .tv-sheet.open, body.nav-open .sidebar-scrim) {
+    -webkit-backdrop-filter: saturate(140%) blur(6px);
+    backdrop-filter: saturate(140%) blur(6px);
+  }
+}
+html :is(.modal-card, .sheet-card, .celebrate-card, .ui-select-pop, .toast) { box-shadow: var(--float-shadow) !important; }
+html :is(.mt-drawer .mt, .dp, .mh-sheet-card, .tv-sheet-card, .hs-sheet-card) { box-shadow: var(--float-shadow) !important; }
+
+/* Menu lateral aberto no celular: o botão do Mentor não fica por cima do véu */
+html body.nav-open :is(.mt-fab, .ai-fab) { visibility: hidden; }
+
+/* Celular: modais sobem da base como uma folha */
+@media (max-width: 640px) and (prefers-reduced-motion: no-preference) {
+  html .modal-card { animation: m-sheet-up 460ms var(--ease-spring); }
+  @keyframes m-sheet-up { from { transform: translateY(100%); } }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html .skeleton::after { display: none; }
+  html .loading { animation: none; }
+}
+
+/* Landing no celular: seletor de idioma só com a bandeira, para "Criar conta" caber sem cortar.
+   O botão continua com aria-label "Idioma"; o nome some só visualmente. */
+@media (max-width: 420px) {
+  html .lp-nav .lang-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  html .lp-nav .ui-select.is-compact .ui-select-trigger { padding: 5px 8px; gap: 6px; }
+  html .lp-nav .ui-select { min-width: 0; }
+}
+
+/* Selo "Você está aqui" sobre a foto do card: o fundo escuro dos selos de banner (styles.css)
+   apagava o texto escuro do .st-atual. Volta a cor de destaque, legível nos dois temas. */
+html :is(.rc-banner, .jc-media-top) .chip-status.st-atual { background: var(--accent); color: var(--accent-ink); }

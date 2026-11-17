@@ -10,6 +10,7 @@
 // O passo a passo (MissionGuide) continua existindo, DENTRO da ferramenta "Passo a passo"/"Fazer agora".
 // Abrir um card nunca conclui nada: só objetivos e a confirmação explícita contam.
 import { h, mount, toast } from '../../ui.js';
+import { skeletonLines } from '../../motion.js';
 import { ApplicationProcess } from '../ApplicationProcess.js';
 import { icon } from '../../icons.js';
 import { api } from '../../api.js';
@@ -224,7 +225,7 @@ export function MissionHub(m, ctx) {
       button: (label, id, cls = 'btn btn-ghost') => h('button', { type: 'button', class: cls, onClick: () => { const next = tools.find((x) => x.painel === id || x.id === id) || toolsFor({ ...m, id: '1.5' }).ferramentas.find((x) => x.painel === id); sheet.close(); if (next) setTimeout(() => open(next), 200); } }, label, ' ', icon('arrow', { size: 14 })),
     };
     const render = async () => {
-      mount(sheet.body, h('div', { class: 'mh-loading' }, icon('clock', { size: 16 }), ' Carregando…'));
+      mount(sheet.body, skeletonLines(4));
       try { mount(sheet.body, await panel(t, hub)); } catch (e) { mount(sheet.body, h('p', { class: 'mh-notice' }, e.message)); }
     };
     render();
