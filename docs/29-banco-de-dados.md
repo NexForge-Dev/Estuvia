@@ -59,7 +59,12 @@ e `data()`/`save()` do Radar (`server/radar/db.js`), com as coleções em memór
 
 - **Gravar** (`server/entities.js`): a cada gravação, cada item é comparado (JSON com chaves ordenadas) com a
   última versão salva; só inserções, atualizações e exclusões reais vão para `estuvia_apply`, numa transação.
-  Conflito de versão desfaz o lote inteiro no banco **e na memória**, e quem chamou recebe erro.
+  Conflito de versão desfaz o lote inteiro no banco **e na memória**, e quem chamou recebe erro. Chave
+  estrangeira violada (ex.: comentário num post que outra instância acabou de excluir) é tratada como conflito.
+  Requisições cujas mudanças estavam no lote desfeito também recebem erro, mesmo que a vez delas na fila
+  chegue depois (`store.js`, `revertedUpTo`). Texto com NUL (`\u0000`) ou surrogate solto, que o `jsonb`
+  recusa, vai para o banco limpo (`pgSafe` em `entities.js`): sem isso, um único texto travaria todas as
+  gravações da instância.
 - **Sincronizar**: antes de cada requisição `/api`, `estuvia_changes` devolve o que outras instâncias
   gravaram desde a última leitura (por `txid` + xmin do snapshot, para não perder transações que
   confirmaram atrasadas). Resolve o caso da Vercel, com várias instâncias em paralelo.
@@ -70,11 +75,15 @@ e `data()`/`save()` do Radar (`server/radar/db.js`), com as coleções em memór
 ## Aplicar num projeto
 
 1. `npm run db:backup` (cópia somente leitura de tudo).
-2. SQL Editor do projeto: colar e rodar `supabase/migrations/0002_entidades.sql` (idempotente, não apaga nada).
+2. SQL Editor do projeto: colar e rodar, em ordem, `supabase/migrations/0002_entidades.sql` e
+   `0003_permissoes.sql` (idempotentes, não apagam nada).
 3. Publicar o código. Sem a `0002`, o servidor recusa subir e diz qual arquivo aplicar.
 
 ## Testes
 
 `tests/entities-supabase.test.js` roda as funções SQL num Postgres real em memória (PGlite) e simula duas
 instâncias: importação, ida e volta idêntica, conta criada numa instância visível na outra, conflito de versão,
-e-mail duplicado, exclusões, ordem das listas, Radar e a barreira DEV × PROD.
+e-mail duplicado, exclusões, ordem das listas, Radar e a barreira DEV × PROD. As chamadas rodam com o papel
+`service_role`, como no Supabase. `tests/db-integrity.test.js` aplica todas as migrations num banco vazio (duas
+vezes) com os privilégios padrão do Supabase e confere: nada para `anon`/`authenticated`, RLS em toda tabela,
+listas de tabelas iguais no SQL, no código e no `db-backup.mjs`, e colunas tipadas existentes.

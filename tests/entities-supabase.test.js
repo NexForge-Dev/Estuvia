@@ -16,32 +16,36 @@ Object.assign(process.env, {
   DATA_FILE: path.join(tmp, 'db.json'), RADAR_DATA_FILE: path.join(tmp, 'radar.json'), MEDIA_DIR: path.join(tmp, 'media'),
 });
 
-const MIGRATIONS = ['0001_estuvia_state.sql', '0002_entidades.sql']
+const MIGRATIONS = ['0001_estuvia_state.sql', '0002_entidades.sql', '0003_permissoes.sql']
   .map((f) => fs.readFileSync(new URL(`../supabase/migrations/${f}`, import.meta.url), 'utf8')).join('\n');
 
 async function newDatabase() {
   const pg = new PGlite();
-  await pg.exec('create role anon; create role authenticated; create role service_role;');
+  await pg.exec('create role anon; create role authenticated; create role service_role bypassrls;'); // como no Supabase
   await pg.exec(MIGRATIONS);
   return pg;
 }
 
-// Mesmo contrato de database.rpc(): conflitos de versão chegam com code = ESTUVIA_CONFLICT.
+// Como o servidor no Supabase: tudo roda com o papel service_role (a chave secret), não como superusuário,
+// para que as permissões das migrations também sejam testadas.
+const asService = (pg, sql, params) => pg.transaction(async (tx) => {
+  await tx.query('set local role service_role');
+  return (await tx.query(sql, params)).rows;
+});
+// Mesmo contrato de database.rpc(): os erros passam pela mesma classificação (database.rpcError).
 const rpcFor = (pg) => async (name, args) => {
   try {
-    if (name === 'estuvia_apply') return (await pg.query('select public.estuvia_apply($1::jsonb) as r', [JSON.stringify(args.p_ops)])).rows[0].r;
-    if (name === 'estuvia_changes') return (await pg.query('select public.estuvia_changes($1::bigint, $2::text[]) as r', [args.p_since, args.p_tables])).rows[0].r;
+    if (name === 'estuvia_apply') return (await asService(pg, 'select public.estuvia_apply($1::jsonb) as r', [JSON.stringify(args.p_ops)]))[0].r;
+    if (name === 'estuvia_changes') return (await asService(pg, 'select public.estuvia_changes($1::bigint, $2::text[]) as r', [args.p_since, args.p_tables]))[0].r;
     throw new Error(`rpc desconhecida: ${name}`);
   } catch (e) {
-    const err = new Error(e.message);
-    if (/estuvia_conflict/.test(e.message)) err.code = 'ESTUVIA_CONFLICT';
-    throw err;
+    throw database.rpcError(e.message);
   }
 };
 // Mesmo SELECT paginado de database.readEntityPage (o Supabase faz isso pela API REST).
 const pageFor = (pg) => async (table, after, limit) => {
   if (!/^[a-z_]+$/.test(table)) throw new Error('tabela inválida');
-  return (await pg.query(`select id, version, seq, ins_seq, data from public.${table} where ins_seq > $1 order by ins_seq limit $2`, [after, limit])).rows;
+  return asService(pg, `select id, version, seq, ins_seq, data from public.${table} where ins_seq > $1 order by ins_seq limit $2`, [after, limit]);
 };
 const legacyFor = (pg) => async (id) => (await pg.query('select state from public.estuvia_state where id = $1', [id])).rows[0]?.state ?? null;
 
@@ -246,4 +250,67 @@ test('sem as tabelas (0002 não aplicada) a mensagem diz o que fazer', async () 
   const E = await newInstance();
   await assert.rejects(E.initStore(), /aplique supabase\/migrations\/0002_entidades\.sql/);
   database.setRpcForTests(rpcFor(pg));
+});
+
+test('texto com NUL ou surrogate solto (recusados pelo jsonb) é gravado limpo e não trava as gravações seguintes', async () => {
+  await A.syncStore();
+  await A.users.update('u1', (u) => { u.profile.bio = 'a\u0000b \ud800 c'; u.profile['ch\u0000ave'] = 1; });
+  const row = await one(`select data->'profile'->>'bio' as bio, data->'profile' ? 'chave' as chave from public.users where id = 'u1'`);
+  assert.equal(row.bio, 'ab \ufffd c');
+  assert.equal(row.chave, true);
+  await A.users.update('u2', (u) => { u.profile.depois = true; }); // a instância segue gravando
+  assert.equal((await one(`select data->'profile'->>'depois' as d from public.users where id = 'u2'`)).d, 'true');
+  assert.ok(A.storeHealth().ok);
+});
+
+test('chave estrangeira violada (post excluído por outra instância) vira conflito: desfeito e a instância se recupera', async () => {
+  await A.syncStore();
+  await B.syncStore();
+  await A.community.mutate((c) => { c.posts.push({ id: 'pfk', autorId: 'u1', curtidas: [], salvos: [] }); });
+  await B.syncStore();
+  await A.community.mutate((c) => { c.posts = c.posts.filter((p) => p.id !== 'pfk'); });
+  // B ainda não sabe da exclusão e comenta no post.
+  await assert.rejects(B.community.mutate((c) => { c.comments.push({ id: 'cfk', postId: 'pfk', autorId: 'u2', texto: 'oi' }); }), (e) => e.code === 'ESTUVIA_CONFLICT');
+  assert.ok(!B.community.read((c) => c.comments.some((x) => x.id === 'cfk')), 'comentário órfão saiu da memória');
+  await B.syncStore();
+  await B.users.update('u2', (u) => { u.profile.fk = 'ok'; }); // sem isto, toda gravação seguinte de B falharia
+  assert.equal((await one(`select data->'profile'->>'fk' as v from public.users where id = 'u2'`)).v, 'ok');
+});
+
+test('conflito desfaz mudanças de outra requisição na fila: ela também recebe erro (não responde "salvo")', async () => {
+  await A.syncStore();
+  await B.syncStore();
+  await A.users.update('u1', (u) => { u.profile.fila = 'A'; });
+  // Duas requisições em B antes de a fila andar: a primeira conflita (u1 velho); a segunda mexe só em u2.
+  const p1 = B.users.update('u1', (u) => { u.profile.fila = 'B'; });
+  const p2 = B.users.update('u2', (u) => { u.profile.fila = 'B2'; });
+  await assert.rejects(p1, (e) => e.code === 'ESTUVIA_CONFLICT');
+  await assert.rejects(p2, (e) => e.code === 'ESTUVIA_CONFLICT');
+  assert.equal(B.users.findById('u2').profile.fila, undefined, 'mudança desfeita na memória');
+  assert.equal((await one(`select data->'profile'->>'fila' as v from public.users where id = 'u2'`)).v, null);
+  // Requisições depois do conflito voltam a gravar normalmente.
+  await B.syncStore();
+  await B.users.update('u2', (u) => { u.profile.fila = 'B3'; });
+  assert.equal((await one(`select data->'profile'->>'fila' as v from public.users where id = 'u2'`)).v, 'B3');
+});
+
+test('Radar: conflito desfaz mudanças de outra chamada na fila: ela também recebe erro (não responde "salvo")', async () => {
+  const R1 = await import('../server/radar/db.js'); // já iniciado no teste do Radar acima
+  const R2 = await import('../server/radar/db.js?instancia=r2');
+  await R2.initRadarStore(); // segunda instância: lê as tabelas radar_*
+  R1.data().programs.find((p) => p.id === 'prog1').nome = 'Máster X (R1)';
+  await R1.save();
+  // R2 ainda tem prog1 na versão velha. Duas chamadas antes de a fila andar: a primeira conflita.
+  R2.data().programs.find((p) => p.id === 'prog1').nome = 'Máster X (R2)';
+  const p1 = R2.save();
+  R2.data().programs.find((p) => p.id === 'prog2').nome = 'Máster Y (R2)';
+  const p2 = R2.save();
+  await assert.rejects(p1, (e) => e.code === 'ESTUVIA_CONFLICT');
+  await assert.rejects(p2, (e) => e.code === 'ESTUVIA_CONFLICT');
+  assert.equal(R2.data().programs.find((p) => p.id === 'prog2').nome, 'Máster Y', 'mudança desfeita na memória');
+  assert.equal((await one(`select nome from public.radar_programs where id = 'prog2'`)).nome, 'Máster Y');
+  await R2.syncRadarStore();
+  R2.data().programs.find((p) => p.id === 'prog2').nome = 'Máster Y2';
+  await R2.save(); // depois do conflito, volta a gravar
+  assert.equal((await one(`select nome from public.radar_programs where id = 'prog2'`)).nome, 'Máster Y2');
 });

@@ -17,12 +17,14 @@ const FAR_FUTURE = Number.MAX_SAFE_INTEGER; // p_since além de qualquer txid: e
 const ts = (v) => {
   if (typeof v !== 'string' && typeof v !== 'number') return null;
   const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  if (Number.isNaN(d.getTime())) return null;
+  const y = d.getUTCFullYear();
+  return y >= 1 && y <= 9999 ? d.toISOString() : null; // "+275760-…" o Postgres recusa (e a gravação inteira falharia)
 };
 const int = (v) => (Number.isInteger(v) && Math.abs(v) < 2 ** 31 ? v : null);
 const txt = (v) => (v == null ? null : typeof v === 'string' ? v : typeof v === 'object' ? null : String(v));
 const bool = (v) => (v == null ? null : !!v);
-const day = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(v || '') ? v : null);
+const day = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(v || '') && ts(`${v}T00:00:00Z`)?.startsWith(v) ? v : null); // 2026-13-45 → null
 
 /** Colunas tipadas de cada tabela, extraídas do objeto. `data` (o objeto inteiro) é acrescentado depois. */
 export const COLUMNS = {
@@ -82,6 +84,24 @@ export function arrayCollection(table, getList, setList) {
 /** Coleção sobre um objeto { chave: valor } (ex.: analytics), com ids derivados das chaves. */
 export function mapCollection(table, { entries, put, del }) {
   return { table, entries, put, del };
+}
+
+// ---------------------------------------------------------------- texto que o Postgres aceita
+
+// jsonb e text recusam o caractere NUL (\u0000) e surrogates UTF-16 soltos. Um único texto assim enviado por
+// um usuário faria o lote inteiro falhar e, como o erro não é conflito, ficaria na memória fazendo TODA gravação
+// seguinte da instância falhar. No banco vai o texto sem NUL e com o surrogate solto trocado por U+FFFD.
+const BAD_TEXT = /\\u0000|\\ud[89a-f][0-9a-f]{2}/i; // como aparecem no JSON.stringify
+const cleanText = (s) => s.replace(/\u0000/g, '').toWellFormed();
+export function pgSafe(value) {
+  if (typeof value === 'string') return cleanText(value);
+  if (Array.isArray(value)) return value.map(pgSafe);
+  if (value && typeof value === 'object') {
+    const out = {};
+    for (const [k, v] of Object.entries(value)) out[cleanText(k)] = pgSafe(v);
+    return out;
+  }
+  return value;
 }
 
 // ---------------------------------------------------------------- comparação estável
@@ -202,7 +222,8 @@ export function createEntityStore(collections, { label }) {
         const json = stable(obj);
         const prev = known.get(id);
         if (prev && prev.json === json) continue;
-        const row = { ...COLUMNS[t](obj, id), data: JSON.parse(json) };
+        const data = BAD_TEXT.test(json) ? pgSafe(JSON.parse(json)) : JSON.parse(json);
+        const row = { ...COLUMNS[t](data, id), data };
         upserts.push({ op: { t, id, v: prev ? prev.version : null, row }, json, size: json.length });
       }
       for (const [id, prev] of known) if (!current.has(id)) deletes.push({ op: { t, id, v: prev.version, del: true }, size: 64 });

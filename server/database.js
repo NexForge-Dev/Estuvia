@@ -27,9 +27,14 @@ export function checkDatabaseEnvironment({ appEnv, ref, prodRef, devRef, marker,
   return { ok: true, aviso: `Banco ${ref} sem marcação de ambiente. Depois de separar DEV e PROD, marque-o: npm run db:env -- mark ${appEnv}` };
 }
 
+// Projeto Supabase de produção (docs/28-ambientes-dev-prod.md). Vale mesmo quando SUPABASE_PROD_PROJECT_REF
+// falta no .env: sem isto, um .env de desenvolvimento incompleto apontando para PROD só seria barrado pela
+// marcação no banco, depois da primeira leitura (e o Storage nem chega a consultar a marcação).
+export const KNOWN_PROD_REF = 'trdpcjvyfieumxakhwop';
+
 /** Barreira por URL aplicada a TODO cliente Supabase (banco e Storage), antes de qualquer acesso. */
 export function assertProjectAllowed() {
-  const r = checkDatabaseEnvironment({ appEnv: config.appEnv, ref: projectRef(config.supabaseUrl), prodRef: config.supabaseProdRef, devRef: config.supabaseDevRef, marker: null, users: 1 });
+  const r = checkDatabaseEnvironment({ appEnv: config.appEnv, ref: projectRef(config.supabaseUrl), prodRef: config.supabaseProdRef || KNOWN_PROD_REF, devRef: config.supabaseDevRef, marker: null, users: 1 });
   if (!r.ok) throw new Error(`[ambiente] ${r.erro}`);
 }
 
@@ -50,20 +55,26 @@ let rpcOverride = null;
 /** Apenas para testes: substitui as chamadas ao Supabase (ex.: PGlite executando as mesmas funções SQL). */
 export function setRpcForTests(fn) { rpcOverride = fn; }
 
+/**
+ * Classifica o erro de uma função SQL. Conflito de versão e chave estrangeira violada (ex.: comentário num post
+ * que outra instância acabou de excluir) viram ESTUVIA_CONFLICT: o lote é desfeito também na memória. Sem isso,
+ * a linha órfã ficaria na memória e TODA gravação seguinte desta instância falharia do mesmo jeito.
+ */
+export function rpcError(message) {
+  const conflict = /estuvia_conflict|violates foreign key constraint/i.test(message);
+  const err = new Error(conflict ? `Os dados mudaram em outra instância do servidor. Tente novamente. (${message})` : `Supabase: ${message}`);
+  if (conflict) err.code = 'ESTUVIA_CONFLICT';
+  if (/function .*estuvia_(apply|changes).* does not exist|Could not find the function/i.test(message)) err.code = 'ESTUVIA_NO_SCHEMA';
+  return err;
+}
+
 /** Chama uma função SQL (estuvia_apply / estuvia_changes). Conflitos de versão chegam com código ESTUVIA_CONFLICT. */
 export async function rpc(name, args) {
   if (rpcOverride) return rpcOverride(name, args);
   const db = await client();
   if (!db) throw new Error("Supabase não configurado.");
   const { data, error } = await db.rpc(name, args);
-  if (error) {
-    const err = new Error(/estuvia_conflict/.test(error.message)
-      ? `Os dados mudaram em outra instância do servidor. Tente novamente. (${error.message})`
-      : `Supabase: ${error.message}`);
-    if (/estuvia_conflict/.test(error.message)) err.code = "ESTUVIA_CONFLICT";
-    if (/function .*estuvia_(apply|changes).* does not exist|Could not find the function/i.test(error.message)) err.code = "ESTUVIA_NO_SCHEMA";
-    throw err;
-  }
+  if (error) throw rpcError(error.message);
   return data;
 }
 

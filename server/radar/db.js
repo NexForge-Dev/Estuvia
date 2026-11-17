@@ -23,6 +23,7 @@ import { config } from '../config.js';
 import { usesSupabase, readLegacyState } from '../database.js';
 import { createEntityStore, arrayCollection } from '../entities.js';
 import { users } from '../store.js';
+import { writeFileAtomic } from '../storage.js';
 
 const COLLECTIONS = ['sources', 'snapshots', 'programs', 'opportunities', 'windows', 'events', 'availability', 'revisions', 'reviews', 'runs', 'subscriptions', 'alerts', 'agendaLinks'];
 // Retenção (docs/11-radar.md, "Proteção de dados do Radar"). Nada é cortado em silêncio: cada poda vai para o log.
@@ -54,7 +55,12 @@ function load() {
     const parsed = JSON.parse(fs.readFileSync(radarFile(), 'utf8'));
     return { ...empty(), ...parsed };
   } catch (err) {
-    if (err.code !== 'ENOENT') console.error('[radar] falha ao ler base, iniciando vazia:', err.message);
+    if (err.code !== 'ENOENT') {
+      // Base ilegível: guarda uma cópia antes de seguir vazia (a próxima gravação sobrescreveria o arquivo).
+      const copia = `${radarFile()}.ilegivel-${new Date().toISOString().replace(/[:.]/g, '-')}`;
+      try { fs.copyFileSync(radarFile(), copia); } catch { /* sem arquivo para copiar */ }
+      console.error(`[radar] falha ao ler base, iniciando vazia (cópia do arquivo em ${copia}):`, err.message);
+    }
     return empty();
   }
 }
@@ -157,6 +163,12 @@ export function applyRetention(d = data(), now = Date.now()) {
   return podado;
 }
 
+// Conflito desfaz na memória TODAS as mudanças pendentes do lote, inclusive as de chamadas que ainda esperam
+// na fila: essas não podem responder "salvo" (mesma lógica de store.js).
+let saveTick = 0;
+let revertedUpTo = 0;
+const revertedError = () => Object.assign(new Error('Os dados mudaram em outra instância do servidor e esta alteração foi desfeita. Tente novamente.'), { code: 'ESTUVIA_CONFLICT' });
+
 let failNextWrite = null;
 /** Apenas para testes: faz a próxima gravação falhar com este erro (simula o banco recusando). */
 export function failNextWriteForTests(err) { failNextWrite = err; }
@@ -170,16 +182,21 @@ export function save() {
   applyRetention(d);
   const snapshot = usesSupabase() ? null : JSON.stringify(d);
   const file = radarFile();
+  const tick = ++saveTick;
   const run = writing.then(async () => {
     if (failNextWrite) { const e = failNextWrite; failNextWrite = null; throw e; }
     if (usesSupabase()) {
       if (!entities) throw new Error('Supabase Radar store was not initialized before writing.');
-      await entities.persist(); // só as linhas que mudaram; conflito de versão = erro ESTUVIA_CONFLICT
+      try {
+        await entities.persist(); // só as linhas que mudaram; conflito de versão = erro ESTUVIA_CONFLICT
+      } catch (err) {
+        if (err.code === 'ESTUVIA_CONFLICT') revertedUpTo = saveTick;
+        throw err;
+      }
+      if (revertedUpTo >= tick) throw revertedError();
     } else {
       await fs.promises.mkdir(path.dirname(file), { recursive: true });
-      const tmp = `${file}.${process.pid}.tmp`;
-      await fs.promises.writeFile(tmp, snapshot, { mode: 0o600 });
-      await fs.promises.rename(tmp, file);
+      await writeFileAtomic(file, snapshot, { mode: 0o600 });
     }
     lastWriteError = null;
   });

@@ -10,6 +10,29 @@ import zlib from 'node:zlib';
 import { config } from './config.js';
 import { usesSupabase, assertProjectAllowed } from './database.js';
 
+/**
+ * Grava um arquivo local de forma atômica: temporário + rename. O nome do temporário é único por chamada
+ * (duas gravações simultâneas do mesmo arquivo não escrevem no mesmo temporário). No Windows o rename sobre
+ * um arquivo aberto por outro processo (antivírus, indexador, editor) falha com EPERM/EBUSY/EACCES por alguns
+ * milissegundos: tenta de novo antes de desistir. Em falha, o temporário é apagado e o original fica intacto.
+ */
+export async function writeFileAtomic(file, data, options = {}, { tries = 8, rename = fs.promises.rename } = {}) {
+  const tmp = `${file}.${process.pid}.${Math.random().toString(36).slice(2, 10)}.tmp`;
+  await fs.promises.writeFile(tmp, data, options);
+  for (let i = 1; ; i++) {
+    try {
+      await rename(tmp, file);
+      return;
+    } catch (err) {
+      if (i >= tries || !['EPERM', 'EBUSY', 'EACCES'].includes(err.code)) {
+        await fs.promises.unlink(tmp).catch(() => {});
+        throw err;
+      }
+      await new Promise((ok) => setTimeout(ok, 20 * i));
+    }
+  }
+}
+
 const DOCS_BUCKET = process.env.SUPABASE_DOCS_BUCKET || 'estuvia-documents';
 const MEDIA_BUCKET = process.env.SUPABASE_MEDIA_BUCKET || 'estuvia-community';
 const META_BUCKET = process.env.SUPABASE_META_BUCKET || 'estuvia-meta';
@@ -61,6 +84,9 @@ async function download(name, key) {
   return Buffer.from(await data.arrayBuffer());
 }
 
+// Arquivo que já não existe não é falha de exclusão; qualquer outro erro sobe para quem chamou.
+const ignoreMissing = (err) => { if (err?.code !== 'ENOENT') throw err; };
+
 async function remove(name, keys) {
   if (!keys.length) return;
   const b = await bucket(name);
@@ -90,22 +116,29 @@ export async function getDocument(userId, id) {
 
 export async function deleteDocument(userId, id) {
   if (!usesSupabaseStorage()) {
-    await fs.promises.unlink(docPath(userId, id)).catch(() => {});
+    await fs.promises.unlink(docPath(userId, id)).catch(ignoreMissing);
     return;
   }
-  await remove(DOCS_BUCKET, [docKey(userId, id)]).catch(() => {});
+  // O erro sobe: quem chama registra a exclusão pendente (LGPD) em vez de perdê-la em silêncio.
+  await remove(DOCS_BUCKET, [docKey(userId, id)]);
 }
 
 export async function purgeDocuments(userId) {
   if (!/^[\w-]+$/.test(userId)) return;
   if (!usesSupabaseStorage()) {
-    await fs.promises.rm(docDir(userId), { recursive: true, force: true }).catch(() => {});
+    await fs.promises.rm(docDir(userId), { recursive: true, force: true });
     return;
   }
   const b = await bucket(DOCS_BUCKET);
-  const { data, error } = await b.list(userId, { limit: 1000 });
-  if (error) throw new Error(`Supabase Storage: ${error.message}`);
-  await remove(DOCS_BUCKET, (data || []).map((f) => `${userId}/${f.name}`));
+  // Em lotes até a pasta esvaziar: uma listagem só traz até 1000 arquivos (exclusão de conta não pode deixar sobras).
+  for (let rodada = 0; rodada < 100; rodada++) {
+    const { data, error } = await b.list(userId, { limit: 1000 });
+    if (error) throw new Error(`Supabase Storage: ${error.message}`);
+    const files = (data || []).filter((f) => f.id);
+    if (!files.length) return;
+    await remove(DOCS_BUCKET, files.map((f) => `${userId}/${f.name}`));
+  }
+  throw new Error(`Supabase Storage: arquivos de ${userId} não terminaram de ser excluídos.`);
 }
 
 // ---------- Imagens da comunidade ----------
@@ -128,10 +161,10 @@ export async function getMedia(id, ext) {
 
 export async function deleteMedia(id, ext) {
   if (!usesSupabaseStorage()) {
-    await fs.promises.unlink(path.join(config.mediaDir, mediaKey(id, ext))).catch(() => {});
+    await fs.promises.unlink(path.join(config.mediaDir, mediaKey(id, ext))).catch(ignoreMissing);
     return;
   }
-  await remove(MEDIA_BUCKET, [mediaKey(id, ext)]).catch(() => {});
+  await remove(MEDIA_BUCKET, [mediaKey(id, ext)]);
 }
 
 // ---------- Metadados (revisões editoriais dos documentos) ----------
@@ -148,9 +181,7 @@ export async function writeMeta(name, value) {
   if (!usesSupabaseStorage()) {
     const file = path.join(path.dirname(config.dataFile), name);
     await fs.promises.mkdir(path.dirname(file), { recursive: true });
-    const tmp = `${file}.${process.pid}.tmp`;
-    await fs.promises.writeFile(tmp, snapshot);
-    await fs.promises.rename(tmp, file);
+    await writeFileAtomic(file, snapshot);
     return;
   }
   await upload(META_BUCKET, name, snapshot, 'application/json', true);
@@ -178,11 +209,7 @@ export async function putEvidence(key, text) {
     const dir = evidenceDir();
     await fs.promises.mkdir(dir, { recursive: true });
     const file = path.join(dir, name);
-    if (!fs.existsSync(file)) {
-      const tmp = `${file}.${process.pid}.tmp`;
-      await fs.promises.writeFile(tmp, gz);
-      await fs.promises.rename(tmp, file);
-    }
+    if (!fs.existsSync(file)) await writeFileAtomic(file, gz);
     return evidenceRef(key);
   }
   await upload(META_BUCKET, `${EVIDENCE_PREFIX}/${name}`, gz, 'application/gzip', true);

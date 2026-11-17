@@ -8,6 +8,7 @@ import crypto from 'node:crypto';
 import { config } from './config.js';
 import { usesSupabase, checkDatabaseEnvironment, projectRef, assertProjectAllowed, readLegacyState } from './database.js';
 import { createEntityStore, arrayCollection, mapCollection } from './entities.js';
+import { writeFileAtomic } from './storage.js';
 
 const EMPTY_COMMUNITY = () => ({ posts: [], comments: [], groups: [], reports: [], media: [] });
 const EMPTY = { users: [], audit: [], community: EMPTY_COMMUNITY(), analytics: { days: {} } };
@@ -23,7 +24,13 @@ function load() {
     data.analytics = { days: {}, ...data.analytics };
     return data;
   } catch (err) {
-    if (err.code !== 'ENOENT') console.error('[store] falha ao ler base, iniciando vazia:', err.message);
+    if (err.code !== 'ENOENT') {
+      // Base ilegível: guarda uma cópia antes de seguir vazia. Sem isto, a primeira gravação sobrescreveria o
+      // arquivo e apagaria de vez tudo o que ainda desse para recuperar à mão.
+      const copia = `${config.dataFile}.ilegivel-${new Date().toISOString().replace(/[:.]/g, '-')}`;
+      try { fs.copyFileSync(config.dataFile, copia); } catch { /* sem arquivo para copiar */ }
+      console.error(`[store] falha ao ler base, iniciando vazia (cópia do arquivo em ${copia}):`, err.message);
+    }
     return structuredClone(EMPTY);
   }
 }
@@ -153,23 +160,36 @@ export async function syncStore() {
 
 // Última falha de gravação (null quando a última escrita deu certo): exposta em /api/health.
 let lastWriteError = null;
+
+// Cada persist() recebe um número; a mutação de quem chamou já está na memória nesse momento. Um conflito
+// desfaz na memória TODAS as mudanças pendentes do lote, inclusive as de outras requisições que ainda esperam
+// a vez na fila: essas não podem responder "salvo" só porque, quando chegou a vez delas, não havia mais nada
+// para gravar. `revertedUpTo` marca até qual chamada as mudanças podem ter sido desfeitas.
+let persistTick = 0;
+let revertedUpTo = 0;
+const revertedError = () => Object.assign(new Error('Os dados mudaram em outra instância do servidor e esta alteração foi desfeita. Tente novamente.'), { code: 'ESTUVIA_CONFLICT' });
 export const storeHealth = () => ({ ok: !lastWriteError, erro: lastWriteError });
 
 function persist() {
   // Serializa as escritas. JSON: arquivo temporário + rename (evita JSON corrompido). Supabase: só as linhas
   // que mudaram, numa transação. A promessa devolvida REJEITA se a gravação falhar: quem chamou não pode responder "salvo".
   const snapshot = usesSupabase() ? null : JSON.stringify(db, null, 2);
+  const tick = ++persistTick;
   const run = writing.then(async () => {
     if (usesSupabase()) {
       if (!entities) throw new Error('Supabase store was not initialized before writing.');
-      await entities.persist();
+      try {
+        await entities.persist();
+      } catch (err) {
+        if (err.code === 'ESTUVIA_CONFLICT') revertedUpTo = persistTick;
+        throw err;
+      }
+      if (revertedUpTo >= tick) throw revertedError();
       lastWriteError = null;
       return;
     }
     await fs.promises.mkdir(path.dirname(config.dataFile), { recursive: true });
-    const tmp = `${config.dataFile}.${process.pid}.tmp`;
-    await fs.promises.writeFile(tmp, snapshot, { mode: 0o600 });
-    await fs.promises.rename(tmp, config.dataFile);
+    await writeFileAtomic(config.dataFile, snapshot, { mode: 0o600 });
     lastWriteError = null;
   });
   // A fila continua andando mesmo após uma falha (a próxima escrita grava o estado completo).

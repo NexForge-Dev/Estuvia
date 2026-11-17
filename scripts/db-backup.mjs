@@ -27,13 +27,16 @@ const ref = new URL(url).hostname.split('.')[0];
 const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 const missing = (msg) => /does not exist|Could not find the table/i.test(msg || '');
 
+// Páginas pequenas: linhas do Radar (fichas do DUA, snapshots) têm até ~25 KB cada, e 1000 de uma vez
+// estouram o tempo-limite de consulta do Supabase (o mesmo motivo da carga paginada em server/entities.js).
+const PAGE = 200;
 async function dump(table) {
   const rows = [];
-  for (let from = 0; ; from += 1000) {
-    const { data, error } = await db.from(table).select('*').order('id').range(from, from + 999);
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await db.from(table).select('*').order('id').range(from, from + PAGE - 1);
     if (error) return missing(error.message) ? null : Promise.reject(new Error(`${table}: ${error.message}`));
     rows.push(...data);
-    if (data.length < 1000) return rows;
+    if (data.length < PAGE) return rows;
   }
 }
 
