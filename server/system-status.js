@@ -10,6 +10,7 @@ import { aiStatus, checkAI } from './ai-health.js';
 import { fxEnabled, cachedRate, refreshRate } from './fx.js';
 import { schedulerRunning, lastScheduledRun } from './radar/scheduler.js';
 import { overview as radarOverview } from './radar/admin.js';
+import { importHealth, importHealthText } from './radar/import-health.js';
 import { requestStats, uptimeMs, startedAtIso } from './ops.js';
 
 // Lido direto do .env (sem importar os módulos de vídeos/preços: o Status não depende deles).
@@ -68,6 +69,12 @@ export async function systemStatus({ check = false } = {}) {
         : radarErros24h ? `${radarErros24h} execução(ões) com erro nas últimas 24 h.`
           : `${radar.fontes.length} fonte(s) monitoradas${radar.desatualizadas.length ? ` · ${radar.desatualizadas.length} sem verificação recente` : ''}.`,
   });
+
+  // Coletor do DUA: as fontes da Junta só chegam pela importação feita fora da Vercel (npm run radar:import).
+  const coletor = importHealth();
+  if (coletor.ativo) {
+    add({ id: 'coletor-dua', nome: 'Coletor do DUA (importação)', grupo: 'Plataforma', estado: coletor.atrasado ? 'erro' : 'ok', detalhe: importHealthText(coletor) });
+  }
 
   // IA
   const mentorBase = ia.mentor.ativo ? { estado: 'ok', detalhe: `${ia.mentor.nome} configurado. Use "Verificar agora" para testar a chave.` }

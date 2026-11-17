@@ -1,0 +1,41 @@
+name: Disponibilidade (ping em /api/health)
+
+# Chama /api/health a cada 15 minutos. Se a plataforma não responder, o job falha e o GitHub manda
+# e-mail para quem editou este agendamento por último (Settings → Notifications → Actions).
+# Precisa de UMA variável do repositório (Settings → Secrets and variables → Actions → Variables):
+#   ESTUVIA_URL  ex.: https://estuvia-pi.vercel.app   (sem barra no fim)
+# Sem ela, o job termina sem fazer nada.
+# Tenta 3 vezes com intervalo, porque a primeira chamada depois de um tempo parada (cold start) pode demorar.
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Chamar /api/health
+        env:
+          BASE: ${{ vars.ESTUVIA_URL }}
+        run: |
+          if [ -z "$BASE" ]; then
+            echo "Variável ESTUVIA_URL não definida: nada a fazer."
+            exit 0
+          fi
+          for i in 1 2 3; do
+            if curl --fail-with-body -sS --max-time 30 "$BASE/api/health"; then
+              echo
+              echo "OK na tentativa $i."
+              exit 0
+            fi
+            echo "Tentativa $i falhou."
+            sleep 15
+          done
+          echo "::error::$BASE/api/health não respondeu em 3 tentativas."
+          exit 1

@@ -4,6 +4,7 @@
 import crypto from 'node:crypto';
 import express from 'express';
 import { runScheduled } from '../radar/scheduler.js';
+import { alertStaleImport } from '../radar/import-health.js';
 
 const router = express.Router();
 // A função da Vercel tem até 60 s (vercel.json); deixa folga para sincronizar e responder.
@@ -22,7 +23,9 @@ router.get('/radar', async (req, res) => {
   if (ok === null) return res.status(503).json({ error: 'Coleta agendada desligada: defina CRON_SECRET (16+ caracteres).' });
   if (!ok) return res.status(401).json({ error: 'Não autorizado.' });
   const r = await runScheduled({ budgetMs: BUDGET_MS });
-  res.json({ ok: true, ...r });
+  // Coletor do DUA (importação feita fora da Vercel) parado há mais de 24 h: avisa o administrador.
+  const coletor = await alertStaleImport().catch((err) => ({ alerta: false, erro: err.message }));
+  res.json({ ok: true, ...r, coletor });
 });
 
 export default router;
