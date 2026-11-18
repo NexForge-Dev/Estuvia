@@ -25,6 +25,7 @@ export async function missionView(jid, mid) {
     window.scrollTo(0, scrollY);
   };
 
+  let mutSeq = 0;
   const ctx = {
     api,
     state: { open: null },
@@ -33,15 +34,25 @@ export async function missionView(jid, mid) {
     categoryForRound: (n) => CATEGORY_BY_ROUND[n] || 'pessoal',
     openAssistant,
     redraw: () => draw(),
+    // Uma alteração por vez: a tela fica ocupada até a resposta (clique duplo não dessincroniza) e
+    // respostas antigas são ignoradas. Conflito (409, outra aba já mudou): recarrega do servidor.
     async mutate(promise) {
+      const my = ++mutSeq;
+      root.classList.add('is-busy'); root.setAttribute('aria-busy', 'true');
       try {
         const r = await promise;
+        if (my !== mutSeq) return;
         if (r.journey) { journey = r.journey; cacheJourney(r.journey); }
         mission = r.mission || (await api.get(`/journeys/${jid}/missions/${mid}`)).mission;
         if (r.events?.some((e) => e.tipo === 'missao-concluida')) ctx.state.open = null;
         draw();
         showEvents(r.events || []);
-      } catch (e) { toast(e.message, 'err'); }
+      } catch (e) {
+        toast(e.message, 'err');
+        if (e.status === 409 && my === mutSeq) await ctx.reload().catch(() => {});
+      } finally {
+        if (my === mutSeq) { root.classList.remove('is-busy'); root.removeAttribute('aria-busy'); }
+      }
     },
     async saveDoc(id, status) {
       setMe(await api.put('/me/documents', { [id]: status }));

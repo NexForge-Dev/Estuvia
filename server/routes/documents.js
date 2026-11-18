@@ -536,7 +536,13 @@ router.delete('/files/:fid', async (req, res) => {
   const meta = (req.user.docFiles || []).find((f) => f.id === req.params.fid);
   if (!meta) return res.status(404).json({ error: 'Arquivo não encontrado.' });
   await removeFile(req.user.id, meta);
-  const user = await updateUser(req.user.id, (u) => { u.docFiles = (u.docFiles || []).filter((f) => f.id !== meta.id); });
+  const user = await updateUser(req.user.id, (u) => {
+    u.docFiles = (u.docFiles || []).filter((f) => f.id !== meta.id);
+    // Último arquivo do documento apagado: "Arquivo enviado" deixa de ser verdade.
+    const r = u.docRecords?.[meta.docId];
+    const left = u.docFiles.some((f) => f.docId === meta.docId && !['apostila', 'traducao', 'comprovante-traducao'].includes(f.papel));
+    if (r?.estado === 'arquivo-enviado' && !left) { delete r.estado; delete r.estadoBase; r.atualizadoEm = new Date().toISOString(); }
+  });
   audit.log({ action: 'documents.file.deleted', userId: req.user.id, docId: meta.docId }).catch(() => {});
   res.json({ documento: meta.docId === PERSONAL.id ? null : detail(user, req, meta.docId) });
 });

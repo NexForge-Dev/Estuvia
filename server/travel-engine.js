@@ -142,12 +142,13 @@ export function computeTravel(user, jid, now = new Date()) {
       horario: i === arr.findLastIndex((x) => x.meio === 'aviao') ? chosen?.horarioChegada || null : null,
       operador: e.meio === 'aviao' ? chosen?.companhia || null : null,
       custo: e.meio === 'aviao' ? (i === 0 ? num(chosen?.voo) : null) : e.meio === 'trem' || e.meio === 'onibus' ? num(chosen?.terrestre) : null,
+      moeda: chosen?.moeda || 'EUR',
       status: chosen?.comprada && e.meio === 'aviao' ? 'comprado' : 'planejado',
     }));
     etapas.push({
       ordem: etapas.length + 1, de: cidade || 'Destino', para: moradia ? `Minha moradia: ${moradia.nome}${moradia.bairro ? ` (${moradia.bairro})` : ''}` : 'Minha moradia', meio: 'local',
       rotulo: tr.chegada.meio ? { onibus: 'Ônibus urbano', taxi: 'Táxi', ape: 'A pé', carro: 'Carona / aplicativo', metro: 'Metrô' }[tr.chegada.meio] || 'Transporte local' : 'Transporte local',
-      data: null, horario: null, operador: null, custo: num(chosen?.transporteLocal), status: moradia ? 'planejado' : 'a-definir',
+      data: null, horario: null, operador: null, custo: num(chosen?.transporteLocal), moeda: chosen?.moeda || 'EUR', status: moradia ? 'planejado' : 'a-definir',
     });
     itinerario = { percurso: chosenTpl?.nome || chosen?.rota, etapas, completo: Boolean(chosen?.dataViagem && moradia) };
   }
@@ -156,7 +157,8 @@ export function computeTravel(user, jid, now = new Date()) {
   const aeroportoChegada = chosen?.aeroportoChegada || (chosenTpl ? chosenTpl.aeroportos[0] : null) || tr.chegada.aeroporto || null;
   const chegada = {
     aeroporto: aeroportoChegada,
-    data: tr.chegada.data || chosen?.dataViagem || null,
+    // Chegada salva antes da data da viagem escolhida ficou velha (a viagem mudou): segue a viagem.
+    data: (tr.chegada.data && (!chosen?.dataViagem || tr.chegada.data >= chosen.dataViagem) ? tr.chegada.data : null) || chosen?.dataViagem || null,
     horario: tr.chegada.horario || chosen?.horarioChegada || null,
     meio: tr.chegada.meio || null,
     transporte: tr.chegada.transporte || null,

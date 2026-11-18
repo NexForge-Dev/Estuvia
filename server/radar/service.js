@@ -16,6 +16,14 @@ import { languageRequirements } from './connectors/dua-program.js';
 const fichaIdiomas = (f) => (f ? languageRequirements(f.requisitos || []) : []);
 import { matchDegree } from '../../public/js/data/degree.js';
 
+// Site próprio do mestrado como veio da fonte pode ser "-", ou duas URLs coladas ("…/citpa  y  …/mara/").
+// Só passa adiante a primeira URL http(s) válida; o resto vira null (o botão some em vez de quebrar).
+export function cleanWeb(raw) {
+  const m = String(raw || '').match(/https?:\/\/[^\s]+/i);
+  if (!m) return null;
+  try { const u = new URL(m[0].replace(/[),.;]+$/, '')); return /^https?:$/.test(u.protocol) ? u.href : null; } catch { return null; }
+}
+
 let scholarships = [];
 export async function initRadar() {
   ensureSources();
@@ -175,7 +183,7 @@ function card(opp, { user = null, now = Date.now() } = {}) {
     universidade: { id: u.id, sigla: u.sigla, nome: u.nome, cidade: u.cidade, pais: u.pais, regiao: u.regiao, capa: u.capa, logo: u.logo },
     programa: {
       nome: p.nome, ramos: p.ramos || [], codigo: p.codigo, tipoTitulo: p.tipoTitulo, ofertaCondicionada: Boolean(p.ofertaCondicionada),
-      fichaUrl: p.fichaUrl, webPropria: p.ficha?.webPropria || p.webPropria, cursoCatalogo: p.cursoCatalogo,
+      fichaUrl: p.fichaUrl, webPropria: cleanWeb(p.ficha?.webPropria || p.webPropria), cursoCatalogo: p.cursoCatalogo,
       creditos: p.ficha?.creditos ?? null, modalidade: p.ficha?.modalidade ?? null, idiomaEnsino: p.ficha?.idiomaEnsino ?? null,
       duracaoEstimadaAnos: p.ficha?.duracaoEstimadaAnos ?? null, fichaVerificada: Boolean(p.ficha), fichaVerificadaEm: p.ficha?.verificadaEm || null,
       cursoFicha: p.ficha?.anoAcademico || null,

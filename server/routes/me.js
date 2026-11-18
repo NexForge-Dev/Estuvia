@@ -136,7 +136,11 @@ router.put('/choices', async (req, res) => {
   const parsed = z.object({ choices: z.array(z.string().max(120)).max(6, 'O DUA permite até 6 opções por pedido.') }).safeParse(req.body);
   if (!parsed.success) return bad(res, parsed);
   const unique = [...new Set(parsed.data.choices)];
-  if (unique.some((id) => !programById(id))) return res.status(400).json({ error: 'Programa desconhecido.' });
+  // Opção que saiu do catálogo e já estava salva não trava a lista (o painel mostra "não está mais no
+  // catálogo"); só um programa NOVO e desconhecido é recusado.
+  const saved = new Set(req.user.choices || []);
+  const unknown = unique.filter((id) => !programById(id) && !saved.has(id));
+  if (unknown.length) return res.status(400).json({ error: 'Programa desconhecido.' });
   const user = await updateUser(req.user.id, (u) => { u.choices = unique; });
   reply(res, user);
 });

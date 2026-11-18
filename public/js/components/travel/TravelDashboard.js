@@ -294,7 +294,11 @@ export async function travelDashboardView() {
         h('p', { class: 'small' }, !c.custo.completo ? h('span', { class: 'tv-warn' }, `Faltam: ${c.custo.desconhecidas.map((x) => ({ bagagem: 'bagagem', terrestre: 'trecho por terra' }[x])).join(' e ')}, o total pode subir.`) : c.diferencaParaMenor === 0 ? h('span', { class: 'tv-good' }, 'Menor custo total entre as completas') : c.diferencaParaMenor ? `+${money(c.diferencaParaMenor, c.moeda)} que a mais barata` : null),
         c.consideracoes.length ? h('ul', { class: 'tv-cons' }, c.consideracoes.map((x) => h('li', { class: `n-${x.nivel}` }, icon(x.nivel === 'risco' ? 'alert' : x.nivel === 'atencao' ? 'clock' : 'help', { size: 12 }), ' ', x.texto))) : null,
         h('div', { class: 'tv-quote-actions' },
-          c.escolhida ? null : h('button', { type: 'button', class: 'btn btn-cta btn-sm', onClick: () => call('post', `/quotes/${c.id}/choose`, {}, 'Rota escolhida. O custo entrou no seu planejamento como estimativa.') }, 'Escolher esta rota'),
+          c.escolhida ? null : h('button', { type: 'button', class: 'btn btn-cta btn-sm', onClick: () => {
+            const bought = (d.cotacoes || []).some((x) => x.comprada && x.id !== c.id);
+            if (bought && !window.confirm('Você já registrou a compra de outra passagem. Trocar de rota desfaz esse registro. Continuar?')) return;
+            call('post', `/quotes/${c.id}/choose`, bought ? { confirmo: true } : {}, 'Rota escolhida. O custo entrou no seu planejamento como estimativa.');
+          } }, 'Escolher esta rota'),
           c.link ? h('a', { class: 'btn btn-ghost btn-sm', href: c.link, target: '_blank', rel: 'noopener noreferrer' }, 'Abrir cotação ', icon('external', { size: 11 })) : null,
           h('button', { type: 'button', class: 'icon-btn sm', 'aria-label': 'Editar', onClick: () => FlightQuoteImporter(c) }, icon('edit', { size: 13 })),
           h('button', { type: 'button', class: 'icon-btn sm', 'aria-label': 'Excluir', onClick: () => call('del', `/quotes/${c.id}`, undefined, 'Cotação removida.') }, icon('trash', { size: 13 })))))));
@@ -302,7 +306,7 @@ export async function travelDashboardView() {
 
   // ---------------------------------------------------------------------------
   function TravelSegment(e, last) {
-    const meta = [e.data && fmtDate(e.data), e.horario && `chegada ${e.horario}`, e.operador, e.custo !== null && e.custo !== undefined ? money(e.custo) : null].filter(Boolean);
+    const meta = [e.data && fmtDate(e.data), e.horario && `chegada ${e.horario}`, e.operador, e.custo !== null && e.custo !== undefined ? money(e.custo, e.moeda) : null].filter(Boolean);
     return h('li', { class: `tv-seg s-${e.status}` },
       h('span', { class: 'tv-seg-node' }, hubIcon(MEIO_ICON[e.meio] || 'pin', { size: 16 })),
       h('div', { class: 'tv-seg-body' },

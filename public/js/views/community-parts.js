@@ -106,9 +106,14 @@ export function PostCard(post, ctx) {
   const el = h('article', { class: `cm-post card ${post.moderacao.estado !== 'publicado' ? 'cm-held' : ''}`, 'aria-label': post.titulo || 'Publicação' });
 
   const replace = (next) => { const fresh = PostCard(next, ctx); el.replaceWith(fresh); onChange?.(next); };
+  // Uma ação por vez no cartão (curtir/salvar com clique duplo não deixa tela e servidor diferentes).
+  let busy = false;
   const act = async (fn, okMsg) => {
+    if (busy) return null;
+    busy = true; el.classList.add('is-busy');
     try { const r = await fn(); if (r?.post) replace(r.post); if (okMsg) toast(okMsg, 'ok'); return r; }
     catch (e) { toast(e.message, 'err'); return null; }
+    finally { busy = false; el.classList.remove('is-busy'); }
   };
 
   const head = h('header', { class: 'cm-post-head' },

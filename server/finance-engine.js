@@ -204,7 +204,9 @@ function buildResources(user, fx) {
   const fin = user.finance;
   const toEur = toEurWith(fx);
   const own = fin.recursos.map((r) => ({ ...r, valorEur: toEur(r.valor, r.moeda, { conversao: true }), grupo: groupOf(r) }));
-  const apps = (user.scholarshipApps || []).filter((a) => num(a.valorTotal) > 0 && ['concedida', 'enviada', 'interesse', 'preparando'].includes(a.status))
+  // Só entra como recurso a bolsa concedida (confirmada) ou já pedida/em preparação (solicitada).
+  // "Interesse" e "verificando elegibilidade" ainda não são pedido: ficam fora da conta.
+  const apps = (user.scholarshipApps || []).filter((a) => num(a.valorTotal) > 0 && ['concedida', 'enviada', 'preparando'].includes(a.status))
     .map((a) => ({
       id: `bolsa-${a.id}`, tipo: 'bolsa', descricao: a.nome, valor: num(a.valorTotal), moeda: a.moeda || 'EUR', automatico: true,
       status: a.status === 'concedida' ? 'confirmado' : 'solicitado', grupo: a.status === 'concedida' ? 'bolsa-concedida' : 'bolsa-solicitada',
@@ -252,7 +254,8 @@ export function computeFinance(user, jr, now = new Date()) {
   const viavel = planoIniciado && informouRecursos && deficit === 0 && totals.faltamInformar.length === 0;
 
   // Plano de economia até a partida (data das aulas > data simulada > setembro do ano de início).
-  const partida = jr?.inicioAulas || fin.partida || `${ano}-09-01`;
+  // A simulação de outra data ("Alternativas") vale mais que o início das aulas da jornada.
+  const partida = fin.partida || jr?.inicioAulas || `${ano}-09-01`;
   const alvo = new Date(`${partida}T12:00:00`);
   const mesesAteViagem = Math.max(1, Math.round((alvo - now) / (30.44 * 24 * 3600 * 1000)));
   const economiaMensal = deficit > 0 ? deficit / mesesAteViagem : 0;
@@ -311,7 +314,7 @@ export function computeFinance(user, jr, now = new Date()) {
     // Estimativa declarada no onboarding/perfil: só referência para comparar com o custo estimado.
     // Não entra em "recursos" (o consulado só aceita o que é comprovado) e ausência nunca vira zero.
     orcamentoDeclarado: declaredBudget(user.profile, totals.aDesembolsar),
-    partida, partidaOrigem: jr?.inicioAulas ? 'inicio-aulas' : fin.partida ? 'simulada' : 'setembro-estimado',
+    partida, partidaOrigem: fin.partida ? 'simulada' : jr?.inicioAulas ? 'inicio-aulas' : 'setembro-estimado',
     mesesAteViagem, economiaMensal, caminhos, cenarios, cenariosSalvos: salvos,
     acompanhamento,
     moradia: chosenHousing(user) ? { id: chosenHousing(user).id, nome: chosenHousing(user).nome } : null,

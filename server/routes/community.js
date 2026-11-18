@@ -298,6 +298,8 @@ router.post('/posts', communityWriteLimiter, async (req, res) => {
   const parsed = postSchema.safeParse(req.body);
   if (!parsed.success) return bad(res, parsed);
   const user = req.user;
+  // Oportunidade nova com prazo já vencido não ajuda ninguém: recusa com explicação.
+  if (parsed.data.oportunidade?.prazo && parsed.data.oportunidade.prazo < today(user)) return res.status(400).json({ error: 'O prazo desta oportunidade já passou. Confira a data no edital oficial.' });
   const result = await community.mutate((c) => {
     const hourAgo = Date.now() - 3600000;
     const mine = c.posts.filter((p) => p.autorId === user.id && Date.now() - new Date(p.criadoEm) < 86400000);

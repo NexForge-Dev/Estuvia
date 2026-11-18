@@ -307,21 +307,31 @@ async function CommunityPanel(m, journey) {
 function GuidePanel(m, ctx, hub) {
   const host = h('div', { class: 'mh-guide' });
   let mission = m;
+  let seq = 0;
   const gctx = {
     ...ctx,
     state: ctx.state.guide ??= {},
     inHub: true, // MissionGuide omite crumbs, ajuda e "mais ferramentas": a central já mostra
     openAssistant: (o) => mentorAsk(o),
     redraw: () => draw(),
+    // Mesmo cuidado da tela da missão: um passo por vez e só a resposta mais recente vale.
     async mutate(promise) {
+      const my = ++seq;
+      host.classList.add('is-busy'); host.setAttribute('aria-busy', 'true');
       try {
         const r = await promise;
+        if (my !== seq) return;
         hub.dirty();
         mission = r.mission || (await api.get(`/journeys/${ctx.journey.id}/missions/${m.id}`)).mission;
         if (r.journey) gctx.journey = r.journey;
         draw();
         showEvents(r.events || []);
-      } catch (e) { toast(e.message, 'err'); }
+      } catch (e) {
+        toast(e.message, 'err');
+        if (e.status === 409 && my === seq) await gctx.reload().catch(() => {});
+      } finally {
+        if (my === seq) { host.classList.remove('is-busy'); host.removeAttribute('aria-busy'); }
+      }
     },
     async reload() {
       hub.dirty();

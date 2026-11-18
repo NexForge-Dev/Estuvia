@@ -92,7 +92,7 @@ export const PRIOR_STAGES = [
   { id: 'candidatura-enviada', rotulo: 'Já enviei a candidatura no DUA', missoes: R(3, [1, 2, 3, 4, 5, 6, 7]), situacao: { adjudicacao: 'aguardando' } },
   { id: 'admitido', rotulo: 'Já fui admitido(a)', missoes: R(3, [9]), situacao: { adjudicacao: 'admitido' } },
   { id: 'matriculado', rotulo: 'Já estou matriculado(a)', missoes: R(4, [1, 2, 3, 4, 5, 6, 7]), situacao: { matricula: 'matriculado' } },
-  { id: 'visto-aprovado', rotulo: 'Já tenho o visto aprovado', missoes: [...R(5, [1, 3, 4, 5, 6, 7, 8, 9]), ...R(9, [1, 2, 3, 8, 9, 10])], situacao: { visto: 'aprovado' } },
+  { id: 'visto-aprovado', rotulo: 'Já tenho o visto aprovado', missoes: [...R(5, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), ...R(9, [1, 2, 3, 8, 9, 10])], situacao: { visto: 'aprovado' } },
   { id: 'na-espanha', rotulo: 'Já estou na Espanha', missoes: R(6, [1, 2, 3, 4, 5]), exigeDataEntrada: true },
 ];
 

@@ -51,7 +51,9 @@ export async function onboardingView() {
     getCatalog(), api.get('/journeys/requirements'), api.get('/journeys'), api.get('/journeys/progress-stages'), getPlaces().catch(() => null),
   ]);
   const perguntas = reqs.perguntas;
-  const year = new Date().getFullYear();
+  // A partir de setembro o curso do ano já começou: o primeiro ano oferecido é o seguinte.
+  const now = new Date();
+  const year = now.getFullYear() + (now.getMonth() >= 8 ? 1 : 0);
   const cycles = [0, 1, 2, 3].map((i) => `${year + i}/${String((year + i + 1) % 100).padStart(2, '0')}`);
   const takenPrograms = new Set(journeys.map((j) => j.destino.programa?.id).filter(Boolean));
   const openDestinations = new Set(journeys.filter((j) => !j.destino.programa).map((j) => `${j.destino.universidade?.id}|${j.destino.anoAcademico || ''}`));

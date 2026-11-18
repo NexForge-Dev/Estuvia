@@ -67,7 +67,7 @@ export async function landingView() {
     mentorDemo(facts),
     spotlights(),
     featureGrid(),
-    trust(),
+    trust(logged),
     faq(),
     finalCta(primary, logged),
     footer(appName, logged),
@@ -461,7 +461,7 @@ function featureGrid() {
           h('span', { class: 'lp-feature-icon' }, icon(ic, { size: 20 })), h('h3', {}, title), h('p', {}, text))))));
 }
 
-function trust() {
+function trust(logged) {
   return h('section', { class: 'lp-section' },
     h('div', { class: 'lp-wrap' },
       sectionHead('De onde vem a informação', 'Cada regra mostra a fonte', 'Você vai gastar tempo e dinheiro com isso. Por isso cada informação diz de onde veio, e a plataforma deixa claro o que ela não faz.'),
@@ -489,8 +489,9 @@ function trust() {
             h('li', {}, icon('check', { size: 16 }), h('span', {}, 'Documentos cifrados na sua conta.')),
             h('li', {}, icon('check', { size: 16 }), h('span', {}, 'Você controla a memória do Mentor.')),
             h('li', {}, icon('check', { size: 16 }), h('span', {}, 'Ações da IA só com a sua aprovação.')),
-            h('li', {}, icon('check', { size: 16 }), h('span', {}, 'Central de fontes aberta para consulta.'))),
-          h('a', { href: '#/fontes', class: 'lp-link' }, 'Ver a Central de fontes', icon('arrow', { size: 14 }))))));
+            h('li', {}, icon('check', { size: 16 }), h('span', {}, 'Central de fontes para consulta, com a data de cada conferência.'))),
+          logged ? h('a', { href: '#/fontes', class: 'lp-link' }, 'Ver a Central de fontes', icon('arrow', { size: 14 }))
+            : h('a', { href: '#/cadastro', class: 'lp-link' }, 'Crie sua conta para ver a Central de fontes', icon('arrow', { size: 14 }))))));
 }
 
 function faq() {

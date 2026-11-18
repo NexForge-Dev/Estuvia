@@ -125,7 +125,7 @@ export async function catalogView() {
       h('header', { class: 'page-head' }, h('div', {},
         h('p', { class: 'eyebrow' }, 'Rodada 1 · Missões 1.2 e 1.3'),
         h('h1', {}, icon('cap', { size: 26 }), ' Mestrados'),
-        h('p', { class: 'muted' }, `${programas.length} mestrados oficiais em ${comUni} universidades públicas da Andaluzia, do catálogo do Distrito Único Andaluz (DUA). Critérios de seleção, idioma e graduações aceitas vêm da ficha oficial de cada mestrado.`),
+        h('p', { class: 'muted' }, `${programas.length} mestrados oficiais em ${comUni} ${comUni === 1 ? 'universidade pública' : 'universidades públicas'} da Andaluzia${fonte ? ', do catálogo do Distrito Único Andaluz (DUA)' : ', pelos catálogos oficiais das universidades (a coleta do DUA ainda não rodou)'}. Critérios de seleção, idioma e graduações aceitas vêm da ficha oficial de cada mestrado, quando já coletada.`),
         fonte ? h('p', { class: 'muted small' }, icon('shield', { size: 12 }), ` Catálogo verificado em ${fmtDate(fonte)}. Confirme sempre na ficha oficial antes de se candidatar.`) : null)),
       choicesPanel(choices),
       choices.length >= 2 ? h('section', { class: 'panel', id: 'comparar' },

@@ -11,6 +11,17 @@ import { ensureFinance, computeFinance } from '../finance-engine.js';
 import { computeTravel, ensureTravel, agendaSuggestions, agendaChanges } from '../travel-engine.js';
 import { BR_AIRPORTS, ROUTE_BY_IATA, ROUTE_IDS } from '../content/travel.js';
 import { pricesForUser } from '../flight-prices.js';
+import { todayFor } from '../agenda-engine.js';
+
+// Data de ida planejada: de hoje até 3 anos à frente (antes aceitava 2020 e 2099).
+function badDeparture(user, d) {
+  if (!d) return null;
+  const today = todayFor(user);
+  const max = `${Number(today.slice(0, 4)) + 3}${today.slice(4)}`;
+  if (d < today) return 'A data de ida não pode estar no passado.';
+  if (d > max) return 'Use uma data de ida dentro dos próximos 3 anos.';
+  return null;
+}
 
 const router = Router();
 router.use(requireAuth);
@@ -51,6 +62,8 @@ router.put('/profile', (req, res) => {
   }).strict().safeParse(req.body);
   if (!parsed.success) return bad(res, parsed);
   if (parsed.data.origemIata && !BR_AIRPORTS[parsed.data.origemIata]) return res.status(400).json({ error: 'Aeroporto de origem não reconhecido.' });
+  const badIda = badDeparture(req.user, parsed.data.dataIda);
+  if (badIda) return res.status(400).json({ error: badIda });
   return save(req, res, (u) => { u.travel.perfil = { ...u.travel.perfil, ...parsed.data, atualizadoEm: new Date().toISOString() }; });
 });
 
@@ -125,6 +138,9 @@ router.delete('/quotes/:id', (req, res) => save(req, res, (u) => { u.travel.opco
 
 router.post('/quotes/:id/choose', (req, res) => {
   if (!(req.user.travel?.opcoes || []).some((o) => o.id === req.params.id)) return res.status(404).json({ error: 'Cotação não encontrada.' });
+  // Trocar de rota desfaz a passagem já registrada como comprada: só com confirmação explícita.
+  const bought = req.user.travel.opcoes.find((o) => o.comprada && o.id !== req.params.id);
+  if (bought && req.body?.confirmo !== true) return res.status(409).json({ error: 'Você já registrou a compra de outra passagem. Confirme para trocar de rota (a compra registrada será desfeita).', precisaConfirmar: true });
   return save(req, res, (u) => { u.travel.opcoes.forEach((o) => { o.escolhida = o.id === req.params.id; if (!o.escolhida) o.comprada = false; }); });
 });
 
@@ -147,6 +163,8 @@ router.put('/arrival', (req, res) => {
     enderecoInicial: z.string().trim().max(200).optional(), conexoes: z.string().trim().max(200).optional(),
   }).strict().safeParse(req.body);
   if (!parsed.success) return bad(res, parsed);
+  const ida = (req.user.travel?.opcoes || []).find((o) => o.escolhida)?.dataViagem;
+  if (parsed.data.data && ida && parsed.data.data < ida) return res.status(400).json({ error: 'A chegada não pode ser antes da data da viagem escolhida.' });
   return save(req, res, (u) => { u.travel.chegada = { ...u.travel.chegada, ...parsed.data }; });
 });
 

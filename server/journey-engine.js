@@ -556,7 +556,13 @@ export function eligibility(ctx) {
   const req = prog.idioma || { status: 'verificar' };
   const lvl = LANG_LEVELS.indexOf(p.espanhol || 'nenhum');
   if (req.status === 'nao-requerido') items.push({ requisito: 'Idioma', status: 'nao-exigido', texto: 'A ficha oficial do DUA não lista exigência de idioma para este máster (é onde os requisitos específicos são publicados, O2 art. 2).', fonte: req.fonte });
-  else if (req.status === 'verificar') items.push({ requisito: 'Idioma', status: 'nao-confirmado', texto: 'Exigência não confirmada na ficha. Pergunte à coordenação.', fonte: req.fonte });
+  else if (req.status === 'verificar') {
+    // A ficha pode exigir espanhol num requisito obrigatório sem dar o nível (ex.: código 099,
+    // "CONOCIMIENTO ... DE ESPAÑOL"): aí é exigido, só o nível que não foi informado.
+    const fichaEsp = (prog.requisitosFicha || []).find((x) => x.obrigatorio && /ESPA[NÑ]OL|CASTELLANO/i.test(x.texto || '') && /CONOCIMIENTO|ACREDITAR|NIVEL|IDIOMA/i.test(x.texto || ''));
+    if (fichaEsp) items.push({ requisito: 'Idioma', status: 'falta-comprovar', texto: `A ficha exige espanhol (requisito obrigatório ${fichaEsp.codigo}), sem informar o nível. Confirme com a coordenação qual certificado é aceito.`, fonte: 'O30' });
+    else items.push({ requisito: 'Idioma', status: 'nao-confirmado', texto: 'Exigência não confirmada na ficha. Pergunte à coordenação.', fonte: req.fonte });
+  }
   else {
     const need = LANG_LEVELS.indexOf(req.nivel);
     const certOk = p.certificadoEspanhol && p.certificadoEspanhol !== 'nenhum' && LANG_LEVELS.indexOf(p.certificadoNivel) >= need;
@@ -1037,11 +1043,17 @@ export function declarePriorProgress(user, jr, etapa, { dataEntrada, confirmo } 
   ensureJourney(jr);
   const iso = now.toISOString();
   const marcadas = [];
+  // O que o estudante acabou de declarar vale mais que a etapa: "preciso solicitar o passaporte" não
+  // vira passaporte pronto. E "já escolhi meu mestrado" só conclui a 1.3 quando há programa definido.
+  const answers = user?.requisitos || {};
+  const skip = new Set(REQUIREMENTS.filter((r) => ['preciso', 'nao', 'aguardando'].includes(answers[r.id])).flatMap((r) => r.missoes));
+  if (!jr.programaId) skip.add('1.3');
   for (const st of stages) {
     for (const [campo, valor] of Object.entries(st.situacao || {})) {
       if (situacaoRank(campo, valor) > situacaoRank(campo, jr.situacao[campo])) { jr.situacao[campo] = valor; recordSituacao(jr, campo, valor, 'progresso-anterior', now); }
     }
     for (const id of st.missoes) {
+      if (skip.has(id)) continue;
       const mp = mp_(jr, id);
       if (mp.concluidaEm) continue;
       Object.assign(mp, { concluidaEm: iso, declarada: true, aguardando: false });

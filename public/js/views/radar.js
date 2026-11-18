@@ -148,11 +148,13 @@ export async function addToJourney(c) {
       invalidate?.();
       c.naJornada = true;
       toast('Mestrado definido na sua jornada. A Missão 1.3 foi atualizada.', 'ok');
+      if (r.aviso) toast(r.aviso, 'info');
       return go(`/j/${r.journey.id}`);
     } catch (e) { return toast(e.message, 'err'); }
   }
   try {
     const r = await api.post('/journeys', { programaId: c.programId, anoAcademico: cicloPlanejado });
+    if (r.aviso) toast(r.aviso, 'info');
     invalidate?.();
     c.naJornada = true;
     toast(cicloPlanejado === cicloPublicado

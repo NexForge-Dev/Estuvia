@@ -107,7 +107,7 @@ router.get('/overview', (req, res) => {
 // Filtros da lista de estudantes (chips no painel).
 const FILTERS = {
   todos: () => true,
-  alerta: (r) => r.alertas > 0,
+  alerta: (r) => r.alertasAcao > 0, // só quem precisa de ação, não os avisos informativos
   inativos: (r) => r.diasSemEntrar >= 7,
   'sem-jornada': (r) => !r.inscricao,
   'candidatura-enviada': (r) => r.inscricao && r.inscricao.candidatura !== 'nao-enviada',

@@ -20,7 +20,9 @@ function authorized(req) {
 
 router.get('/radar', async (req, res) => {
   const ok = authorized(req);
-  if (ok === null) return res.status(503).json({ error: 'Coleta agendada desligada: defina CRON_SECRET (16+ caracteres).' });
+  // Sem segredo configurado a rota simplesmente não existe para quem chama (404): não revela a
+  // configuração e não infla o log de erros 5xx. O painel de Status mostra o CRON_SECRET ausente.
+  if (ok === null) return res.status(404).json({ error: 'Não encontrado.' });
   if (!ok) return res.status(401).json({ error: 'Não autorizado.' });
   const r = await runScheduled({ budgetMs: BUDGET_MS });
   // Coletor do DUA (importação feita fora da Vercel) parado há mais de 24 h: avisa o administrador.

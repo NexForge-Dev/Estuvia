@@ -1,5 +1,7 @@
 /* O atributo hidden sempre vence classes que definem display (ex.: .btn { display: inline-flex }). */
 [hidden] { display: none !important; }
+/* Enquanto uma alteração está a caminho do servidor: sem cliques novos (evita estados trocados). */
+.is-busy { pointer-events: none; opacity: .75; transition: opacity .15s; }
 
 /* =========================================================================
    Estuvia — design system (dark-first)

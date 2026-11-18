@@ -24,6 +24,14 @@ export function todayFor(user, now = new Date()) {
   try { return isoDayIn(fuso, now); } catch { return now.toISOString().slice(0, 10); }
 }
 
+// Minutos desde a meia-noite, agora, no fuso do estudante (para não sugerir horários que já passaram).
+function nowMinutesIn(fuso, now = new Date()) {
+  try {
+    const parts = new Intl.DateTimeFormat('en-GB', { timeZone: fuso, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(now);
+    return Number(parts.find((p) => p.type === 'hour').value) * 60 + Number(parts.find((p) => p.type === 'minute').value);
+  } catch { return now.getUTCHours() * 60 + now.getUTCMinutes(); }
+}
+
 const toMin = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
 const toTime = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 const addDays = (iso, n) => { const d = new Date(`${iso}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
@@ -79,6 +87,9 @@ export function suggestWeek(user, weekStart, today = todayFor(user), { journeyId
   const maxBlock = av.preferencia === 'longas' ? 120 : 45;
   let budget = Math.round((Number(av.horasSemanais) || 5) * 60);
   const busy = (user.planner || []).filter((e) => e.data >= start && e.data <= addDays(start, 6));
+  // Hoje (de verdade): só a partir do próximo quarto de hora.
+  const realToday = today === todayFor(user);
+  const cutToday = realToday ? Math.ceil((nowMinutesIn(av.fuso) + 1) / 15) * 15 : 0;
   const free = [];
   for (let d = 0; d < 7; d++) {
     const date = addDays(start, d);
@@ -86,6 +97,8 @@ export function suggestWeek(user, weekStart, today = todayFor(user), { journeyId
     for (const w of av.janelas) {
       let s = toMin(w.inicio);
       const end = toMin(w.fim);
+      if (date === today) s = Math.max(s, cutToday);
+      if (s >= end) continue;
       // Recorta os horários já ocupados por compromissos do estudante.
       const taken = busy.filter((e) => e.data === date).map((e) => [toMin(e.inicio), toMin(e.fim)]).sort((a, b) => a[0] - b[0]);
       for (const [ts, te] of taken) {
@@ -100,10 +113,20 @@ export function suggestWeek(user, weekStart, today = todayFor(user), { journeyId
   const proposal = [];
   const focus = Boolean(missaoId);
   let queue = workItems(user, today).map((x) => ({ ...x, restante: x.minutos }));
+  // O que a Agenda já agendou nesta semana conta: organizar de novo não passa da meta semanal
+  // nem repete o tempo de uma missão que já tem blocos.
+  const already = busy.filter((e) => e.origem === 'agenda-ai');
+  for (const e of already) {
+    const mins = Math.max(0, toMin(e.fim) - toMin(e.inicio));
+    if (!missaoId) budget -= mins;
+    const q = queue.find((x) => (e.missaoId && x.missaoId === e.missaoId && (!e.journeyId || x.journeyId === e.journeyId)) || (e.bolsaId && x.bolsaId === e.bolsaId));
+    if (q) q.restante = Math.max(0, q.restante - mins);
+  }
+  const hasReview = already.some((e) => e.motivo === 'Revisão semanal');
   // Foco numa missão: só ela, em blocos distribuídos ao longo dos dias (um por dia).
   if (focus) queue = queue.filter((q) => q.missaoId === missaoId && (!journeyId || q.journeyId === journeyId));
   // Bloco fixo de revisão no último dia disponível da semana (só no planejamento geral).
-  const reviewSlot = focus ? null : [...free].reverse().find((f) => f.e - f.s >= 20);
+  const reviewSlot = focus || hasReview ? null : [...free].reverse().find((f) => f.e - f.s >= 20);
   if (reviewSlot) {
     proposal.push({ titulo: 'Conferir pendências e planejar a próxima semana', categoria: 'pessoal', data: reviewSlot.date, inicio: toTime(reviewSlot.e - 20), fim: toTime(reviewSlot.e), prioridade: 'normal', motivo: 'Revisão semanal' });
     reviewSlot.e -= 20;

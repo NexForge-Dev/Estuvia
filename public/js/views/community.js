@@ -50,7 +50,7 @@ function Header(meta, secao) {
 
 // ---------- Feed ----------
 
-function Feed(ctx, { withFilters = false, fixed = {}, title = '', empty = 'Nenhuma publicação encontrada com esses filtros.', grupoId = '', missaoId = '' } = {}) {
+function Feed(ctx, { withFilters = false, fixed = {}, title = '', empty = 'Nenhuma publicação encontrada com esses filtros.', grupoId = '', missaoId = '', onPosted = null } = {}) {
   const list = h('div', { class: 'cm-list', 'aria-live': 'polite' });
   const more = h('button', { type: 'button', class: 'btn btn-ghost cm-more-btn', hidden: true }, 'Carregar mais');
   const composerSlot = h('div');
@@ -66,7 +66,7 @@ function Feed(ctx, { withFilters = false, fixed = {}, title = '', empty = 'Nenhu
     mount(composerSlot, Composer({
       ...ctx, initial, grupoId, missaoId,
       onCancel: () => mount(composerSlot, ComposerPrompt()),
-      onDone: () => { mount(composerSlot, ComposerPrompt()); load(); },
+      onDone: () => { mount(composerSlot, ComposerPrompt()); load(); onPosted?.(); },
     }));
     composerSlot.querySelector('textarea, select')?.focus();
   }
@@ -135,7 +135,26 @@ async function PostDetail(ctx, id) {
   const list = h('ol', { class: 'cm-comments' });
   // O título acompanha a lista: antes ficava "Comentários (0)" depois de comentar.
   const heading = h('h2', {});
-  const setCount = () => { heading.textContent = `Comentários (${list.children.length})`; };
+  // O cartão do post (contador de comentários) acompanha a lista; "Editar" abre o editor aqui mesmo.
+  const cardHost = h('div');
+  const editSlot = h('div');
+  let current = post;
+  const cardCtx = {
+    ...ctx, detail: true,
+    onChange: (next) => { current = next; },
+    onDeleted: () => go('/comunidade'),
+    onEdit: (p) => mount(editSlot, Composer({
+      ...ctx, initial: p,
+      onCancel: () => editSlot.replaceChildren(),
+      onDone: async () => { editSlot.replaceChildren(); try { current = (await api.get(`/community/posts/${id}`)).post; drawCard(); } catch (e) { toast(e.message, 'err'); } },
+    })),
+  };
+  const drawCard = () => mount(cardHost, PostCard(current, cardCtx));
+  const setCount = () => {
+    heading.textContent = `Comentários (${list.children.length})`;
+    if (current.comentarios !== list.children.length) { current = { ...current, comentarios: list.children.length }; drawCard(); }
+  };
+  drawCard();
   const draw = (cm) => {
     const li = h('li', { class: `cm-comment ${cm.moderacao.estado !== 'publicado' ? 'cm-held' : ''}` },
       h('span', { class: 'cm-avatar sm', 'aria-hidden': 'true' }, cm.autor.avatar),
@@ -168,7 +187,7 @@ async function PostDetail(ctx, id) {
 
   return h('div', { class: 'cm-detail stack-lg' },
     h('a', { href: '#/comunidade', class: 'cm-back' }, icon('back', { size: 16 }), 'Voltar ao feed'),
-    PostCard(post, { ...ctx, detail: true, onEdit: () => go('/comunidade'), onDeleted: () => go('/comunidade') }),
+    cardHost, editSlot,
     h('section', { class: 'card stack', 'aria-label': 'Comentários' }, heading, list, form));
 }
 
@@ -206,12 +225,13 @@ function GroupsSection(ctx) {
     h('button', { type: 'submit', class: 'btn' }, 'Criar grupo'));
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    err.hidden = true; // o erro anterior não fica na tela
     const f = Object.fromEntries(new FormData(form));
     Object.keys(f).forEach((k) => { if (!f[k]) delete f[k]; });
     try {
       const r = await api.post('/community/groups', f);
       ctx.grupos.unshift(r.grupo);
-      draw(); form.reset(); err.hidden = true;
+      draw(); form.reset(); form.pais.value = 'Espanha'; err.hidden = true;
       toast('Grupo criado.', 'ok');
     } catch (ex) { err.textContent = ex.message; err.hidden = false; }
   });
@@ -222,15 +242,27 @@ async function GroupFeed(ctx, id) {
   const g = ctx.grupos.find((x) => x.id === id);
   if (!g) return h('p', { class: 'notice' }, 'Grupo não encontrado.');
   const join = h('button', { type: 'button', class: `btn btn-sm ${g.participo ? 'btn-ghost' : ''}`, onClick: async () => {
-    try { const r = await api.post(`/community/groups/${g.id}/join`); Object.assign(g, r.grupo); join.textContent = g.participo ? 'Sair do grupo' : 'Participar'; join.classList.toggle('btn-ghost', g.participo); }
+    try { const r = await api.post(`/community/groups/${g.id}/join`); Object.assign(g, r.grupo); refreshHead(); }
     catch (e) { toast(e.message, 'err'); }
   } }, g.participo ? 'Sair do grupo' : 'Participar');
+  const members = h('p', { class: 'small muted' });
+  const refreshHead = () => {
+    members.textContent = `${g.membros} ${g.membros === 1 ? 'membro' : 'membros'}`;
+    join.textContent = g.participo ? 'Sair do grupo' : 'Participar';
+    join.classList.toggle('btn-ghost', g.participo);
+  };
+  refreshHead();
+  // Publicar no grupo torna a pessoa membro: atualiza o cabeçalho com o que o servidor diz.
+  const onPosted = async () => {
+    const ng = (await api.get('/community/groups').catch(() => null))?.grupos?.find((x) => x.id === g.id);
+    if (ng) { Object.assign(g, ng); refreshHead(); }
+  };
   return h('div', { class: 'stack-lg' },
     h('section', { class: 'card cm-group-head' },
       h('a', { href: '#/comunidade/grupos', class: 'cm-back' }, icon('back', { size: 16 }), 'Grupos'),
       h('div', { class: 'row between wrap' }, h('h2', {}, g.nome), join),
-      h('p', { class: 'muted' }, g.descricao), h('p', { class: 'small muted' }, `${g.membros} membros`)),
-    Feed(ctx, { fixed: { grupo: g.id }, grupoId: g.id, empty: 'Este grupo ainda não tem publicações.' }));
+      h('p', { class: 'muted' }, g.descricao), members),
+    Feed(ctx, { fixed: { grupo: g.id }, grupoId: g.id, empty: 'Este grupo ainda não tem publicações.', onPosted }));
 }
 
 // ---------- Oportunidades verificadas (alimentam o Radar) ----------

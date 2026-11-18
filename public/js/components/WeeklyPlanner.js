@@ -17,8 +17,9 @@ export const CATEGORY = {
 };
 const PRIORITY = { critica: 'Crítica', alta: 'Alta', normal: 'Normal', aguardando: 'Aguardando resposta' };
 const DAYS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-const START_H = 7;
-const END_H = 22;
+// Faixa visível da grade: 07h–22h, ampliada na semana que tiver atividade fora dela.
+let START_H = 7;
+let END_H = 22;
 const PX_PER_MIN = 1.1;
 const SNAP = 15;
 const HOLD_MS = 350; // toque: segurar antes de arrastar, para não brigar com a rolagem
@@ -361,6 +362,9 @@ export function WeeklyPlanner({ initialWeek, autoOrganize = false } = {}) {
   // ---------- Grade ----------
   function grid() {
     const days = shownDays();
+    const inView = (data.events || []).filter((e) => days.includes(e.data));
+    START_H = Math.min(7, ...inView.map((e) => Math.floor(Number(e.inicio.slice(0, 2)))));
+    END_H = Math.max(22, ...inView.map((e) => Math.ceil((Number(e.fim.slice(0, 2)) * 60 + Number(e.fim.slice(3, 5))) / 60)));
     const today = todayIso();
     const deadlines = days.map((d) => data.deadlines.filter((x) => x.data === d && filters.has(x.categoria)));
     const head = view === 'dia' ? null : h('div', { class: 'wp-head' }, h('span'), days.map((d, i) =>
@@ -369,7 +373,7 @@ export function WeeklyPlanner({ initialWeek, autoOrganize = false } = {}) {
     // Linha de prazos só aparece quando há prazo nos dias visíveis.
     const allDay = deadlines.some((x) => x.length) ? h('div', { class: 'wp-allday' }, h('span', {}, icon('flag', { size: 12 })),
       deadlines.map((list) => h('div', { class: 'wp-allday-cell' }, list.map((x) =>
-        h('button', { type: 'button', class: `wp-deadline ${x.tipo}`, title: `${x.rotulo || x.titulo} - ${x.tipo === 'prazo-oficial' ? 'prazo oficial (regra cadastrada)' : 'prazo declarado por você'}`, onClick: () => x.missaoId && x.journeyId && go(`/j/${x.journeyId}/m/${x.missaoId}`) },
+        h('button', { type: 'button', class: `wp-deadline ${x.tipo}`, title: `${x.rotulo || x.titulo} - ${x.tipo === 'prazo-oficial' ? 'prazo oficial (regra cadastrada)' : 'prazo declarado por você'}`, onClick: () => (x.missaoId && x.journeyId ? go(`/j/${x.journeyId}/m/${x.missaoId}`) : (x.bolsaId || /bolsa|pagamento|financ/i.test(`${x.tipo} ${x.categoria}`)) ? go('/financiamento') : null) },
           icon(x.tipo === 'prazo-oficial' ? 'shield' : 'flag', { size: 11 }), h('span', {}, x.titulo)))))) : null;
 
     const hours = h('div', { class: 'wp-hours', 'aria-hidden': 'true' }, Array.from({ length: END_H - START_H }, (_, i) => h('span', {}, i ? `${String(START_H + i).padStart(2, '0')}:00` : '')));

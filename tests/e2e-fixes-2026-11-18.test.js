@@ -43,3 +43,41 @@ test('validação em português, sem regex nem inglês', () => {
   }
   assert.equal(typeof ptError({ code: 'custom' }), 'string');
 });
+
+// ---------- Problemas médios ----------
+import { declarePriorProgress } from '../server/journey-engine.js';
+import { suggestWeek, todayFor } from '../server/agenda-engine.js';
+import { cleanWeb } from '../server/radar/service.js';
+
+test('progresso anterior respeita "preciso solicitar" e não conclui a 1.3 sem mestrado', () => {
+  const user = { requisitos: { passaporte: 'preciso' }, journeys: [] };
+  const jr = { id: 'j', universidadeId: 'ugr', missions: {}, dados: {}, situacao: {} };
+  const marcadas = declarePriorProgress(user, jr, 'documentos-prontos', { confirmo: true });
+  assert.ok(!marcadas.includes('2.1'), 'passaporte não vira pronto');
+  assert.ok(!marcadas.includes('1.3'), '1.3 só com programa');
+  assert.ok(marcadas.includes('2.2'));
+});
+
+test('visto aprovado declara também 5.2 e 5.10', () => {
+  const jr = { id: 'j', universidadeId: 'ugr', programaId: 'x', missions: {}, dados: {}, situacao: {} };
+  const marcadas = declarePriorProgress({ requisitos: {} }, jr, 'visto-aprovado', { confirmo: true });
+  assert.ok(marcadas.includes('5.2') && marcadas.includes('5.10'));
+});
+
+test('Agenda: organizar de novo não passa da meta nem sugere horário passado', () => {
+  const user = { agenda: { disponibilidade: { dias: [1, 2, 3, 4, 5, 6, 7], janelas: [{ inicio: '00:00', fim: '23:45' }], horasSemanais: 2, preferencia: 'curtas', fuso: 'America/Sao_Paulo' } }, journeys: [], planner: [] };
+  const today = todayFor(user);
+  const now = new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date());
+  const first = suggestWeek(user, today, today);
+  for (const p of first.proposta) if (p.data === today) assert.ok(p.inicio > now, `${p.inicio} já passou (${now})`);
+  user.planner = first.proposta.map((p, i) => ({ ...p, id: `e${i}`, origem: 'agenda-ai' }));
+  const again = suggestWeek(user, today, today);
+  const mins = (p) => (Number(p.fim.slice(0, 2)) * 60 + Number(p.fim.slice(3))) - (Number(p.inicio.slice(0, 2)) * 60 + Number(p.inicio.slice(3)));
+  const total = [...first.proposta, ...again.proposta].reduce((s, p) => s + mins(p), 0);
+  assert.ok(total <= 120, `total ${total} min passa da meta de 2 h`);
+});
+
+test('site do mestrado: "-" e URLs coladas não viram link quebrado', () => {
+  assert.equal(cleanWeb('-'), null);
+  assert.equal(cleanWeb('http://a.es/x  y  http://a.es/z'), 'http://a.es/x');
+});

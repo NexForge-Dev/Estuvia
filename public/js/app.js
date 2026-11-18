@@ -170,11 +170,24 @@ export const currentPath = () => location.hash.replace(/^#/, '').split('#')[0] |
 export const currentAnchor = () => location.hash.split('#')[2] || null;
 
 async function render() {
+  // Âncora de página ("#app", "#rodadas"): não é rota. Se o elemento está na tela, só rola até ele e
+  // devolve o endereço da tela atual; aberto direto (link compartilhado), vira "#/#âncora" na inicial.
+  const raw = currentPath();
+  if (!raw.startsWith('/')) {
+    const target = document.getElementById(raw);
+    if (target && state.route.path) {
+      history.replaceState(null, '', `#${state.route.path}`);
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (target.tabIndex < 0 && target.id === 'app') target.focus();
+      return;
+    }
+    history.replaceState(null, '', `#/#${raw}`);
+  }
   const path = currentPath();
   const route = routes.find((r) => r.path.test(path));
   const main = document.getElementById('app');
   closeSidebar();
-  if (!route) document.body.classList.remove('landing-mode');
+  if (!route) document.body.classList.remove('landing-mode', 'focus-mode', 'admin-mode');
   if (!route) return mount(main, emptyState('Página não encontrada', 'O endereço que você abriu não existe.', h('a', { href: '#/', class: 'btn' }, 'Ir para o início')));
   if (route.auth && !state.me) return go('/entrar');
   if (route.guestOnly && state.me) return go('/');
@@ -188,6 +201,7 @@ async function render() {
   // Autenticação e onboarding: tela limpa, sem menu lateral, barra inferior nem Mentor (ver css/flow.css).
   document.body.classList.toggle('focus-mode', isFocusPath(path));
   renderNav();
+  document.getElementById('footer-fontes')?.toggleAttribute('hidden', !state.me); // a central exige login
   if (!isAdminMode()) mountMentorLauncher();
   else document.getElementById('assistant-root')?.replaceChildren();
   // Avisos ao vivo (Radar, preços de passagem) enquanto o estudante estiver logado.

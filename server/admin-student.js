@@ -87,6 +87,8 @@ export function studentRow(user) {
     destino: best ? `${best.sigla || best.universidade} · ${best.programa}` : null,
     alertas: al.length,
     alertaAlto: al.some((a) => a.nivel === 'alto'),
+    // Alertas que pedem ação (médio/alto); os de nível baixo são só informativos.
+    alertasAcao: al.filter((a) => a.nivel === 'alto' || a.nivel === 'medio').length,
   };
 }
 

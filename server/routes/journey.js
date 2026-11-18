@@ -42,6 +42,22 @@ const journeyFields = z.object({
   duracaoMeses: z.number().int().min(1).max(48).nullable().optional(),
 }).strict();
 
+// Coerência que o regex não pega: "2027/28" (segundo ano = primeiro + 1), ano não muito distante e
+// início das aulas dentro do curso (de julho do 1º ano a junho do 2º).
+function journeyCoherence(d) {
+  if (d.anoAcademico) {
+    const [a, b] = d.anoAcademico.split('/').map(Number);
+    const now = new Date().getUTCFullYear();
+    if ((a + 1) % 100 !== b) return 'Ano acadêmico inválido (ex.: 2027/28).';
+    if (a < now - 1 || a > now + 5) return 'Escolha um ano acadêmico entre os próximos anos.';
+    if (d.inicioAulas) {
+      const ini = `${a}-07-01`, fim = `${a + 1}-06-30`;
+      if (d.inicioAulas < ini || d.inicioAulas > fim) return `O início das aulas precisa cair dentro do curso ${d.anoAcademico}.`;
+    }
+  }
+  return null;
+}
+
 // Jornada sem mestrado definido: no máximo uma por universidade e ano acadêmico (o mestrado é escolhido na Missão 1.3).
 const sameOpenDestination = (j, universidadeId, anoAcademico) => !j.programaId && j.universidadeId === universidadeId && (j.anoAcademico || null) === (anoAcademico || null);
 
@@ -94,12 +110,16 @@ router.put('/requirements', async (req, res) => {
   res.json({ respostas: user.requisitos, journeys: (user.journeys || []).map((jr) => summary(user, jr)) });
 });
 
+const CHOICES_FULL = 'Você já tem 6 opções salvas (o máximo do DUA): este mestrado não entrou em "Minhas opções". Troque uma delas em Mestrados para manter a mesma lista da plataforma no DUA.';
+
 // Destino = universidade (+ ano). O mestrado é opcional: quando o estudante já sabe, entra junto;
 // senão a jornada nasce "Mestrado a definir" e a Missão 1.3 conclui quando ele definir (PUT /:jid/program).
 router.post('/', async (req, res) => {
   const parsed = journeyFields.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
   const data = parsed.data;
+  const incoherent = journeyCoherence(data);
+  if (incoherent) return res.status(400).json({ error: incoherent });
   const program = data.programaId ? programById(data.programaId) : null;
   if (!program && !data.universidadeId) return res.status(400).json({ error: 'Escolha a universidade de destino.' });
   if (program && data.universidadeId && data.universidadeId !== program.universidadeId) return res.status(400).json({ error: 'Este mestrado não pertence à universidade escolhida.' });
@@ -120,14 +140,18 @@ router.post('/', async (req, res) => {
   };
   if (!program) delete jr.programaId;
   if (!jr.inicioAulas) { delete jr.inicioAulas; delete jr.inicioAulasAproximado; }
+  let semVaga = false;
   const user = await updateUser(req.user.id, (u) => {
     (u.journeys ??= []).push(jr);
-    if (program && !(u.choices || []).includes(jr.programaId)) u.choices = [...(u.choices || []), jr.programaId].slice(0, 6);
+    if (program && !(u.choices || []).includes(jr.programaId)) {
+      if ((u.choices || []).length >= 6) semVaga = true;
+      else u.choices = [...(u.choices || []), jr.programaId];
+    }
     const saved = findJourney(u, jr.id);
     applyRequirements(u, saved);
     recordUnlocks(saved, computeJourney(u, saved));
   });
-  res.status(201).json({ journey: view(user, findJourney(user, jr.id)), etapas: STAGES });
+  res.status(201).json({ journey: view(user, findJourney(user, jr.id)), etapas: STAGES, ...(semVaga ? { aviso: CHOICES_FULL } : {}) });
 });
 
 // Define (ou troca) o mestrado de uma jornada: precisa ser da mesma universidade e não repetir outra jornada.
@@ -140,18 +164,22 @@ router.put('/:jid/program', async (req, res) => {
   if (jr.universidadeId && program.universidadeId !== jr.universidadeId) return res.status(400).json({ error: 'Este mestrado é de outra universidade. Crie uma nova jornada para ele.' });
   if ((req.user.journeys || []).some((j) => j.id !== jr.id && j.programaId === program.id)) return res.status(409).json({ error: 'Você já tem uma jornada para este mestrado.' });
   const novos = [];
+  let semVaga = false;
   const user = await updateUser(req.user.id, (u) => {
     const t = findJourney(u, req.params.jid);
     t.programaId = program.id;
     t.universidadeId = program.universidadeId;
     if (!t.duracaoMeses && program.duracaoMeses) t.duracaoMeses = program.duracaoMeses;
-    if (!(u.choices || []).includes(program.id)) u.choices = [...(u.choices || []), program.id].slice(0, 6);
+    if (!(u.choices || []).includes(program.id)) {
+      if ((u.choices || []).length >= 6) semVaga = true;
+      else u.choices = [...(u.choices || []), program.id];
+    }
     applyRequirements(u, t);
     novos.push(...recordUnlocks(t, computeJourney(u, t)));
   });
   logUnlocks(req.user.id, req.params.jid, novos);
   audit.log({ action: 'journey.program-set', userId: req.user.id, journeyId: req.params.jid, programaId: program.id }).catch(() => {});
-  res.json({ journey: view(user, findJourney(user, req.params.jid)) });
+  res.json({ journey: view(user, findJourney(user, req.params.jid)), ...(semVaga ? { aviso: CHOICES_FULL } : {}) });
 });
 
 // Ao abrir, recalcula: se algo mudou em outro módulo (perfil, documentos, finanças), registra os novos desbloqueios.
@@ -178,6 +206,8 @@ router.put('/:jid', async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
   const jr = findJourney(req.user, req.params.jid);
   if (!jr) return res.status(404).json({ error: 'Jornada não encontrada.' });
+  const incoherentPut = journeyCoherence({ anoAcademico: parsed.data.anoAcademico ?? jr.anoAcademico, inicioAulas: parsed.data.inicioAulas === undefined ? jr.inicioAulas : parsed.data.inicioAulas });
+  if (incoherentPut) return res.status(400).json({ error: incoherentPut });
   // Mesma regra da criação: uma só jornada "mestrado a definir" por universidade e ano acadêmico.
   if (!jr.programaId && parsed.data.anoAcademico !== undefined
     && (req.user.journeys || []).some((j) => j.id !== jr.id && sameOpenDestination(j, jr.universidadeId, parsed.data.anoAcademico))) {
