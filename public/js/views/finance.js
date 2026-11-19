@@ -229,7 +229,7 @@ export async function financeView() {
   // ---------- Quando falta dinheiro: caminhos ----------
   function alternatives(p) {
     if (!p.informouRecursos || !p.deficit) return null;
-    const partida = h('input', { type: 'date', class: 'guide-input', value: p.partida, 'aria-label': 'Data prevista de partida' });
+    const partida = h('input', { type: 'date', class: 'guide-input', value: p.partida, min: new Date().toLocaleDateString('sv-SE'), 'aria-label': 'Data prevista de partida' });
     partida.addEventListener('change', () => call('put', '/finance', { partida: partida.value }));
     const action = (c) => {
       if (c.id === 'bolsas') return h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onClick: () => go('bolsas') }, 'Ver bolsas', icon('arrow', { size: 12 }));

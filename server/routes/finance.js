@@ -3,6 +3,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { isoDate } from './validators.js';
+import { todayFor } from '../agenda-engine.js';
 import { users, newId } from '../store.js';
 import { requireAuth } from '../security.js';
 import { updateUser, accountGone } from './guards.js';
@@ -69,6 +70,9 @@ router.put('/', async (req, res) => {
   }).strict().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
   const d = parsed.data;
+  // A partida simulada serve para planejar a economia até a viagem: uma data já passada zeraria o plano.
+  // (Vencimento no passado continua aceito: é um pagamento atrasado ou já feito.)
+  if (d.partida && d.partida < todayFor(req.user)) return res.status(400).json({ error: 'A data de partida precisa ser hoje ou depois.' });
   // "Pago" só conta com o valor que a pessoa pagou; marcar a estimativa do sistema como paga seria
   // aceito e ignorado (jaPago fica 0), então recusamos com a explicação.
   for (const [id, it] of Object.entries(d.itens || {})) {

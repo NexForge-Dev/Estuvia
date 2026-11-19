@@ -76,6 +76,7 @@ test('data inexistente é recusada (antes era gravada e derrubava a tela de viag
   assert.equal((await req('POST', '/planner', { titulo: 'x', categoria: 'pessoal', data: '2026-02-31', inicio: '10:00', fim: '11:00' })).status, 400);
   assert.equal((await req('PUT', `/journeys/${journey.id}`, { inicioAulas: '2027-09-31' })).status, 400);
   assert.equal((await req('PUT', '/finance', { partida: '2027-13-01' })).status, 400);
+  assert.equal((await req('PUT', '/finance', { partida: '2020-01-01' })).status, 400); // partida no passado
   assert.equal((await req('POST', '/living/housing', { nome: 'Quarto', tipo: 'quarto', aluguel: 300, entrada: '2027-13-01' })).status, 400);
   // Data válida continua funcionando.
   assert.equal((await req('PUT', '/travel/profile', { dataIda: '2027-08-20' })).status, 200);

@@ -90,6 +90,17 @@ test('autor vê o estado e a nota da moderação, mas não o id de quem moderou'
   assert.equal((await mod.req('GET', `/community/posts/${p.data.post.id}`)).data.post.moderacao.por, mod.id);
 });
 
+test('post removido: o autor recebe 410 com o motivo; outras pessoas continuam com 404', async () => {
+  const p = await ana.req('POST', '/community/posts', { tipo: 'publicacao', categoria: 'experiencias', texto: 'Relato que a moderação vai remover.' });
+  await mod.req('POST', `/community/mod/posts/${p.data.post.id}/moderation`, { acao: 'remover', nota: 'Propaganda de serviço pago.' });
+  const mine = await ana.req('GET', `/community/posts/${p.data.post.id}`);
+  assert.equal(mine.status, 410);
+  assert.match(mine.data.error, /Propaganda de serviço pago/);
+  assert.equal(mine.data.moderacao.por, undefined);
+  assert.ok(!JSON.stringify(mine.data).includes(mod.id));
+  assert.equal((await bia.req('GET', `/community/posts/${p.data.post.id}`)).status, 404);
+});
+
 test('imagem não publicada: descartável pela dona, expira em 24 h e não trava novos envios', async () => {
   const before = media().length;
   const up = await ana.req('POST', '/community/media', PNG, { 'Content-Type': 'image/png' });

@@ -204,7 +204,15 @@ router.get('/posts/:id', (req, res) => {
       .sort((a, b) => a.criadoEm.localeCompare(b.criadoEm)).map((cm) => commentView(cm, req.user));
     return { post: postView(c, post, req.user), comentarios };
   });
-  if (!out) return res.status(404).json({ error: 'Publicação não encontrada.' });
+  if (!out) {
+    // O autor de um post removido pela moderação vê que foi removido e por quê (nunca quem removeu).
+    const removido = community.read((c) => {
+      const p = findPost(c, req.params.id);
+      return p && p.autorId === req.user.id && p.moderacao.estado === 'removido' ? moderationView(p.moderacao, false) : null;
+    });
+    if (removido) return res.status(410).json({ error: removido.nota ? `Esta publicação foi removida pela moderação. Motivo: ${removido.nota}` : 'Esta publicação foi removida pela moderação.', moderacao: removido });
+    return res.status(404).json({ error: 'Publicação não encontrada.' });
+  }
   res.json(out);
 });
 

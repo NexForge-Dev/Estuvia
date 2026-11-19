@@ -131,7 +131,14 @@ function Filters({ meta }, onChange) {
 // ---------- Detalhe com comentários ----------
 
 async function PostDetail(ctx, id) {
-  const { post, comentarios } = await api.get(`/community/posts/${id}`);
+  let data;
+  try { data = await api.get(`/community/posts/${id}`); } catch (e) {
+    // 410 = post da própria pessoa removido pela moderação: mostra o motivo em vez de um erro genérico.
+    if (e.status !== 410) throw e;
+    return h('section', { class: 'card' }, h('p', { class: 'notice', role: 'note' }, e.message),
+      h('a', { class: 'btn', href: '#/comunidade' }, 'Voltar à comunidade'));
+  }
+  const { post, comentarios } = data;
   const list = h('ol', { class: 'cm-comments' });
   // O título acompanha a lista: antes ficava "Comentários (0)" depois de comentar.
   const heading = h('h2', {});
