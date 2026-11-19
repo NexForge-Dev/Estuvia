@@ -12,16 +12,18 @@ A auditoria achou 16 itens: 1 possível alto (E1, a confirmar), 3 médios e 12 b
 
 **Método:** 3 agentes testaram em servidores locais isolados (base JSON, sem Supabase), pela tela e pela API. Focaram no que não foi testado em 2026-11-18 (ver `2026-11-18-e2e-todos-os-fluxos.md`).
 
+**Atualização de 2026-11-19 (tarde):** todos os itens estão resolvidos. E6 e E16 foram corrigidos em `662afcb` e E3 em `9fdd3c7`. E1, E4 e E15 não eram erro.
+
 ## Formulário de erros
 
 | ID | Gravidade | Fluxo | Erro | Onde | Como reproduzir | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| E1 | Alto (a confirmar) | Onboarding | O navegador travou ("Target crashed") entre a etapa Destino e a tela de resultado. Pode ser só do Chrome sem tela usado no teste | `public/js/views/onboarding.js:392-430`, `resultScreen` ~654 | Preencher as 6 etapas até "Gerar minha jornada" | A confirmar |
+| E1 | Alto (a confirmar) | Onboarding | O navegador travou ("Target crashed") entre a etapa Destino e a tela de resultado. Pode ser só do Chrome sem tela usado no teste | `public/js/views/onboarding.js:392-430`, `resultScreen` ~654 | Preencher as 6 etapas até "Gerar minha jornada" | Não é erro: 10 de 10 execuções no Chrome sem tela (1280 e 390 px) chegaram à tela de resultado, sem travamento |
 | E2 | Médio | Missões / Rodada 7 | Com visto aprovado e chegada registrada, a Rodada 7 seguia bloqueada até marcar a 5.9 | `server/journey-engine.js` (`registerArrival`) | Situação visto=aprovado, POST /arrival, abrir a jornada | Corrigido |
-| E3 | Médio | Novo lar / cidades | Só Granada tem moradia, faixas de preço, custos e guia da cidade | `server/content/housing.js:48`, `costs.js:47`, `places.js:119` | Aluno da UMA abre #/novo-lar | Aberto (precisa de dados com fonte) |
-| E4 | Médio | Mestrados / catálogo | Só os 138 mestrados da UGR; as outras 9 universidades estão "em coleta" | catálogo do Radar | Abrir #/mestrados | Aberto (precisa de dados com fonte) |
+| E3 | Médio | Novo lar / cidades | Só Granada tem moradia, faixas de preço, custos e guia da cidade | `server/content/housing.js:48`, `costs.js:47`, `places.js:119` | Aluno da UMA abre #/novo-lar | Corrigido (`9fdd3c7`): links de busca e página oficial de moradia para todas as cidades; guia para todas; faixa de preço também em Sevilla (UPO, O36). As outras universidades não publicam faixa |
+| E4 | Médio | Mestrados / catálogo | Só os 138 mestrados da UGR; as outras 9 universidades estão "em coleta" | catálogo do Radar | Abrir #/mestrados | Não é erro: a produção lista 941 mestrados nas 10 universidades; o teste usou uma base local vazia |
 | E5 | Baixo | Finanças | "Pago" sem valor era aceito e ignorado (`jaPago` = 0) | `server/routes/finance.js`, `public/js/views/finance.js` | PUT /finance {itens:{moradia:{status:'pago'}}} | Corrigido |
-| E6 | Baixo | Finanças | Partida e vencimento no passado são aceitos; mudar a partida não muda os meses (pode ser de propósito) | `server/routes/finance.js:57-70` | PUT /finance {partida:'2020-01-01'} | A confirmar |
+| E6 | Baixo | Finanças | Partida e vencimento no passado são aceitos; mudar a partida não muda os meses (pode ser de propósito) | `server/routes/finance.js:57-70` | PUT /finance {partida:'2020-01-01'} | Corrigido (`662afcb`): partida no passado é recusada; vencimento no passado continua aceito; os meses são a duração da estadia |
 | E7 | Baixo | Missões / QuickPlan | O atalho de planejamento usava o fuso fixo de São Paulo | `public/js/components/QuickPlan.js` | Usar "Meu planejamento" numa missão estando na Espanha | Corrigido |
 | E8 | Baixo | Agenda / celular | Faltava nome acessível em "Organizar semana" com só o ícone. A faixa de filtros rolando para o lado é proposital | `public/js/components/WeeklyPlanner.js:97` | #/agenda a 390 px | Corrigido |
 | E9 | Baixo | Agenda / API | `/planner/approve` recusava a própria proposta do `/suggest` (campo `prioridadeLabel`) | `server/routes/planner.js` | Reenviar a proposta inteira | Corrigido |
@@ -30,8 +32,8 @@ A auditoria achou 16 itens: 1 possível alto (E1, a confirmar), 3 médios e 12 b
 | E12 | Baixo | Radar admin | Erro 400 "Opção inválida." sem dizer o campo | `server/routes/radar-admin.js` | GET /api/radar/admin/history sem parâmetros | Corrigido |
 | E13 | Baixo | Idioma es | 76 frases de #/perfil sem tradução | `public/js/i18n.js` | Español, abrir #/perfil | Corrigido |
 | E14 | Baixo | Idioma es | "Baixar meus dados" sem tradução | `public/js/i18n.js` | Español, abrir #/perfil | Corrigido |
-| E15 | Baixo | Fontes / Missão 1.4 | Numa jornada 2027/28 a fonte O1 se chama "Procedimento DUA 2026/27" (talvez título histórico) | `server/content/sources.js` (O1) | Abrir a 1.4 numa jornada 2027/28 | A confirmar |
-| E16 | Baixo | Comunidade | O autor de um post removido recebe 404 e não vê o motivo (talvez de propósito) | `server/routes/community.js:199` | Moderador remove; autor abre o post | A confirmar |
+| E15 | Baixo | Fontes / Missão 1.4 | Numa jornada 2027/28 a fonte O1 se chama "Procedimento DUA 2026/27" (talvez título histórico) | `server/content/sources.js` (O1) | Abrir a 1.4 numa jornada 2027/28 | Não é erro: o título é o do acordo oficial, e a 1.4 já avisa que as regras são do ciclo anterior |
+| E16 | Baixo | Comunidade | O autor de um post removido recebe 404 e não vê o motivo (talvez de propósito) | `server/routes/community.js:199` | Moderador remove; autor abre o post | Corrigido (`662afcb`): o autor recebe 410 com o motivo, sem saber quem moderou |
 
 ## Fluxos verificados sem erro
 
