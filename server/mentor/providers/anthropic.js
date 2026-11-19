@@ -3,6 +3,7 @@
 import { loadAnthropic } from '../../anthropic-sdk.js';
 import { providerTimeoutMs } from './index.js';
 
+/** @param {{ model?: string }} [opts] */
 export function anthropicProvider({ model } = {}) {
   if (!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_AUTH_TOKEN) throw new Error('credencial Anthropic ausente');
   // Sem isso o SDK espera até 10 min por chamada (com 2 novas tentativas): o laço do Mentor faz até 6.

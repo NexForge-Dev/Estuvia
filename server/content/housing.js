@@ -88,6 +88,7 @@ export const housingSearchFor = (cidade, universidadeId) => {
 };
 
 // Reconhece o site de um link colado (só o nome: nenhum dado é baixado do anúncio).
+/** @type {Array<[RegExp, string]>} */
 export const KNOWN_SITES = [
   [/idealista\./i, 'Idealista'], [/fotocasa\./i, 'Fotocasa'], [/spotahome\./i, 'Spotahome'], [/uniplaces\./i, 'Uniplaces'],
   [/housinganywhere\./i, 'HousingAnywhere'], [/badi\./i, 'Badi'], [/pisos\.com/i, 'pisos.com'], [/milanuncios\./i, 'Milanuncios'],

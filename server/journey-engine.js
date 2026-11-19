@@ -299,6 +299,7 @@ const fmtDate = (iso) => iso.split('-').reverse().join('/');
 export function roundUnlock(n, ctx, cache = new Map()) {
   ctx._rounds ??= new Map();
   if (ctx._rounds.has(n)) return ctx._rounds.get(n);
+  /** @type {{ rodada?: number, sempre?: boolean, texto?: string, requisitos?: any[], alternativas?: any[], acao?: any }} */
   const rule = ROUND_UNLOCK.find((r) => r.rodada === n) || { sempre: true };
   const evalCond = (c) => {
     if (c.missao) {
@@ -458,6 +459,7 @@ export function computeJourney(user, jr, now = new Date()) {
 
   const all = rounds.flatMap((r) => r.missoes);
   const applicable = all.filter(counts);
+  /** @type {Record<string, number>} */
   const count = Object.fromEntries(Object.keys(STATUS).map((k) => [k, applicable.filter((m) => m.status === k).length]));
   count['nao-aplicavel'] = all.filter((m) => m.status === 'nao-aplicavel').length;
   const progresso = applicable.length ? applicable.reduce((s, m) => s + (m.status === 'concluida' ? 1 : m.progresso * 0.85), 0) / applicable.length : 0;
@@ -503,7 +505,7 @@ export function computeJourney(user, jr, now = new Date()) {
       duracaoMeses: ctx.duracaoMeses,
     },
     progresso,
-    contagem: { ...count, total: all.length, aplicaveis: applicable.length, pendentes: applicable.length - count.concluida },
+    contagem: /** @type {Record<string, number>} */ ({ ...count, total: all.length, aplicaveis: applicable.length, pendentes: applicable.length - count.concluida }),
     rodadaAtual: rodadaAtual.numero,
     proximaMissao: recommend(all),
     prazos,
@@ -848,6 +850,13 @@ function recordSituacao(jr, campo, valor, origem, now) {
   jr.situacaoRegistro = { ...(jr.situacaoRegistro || {}), [campo]: { valor, origem, em: now.toISOString() } };
 }
 
+/**
+ * @param {any} user
+ * @param {any} jr
+ * @param {string} missionId
+ * @param {string} objId
+ * @param {{ feito?: boolean, valor?: any }} mudanca
+ */
 export function setObjective(user, jr, missionId, objId, { feito, valor }) {
   const { def, state } = editable(user, jr, missionId);
   const obj = def.objetivos.find((o) => o.id === objId);
@@ -932,6 +941,12 @@ export function applyRequirements(user, jr, now = new Date()) {
 export const EXECUCAO = ['nao-comecei', 'fazendo', 'ajuda'];
 const mp_ = (jr, id) => (ensureJourney(jr).missions[id] ??= { objetivos: {} });
 
+/**
+ * @param {any} user
+ * @param {any} jr
+ * @param {string} missionId
+ * @param {{ aguardando?: boolean, naoAplicavel?: boolean, prazo?: string|null, nota?: string, execucao?: string|null, ignorada?: boolean }} flags
+ */
 export function setMissionFlags(user, jr, missionId, { aguardando, naoAplicavel, prazo, nota, execucao, ignorada }) {
   const { def, state } = editable(user, jr, missionId);
   // Missão bloqueada: o conteúdo ainda não foi liberado, então nada pode ser registrado nela.
@@ -997,6 +1012,13 @@ export function addNote(jr, missionId, { texto, tipo = 'nota' }, id, now = new D
   return note;
 }
 
+/**
+ * @param {any} jr
+ * @param {string} missionId
+ * @param {string} noteId
+ * @param {{ texto?: string, tipo?: string, feito?: boolean }} mudanca
+ * @param {Date} [now]
+ */
 export function updateNote(jr, missionId, noteId, { texto, tipo, feito }, now = new Date()) {
   const note = noteTarget(jr, missionId).find((n) => n.id === noteId);
   if (!note) throw new JourneyError(404, 'Anotação não encontrada.');
@@ -1034,6 +1056,13 @@ function validEntry(dataEntrada, now) {
 }
 
 // Registra etapas já cumpridas fora da Estuvia. Nunca rebaixa uma situação nem desfaz conclusões.
+/**
+ * @param {any} user
+ * @param {any} jr
+ * @param {string} etapa
+ * @param {{ dataEntrada?: string, confirmo?: boolean }} [opts]
+ * @param {Date} [now]
+ */
 export function declarePriorProgress(user, jr, etapa, { dataEntrada, confirmo } = {}, now = new Date()) {
   if (!confirmo) throw new JourneyError(400, 'Confirme que estas etapas já foram realizadas.');
   const idx = PRIOR_STAGES.findIndex((s) => s.id === etapa);
@@ -1134,6 +1163,7 @@ export function missionForClient(user, jr, id, now = new Date()) {
 
 // Eventos para feedback visual, comparando o estado antes e depois de uma mutação.
 export function diffEvents(before, after, missionId) {
+  /** @type {Array<{ tipo: string, journeyId?: string, [campo: string]: any }>} */
   const events = [];
   const flat = (j) => j.rodadas.flatMap((r) => r.missoes);
   const mb = missionId && flat(before).find((m) => m.id === missionId);

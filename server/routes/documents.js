@@ -426,6 +426,7 @@ export async function removeFile(userId, meta, { del = deleteDocument } = {}) {
 
 router.post('/:docId/files', documentUploadLimiter, express.raw({ type: ['application/pdf', 'image/png', 'image/jpeg', 'image/webp', 'application/octet-stream'], limit: MAX_BYTES }), async (req, res) => {
   const personal = req.params.docId === PERSONAL.id;
+  /** @type {any} */
   const doc = personal ? PERSONAL : knownDoc(req, res);
   if (!doc) return;
   if (doc.agregado) return res.status(400).json({ error: 'Anexe o arquivo dentro de cada documento.' });

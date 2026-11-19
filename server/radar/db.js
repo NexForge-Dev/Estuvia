@@ -46,6 +46,7 @@ export const radarFile = () => process.env.RADAR_DATA_FILE || path.join(path.dir
 let db = null;
 let writing = Promise.resolve();
 let entities = null; // sincronizador das tabelas radar_* (só no modo Supabase)
+/** @type {{ mensagem: string, [campo: string]: any } | null} */
 let lastWriteError = null;
 
 const empty = () => Object.fromEntries(COLLECTIONS.map((c) => [c, []]));

@@ -93,6 +93,17 @@ function recordSnapshot(source, { url, text, parsed, fetchedAt, chave = source.i
 
 // ---------- Fila de revisão e histórico ----------
 
+/**
+ * @typedef {{ tipo: string, sourceId: string, snapshotId?: string|null, motivo: string, proposta?: any, impacto?: string, chave?: string }} ReviewInput
+ * @typedef {{ entidade: string, entidadeId: string, opportunityKey?: string, campo: string, anterior: any, novo: any, evidencia: any,
+ *   validacao?: string, impacto?: string, por?: string, nota?: string }} RevisionInput
+ * @typedef {{ publicado: boolean, revisions: any[], revisao?: boolean, semAlteracao?: boolean }} ApplyResult
+ * @typedef {{ id: string, sourceId: string, inicio: string, fim: string|null, resultado: string|null, mudancas: number, erro: string|null,
+ *   itens: number, alvos: number, persistido: boolean, origem?: string, falhasExtracao?: number, naoModificadas?: number }} RadarRun
+ */
+
+/** @param {ReviewInput} input */
+
 export function openReview({ tipo, sourceId, snapshotId, motivo, proposta, impacto = 'alto', chave }) {
   const d = data();
   const dedupe = chave || hash([tipo, sourceId, motivo, proposta]);
@@ -104,6 +115,7 @@ export function openReview({ tipo, sourceId, snapshotId, motivo, proposta, impac
 }
 
 // Revisão = mudança real. Valor anterior igual ao novo (inclusive com chaves em outra ordem) não é registrado.
+/** @param {RevisionInput} input */
 function revision({ entidade, entidadeId, opportunityKey, campo, anterior, novo, evidencia, validacao = 'publicada', impacto = 'baixo', por = 'atualizador', nota }) {
   if (sameJson(anterior, novo)) return null;
   const r = { id: newId(), entidade, entidadeId, opportunityKey, campo, anterior: anterior ?? null, novo: novo ?? null, evidencia, em: new Date().toISOString(), validacao, impacto, por, ...(nota ? { nota } : {}) };
@@ -498,6 +510,7 @@ function backoffHours(source) {
 // incerta) a coleta NÃO conta como verificação: vai para revisão e o dado publicado envelhece.
 const isValidExtraction = (parsed) => Boolean(parsed?.ok) && !(parsed.avisos || []).some((a) => ['ciclo-inconsistente', 'extracao-incerta'].includes(a.tipo));
 
+/** @returns {ApplyResult} */
 function processParsed(source, parsed, ctx) {
   if (!isValidExtraction(parsed)) {
     openReview({
@@ -522,6 +535,7 @@ export function ingest(sourceId, { url, text, fetchedAt = new Date().toISOString
   const parsed = parsedOverride || connector.parse(text, parseContext);
   const { snapshot, changed } = recordSnapshot(source, { url, text, parsed, fetchedAt, chave: snapshotKey || (programId ? `${source.id}:${programId}` : source.id) });
   const valido = isValidExtraction(parsed);
+  /** @type {ApplyResult} */
   const result = changed
     ? processParsed(source, parsed, { source, snapshot, programId, completo })
     : parsed.tipo === 'catalogo' && valido
@@ -549,11 +563,16 @@ export function runSource(sourceId, opts = {}) {
   return next;
 }
 
+/**
+ * @param {string} sourceId
+ * @param {{ fetchImpl?: typeof fetch, now?: number, origem?: string|null, lote?: number|null, onlyTargets?: string[]|null, replay?: boolean }} [opts]
+ */
 async function runSourceUnlocked(sourceId, { fetchImpl, now = Date.now(), origem = null, lote = null, onlyTargets = null, replay = false } = {}) {
   ensureSources();
   const source = sourceById(sourceId);
   if (!source) throw Object.assign(new Error(`Fonte desconhecida: ${sourceId}`), { status: 404 });
   const t0 = Date.now();
+  /** @type {RadarRun} */
   const run = { id: newId(), sourceId, inicio: nowIso(now), fim: null, resultado: null, mudancas: 0, erro: null, itens: 0, alvos: 0, persistido: false, ...(origem ? { origem } : {}) };
   data().runs.push(run);
 

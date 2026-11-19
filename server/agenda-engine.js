@@ -41,6 +41,10 @@ const PRIORITY_ORDER = { critica: 0, alta: 1, normal: 2, aguardando: 3 };
 const PRIORITY_LABEL = { critica: 'Crítica', alta: 'Alta', normal: 'Normal', aguardando: 'Aguardando resposta' };
 
 // Lista de trabalho: missões abertas de todas as jornadas + tarefas de bolsas.
+/**
+ * @returns {Array<{ titulo: string, minutos: number, prioridade: string, prazo?: string|null, motivo?: string, categoria?: string, rodada?: number,
+ *   missaoId?: string, journeyId?: string, bolsaId?: string, resposta?: any, terceiros?: boolean }>}
+ */
 export function workItems(user, today) {
   const items = [];
   for (const jr of user.journeys || []) {
@@ -70,7 +74,7 @@ export function workItems(user, today) {
     if (['concedida', 'negada', 'desisti'].includes(app.status) && !(app.tarefas || []).some((t) => !t.feito)) continue;
     const pend = (app.tarefas || []).filter((t) => !t.feito);
     if (!pend.length) continue;
-    const dias = app.prazo ? Math.ceil((new Date(`${app.prazo}T23:59:59Z`) - new Date(`${today}T12:00:00Z`)) / 86400000) : null;
+    const dias = app.prazo ? Math.ceil((Date.parse(`${app.prazo}T23:59:59Z`) - Date.parse(`${today}T12:00:00Z`)) / 86400000) : null;
     items.push({
       titulo: `Bolsa ${app.nome} - ${pend[0].texto}`, minutos: 45, categoria: 'financeiro', bolsaId: app.id,
       prioridade: dias !== null && dias <= 7 ? 'critica' : dias !== null && dias <= 30 ? 'alta' : 'normal',
@@ -81,6 +85,12 @@ export function workItems(user, today) {
   return items;
 }
 
+/**
+ * @param {any} user
+ * @param {string} weekStart
+ * @param {string} [today]
+ * @param {{ journeyId?: string, missaoId?: string }} [foco]
+ */
 export function suggestWeek(user, weekStart, today = todayFor(user), { journeyId, missaoId } = {}) {
   const av = { ...DEFAULT_AVAILABILITY, ...(user.agenda?.disponibilidade || {}) };
   const start = mondayOf(weekStart);

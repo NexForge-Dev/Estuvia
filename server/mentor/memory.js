@@ -56,6 +56,10 @@ const ensure = (u) => {
 
 export const can = (user, perm) => !perm || mentorState(user).permissoes[perm] !== false;
 
+/**
+ * @param {string} userId
+ * @param {{ permissoes?: Record<string, any>, preferencias?: any }} mudanca
+ */
 export async function setPreferences(userId, { permissoes, preferencias }) {
   return users.update(userId, (u) => {
     const m = ensure(u);
@@ -106,6 +110,10 @@ export const openNotes = (user) => mentorState(user).notas.filter((n) => !n.reso
 // ---------- Audit Log ----------
 // Toda ação de escrita do Mentor (confirmada ou recusada pelo backend) é registrada em dois lugares:
 // no log global (sem conteúdo pessoal) e no histórico do próprio estudante, que ele pode consultar.
+/**
+ * @param {string} userId
+ * @param {{ ferramenta: string, efeito: string, resumo?: string, resultado: string, propostaId?: string, erro?: string }} acao
+ */
 export async function recordAction(userId, { ferramenta, efeito, resumo, resultado, propostaId, erro }) {
   const entry = { id: newId(), em: new Date().toISOString(), ferramenta, efeito, resumo: String(resumo || '').slice(0, 200), resultado, ...(erro ? { erro: String(erro).slice(0, 200) } : {}) };
   await users.update(userId, (u) => {

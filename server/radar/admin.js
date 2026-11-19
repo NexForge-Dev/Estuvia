@@ -141,6 +141,10 @@ function findTarget(entidade, id) {
  * Correção manual protegida: o valor do admin passa a valer e as coletas seguintes não o sobrescrevem
  * (só atualizam o "valor da fonte", visível no painel). Exige motivo e URL de evidência.
  */
+/**
+ * @param {{ entidade: string, id: string, campo: string, valor?: any, motivo: string, url: string }} correcao
+ * @param {string} por
+ */
 export async function correct({ entidade, id, campo, valor, motivo, url }, por) {
   const target = findTarget(entidade, id);
   if (!EDITABLE[entidade].includes(campo)) throw err(400, `Campo não editável: ${campo}. Editáveis: ${EDITABLE[entidade].join(', ')}.`);
@@ -158,6 +162,10 @@ export async function correct({ entidade, id, campo, valor, motivo, url }, por) 
 }
 
 /** Remove uma correção manual: o campo volta ao valor mais recente da fonte. Fica registrado no histórico. */
+/**
+ * @param {{ entidade: string, id: string, campo: string, motivo?: string }} pedido
+ * @param {string} por
+ */
 export async function clearCorrection({ entidade, id, campo, motivo }, por) {
   const target = findTarget(entidade, id);
   if (!isOverridden(target, campo)) throw err(404, 'Este campo não tem correção manual.');

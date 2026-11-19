@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 import { config } from './config.js';
 import { users } from './store.js';
 
+/** @type {(senha: string | Buffer, sal: Buffer, tamanho: number, opcoes?: crypto.ScryptOptions) => Promise<Buffer>} */
 const scrypt = promisify(crypto.scrypt);
 export const COOKIE = 'tv_session';
 
@@ -85,7 +86,7 @@ export function requireAuth(req, res, next) {
   const token = req.cookies?.[COOKIE];
   if (!token) return res.status(401).json({ error: 'Faça login para continuar.' });
   try {
-    const payload = jwt.verify(token, config.jwtSecret, { algorithms: ['HS256'] });
+    const payload = /** @type {import('jsonwebtoken').JwtPayload} */ (jwt.verify(token, config.jwtSecret, { algorithms: ['HS256'] }));
     const user = users.findById(payload.sub);
     // tokenVersion permite invalidar todas as sessões (logout geral / troca de senha).
     if (!user || user.tokenVersion !== payload.v) throw new Error('sessão inválida');

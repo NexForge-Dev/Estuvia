@@ -257,7 +257,7 @@ export function computeFinance(user, jr, now = new Date()) {
   // A simulação de outra data ("Alternativas") vale mais que o início das aulas da jornada.
   const partida = fin.partida || jr?.inicioAulas || `${ano}-09-01`;
   const alvo = new Date(`${partida}T12:00:00`);
-  const mesesAteViagem = Math.max(1, Math.round((alvo - now) / (30.44 * 24 * 3600 * 1000)));
+  const mesesAteViagem = Math.max(1, Math.round((alvo.getTime() - Number(now)) / (30.44 * 24 * 3600 * 1000)));
   const economiaMensal = deficit > 0 ? deficit / mesesAteViagem : 0;
 
   // Cenários comparáveis: os três perfis, mantendo o que o estudante informou e o que veio de outros módulos.

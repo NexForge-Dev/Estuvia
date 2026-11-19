@@ -4,6 +4,7 @@
 // Modelos locais evitam custo por mensagem, mas exigem hardware/hospedagem com GPU — avalie antes.
 import { providerTimeoutMs } from './index.js';
 
+/** @param {{ baseUrl?: string, apiKey?: string, model?: string, fetchImpl?: typeof fetch }} [opts] */
 export function openAICompatibleProvider({ baseUrl, apiKey, model, fetchImpl = globalThis.fetch } = {}) {
   if (!baseUrl || !model) throw new Error('defina MENTOR_BASE_URL e MENTOR_MODEL');
   const url = `${baseUrl.replace(/\/$/, '')}/chat/completions`;
@@ -36,6 +37,7 @@ export function openAICompatibleProvider({ baseUrl, apiKey, model, fetchImpl = g
         }),
       });
       if (!res.ok) throw new Error(`erro do provedor (${res.status})`);
+      /** @type {any} */
       let data;
       try { data = await res.json(); } catch { throw new Error('resposta do provedor não é JSON'); }
       const msg = data?.choices?.[0]?.message;

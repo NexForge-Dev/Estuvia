@@ -36,6 +36,7 @@ export const QUICK_ACTIONS = {
 };
 
 // Pergunta livre → ação rápida equivalente (para responder com dados reais no modo offline).
+/** @type {Array<[string, RegExp]>} */
 const INTENTS = [
   ['semana', /organiz\w* (minha )?semana|minhas tarefas da pr[oó]xima semana|agenda/i],
   ['suficiente', /tenho\s*(r\$|€|eur)?\s*[\d.,]+\s*(mil|k)?.*(suficiente|d[aá]|basta)|[eé] suficiente\?/i],

@@ -68,6 +68,7 @@ function historicalReference(opp) {
   };
 }
 
+/** @type {Array<[RegExp, string[], RegExp]>} */
 const PROFILE_AREAS = [
   [/inform|computa|software|sistemas|dados|ti\b|tecnolog/, ['Ingeniería y Arquitectura', 'Ciencias'], /software|inform|datos|ciber|digital|computador/],
   [/engenh|arquitet|civil|eletr|mecan|quim/, ['Ingeniería y Arquitectura'], /ingenier|arquitect|estructur|electr|hidraul/],
@@ -96,6 +97,7 @@ export function compatibility(profile, program) {
 export const NIVEIS_QECR = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
 // Critérios mais comuns nas fichas, em português; o texto original sempre acompanha.
+/** @type {Array<[RegExp, string]>} */
 const CRITERIOS_PT = [
   [/NOTA MEDIA|EXPEDIENTE/, 'Nota média do histórico'],
   [/CURRICUL/, 'Currículo'],
@@ -532,6 +534,11 @@ export async function confirmAgendaChange(user, linkId, aceitar, usersStore) {
 
 // ---------- Acompanhamento e alertas ----------
 
+/**
+ * @param {any} user
+ * @param {string} oppId
+ * @param {{ eventos?: string[], canal?: string }} [opts]
+ */
 export async function subscribe(user, oppId, { eventos, canal = 'app' } = {}) {
   const list = (eventos?.length ? eventos : Object.keys(EVENT_TYPES)).filter((e) => EVENT_TYPES[e]);
   const id = newId();
@@ -707,7 +714,10 @@ export function officialDeadlines(user, now = Date.now()) {
   return out.sort((a, b) => a.data.localeCompare(b.data));
 }
 
-/** Duplicata contra oportunidades oficiais (usado pela Comunidade). Síncrona, sem rede. */
+/**
+ * Duplicata contra oportunidades oficiais (usado pela Comunidade). Síncrona, sem rede.
+ * @param {{ link?: string, universidadeId?: string, titulo?: string }} [m]
+ */
 export function findOfficialMatch({ link, universidadeId, titulo } = {}) {
   const d = data();
   const url = (u) => norm(u).replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/[?#].*$/, '').replace(/\/+$/, '');
@@ -809,6 +819,7 @@ function studentAnswer({ q, ano, scored, all, abertas, user, now, src }) {
 // ---------- Consultas para o Mentor ----------
 
 // Termos em português → radicais usados nos nomes oficiais (espanhol).
+/** @type {Array<[RegExp, string[]]>} */
 const PT_ES = [
   [/comput|informat/, ['informat', 'computac', 'software', 'datos', 'ciber']], [/software|programa[cç]/, ['software', 'desarrollo', 'informat']],
   [/desenvolv/, ['desarrollo']], [/dados/, ['datos']], [/intelig[eê]ncia artificial|\bia\b/, ['inteligencia artificial', 'datos']],

@@ -29,6 +29,10 @@ const publicProposal = (id, p) => ({
 });
 
 /** passos: [{ ferramenta, input, preview, editavel? }] — previews já validados por useTool. */
+/**
+ * @param {any} user
+ * @param {{ titulo: string, passos: any[], contexto?: any, confirmarRotulo?: string }} proposta
+ */
 export async function propose(user, { titulo, passos, contexto = {}, confirmarRotulo }) {
   const id = crypto.randomUUID();
   const now = Date.now();

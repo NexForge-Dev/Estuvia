@@ -331,6 +331,10 @@ export const audit = {
       else markRow('audit_log', entry.id);
     });
   },
+  /**
+   * @param {number} [limit]
+   * @param {(entrada: any) => boolean} [predicate]
+   */
   recent(limit = 200, predicate = () => true) {
     const out = [];
     for (let i = db.audit.length - 1; i >= 0 && out.length < limit; i -= 1) {

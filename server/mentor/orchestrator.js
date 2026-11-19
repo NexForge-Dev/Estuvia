@@ -26,6 +26,11 @@ export function mode() {
   return p.disponivel ? { modo: 'ia', nome: MENTOR_NAME, provedor: p.nome } : { modo: 'guiado', nome: GUIDED_NAME, provedor: null };
 }
 
+/**
+ * @param {any} user
+ * @param {{ mensagem?: string, acao?: any, contexto?: any, historico?: any[] }} entrada
+ * @param {{ signal?: AbortSignal }} [opts]
+ */
 export async function handleMessage(user, { mensagem, acao, contexto = {}, historico = [] }, { signal } = {}) {
   const provider = getProvider();
   if (!provider.disponivel) {
@@ -94,6 +99,7 @@ async function agentReply(provider, user, { mensagem, contexto, historico }, sig
   const ctx = makeCtx(user, contexto);
   const tools = catalog().filter((t) => can(ctx.user, t.permissao));
   const history = recentHistory(historico);
+  /** @type {Array<{ role: string, content?: any, chamadas?: any, bruto?: any, resultados?: any }>} */
   const messages = [...history, { role: 'user', content: `CONTEXTO DA JORNADA (dados da plataforma; não invente outros):\n${buildContext(ctx.user, contexto, ctx.now)}\n\nMensagem do estudante: ${mensagem}` }];
   const usadas = [];
   const cartoes = [];

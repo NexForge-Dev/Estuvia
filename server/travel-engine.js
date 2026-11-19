@@ -44,6 +44,7 @@ function guessTemplate(o, cidade) {
   const t = `${o.rota || ''} ${o.aeroportoChegada || ''}`.toLowerCase();
   // O destino é o último trecho da rota ("Recife → Madrid → Sevilla" chega em Sevilla).
   const last = t.split(/→|->|>|\/|,/).map((x) => x.trim()).filter(Boolean).pop() || t;
+  /** @type {Array<[RegExp, string]>} */
   const NAMES = [[/m[aá]laga|\bagp\b/, 'AGP'], [/madri|madrid|\bmad\b/, 'MAD'], [/granada|\bgrx\b/, 'GRX'], [/sevil|\bsvq\b/, 'SVQ'], [/jerez|\bxry\b/, 'XRY'], [/almer[ií]a|\blei\b/, 'LEI']];
   for (const text of [o.aeroportoChegada ? String(o.aeroportoChegada).toLowerCase() : '', last, t]) {
     for (const [re, iata] of NAMES) if (re.test(text) && ids.has(ROUTE_BY_IATA[iata])) return ROUTE_BY_IATA[iata];

@@ -36,6 +36,18 @@ export const JOURNEY_TEMPLATE = {
   base: 'Manual Brasil → Universidad de Granada [M] + fontes oficiais',
 };
 
+/**
+ * Campos descritos no cabeçalho deste arquivo; todos opcionais exceto id, titulo e objetivos.
+ * @typedef {{ id: string, titulo: string, objetivos: any[], rodada?: number, label?: string, rota?: string, resumo?: string, objetivo?: string,
+ *   porque?: string, comoExecutar?: any[], dicas?: string[], errosComuns?: string[], resultado?: string, criterio?: string,
+ *   dificuldade?: string, tutorial?: any, acoes?: any[], dependencias?: string[], requer?: any, aguardandoSe?: any, atencaoSe?: any,
+ *   urgenteSe?: any, regra?: any, condicional?: boolean, condicaoTexto?: string, opcional?: boolean, aguardavel?: boolean,
+ *   prioridade?: string, tempoEstimado?: string, duracaoMin?: number, documentos?: string[], fontes?: string[], tag?: string,
+ *   prazo?: any, marco?: string, ferramenta?: string, processo?: boolean, alertasProcesso?: string[], soDua?: boolean }} Mission
+ * @typedef {{ numero: number, titulo: string, missoes: Mission[], [campo: string]: any }} Round
+ */
+
+/** @type {Round[]} */
 export const ROUNDS = [
   {
     numero: 1,
@@ -785,7 +797,9 @@ export const MILESTONES = [
   { id: 'estadia-regularizada', titulo: 'Estadia regularizada!', icone: 'shield' },
 ];
 
+/** @returns {Mission[]} */
 export const allMissions = () => ROUNDS.flatMap((r) => r.missoes.map((m) => ({ ...m, rodada: r.numero })));
+/** @returns {Mission|null} */
 export const missionById = (id) => allMissions().find((m) => m.id === id) || null;
 export const roundOf = (id) => ROUNDS.find((r) => r.missoes.some((m) => m.id === id));
 // Rótulo exibido: missões da trilha transversal aparecem como "F.3".

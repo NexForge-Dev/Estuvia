@@ -63,7 +63,7 @@ export const config = {
   docsDir: process.env.DOCS_DIR || path.join(path.dirname(process.env.DATA_FILE || path.join(here, '..', 'data', 'db.json')), 'docfiles'),
   // Chave dos arquivos: DOCUMENTS_KEY (recomendado em produção, ≥ 32 caracteres) ou derivada do JWT_SECRET.
   // Trocar a chave (ou o sal 'padapal', nome antigo da plataforma) torna os arquivos já guardados ilegíveis.
-  docsKey: crypto.hkdfSync('sha256', process.env.DOCUMENTS_KEY || jwtSecret, 'padapal', 'documentos-v1', 32),
+  docsKey: Buffer.from(crypto.hkdfSync('sha256', process.env.DOCUMENTS_KEY || jwtSecret, 'padapal', 'documentos-v1', 32)),
   // Moderadores da comunidade (verificação de oportunidades, denúncias). Lista separada por vírgula.
   // Só vale FORA de produção (o cadastro não verifica e-mail; em produção o admin concede o papel no painel).
   moderatorEmails: (process.env.MODERATOR_EMAILS || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean),

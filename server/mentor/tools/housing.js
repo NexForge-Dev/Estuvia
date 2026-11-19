@@ -58,6 +58,7 @@ export const compareHousingOptions = defineTool({
 });
 
 // Sinais de risco identificáveis num anúncio ou conversa colada pelo estudante.
+/** @type {Array<[RegExp, string]>} */
 const RED_FLAGS = [
   [/western union|moneygram|transferwise|wise\b|pix|bitcoin|cripto|gift ?card/, 'Pedido de pagamento por meio difícil de rastrear ou estornar.'],
   [/(adiant|antecip|reserv|sinal|pag\w*|deposit\w*|transfer\w*).{0,40}\b(antes|sem)\b.{0,30}(ver|visit|contrato|chave|assin)|pague (agora|hoje)|deposit\w* (ja|agora|hoje)/, 'Pedido de dinheiro antes de ver o imóvel ou o contrato.'],

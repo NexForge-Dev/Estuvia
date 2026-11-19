@@ -118,7 +118,7 @@ const FILTERS = {
 router.get('/users', (req, res) => {
   const q = String(req.query.q || '').trim().toLowerCase().slice(0, 80);
   const filtro = typeof req.query.filtro === 'string' && Object.hasOwn(FILTERS, req.query.filtro) ? req.query.filtro : 'todos';
-  const ordem = ['ultimo-acesso', 'inatividade', 'progresso', 'alertas', 'cadastro'].includes(req.query.ordem) ? req.query.ordem : 'ultimo-acesso';
+  const ordem = ['ultimo-acesso', 'inatividade', 'progresso', 'alertas', 'cadastro'].includes(String(req.query.ordem)) ? String(req.query.ordem) : 'ultimo-acesso';
   const list = users.all()
     .filter((u) => !isAdmin(u))
     .filter((u) => !q || u.email.includes(q) || String(u.profile?.nome || '').toLowerCase().includes(q))
@@ -154,7 +154,7 @@ router.get('/status', async (req, res) => {
 
 // Logs do servidor (memória, desde o último reinício).
 router.get('/logs', (req, res) => {
-  const nivel = ['info', 'aviso', 'erro'].includes(req.query.nivel) ? req.query.nivel : null;
+  const nivel = ['info', 'aviso', 'erro'].includes(String(req.query.nivel)) ? String(req.query.nivel) : null;
   res.json(recentLogs({ nivel, q: String(req.query.q || '').slice(0, 100) }));
 });
 

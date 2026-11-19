@@ -36,6 +36,7 @@ export async function refreshRate({ force = false, fetchImpl = globalThis.fetch 
     try {
       const res = await fetchImpl(URL_, { signal: AbortSignal.timeout(3000) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      /** @type {any} */
       const body = await res.json();
       const taxa = Number(body?.rates?.BRL);
       if (!(taxa > 0)) throw new Error('resposta sem taxa');

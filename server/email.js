@@ -5,6 +5,7 @@ import { config } from './config.js';
 
 export const emailEnabled = () => Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
 
+/** @param {{ to: string, subject: string, text: string, html?: string }} msg */
 export async function sendEmail({ to, subject, text, html }) {
   if (!emailEnabled()) {
     if (config.isProd) return false;

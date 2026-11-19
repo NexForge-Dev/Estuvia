@@ -25,6 +25,7 @@ const fonte = (id) => {
 };
 
 // Documentos que um critério de seleção da ficha costuma pedir. Só a partir do texto oficial do critério.
+/** @type {Array<[RegExp, string, string]>} */
 const DERIVED = [
   [/CURRICUL/, 'cv', 'Currículo (CV) para a avaliação do critério'],
   [/MOTIVACI/, 'motivacao', 'Carta de motivação / exposição de motivos'],
@@ -59,6 +60,10 @@ export function planningCycle(now = new Date()) {
 /** O curso das regras cadastradas já começou (as aulas começam entre setembro e outubro do 1º ano). */
 const cycleStarted = (ciclo, now) => { const y = Number(String(ciclo).slice(0, 4)); return Number.isFinite(y) && now >= new Date(Date.UTC(y, 9, 31)); };
 
+/**
+ * @param {any} program
+ * @param {{ calendario?: any, profile?: any, requisitos?: Record<string, string>, faseDeclarada?: any, cicloJornada?: string|null, now?: Date }} [opts]
+ */
 export function applicationProcess(program, { calendario = { windows: [], events: [] }, profile = {}, requisitos = {}, faseDeclarada = null, cicloJornada = null, now = new Date() } = {}) {
   if (!program) return null;
   const proc = DUA_MASTERES;

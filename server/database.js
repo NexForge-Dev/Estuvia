@@ -62,6 +62,7 @@ export function setRpcForTests(fn) { rpcOverride = fn; }
  */
 export function rpcError(message) {
   const conflict = /estuvia_conflict|violates foreign key constraint/i.test(message);
+  /** @type {Error & { code?: string }} */
   const err = new Error(conflict ? `Os dados mudaram em outra instância do servidor. Tente novamente. (${message})` : `Supabase: ${message}`);
   if (conflict) err.code = 'ESTUVIA_CONFLICT';
   if (/function .*estuvia_(apply|changes).* does not exist|Could not find the function/i.test(message)) err.code = 'ESTUVIA_NO_SCHEMA';

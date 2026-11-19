@@ -35,6 +35,7 @@ export function isOfficialDeadline(userId, event) {
 }
 
 /** Primeiro horário livre no dia, dentro das janelas de disponibilidade e sem conflito. */
+/** @returns {{ inicio: string, fim: string, foraDaDisponibilidade?: boolean, conflito: any } | null} */
 export function findSlot(user, dia, minutos, preferido = null) {
   const av = availability(user);
   const busy = (user.planner || []).filter((e) => e.data === dia);

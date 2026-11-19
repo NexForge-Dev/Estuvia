@@ -46,6 +46,7 @@ export function phaseState(window, events, now = Date.now()) {
  * @param {object[]} events         AdmissionEvent do procedimento/curso
  * @param {object} health           { ultimaVerificacaoOk?: ISO, falhando?: bool }
  * @param {object} channel          canal oficial de candidatura (ou null)
+ * @returns {{ fases: any[], atualizacaoPendente: boolean, estado: string, motivo?: string, faseAtual?: any, prazoFinal?: string, proximaAbertura?: string }}
  */
 export function opportunityState(o, windows, events, health = {}, channel = null, now = Date.now()) {
   const fases = windows

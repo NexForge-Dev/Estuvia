@@ -12,6 +12,10 @@ const lastHit = new Map();
 const robotsCache = new Map();
 
 export class FetchError extends Error {
+  /**
+   * @param {string} message
+   * @param {{ status?: number, blocked?: boolean }} [info]
+   */
   constructor(message, { status, blocked } = {}) {
     super(message);
     this.status = status;

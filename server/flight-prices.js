@@ -73,6 +73,7 @@ export async function routePrices({ origem, destino, quando, moeda = 'brl', limi
     if (res.status === 429) cooldownUntil = Date.now() + COOLDOWN_MS;
     if (res.status === 429) throw new Error('limite gratuito de consultas atingido; tente mais tarde');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    /** @type {any} */
     const body = await res.json();
     if (body?.success === false) throw new Error(String(body.error || 'consulta recusada'));
     const ofertas = (Array.isArray(body?.data) ? body.data : []).map((it) => normalizeOffer(it, moeda)).filter(Boolean).sort((a, b) => a.preco - b.preco);
@@ -118,12 +119,14 @@ export async function pricesForUser(user, jid, opts = {}) {
 // ---------- Alerta de preço ----------
 
 /** Verifica os alertas ativos. Retorna os avisos gerados (para testes e logs). */
+/** @param {{ now?: number, token?: string, [campo: string]: any }} [opts] */
 export async function checkPriceAlerts({ now = Date.now(), ...opts } = {}) {
   if (!pricesEnabled() && !opts.token) return [];
   const avisos = [];
   for (const u of users.all()) {
     const alerta = u.travel?.alertaPreco;
     if (!alerta?.ativo || !(alerta.teto > 0)) continue;
+    /** @type {any} */
     let r;
     try { r = await pricesForUser(u, alerta.journeyId, opts); } catch { continue; }
     const menor = r.menor;

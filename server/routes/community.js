@@ -19,6 +19,7 @@ import { putMedia, getMedia, deleteMedia } from '../storage.js';
 import { sameJson } from '../json-equal.js';
 
 // Radar oficial (opcional): se o módulo falhar ao carregar, a comunidade segue sem a checagem.
+/** @type {(m: { link?: string, universidadeId?: string, titulo?: string }) => any} */
 let findOfficialMatch = () => ({ match: false });
 import('../radar/service.js').then((m) => { if (m.findOfficialMatch) findOfficialMatch = m.findOfficialMatch; }).catch(() => {});
 
@@ -37,7 +38,7 @@ const PAGE = 20;
 const today = (user) => todayFor(user);
 const now = () => new Date().toISOString();
 const bad = (res, parsed) => res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
-const daysUntil = (iso, user) => Math.round((new Date(`${iso}T12:00:00Z`) - new Date(`${today(user)}T12:00:00Z`)) / 86400000);
+const daysUntil = (iso, user) => Math.round((Date.parse(`${iso}T12:00:00Z`) - Date.parse(`${today(user)}T12:00:00Z`)) / 86400000);
 const addDays = (iso, n) => { const d = new Date(`${iso}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 
 // Grupos iniciais entram na base na primeira carga (persistem na próxima escrita).
@@ -249,6 +250,12 @@ const postSchema = z.object({
 }).strict().refine((p) => p.tipo !== 'oportunidade' || p.oportunidade, { message: 'Preencha os dados da oportunidade.' });
 
 // Valida, protege dados pessoais e analisa links. Devolve { erro } ou os campos prontos para gravar.
+/**
+ * @param {any} c
+ * @param {any} user
+ * @param {any} data
+ * @param {{ editingId?: string }} [opts]
+ */
 function preparePost(c, user, data, { editingId } = {}) {
   if (data.grupoId && !c.groups.some((g) => g.id === data.grupoId)) return { erro: [400, 'Grupo não encontrado.'] };
   for (const id of data.imagens) {
@@ -310,8 +317,8 @@ router.post('/posts', communityWriteLimiter, async (req, res) => {
   if (parsed.data.oportunidade?.prazo && parsed.data.oportunidade.prazo < today(user)) return res.status(400).json({ error: 'O prazo desta oportunidade já passou. Confira a data no edital oficial.' });
   const result = await community.mutate((c) => {
     const hourAgo = Date.now() - 3600000;
-    const mine = c.posts.filter((p) => p.autorId === user.id && Date.now() - new Date(p.criadoEm) < 86400000);
-    if (mine.filter((p) => new Date(p.criadoEm) > hourAgo).length >= 8) return { erro: [429, 'Limite de publicações por hora atingido. Volte mais tarde.'] };
+    const mine = c.posts.filter((p) => p.autorId === user.id && Date.now() - Date.parse(p.criadoEm) < 86400000);
+    if (mine.filter((p) => Date.parse(p.criadoEm) > Number(hourAgo)).length >= 8) return { erro: [429, 'Limite de publicações por hora atingido. Volte mais tarde.'] };
     const prep = preparePost(c, user, parsed.data);
     if (prep.erro) return prep;
     const spam = spamSignals({ texto: prep.campos.texto, links: prep.campos.links, autor: user, recentes: mine });
@@ -353,7 +360,7 @@ router.put('/posts/:id', communityWriteLimiter, async (req, res) => {
     const prep = preparePost(c, user, parsed.data, { editingId: post.id });
     if (prep.erro) return prep;
     // Mesmo filtro da criação: sem isto, publicava-se um texto inocente e depois se editava para spam.
-    const recentes = c.posts.filter((p) => p.id !== post.id && p.autorId === user.id && Date.now() - new Date(p.criadoEm) < 86400000);
+    const recentes = c.posts.filter((p) => p.id !== post.id && p.autorId === user.id && Date.now() - Date.parse(p.criadoEm) < 86400000);
     const spam = spamSignals({ texto: prep.campos.texto, links: prep.campos.links, autor: user, recentes });
     if (spam.repetida) return { erro: [409, 'Você já publicou este mesmo texto nas últimas 24 horas.'] };
     if (spam.revisar && post.moderacao.estado === 'publicado') {
@@ -438,7 +445,7 @@ router.post('/posts/:id/comments', communityWriteLimiter, async (req, res) => {
   const out = await community.mutate((c) => {
     const post = findPost(c, req.params.id);
     if (!post || !canSee(post, user)) return { erro: [404, 'Publicação não encontrada.'] };
-    const recent = c.comments.filter((x) => x.autorId === user.id && Date.now() - new Date(x.criadoEm) < 3600000);
+    const recent = c.comments.filter((x) => x.autorId === user.id && Date.now() - Date.parse(x.criadoEm) < 3600000);
     if (recent.length >= 30) return { erro: [429, 'Limite de comentários por hora atingido.'] };
     const masked = protectText(parsed.data.texto);
     const links = extractLinks(masked.texto).map(analyzeLink);
@@ -904,7 +911,7 @@ export function deleteMediaFile(m, { del = deleteMedia } = {}) {
 // Imagem enviada e nunca publicada (composição abandonada, removida da prévia ou tirada de um post na edição)
 // expira depois de 24 h: não fica guardada para sempre nem trava o limite de pendentes.
 const PENDING_MEDIA_MS = 24 * 3600000;
-const expiredPending = (m, at = Date.now()) => !m.postId && at - new Date(m.soltaEm || m.criadoEm) > PENDING_MEDIA_MS;
+const expiredPending = (m, at = Date.now()) => !m.postId && at - Date.parse(m.soltaEm || m.criadoEm) > PENDING_MEDIA_MS;
 function dropMedia(c, pred) {
   const gone = c.media.filter(pred);
   gone.forEach((m) => deleteMediaFile(m));

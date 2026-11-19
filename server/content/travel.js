@@ -84,6 +84,12 @@ const AIRPORT = {
   MAD: { nome: 'Madri', fonte: S.mad }, AGP: { nome: 'Málaga', fonte: S.agp }, GRX: { nome: 'Granada-Jaén', fonte: S.grx },
   SVQ: { nome: 'Sevilha', fonte: S.svq }, XRY: { nome: 'Jerez', fonte: S.xry }, LEI: { nome: 'Almería', fonte: S.lei },
 };
+/**
+ * @param {string} id
+ * @param {string} iata
+ * @param {string} cidade
+ * @param {{ nome?: string, resumo?: string, terrestreRotulo?: string }} [textos]
+ */
 function viaHub(id, iata, cidade, { nome, resumo, terrestreRotulo } = {}) {
   const a = AIRPORT[iata];
   const madri = iata === 'MAD';

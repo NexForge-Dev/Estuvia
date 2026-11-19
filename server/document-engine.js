@@ -528,6 +528,12 @@ function nextSentence(v) {
 
 const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
+/**
+ * @param {any} user
+ * @param {any} jr
+ * @param {{ q?: string, categoria?: string, etapa?: string, exigencia?: string, estado?: string, incluirNaoAplicaveis?: boolean }} [filtros]
+ * @param {Date} [now]
+ */
 export function listDocuments(user, jr, { q, categoria, etapa, exigencia, estado, incluirNaoAplicaveis = false } = {}, now = new Date()) {
   const ctx = docContext(user, jr, now);
   const termos = norm(q).split(/\s+/).filter((w) => w.length >= 2);

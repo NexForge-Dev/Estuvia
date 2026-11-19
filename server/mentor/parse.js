@@ -124,6 +124,7 @@ export function matchDocument(text) {
 const DOC_MISSION = { passaporte: '2.1', diploma: '2.2', historico: '2.3', 'escala-notas': '2.4', 'acesso-pos': '2.4', idioma: '2.5', especificos: '2.6', 'comprovante-dua': '3.7', 'comprovante-pagamento': '4.5', admissao: '4.6', meios: '5.4', seguro: '5.5', antecedentes: '5.6', atestado: '5.6', traducoes: '5.6', formulario: '5.7', 'apoio-familiar': '9.8', 'carta-bolsa': '9.8' };
 export const missionForDocument = (docId) => DOC_MISSION[docId] || null;
 
+/** @type {Array<[RegExp, string]>} */
 const TOPIC_MISSION = [
   [/\bvisto\b/, '5.7'], [/\bconsulado\b/, '5.1'], [/\bseguro\b/, '5.5'], [/\bdua\b|candidatura|inscricao/, '3.6'], [/\bmoradia|quarto|apartamento|aluguel\b/, '6.1'],
   [/\bpassage(m|ns)|voo\b/, '6.3'], [/\btie\b/, '8.1'], [/\bempadronamiento\b/, '7.9'], [/\bbolsa\b/, '9.4'], [/\borcamento\b/, '9.1'], [/\bcoordenador|professor\b/, '3.8'],

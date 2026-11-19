@@ -11,6 +11,11 @@ const anthropicKey = () => process.env.ANTHROPIC_API_KEY || process.env.ANTHROPI
 // Contadores persistidos junto com o uso dos módulos (sobrevivem a reinícios).
 // servico: 'mentor' | 'assistente'; resultado: 'ok' | 'erro' | 'guiado' | 'offline'
 // `user` (opcional) soma o uso por estudante — mesma gravação agrupada dos acessos.
+/**
+ * @param {string} servico
+ * @param {string} resultado
+ * @param {{ erro?: string, user?: any }} [extra]
+ */
 export function recordAI(servico, resultado, { erro, user } = {}) {
   analytics.mutate((a) => {
     if (user) {
@@ -128,6 +133,7 @@ async function checkOpenAICompatible() {
     });
     if (res.status === 401 || res.status === 403) return { ok: false, latenciaMs: Date.now() - started, detalhe: `Chave recusada pelo servidor (${res.status}).` };
     if (!res.ok) return { ok: false, latenciaMs: Date.now() - started, detalhe: `O servidor respondeu ${res.status}.` };
+    /** @type {any} */
     const data = await res.json().catch(() => ({}));
     const ids = (data.data || data.models || []).map((x) => x.id || x.name);
     const found = !ids.length || ids.includes(process.env.MENTOR_MODEL);

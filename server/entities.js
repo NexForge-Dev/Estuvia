@@ -258,6 +258,7 @@ export function createEntityStore(collections, { label }) {
   }
 
   /** Grava tudo o que difere da última versão salva. Rejeita em conflito (nada do lote é gravado). */
+  /** @param {{ only?: any }} [opts] */
   async function persist({ only } = {}) {
     const pending = diff(only);
     if (!pending.length) return 0;

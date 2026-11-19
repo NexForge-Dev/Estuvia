@@ -214,6 +214,7 @@ async function unavailable(u) {
     upload_document: [msg('Quais documentos ainda faltam?')],
     search_housing_web: [rota('/novo-lar', 'Abrir Meu novo lar'), msg('Compare minhas opções de moradia')],
   }[cap.name];
+  /** @type {Array<{ tipo: string, [campo: string]: any }>} */
   const cartoes = [{ tipo: 'limitacao', motivo: cap.motivo, alternativa: cap.alternativa }];
   if (cap.name === 'search_housing_web') {
     const r = await u.use('get_housing_options');

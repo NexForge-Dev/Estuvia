@@ -63,7 +63,7 @@ export function insights(user, { now = new Date(), limit = 6 } = {}) {
     // Missões paradas: iniciadas há muito tempo, sem conclusão nem espera de terceiros.
     for (const m of ms.filter((x) => x.status === 'em-andamento')) {
       const ini = jr.missions?.[m.id]?.iniciadaEm;
-      if (ini && (now - new Date(ini)) / 86400000 >= STALE_DAYS) {
+      if (ini && (Number(now) - Date.parse(ini)) / 86400000 >= STALE_DAYS) {
         add({ id: sig('parada', jr.id, m.id, ini.slice(0, 10)), tipo: 'missao', prioridade: 'baixa', titulo: 'Missão parada', texto: `Você começou a Missão ${m.label} - ${m.titulo} há mais de ${STALE_DAYS} dias. Travou em alguma parte?`, acao: say(`Estou com dificuldade na Missão ${m.label}`, 'Pedir ajuda'), origem: 'regra:missao-parada', base: { journeyId: jr.id, missaoId: m.id } });
         break;
       }
@@ -102,7 +102,7 @@ export function insights(user, { now = new Date(), limit = 6 } = {}) {
 
   // Pendências que o estudante contou (memória autorizada), depois de 2 dias.
   if (st.permissoes.memoria !== false) {
-    for (const n of openNotes(user).filter((x) => (now - new Date(x.criadaEm)) / 86400000 >= 2).slice(0, 1)) {
+    for (const n of openNotes(user).filter((x) => (Number(now) - Date.parse(x.criadaEm)) / 86400000 >= 2).slice(0, 1)) {
       add({ id: sig('nota', n.id), tipo: 'memoria', permissao: 'memoria', prioridade: 'baixa', titulo: 'Conseguiu resolver?', texto: `Você me contou: "${n.texto}". Conseguiu resolver?`, acao: say(n.documentoId ? `Consegui o ${n.documentoId.replace('-', ' ')}` : 'Já resolvi aquela pendência', 'Sim, resolvi'), origem: 'regra:memoria-pendencia', base: { notaId: n.id } });
     }
   }
