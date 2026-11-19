@@ -29,7 +29,12 @@ const send = (res, fn) => Promise.resolve().then(fn).then((body) => res.json(bod
   if (err.status) return res.status(err.status).json({ error: err.message, ...(err.run ? { run: err.run } : {}) });
   throw err;
 });
-const bad = (res, parsed) => res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
+// Painel da equipe: a mensagem diz também qual campo está errado ("Opção inválida." sozinho não ajuda).
+const bad = (res, parsed) => {
+  const iss = parsed.error.issues[0];
+  const campo = iss?.path?.length ? ` (campo: ${iss.path.join('.')})` : '';
+  return res.status(400).json({ error: (iss?.message || 'Dados inválidos.') + campo });
+};
 const who = (req) => req.user.email;
 const date = isoDate('Data no formato AAAA-MM-DD.');
 

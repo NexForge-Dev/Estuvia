@@ -1076,6 +1076,12 @@ export function registerArrival(user, jr, { dataEntrada, confirmo }, now = new D
     throw new JourneyError(409, 'Registre primeiro a aprovação do visto (situação da jornada ou Missão 5.9).');
   }
   ensureJourney(jr).dados.dataEntrada = dataEntrada;
+  // Visto aprovado declarado na situação + entrada confirmada: a conferência do visto (5.9) já
+  // aconteceu fora da plataforma. Sem isso a 7.1 (que depende da 5.9) ficaria bloqueada.
+  if (ctx.rota !== 'espanha' && visto.status !== 'concluida' && visto.status !== 'nao-aplicavel') {
+    const mp = mp_(jr, '5.9');
+    Object.assign(mp, { concluidaEm: now.toISOString(), declarada: true, aguardando: false });
+  }
 }
 
 // ---------- Registro idempotente de desbloqueios (UnlockEvent) ----------

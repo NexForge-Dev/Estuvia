@@ -94,7 +94,7 @@ export function WeeklyPlanner({ initialWeek, autoOrganize = false } = {}) {
         h('h2', { class: 'wp-week' }, label)),
       h('div', { class: 'wp-actions' },
         h('div', { class: 'wp-seg', role: 'group', 'aria-label': 'Visão' }, viewBtn('dia', 'Dia'), viewBtn('semana', 'Semana')),
-        h('button', { class: 'btn btn-ghost', type: 'button', id: 'organizar', onClick: organize }, icon('calendar', { size: 16 }), h('span', { class: 'wp-hide-sm' }, 'Organizar semana')),
+        h('button', { class: 'btn btn-ghost', type: 'button', id: 'organizar', 'aria-label': 'Organizar semana', onClick: organize }, icon('calendar', { size: 16 }), h('span', { class: 'wp-hide-sm' }, 'Organizar semana')),
         h('button', { class: 'btn btn-cta', type: 'button', onClick: () => newAt(view === 'dia' ? day : weekDays().find((d) => d >= todayIso()) || week) }, icon('calendar', { size: 16 }), 'Novo')));
   }
 

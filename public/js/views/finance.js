@@ -315,6 +315,7 @@ export async function financeView() {
       const due = i.grupo === 'instalacao' ? h('input', { type: 'date', class: 'fp-due', value: ov?.vencimento || '', 'aria-label': `Data de pagamento de ${i.label}`, title: 'Data de pagamento (vai para a Agenda)', dataset: { key: `d-${i.id}` } }) : null;
       const send = () => {
         const valor = input.value === '' ? null : Number(input.value);
+        if (status.value === 'pago' && valor === null) return toast('Informe o valor que você pagou para marcar este custo como pago.', 'err');
         const body = valor === null && !ov ? null : { valor, moeda: cur.value, status: status.value, ...(due ? { vencimento: due.value } : {}) };
         if (body === null) return;
         call('put', '/finance', { itens: { [i.id]: body } });

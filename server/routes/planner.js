@@ -29,6 +29,8 @@ const eventSchema = z.object({
   missaoId: z.string().regex(/^\d\.\d{1,2}$/).optional(),
   bolsaId: z.string().max(60).optional(),
   prioridade: z.enum(['critica', 'alta', 'normal', 'aguardando']).optional(),
+  // Rótulo que o /suggest devolve junto da proposta; aceito para que a proposta possa voltar inteira.
+  prioridadeLabel: z.string().max(40).optional(),
   motivo: z.string().max(200).optional(),
 }).strict().refine((e) => e.fim > e.inicio, { message: 'O fim precisa ser depois do início.' });
 

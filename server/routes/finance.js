@@ -69,6 +69,13 @@ router.put('/', async (req, res) => {
   }).strict().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Dados inválidos.' });
   const d = parsed.data;
+  // "Pago" só conta com o valor que a pessoa pagou; marcar a estimativa do sistema como paga seria
+  // aceito e ignorado (jaPago fica 0), então recusamos com a explicação.
+  for (const [id, it] of Object.entries(d.itens || {})) {
+    if (it?.status !== 'pago') continue;
+    const valor = it.valor !== undefined ? it.valor : req.user.finance?.itens?.[id]?.valor;
+    if (valor === null || valor === undefined) return res.status(400).json({ error: 'Informe o valor que você pagou para marcar este custo como pago.' });
+  }
   res.json(await save(req, (u) => {
     const fin = u.finance;
     if (d.perfil) fin.perfil = d.perfil;

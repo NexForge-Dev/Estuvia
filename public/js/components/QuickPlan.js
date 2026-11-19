@@ -12,6 +12,11 @@ const SLOTS = [
   { id: 'noite', rotulo: 'Noites', ic: 'moon', dias: [1, 2, 3, 4, 5], janela: { inicio: '19:00', fim: '21:00' } },
   { id: 'fds', rotulo: 'Fins de semana', ic: 'calendar', dias: [6, 7], janela: { inicio: '10:00', fim: '13:00' } },
 ];
+// Fuso do navegador quando é um dos aceitos pela Agenda (quem já está na Espanha usa Madri).
+const ZONES = ['America/Sao_Paulo', 'America/Manaus', 'America/Fortaleza', 'America/Noronha', 'America/Rio_Branco', 'Europe/Madrid'];
+function localZone() {
+  try { const z = Intl.DateTimeFormat().resolvedOptions().timeZone; return ZONES.includes(z) ? z : 'America/Sao_Paulo'; } catch { return 'America/Sao_Paulo'; }
+}
 const weekday = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString(locale(), { weekday: 'long' });
 
 export function QuickPlan({ journeyId, missaoId, onDone } = {}) {
@@ -24,7 +29,7 @@ export function QuickPlan({ journeyId, missaoId, onDone } = {}) {
     mount(host, h('p', { class: 'muted' }, icon('calendar', { size: 14 }), ' Montando sua semana…'));
     try {
       // O horário escolhido vale só para esta proposta: não sobrescreve a disponibilidade salva na Agenda.
-      const disponibilidade = { dias: slot.dias, janelas: [slot.janela], horasSemanais: 4, preferencia: 'curtas', fuso: 'America/Sao_Paulo' };
+      const disponibilidade = { dias: slot.dias, janelas: [slot.janela], horasSemanais: 4, preferencia: 'curtas', fuso: localZone() };
       const p = await api.post('/planner/suggest', { semana: defaultWeek(), disponibilidade, ...(journeyId ? { journeyId } : {}), ...(missaoId ? { missaoId } : {}) });
       const items = p.proposta.filter((x) => x.missaoId || x.bolsaId);
       if (!items.length) {
