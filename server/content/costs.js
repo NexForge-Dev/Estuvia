@@ -50,6 +50,13 @@ export const DESTINATION_ASSUMPTIONS = {
       nota: 'Quarto em apartamento compartilhado. A UGR publica €200–300 (O15) e €300–350 (O16); usamos 250 / 300 / 350. As páginas não informam a data de atualização.',
     },
   },
+  Sevilla: {
+    moradia: {
+      faixa: { min: 300, meio: 350, max: 400 }, fonte: 'O36', consultadoEm: '2026-11-19',
+      nota: 'Quarto em apartamento compartilhado numa boa zona. A Universidad Pablo de Olavide publica €300–400 por mês (O36); a página não informa a data de atualização.',
+    },
+  },
+  // Demais cidades: nenhuma universidade publica faixa de preço de quarto (conferido em 19/11/2026).
 };
 
 // Premissas de cálculo da própria Estuvia (sem preço envolvido): sempre identificadas como premissa.

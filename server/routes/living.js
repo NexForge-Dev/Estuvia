@@ -11,7 +11,7 @@ import { ensureFinance, routeTotal } from '../finance-engine.js';
 import { programById, universityById } from '../content/catalog.js';
 import { DESTINATION_ASSUMPTIONS } from '../content/costs.js';
 import { sourceById } from '../content/sources.js';
-import { ANTIFRAUDE, HOUSING_TYPES, HOUSING_STATUS, LEGACY_STATUS, PREFERENCES, SEARCH_SOURCES, normStatus, siteOf } from '../content/housing.js';
+import { ANTIFRAUDE, HOUSING_TYPES, HOUSING_STATUS, LEGACY_STATUS, PREFERENCES, housingSearchFor, normStatus, siteOf } from '../content/housing.js';
 import { decorate, compareHousing } from '../housing-engine.js';
 
 const router = Router();
@@ -55,9 +55,9 @@ function destination(user, jid) {
   const faixa = cidade && DESTINATION_ASSUMPTIONS[cidade]?.moradia;
   return {
     journeyId: jr?.id || null, cidade, pais: uni?.pais || 'Espanha', universidade: uni ? { id: uni.id, nome: uni.nome, sigla: uni.sigla } : null, meses,
-    // Faixas de orçamento só onde há fonte (hoje: quarto compartilhado em Granada, UGR).
+    // Faixas de orçamento só onde há fonte (hoje: quarto compartilhado em Granada, UGR, e em Sevilla, UPO).
     faixas: faixa ? { quarto: [{ id: 'ate', rotulo: `Até € ${faixa.faixa.min}`, max: faixa.faixa.min }, { id: 'meio', rotulo: `€ ${faixa.faixa.min}–${faixa.faixa.max}`, min: faixa.faixa.min, max: faixa.faixa.max }, { id: 'acima', rotulo: `Acima de € ${faixa.faixa.max}`, min: faixa.faixa.max }], fonte: [sourceById(faixa.fonte), sourceById(faixa.fonteExtra)].filter(Boolean).map((x) => ({ id: x.id, orgao: x.orgao, url: x.url })), nota: faixa.nota } : null,
-    busca: (cidade && SEARCH_SOURCES[cidade]) || null,
+    busca: housingSearchFor(cidade, uni?.id),
   };
 }
 

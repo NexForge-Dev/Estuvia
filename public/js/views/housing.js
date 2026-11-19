@@ -113,7 +113,7 @@ export async function housingView() {
       src ? [
         h('div', { class: 'hs-sites' }, sites.map((s) => h('a', { class: 'hs-site card', href: s.url, target: '_blank', rel: 'noopener noreferrer' },
           h('strong', {}, s.nome, ' ', icon('external', { size: 12 })), h('span', { class: 'small muted' }, s.desc)))),
-        h('a', { class: 'hs-site official card', href: src.oficial.url, target: '_blank', rel: 'noopener noreferrer' }, h('span', { class: 'tag tag-ok' }, 'Fonte oficial'), h('strong', {}, src.oficial.nome, ' ', icon('external', { size: 12 })), h('span', { class: 'small muted' }, src.oficial.desc)),
+        src.oficial ? h('a', { class: 'hs-site official card', href: src.oficial.url, target: '_blank', rel: 'noopener noreferrer' }, h('span', { class: 'tag tag-ok' }, 'Fonte oficial'), h('strong', {}, src.oficial.nome, ' ', icon('external', { size: 12 })), h('span', { class: 'small muted' }, src.oficial.desc)) : null,
         h('p', { class: 'hint' }, `Links conferidos em ${fmtDate(src.verificadoEm)}. A Estuvia não tem parceria com esses sites e não mostra anúncios por eles.`),
       ] : h('p', { class: 'notice' }, `Ainda não temos sites conferidos para ${d.destino.cidade || 'o seu destino'}. Procure nos portais que você conhece e salve aqui o link.`),
       h('div', { class: 'row wrap' },

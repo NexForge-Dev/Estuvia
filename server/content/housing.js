@@ -43,18 +43,48 @@ export const PREFERENCES = {
   transporte: 'Boa conexão com transporte público',
 };
 
-// Onde procurar, por cidade (links conferidos em 24/10/2026; cada site aplica os próprios filtros).
-export const SEARCH_SOURCES = {
-  Granada: {
-    oficial: { nome: 'Universidad de Granada, onde morar', url: 'https://internacional.ugr.es/en/students/ugr-services/acommodation', fonte: 'O16', desc: 'Página oficial da UGR com tipos de moradia, preços de referência e dicas.' },
-    sites: [
-      { nome: 'Spotahome', url: 'https://www.spotahome.com/es/s/granada', tipos: ['quarto', 'apartamento', 'temporario'], desc: 'Quartos e apartamentos, muitos com vídeo do imóvel.' },
-      { nome: 'Uniplaces', url: 'https://www.uniplaces.com/es/accommodation/granada', tipos: ['quarto', 'apartamento', 'residencia'], desc: 'Focado em estudantes: quartos, estúdios e apartamentos.' },
-      { nome: 'HousingAnywhere', url: 'https://housinganywhere.com/es/s/Granada--Espa%C3%B1a', tipos: ['quarto', 'apartamento', 'temporario'], desc: 'Quartos e apartamentos para estadias de média duração.' },
-      { nome: 'Fotocasa', url: 'https://www.fotocasa.es/es/alquiler/viviendas/granada-capital/todas-las-zonas/l', tipos: ['apartamento'], desc: 'Portal espanhol de aluguel de apartamentos.' },
-    ],
-    verificadoEm: '2026-10-24',
-  },
+// Onde procurar, por cidade (links de busca conferidos; cada site aplica os próprios filtros).
+// Granada: 24/10/2026. Demais cidades: 19/11/2026 (o título de cada página confere a cidade).
+// Em Sevilla, Spotahome e Uniplaces usam o nome em inglês ("seville").
+const CITY_SLUGS = {
+  Granada: { spot: 'granada', uni: 'granada', ha: 'Granada', foto: 'granada', em: '2026-10-24' },
+  Sevilla: { spot: 'seville', uni: 'seville', ha: 'Sevilla', foto: 'sevilla', em: '2026-11-19' },
+  'Málaga': { spot: 'malaga', uni: 'malaga', ha: 'M%C3%A1laga', foto: 'malaga', em: '2026-11-19' },
+  'Córdoba': { spot: 'cordoba', uni: 'cordoba', ha: 'C%C3%B3rdoba', foto: 'cordoba', em: '2026-11-19' },
+  'Cádiz': { spot: 'cadiz', uni: 'cadiz', ha: 'C%C3%A1diz', foto: 'cadiz', em: '2026-11-19' },
+  Huelva: { spot: 'huelva', uni: 'huelva', ha: 'Huelva', foto: 'huelva', em: '2026-11-19' },
+  'Jaén': { spot: 'jaen', uni: 'jaen', ha: 'Ja%C3%A9n', foto: 'jaen', em: '2026-11-19' },
+  'Almería': { spot: 'almeria', uni: 'almeria', ha: 'Almer%C3%ADa', foto: 'almeria', em: '2026-11-19' },
+};
+export const SEARCH_SOURCES = Object.fromEntries(Object.entries(CITY_SLUGS).map(([cidade, c]) => [cidade, {
+  sites: [
+    { nome: 'Spotahome', url: `https://www.spotahome.com/es/s/${c.spot}`, tipos: ['quarto', 'apartamento', 'temporario'], desc: 'Quartos e apartamentos, muitos com vídeo do imóvel.' },
+    { nome: 'Uniplaces', url: `https://www.uniplaces.com/es/accommodation/${c.uni}`, tipos: ['quarto', 'apartamento', 'residencia'], desc: 'Focado em estudantes: quartos, estúdios e apartamentos.' },
+    { nome: 'HousingAnywhere', url: `https://housinganywhere.com/es/s/${c.ha}--Espa%C3%B1a`, tipos: ['quarto', 'apartamento', 'temporario'], desc: 'Quartos e apartamentos para estadias de média duração.' },
+    { nome: 'Fotocasa', url: `https://www.fotocasa.es/es/alquiler/viviendas/${c.foto}-capital/todas-las-zonas/l`, tipos: ['apartamento'], desc: 'Portal espanhol de aluguel de apartamentos.' },
+  ],
+  verificadoEm: c.em,
+}]));
+
+// Página oficial de moradia de cada universidade (conferidas em 19/11/2026; UGR em 24/10/2026).
+// Cidade com mais de uma universidade (Sevilla) mostra a da universidade da jornada. UNIA: sem página encontrada.
+export const OFFICIAL_HOUSING = {
+  ugr: { nome: 'Universidad de Granada, onde morar', url: 'https://internacional.ugr.es/en/students/ugr-services/acommodation', fonte: 'O16', desc: 'Página oficial da UGR com tipos de moradia, preços de referência e dicas.' },
+  us: { nome: 'Universidad de Sevilla, serviços de alojamento (SACU)', url: 'https://sacu.us.es/spp-servicios-alojamiento', desc: 'Serviço de alojamento da US: residências, colégios maiores e apartamentos para alugar.' },
+  upo: { nome: 'Universidad Pablo de Olavide, alojamento', url: 'https://www.upo.es/intl/alojamiento', fonte: 'O36', desc: 'Residências em Sevilla, bairros recomendados e preço de referência de quarto compartilhado.' },
+  uma: { nome: 'Universidad de Málaga, ferramentas para buscar alojamento', url: 'https://www.uma.es/relaciones-internacionales/info/141097/accommodation-rrii', desc: 'Portal de aluguel do Serviço de Alojamento da UMA, HUB internacional e ESN. A UMA não oferece moradia própria.' },
+  uco: { nome: 'Universidad de Córdoba, Serviço de Alojamento', url: 'https://www.uco.es/servicios/alojamiento/es/', desc: 'Residências e apartamentos universitários da UCO.' },
+  uca: { nome: 'Universidad de Cádiz, alojamento universitário', url: 'https://oficinadelestudiante.uca.es/alojamiento', desc: 'Residências da UCA e serviços de busca de apartamento na província de Cádiz.' },
+  uhu: { nome: 'Universidad de Huelva, antes de chegar', url: 'https://uhu.es/english/pre-arrival', desc: 'Guia de alojamento da UHU. O escritório internacional orienta, mas não reserva moradia.' },
+  ujaen: { nome: 'Universidad de Jaén, prepare sua estadia', url: 'https://www.ujaen.es/internacional/en/node/133112', desc: 'Residências em Jaén e apoio na busca de alojamento.' },
+  ual: { nome: 'Universidad de Almería, alojamentos', url: 'https://www.ual.es/vida-universitaria/alojamiento', desc: 'Página de alojamentos da UAL.' },
+};
+
+// Busca da jornada: sites da cidade + página oficial da universidade (quando houver).
+export const housingSearchFor = (cidade, universidadeId) => {
+  const city = cidade && SEARCH_SOURCES[cidade];
+  if (!city) return null;
+  return { ...city, oficial: OFFICIAL_HOUSING[universidadeId] || null };
 };
 
 // Reconhece o site de um link colado (só o nome: nenhum dado é baixado do anúncio).

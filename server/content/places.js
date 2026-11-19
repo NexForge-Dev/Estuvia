@@ -115,7 +115,7 @@ export function consulateResult(uf, { pais = 'Brasil' } = {}) {
   };
 }
 
-export const CITY_GUIDES = {
+const GRANADA_GUIDE = {
   Granada: {
     cidade: 'Granada',
     intro: 'Cidade universitária, com boa parte da vida estudantil concentrada em torno dos campi e do centro. Orientações práticas para os primeiros dias.',
@@ -128,4 +128,15 @@ export const CITY_GUIDES = {
     tag: 'pratica',
     fonte: 'M',
   },
+};
+
+// Demais cidades: as mesmas orientações práticas (não dependem da cidade); a intro diz que são gerais.
+const CITY_NAMES = ['Sevilla', 'Málaga', 'Córdoba', 'Cádiz', 'Huelva', 'Jaén', 'Almería'];
+export const CITY_GUIDES = {
+  ...GRANADA_GUIDE,
+  ...Object.fromEntries(CITY_NAMES.map((cidade) => [cidade, {
+    ...GRANADA_GUIDE.Granada,
+    cidade,
+    intro: `Orientações práticas para os primeiros dias em ${cidade}. São gerais: confira os detalhes locais no site da sua universidade e do ayuntamiento.`,
+  }])),
 };

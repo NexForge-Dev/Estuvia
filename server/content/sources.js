@@ -182,6 +182,7 @@ export const SOURCES = [
   // Conferida em 17/11/2026: art. 57 (trabalho automático e compatível com os estudos superiores, até 30 h semanais,
   // limitado à comunidade autônoma da autorização; estágios curriculares cobertos).
   { id: 'O35', orgao: 'Boletín Oficial del Estado', titulo: 'Real Decreto 1155/2024 (Reglamento de Extranjería), art. 57: trabalho de quem tem autorização de estudos', url: 'https://www.boe.es/buscar/act.php?id=BOE-A-2024-24099', revisadoEm: '2026-11-17', tipo: 'oficial' },
+  { id: 'O36', orgao: 'Universidad Pablo de Olavide: Relaciones Internacionales', titulo: 'Alojamiento, quarto em apartamento compartilhado em Sevilla: €300–400/mês', url: 'https://www.upo.es/intl/alojamiento', revisadoEm: '2026-11-19', tipo: 'oficial' },
 ];
 
 export const sourceById = (id) => SOURCES.find((s) => s.id === id) || null;
