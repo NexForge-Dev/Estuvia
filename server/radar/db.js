@@ -244,8 +244,7 @@ export async function reloadRadarStore() {
   db = empty();
   const store = createEntityStore(radarCollections(), { label: 'radar' });
   await store.load();
-  // Gravações do Radar só são liberadas depois que a base principal passou pelas barreiras (ambiente, esquema).
-  await mainReady;
+  // (Sem esperar a base principal: o recarregamento só acontece depois da inicialização, com ela já pronta.)
   db = normalize(db);
   entities = store;
 }

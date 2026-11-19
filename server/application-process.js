@@ -46,7 +46,7 @@ function foreignNationality(profile) {
 
 /**
  * @param program  programa no formato de catalog.programById (programas do Radar trazem os campos do DUA)
- * @param opts.calendario { windows, events } do procedimento no ciclo (só itens confirmados)
+ * @param opts.calendario objeto { windows, events } do procedimento no ciclo (só itens confirmados)
  * @param opts.profile    perfil do estudante
  * @param opts.requisitos respostas "o que eu já tenho" (diploma: tenho|aguardando|nao|verificar)
  * @param opts.faseDeclarada fase escolhida pelo estudante na Missão 3.2 (1, 2 ou 3)

@@ -20,6 +20,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
+      # Checagem de tipos: falha só com erro novo (os antigos estão em scripts/typecheck-baseline.json).
+      - run: npm run typecheck
       # Os testes não acessam a rede nem provedores de IA pagos (provedores falsos e HTML oficial salvo).
       - run: npm test
         env:
