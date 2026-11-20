@@ -35,7 +35,6 @@ const RESOLVED = new Set(['concluida', 'nao-aplicavel', 'ignorada']);
 
 export const PRIORITY_LABEL = { critica: 'Crítica', alta: 'Alta', media: 'Normal', baixa: 'Baixa' };
 const LANG_LEVELS = ['nenhum', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'nativo'];
-const PRIORITY_RANK = { critica: 0, alta: 1, media: 2, baixa: 3 };
 const ATTENTION_DAYS = 14;
 const CRITICAL_DAYS = 7;
 const DAY = 24 * 3600 * 1000;
@@ -383,10 +382,10 @@ export function missionState(mission, ctx, cache = new Map()) {
     rodada: mission.rodada,
     titulo: mission.titulo,
     status,
-    statusLabel: status === 'concluida' && mp.requisitoAtendido ? 'Requisito já atendido' : status === 'concluida' && mp.declarada ? 'Feita antes da Estuvia' : STATUS[status],
+    statusLabel: status === 'concluida' && mp.requisitoAtendido ? 'Requisito já atendido' : status === 'concluida' && mp.automatica ? 'Concluída com seus dados' : status === 'concluida' && mp.declarada ? 'Feita antes da Estuvia' : STATUS[status],
     codigo: STATUS_CODE[status],
     // Origem da conclusão: feita na plataforma, declarada como anterior ou requisito que o estudante já atendia.
-    conclusao: status !== 'concluida' ? null : mp.requisitoAtendido ? 'requisito-atendido' : mp.declarada ? 'declarada' : 'plataforma',
+    conclusao: status !== 'concluida' ? null : mp.requisitoAtendido ? 'requisito-atendido' : mp.declarada ? 'declarada' : mp.automatica ? 'automatica' : 'plataforma',
     complexidade: complexityOf(mission.id),
     risco: riskOf(mission.id).nivel,
     trilha: trilha ? { id: trilha, titulo: PARALLEL_TRACKS[trilha].titulo } : null,
@@ -517,16 +516,18 @@ export function computeJourney(user, jr, now = new Date()) {
 
 // Próxima missão: crítica → prazo mais próximo → atenção → em andamento → disponível; depois prioridade e ordem.
 function recommend(all) {
-  const rank = { atencao: 0, 'em-andamento': 1, disponivel: 2 };
   const candidates = all.filter((m) => ['atencao', 'em-andamento', 'disponivel'].includes(m.status) && !(m.opcional && m.objetivosFeitos === 0));
   candidates.sort((a, b) => {
     if ((a.prioridade === 'critica') !== (b.prioridade === 'critica')) return a.prioridade === 'critica' ? -1 : 1;
     const da = a.prazo?.diasRestantes ?? Infinity;
     const db = b.prazo?.diasRestantes ?? Infinity;
     if (da !== db) return da - db;
-    if (rank[a.status] !== rank[b.status]) return rank[a.status] - rank[b.status];
-    if (PRIORITY_RANK[a.prioridade] !== PRIORITY_RANK[b.prioridade]) return PRIORITY_RANK[a.prioridade] - PRIORITY_RANK[b.prioridade];
-    return a.rodada - b.rodada;
+    // Sem urgência, segue a ordem do caminho: uma missão de rodada adiantada com objetivo automático já
+    // cumprido (ex.: 5.1, estado no perfil) não passa na frente da rodada em que o estudante está.
+    // Dentro da rodada, a numeração (1.2 antes de 1.5): objetivos automáticos não contam como "começada".
+    if (a.rodada !== b.rodada) return a.rodada - b.rodada;
+    if ((a.status === 'atencao') !== (b.status === 'atencao')) return a.status === 'atencao' ? -1 : 1;
+    return String(a.label).localeCompare(String(b.label), undefined, { numeric: true });
   });
   const m = candidates[0];
   return m ? { id: m.id, label: m.label, titulo: m.titulo, resumo: m.resumo, rodada: m.rodada, status: m.status, statusLabel: m.statusLabel, prioridade: m.prioridade, progresso: m.progresso } : null;
@@ -921,6 +922,7 @@ export function reopenMission(user, jr, missionId) {
   delete mp.concluidaEm;
   delete mp.declarada;
   delete mp.requisitoAtendido;
+  if (mp.automatica) { delete mp.automatica; mp.reaberta = true; }
 }
 
 // Requisitos que o estudante já atende (ex.: passaporte válido): a missão deixa de ser pendência,
@@ -936,6 +938,35 @@ export function applyRequirements(user, jr, now = new Date()) {
       else if (!ok && mp?.requisitoAtendido) { delete mp.concluidaEm; delete mp.requisitoAtendido; }
     }
   }
+  completeAutoMissions(user, jr, now);
+}
+
+// Missões feitas só de objetivos automáticos (1.1 perfil, 1.5 planejamento financeiro, 9.1, 9.3...):
+// quando liberadas e com tudo cumprido pelos dados, concluem sozinhas. Pedir "Confirmo e concluir"
+// depois de o sistema já ter verificado tudo parecia que nada tinha sido registrado. Missão reaberta
+// pelo estudante (mp.reaberta) não volta a ser concluída automaticamente.
+const AUTO_ONLY = () => ROUNDS.flatMap((r) => r.missoes.map((m) => ({ ...m, rodada: r.numero }))).filter((d) => d.objetivos?.length && d.objetivos.every((o) => o.tipo === 'auto'));
+export function completeAutoMissions(user, jr, now = new Date()) {
+  ensureJourney(jr);
+  const ctx = buildContext(user, jr);
+  let changed = false;
+  for (const def of AUTO_ONLY()) {
+    const mp = jr.missions[def.id];
+    // Conclusão automática de missão que voltou a depender de outra (ex.: regra de ordem nova): desfaz,
+    // para o caminho continuar em sequência. Conclusões feitas pelo estudante nunca são tocadas.
+    if (mp?.automatica) {
+      const saved = mp.concluidaEm;
+      delete mp.concluidaEm;
+      if (missionState(def, buildContext(user, jr)).status === 'bloqueada') { delete mp.automatica; changed = true; } else mp.concluidaEm = saved;
+      continue;
+    }
+    if (mp?.concluidaEm || mp?.reaberta) continue;
+    const state = missionState(def, ctx);
+    if (!state.podeConcluir || state.status === 'concluida') continue;
+    Object.assign(mp_(jr, def.id), { concluidaEm: now.toISOString(), automatica: true, aguardando: false });
+    changed = true;
+  }
+  return changed;
 }
 
 export const EXECUCAO = ['nao-comecei', 'fazendo', 'ajuda'];

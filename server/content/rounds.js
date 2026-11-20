@@ -131,6 +131,9 @@ export const ROUNDS = [
           { id: 'custos', texto: 'Calcular meus custos no planejamento financeiro', tipo: 'auto', regra: 'temCustos' },
           { id: 'recursos', texto: 'Registrar os recursos que já tenho (mesmo que seja zero)', tipo: 'auto', regra: 'temRecursosInformados' },
         ],
+        // Última da rodada: com o mestrado escolhido (1.3) e conferido (1.4), o custo já inclui a matrícula real.
+        // Rodada 1 é uma sequência única (1.1 → 1.5): duas missões abertas ao mesmo tempo confundiam.
+        dependencias: ['1.4'],
         prioridade: 'alta', tempoEstimado: '30 min', duracaoMin: 45, fontes: ['O6'], tag: 'estimativa',
         criterio: 'Custos e recursos iniciais registrados.', ferramenta: 'financeiro',
         acoes: [{ tipo: 'interna', rota: '/financiamento', rotulo: 'Abrir planejamento financeiro' }],

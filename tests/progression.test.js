@@ -63,6 +63,9 @@ async function doMission(req, jid, id, { evidencia } = {}) {
       for (const [v] of o.opcoes) if ((await req('PUT', `/journeys/${jid}/missions/${id}/objectives/${o.id}`, { valor: v })).status === 200) break;
     }
   }
+  // Missão só de objetivos automáticos conclui sozinha quando os dados estão completos.
+  const now = (await req('GET', `/journeys/${jid}/missions/${id}`)).data.mission;
+  if (now.status === 'concluida') return { mission: now, journey: (await req('GET', `/journeys/${jid}`)).data.journey, events: [] };
   const r = await req('POST', `/journeys/${jid}/missions/${id}/complete`, { confirmo: true, ...(evidencia ? { evidencia } : {}) });
   assert.equal(r.status, 200, `concluir ${id}: ${JSON.stringify(r.data.error)}`);
   return r.data;
@@ -101,6 +104,20 @@ test('1–3: usuário novo começa na Rodada 1; rodadas futuras bloqueadas e sem
   assert.ok(prev.previa.objetivo && prev.rodadaDesbloqueio.texto);
 });
 
+test('caminho simples: perfil do cadastro conclui a 1.1 e o próximo passo segue a ordem (1.2, não 5.1 nem 1.5)', async () => {
+  const j = (await req('GET', `/journeys/${jid}`)).data.journey;
+  const m11 = find(j, '1.1');
+  assert.equal(m11.status, 'concluida', 'o cadastro já preencheu o perfil');
+  assert.equal(m11.conclusao, 'automatica');
+  assert.equal(j.proximaMissao.id, '1.2', 'objetivo automático cumprido (estado → 5.1) não fura a fila');
+  assert.equal(find(j, '1.5').status, 'bloqueada', 'Rodada 1 em sequência única');
+  // Reabrir uma conclusão automática vale: ela não se conclui de novo sozinha.
+  const re = await req('POST', `/journeys/${jid}/missions/1.1/reopen`, {});
+  assert.equal(re.status, 200);
+  assert.notEqual(find((await req('GET', `/journeys/${jid}`)).data.journey, '1.1').status, 'concluida');
+  assert.equal((await req('POST', `/journeys/${jid}/missions/1.1/complete`, { confirmo: true })).status, 200);
+});
+
 test('o navegador não consegue avançar uma missão bloqueada', async () => {
   assert.equal((await req('PUT', `/journeys/${jid}/missions/2.1/objectives/validade`, { feito: true })).status, 409);
   assert.equal((await req('PUT', `/journeys/${jid}/missions/2.1/state`, { execucao: 'fazendo' })).status, 409);
@@ -129,11 +146,15 @@ test('4–7: missões e rodada desbloqueadas pelos pré-requisitos, com eventos 
   await req('POST', '/finance/resources', { tipo: Object.keys(fin.tiposRecurso)[0], descricao: 'Poupança', valor: 9000, moeda: 'EUR', status: 'disponivel' });
   const before = (await req('GET', `/journeys/${jid}`)).data.journey;
   assert.equal(round(before, 2).desbloqueada, false, 'ainda falta o planejamento financeiro');
-  const r = await doMission(req, jid, '1.5');
+  // Rodada 1 em sequência única: a 1.5 só abre depois da 1.4, mesmo com custos e recursos já registrados.
+  assert.equal(find(before, '1.5').status, 'bloqueada', '1.5 espera a 1.4');
+  const r = await doMission(req, jid, '1.4');
+  // Ao abrir, a 1.5 já tem os dados: conclui sozinha e a Rodada 2 é liberada na mesma ação.
+  assert.equal(find(r.journey, '1.5').status, 'concluida', '1.5 concluída com os dados do planejamento');
+  assert.equal(find(r.journey, '1.5').conclusao, 'automatica');
   assert.ok(r.events.some((e) => e.tipo === 'rodada-desbloqueada' && e.numero === 2), 'evento de nova rodada');
   assert.equal(round(r.journey, 2).desbloqueada, true);
   assert.equal(find(r.journey, '2.1').status, 'disponivel');
-  assert.equal(round(r.journey, 1).status === 'concluida', false, '1.4 ainda pendente: a rodada não fecha');
 });
 
 test('8: a Agenda AI considera as novas missões e nunca agenda as bloqueadas', async () => {
@@ -285,7 +306,8 @@ test('requisito já atendido: passaporte e documentos sem burocracia, com histó
   const fin = (await c('GET', `/finance?journeyId=${id}`)).data;
   await c('PUT', '/finance', { custos: { matricula: { valor: 1500, moeda: 'EUR' } } });
   await c('POST', '/finance/resources', { tipo: Object.keys(fin.tiposRecurso)[0], descricao: 'Poupança', valor: 9000, moeda: 'EUR', status: 'disponivel' });
-  const r = await doMission(c, id, '1.5');
+  await doMission(c, id, '1.4');
+  const r = await doMission(c, id, '1.5'); // já concluída sozinha ao abrir (dados completos)
   const m21 = find(r.journey, '2.1');
   assert.equal(m21.status, 'concluida');
   assert.equal(m21.conclusao, 'requisito-atendido', 'diferente de "concluída na plataforma"');

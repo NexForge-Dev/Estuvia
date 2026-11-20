@@ -258,6 +258,7 @@ function client() {
 async function doMission(c, jid, id) {
   const m = (await c('GET', `/journeys/${jid}/missions/${id}`)).data.mission;
   for (const o of m.objetivos.filter((x) => !x.feito && x.tipo === 'check')) await c('PUT', `/journeys/${jid}/missions/${id}/objectives/${o.id}`, { feito: true });
+  if ((await c('GET', `/journeys/${jid}/missions/${id}`)).data.mission.status === 'concluida') return; // concluída automaticamente
   const r = await c('POST', `/journeys/${jid}/missions/${id}/complete`, { confirmo: true });
   assert.equal(r.status, 200, `concluir ${id}: ${JSON.stringify(r.data.error)}`);
 }
