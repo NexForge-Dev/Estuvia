@@ -285,3 +285,18 @@ html .lp-burst i:nth-child(3n) { background: var(--accent); }
 .hm-link span { justify-items: center; }
 .hm-link small { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: .76rem; }
 .hm-link-go { display: none; }
+
+/* Minha jornada: rodadas em quadrados lado a lado (2 por linha; 3 no computador) */
+.jm-rounds:not(.jm-side) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (min-width: 1000px) { .jm { max-width: 960px; } .jm-rounds:not(.jm-side) { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.jm-rounds:not(.jm-side) .jm-card { flex-direction: column; height: 100%; }
+.jm-rounds:not(.jm-side) .jm-img,
+.jm-rounds:not(.jm-side) .jm-card.is-now .jm-img { width: 100%; min-height: 0; aspect-ratio: 4 / 3; }
+.jm-rounds:not(.jm-side) .jm-img::after { background: linear-gradient(0deg, rgb(0 0 0 / 60%), rgb(0 0 0 / 5%) 60%); }
+.jm-rounds:not(.jm-side) .jm-card .jm-text { padding: 12px 14px 14px; align-content: start; }
+.jm-rounds:not(.jm-side) .jm-text strong,
+.jm-rounds:not(.jm-side) .jm-card.is-now .jm-text strong { font-size: .92rem; line-height: 1.25; }
+.jm-rounds:not(.jm-side) .jm-text small { font-size: .76rem; }
+.jm-rounds:not(.jm-side) .jm-here { position: absolute; }
+.jm-rounds:not(.jm-side) .jm-card { position: relative; }
+.jm-rounds:not(.jm-side) .jm-card.is-now .jm-here { top: 8px; left: 8px; z-index: 2; }
