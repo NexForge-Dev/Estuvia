@@ -189,3 +189,99 @@ html .lp-bubble-me, html .lp-switch button:last-child.is-on, html .lp-video-btn 
 html .lp-final { border-color: var(--border); border-radius: 12px; }
 html .lp-feature-icon { background: var(--surface-2); color: var(--text); border-radius: 10px; }
 html .lp-burst i:nth-child(3n) { background: var(--accent); }
+
+/* Início minimalista (2026-11-20): saudação, próximo passo, uma linha de progresso, atalhos. */
+.home-min { max-width: 620px; margin: 0 auto; display: grid; gap: 16px; padding: 8px 0 40px; }
+.hm-head h1 { margin: 0; font-size: clamp(1.6rem, 5vw, 2.1rem); letter-spacing: -.02em; }
+.hm-head p { margin: 4px 0 0; color: var(--muted); }
+.hm-next { display: grid; gap: 8px; padding: 24px; border-radius: 22px; text-decoration: none; color: var(--text);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 14%, var(--surface)), var(--surface) 70%);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border)); transition: transform .15s ease, border-color .15s ease; }
+.hm-next:hover { border-color: var(--accent); }
+@media (hover: hover) { .hm-next:hover { transform: translateY(-2px); } }
+.hm-next small { font-size: .74rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.hm-next strong { font-size: clamp(1.35rem, 4.4vw, 1.7rem); line-height: 1.2; letter-spacing: -.01em; }
+.hm-next p { margin: 0; color: var(--muted); line-height: 1.45; }
+.hm-next .btn { justify-self: start; margin-top: 8px; pointer-events: none; }
+.hm-alert { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-radius: 14px; font-size: .9rem; text-decoration: none;
+  color: var(--warn); background: var(--warn-soft); border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent); }
+.hm-alert.t-danger { color: var(--danger, #f87171); background: color-mix(in srgb, var(--danger, #f87171) 12%, transparent); border-color: color-mix(in srgb, var(--danger, #f87171) 35%, transparent); }
+.hm-round { display: grid; gap: 10px; padding: 16px 18px; border-radius: 16px; border: 1px solid var(--border); background: var(--surface); text-decoration: none; color: var(--text); }
+.hm-round:hover { border-color: var(--border-2); }
+.hm-round-top { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; font-size: .92rem; font-weight: 600; }
+.hm-round-top small { color: var(--muted); font-weight: 700; white-space: nowrap; }
+.hm-bar { height: 6px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
+.hm-bar span { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width .4s ease; }
+.hm-links { display: grid; gap: 2px; margin-top: 4px; }
+.hm-link { display: flex; align-items: center; gap: 14px; padding: 14px 6px; border-bottom: 1px solid var(--border); text-decoration: none; color: var(--text); }
+.hm-link:last-child { border-bottom: 0; }
+.hm-link > svg:first-child { color: var(--muted); flex: none; }
+.hm-link span { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.hm-link strong { font-size: .95rem; font-weight: 600; }
+.hm-link small { color: var(--muted); font-size: .82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hm-link-go { color: var(--faint); flex: none; }
+.hm-link:hover strong { color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { .hm-next, .hm-bar span { transition: none; } }
+
+/* Minha jornada minimalista (2026-11-20) */
+.jm { max-width: 640px; margin: 0 auto; display: grid; gap: 16px; padding-bottom: 40px; }
+.jm .tm-head { margin: 4px 0 0; }
+.jm .tm-head p { margin: 0; }
+.jm-rounds { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.jm-side { margin-top: -6px; padding-top: 10px; border-top: 1px dashed var(--border); }
+.jm-round { display: flex; align-items: center; gap: 14px; padding: 12px 8px; border-radius: 14px; text-decoration: none; color: var(--text); }
+.jm-round:hover { background: var(--surface); }
+.jm-dot { flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; font-weight: 800; font-size: .9rem; border: 2px solid var(--border-2); color: var(--muted); }
+.jm-round.is-done .jm-dot { background: var(--ok); border-color: var(--ok); color: var(--bg); }
+.jm-round.is-now { background: color-mix(in srgb, var(--accent) 9%, var(--surface)); border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border)); }
+.jm-round.is-now .jm-dot { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.jm-round.is-open .jm-dot { border-color: var(--accent); color: var(--accent); }
+.jm-round.is-locked { color: var(--muted); }
+.jm-round.is-locked .jm-dot { border-style: dashed; color: var(--faint); }
+.jm-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.jm-text strong { font-size: .97rem; font-weight: 650; }
+.jm-text small { color: var(--muted); font-size: .82rem; }
+.jm-round.is-now .jm-text small { color: var(--accent); font-weight: 700; }
+.jm-go { flex: none; color: var(--faint); }
+.jm-more .stack { margin-top: 10px; }
+.jm-more { border-top: 1px solid var(--border); padding-top: 6px; }
+.jm-more > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 10px 2px; color: var(--muted); font-weight: 600; font-size: .92rem; }
+.jm-more > summary::-webkit-details-marker { display: none; }
+.jm-more > summary svg { transition: transform .2s ease; }
+.jm-more[open] > summary svg { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .jm-more > summary svg { transition: none; } }
+
+/* Rodadas com imagem (meio-termo, 2026-11-20) */
+.jm-rounds { gap: 10px; }
+.jm-side { margin-top: 0; padding-top: 12px; }
+.jm-card { display: flex; align-items: stretch; gap: 0; border-radius: 18px; overflow: hidden; border: 1px solid var(--border); background: var(--surface); text-decoration: none; color: var(--text); transition: border-color .15s ease, transform .15s ease; }
+.jm-card:hover { border-color: var(--border-2); }
+@media (hover: hover) { .jm-card:hover { transform: translateY(-2px); } }
+.jm-img { position: relative; flex: none; width: 108px; min-height: 92px; overflow: hidden; background: var(--surface-2); }
+.jm-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.jm-img::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgb(0 0 0 / 55%), rgb(0 0 0 / 15%)); }
+.jm-num { position: absolute; left: 10px; bottom: 8px; z-index: 1; display: grid; color: #fff; font-size: 1.6rem; font-weight: 900; line-height: 1; }
+.jm-num small { font-size: .58rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; opacity: .9; }
+.jm-badge { position: absolute; top: 8px; right: 8px; z-index: 1; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--ok); color: var(--bg); }
+.jm-badge.is-lock { background: rgb(0 0 0 / 55%); color: #fff; }
+.jm-card .jm-text { padding: 14px 16px; align-content: center; gap: 4px; }
+.jm-card.is-locked .jm-img img { filter: grayscale(1) brightness(.6); }
+.jm-card.is-locked .jm-text strong { color: var(--muted); }
+.jm-card.is-done .jm-text small { color: var(--ok); font-weight: 700; }
+.jm-card.is-now { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
+.jm-card.is-now .jm-img { width: 128px; min-height: 120px; }
+.jm-card.is-now .jm-text strong { font-size: 1.08rem; }
+.jm-card .hm-bar { margin-top: 6px; }
+.jm-here { justify-self: start; font-size: .66rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--bg); background: var(--accent); padding: 3px 8px; border-radius: 999px; }
+@media (prefers-reduced-motion: reduce) { .jm-card { transition: none; } }
+
+/* Atalhos do início como quadradinhos (combina com "Mais opções") */
+.hm-links { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.hm-link { flex-direction: column; justify-content: center; text-align: center; gap: 8px; padding: 16px 8px; min-height: 112px;
+  border: 1px solid var(--border); border-radius: 18px; background: var(--surface); }
+.hm-link:last-child { border-bottom: 1px solid var(--border); }
+.hm-link:hover { border-color: var(--border-2); }
+.hm-link > svg:first-child { width: 44px; height: 44px; padding: 11px; border-radius: 50%; color: var(--accent); background: var(--accent-soft); box-sizing: border-box; }
+.hm-link span { justify-items: center; }
+.hm-link small { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: .76rem; }
+.hm-link-go { display: none; }

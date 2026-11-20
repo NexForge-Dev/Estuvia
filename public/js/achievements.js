@@ -66,6 +66,7 @@ let announcing = false;
 function announce(novas) {
   if (announcing) return;
   announcing = true;
-  novas.forEach((a) => toast(`Nova conquista: ${a.titulo}`, 'ok'));
+  // Um aviso só, mesmo com várias conquistas de uma vez: vários avisos empilhados cobrem a tela no celular.
+  toast(novas.length === 1 ? `Nova conquista: ${novas[0].titulo}` : `${novas.length} novas conquistas: ${novas.map((a) => a.titulo).join(', ')}`, 'ok');
   api.post('/achievements/seen', { ids: novas.map((a) => a.id) }).catch(() => {}).finally(() => { announcing = false; });
 }

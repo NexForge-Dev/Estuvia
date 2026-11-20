@@ -3,7 +3,7 @@
 // O botão "Continuar" fica uma vez só, no topo da jornada.
 import { h } from '../ui.js';
 import { icon } from '../icons.js';
-import { progressBar, pctLabel } from './common.js';
+import { progressBar } from './common.js';
 
 export function RoundCard(round, { journeyId, atual, proxima = false }) {
   const href = `#/j/${journeyId}/r/${round.numero}`;
@@ -38,8 +38,9 @@ export function RoundCard(round, { journeyId, atual, proxima = false }) {
       h('p', { class: 'eyebrow' }, round.etapa),
       h('h3', {}, round.titulo),
       atual ? h('p', { class: 'rc-preview' }, round.resumo) : null,
-      h('p', { class: 'rc-missions' }, h('strong', {}, `${round.concluidas} de ${round.total}`), ' missões concluídas'),
-      h('div', { class: 'rc-progress' }, progressBar(round.progresso, { label: `Progresso da rodada ${round.numero}` }), h('span', { class: 'rc-pct' }, pctLabel(round.progresso))),
+      // Um número só: missões concluídas (a barra segue a mesma conta, sem porcentagem que contradiga).
+      h('p', { class: 'rc-missions' }, h('strong', {}, `${round.concluidas} de ${round.total}`), round.total === 1 ? ' missão feita' : ' missões feitas'),
+      h('div', { class: 'rc-progress' }, progressBar(round.total ? round.concluidas / round.total : 0, { label: `Progresso da rodada ${round.numero}` })),
       round.atencao || round.aguardando
         ? h('p', { class: 'rc-flags' },
             round.atencao ? h('span', { class: 'flag flag-warn' }, icon('alert', { size: 13 }), `${round.atencao} com atenção`) : null,

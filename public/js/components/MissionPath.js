@@ -14,19 +14,21 @@ const DONE = new Set(['concluida', 'nao-aplicavel', 'ignorada']);
 export function MissionNode(m, { journeyId, current, index }) {
   const locked = m.status === 'bloqueada';
   const sub = locked
-    ? (m.bloqueioExterno && m.bloqueadaPor.every((b) => b.externo) ? `Aguarda: ${m.bloqueadaPor.map((b) => b.titulo).join(', ')}` : `Libera após ${m.bloqueadaPor.filter((b) => !b.externo).map((b) => b.label || `Rodada ${b.rodada}`).join(', ')}`)
+    ? (m.bloqueioExterno && m.bloqueadaPor.every((b) => b.externo) ? `Aguarda: ${m.bloqueadaPor.map((b) => b.titulo).join(', ')}` : `Abre depois da ${m.bloqueadaPor.filter((b) => !b.externo).map((b) => (b.label ? `missão ${b.label}` : `Rodada ${b.rodada}`)).join(', ')}`)
     : m.status === 'nao-aplicavel' ? 'Não se aplica a você'
       : m.status === 'ignorada' ? 'Pulada (opcional)'
       : m.status === 'concluida' ? 'Concluída'
-        : m.status === 'em-andamento' ? `${m.objetivosFeitos}/${m.objetivosTotal} objetivos`
-          : m.statusLabel;
+        // Fora do "Você está aqui": aberta, mas sem pressa (o caminho principal é o destacado).
+        : !current && ['disponivel', 'em-andamento'].includes(m.status) ? `Pode adiantar${m.objetivosFeitos ? ` · ${m.objetivosFeitos} de ${m.objetivosTotal} feitos` : ''}`
+          : m.status === 'em-andamento' ? `${m.objetivosFeitos} de ${m.objetivosTotal} feitos`
+            : m.statusLabel;
 
   const glyph = m.status === 'em-andamento' || m.status === 'disponivel' || m.status === 'atencao'
     ? h('span', { class: 'mn-num' }, m.label)
     : icon(STATUS_ICON[m.status], { size: 30 });
 
   const node = h('a', {
-    class: `mission-node n-${m.status} ${current ? 'is-current' : ''} ${m.prioridade === 'critica' ? 'is-critical' : ''}`,
+    class: `mission-node n-${m.status} ${current ? 'is-current' : !locked && !DONE.has(m.status) ? 'is-later' : ''} ${m.prioridade === 'critica' ? 'is-critical' : ''}`,
     href: `#/j/${journeyId}/m/${m.id}`,
     'aria-label': `Missão ${m.label}: ${m.titulo} - ${m.statusLabel}${locked ? `, depende de ${m.bloqueadaPor.map((b) => b.label || b.titulo).join(', ')}. Toque para ver o que falta` : ''}`,
     dataset: { mission: m.id },

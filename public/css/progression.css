@@ -174,3 +174,21 @@
   .round-card.is-future .rc-banner { width: 34%; aspect-ratio: auto; min-height: 76px; }
   .round-card.is-future .rc-number { font-size: 1.4rem; }
 }
+
+/* Missão aberta fora do "Você está aqui": continua clicável, mas visualmente secundária. */
+.mission-node.is-later .mn-circle { opacity: .55; }
+.mission-node.is-later:hover .mn-circle, .mission-node.is-later:focus-visible .mn-circle { opacity: 1; }
+
+/* Rodada minimalista (2026-11-20) */
+.trail-min { max-width: 640px; margin: 0 auto; }
+.tm-back { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: .88rem; font-weight: 600; text-decoration: none; }
+.tm-back:hover { color: var(--accent); }
+.tm-head { display: grid; gap: 6px; margin: 14px 0 8px; }
+.tm-head small { font-size: .74rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+.tm-head h1 { margin: 0; font-size: clamp(1.6rem, 5vw, 2.1rem); letter-spacing: -.02em; }
+.tm-progress { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+.tm-progress .hm-bar { flex: 1; }
+.tm-progress span { color: var(--muted); font-size: .85rem; font-weight: 600; white-space: nowrap; }
+.tm-nav { display: flex; justify-content: space-between; gap: 12px; margin: 8px 0 90px; }
+.tm-nav a { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: .88rem; font-weight: 600; text-decoration: none; }
+.tm-nav a:hover { color: var(--accent); }

@@ -48,18 +48,18 @@ export const mentorAsk = ({ journeyId, missaoId, acao, pergunta } = {}) => {
 // Componentes
 // ---------------------------------------------------------------------------
 
-export function MissionOverviewHeader(m, journey) {
+// Cabeçalho simples: em que etapa estou, o nome da missão e para que ela serve. Sem repetir a
+// jornada (o caminho acima já mostra) nem números de missão como título.
+export function MissionOverviewHeader(m, { descricao }) {
   const def = m.definicao;
-  const destino = `${journey.destino.origem || 'Brasil'} → ${journey.destino.universidade?.nome || 'Espanha'}`;
-  const rodada = def.rodadaSigla ? `Trilha ${def.rodadaSigla} - ${def.rodadaTitulo}` : `Rodada ${def.rodada} - ${def.rodadaTitulo}`;
-  const item = (label, value, href) => h('div', { class: 'mh-head-item' }, h('small', {}, label), href ? h('a', { href }, value) : h('strong', {}, value));
-  return h('header', { class: 'mh-card mh-head' },
-    item('Jornada', destino, `#/j/${journey.id}`),
-    item(def.rodadaSigla ? 'Trilha' : 'Rodada', rodada, `#/j/${journey.id}/r/${def.rodada}`),
-    h('div', { class: 'mh-head-item is-main' }, h('small', {}, 'Missão'), h('strong', {}, `${m.label} - ${def.titulo}`)));
+  const etapa = def.rodadaSigla ? def.rodadaTitulo : `Rodada ${def.rodada} · ${def.rodadaTitulo}`;
+  return h('header', { class: 'mh-title', 'aria-label': etapa },
+    h('h1', {}, def.titulo),
+    h('p', { class: 'mh-title-desc' }, descricao || def.resumo || def.objetivo));
 }
 
-export function MissionProgressCard(m, { descricao, tools, onOpen }) {
+// Lista do que fazer: cada item pendente tem o seu botão; o primeiro pendente fica em destaque.
+export function MissionProgressCard(m, { tools, onOpen, onToggle }) {
   const total = m.objetivosTotal;
   const done = m.status === 'concluida' ? total : m.objetivosFeitos;
   const ratio = total ? done / total : m.status === 'concluida' ? 1 : 0;
@@ -68,34 +68,39 @@ export function MissionProgressCard(m, { descricao, tools, onOpen }) {
   const via = (o) => tools.find((t) => Array.isArray(t.objetivos) && t.objetivos.includes(o.id)) || (o.id === nextOpen ? tools.find((t) => t.objetivos === '*') : null);
   return h('section', { class: 'mh-card mh-progress' },
     h('div', { class: 'mh-progress-top' },
-      h('div', {}, h('small', { class: 'mh-eyebrow' }, 'Seu progresso nesta missão'),
-        h('strong', { class: 'mh-progress-count' }, m.status === 'concluida' ? 'Missão concluída' : `${done} de ${total} objetivo${total === 1 ? '' : 's'} concluído${total === 1 ? '' : 's'}`)),
-      h('span', { class: 'mh-progress-pct' }, `${Math.round(ratio * 100)}%`)),
-    h('div', { class: 'mh-bar', role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': total, 'aria-valuenow': done, 'aria-label': 'Objetivos concluídos' }, fill({}, ratio * 100)),
-    h('p', { class: 'mh-progress-desc' }, descricao || m.definicao.resumo || m.definicao.objetivo),
-    total > 1 || m.objetivos.some((o) => o.tipo === 'auto') ? h('ul', { class: 'mh-goals' }, m.objetivos.map((o) => {
+      h('strong', { class: 'mh-progress-count' }, m.status === 'concluida' ? 'Tudo feito' : 'O que fazer'),
+      total ? h('span', { class: 'mh-progress-pct' }, `${done} de ${total}`) : null),
+    total ? h('div', { class: 'mh-bar', role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': total, 'aria-valuenow': done, 'aria-label': 'Tarefas feitas' }, fill({}, ratio * 100)) : null,
+    total ? h('ul', { class: 'mh-goals' }, m.objetivos.map((o) => {
       const t = via(o);
       const feito = o.feito || m.status === 'concluida';
-      return h('li', { class: feito ? 'done' : '' },
-        h('span', { class: 'mh-goal-box' }, feito ? icon('check', { size: 12 }) : null),
+      return h('li', { class: feito ? 'done' : o.id === nextOpen ? 'is-next' : '' },
+        // Tarefa manual: marca/desmarca aqui mesmo. Automáticas e de escolha seguem a regra do servidor.
+        onToggle && o.tipo === 'check' && m.status !== 'concluida'
+          ? h('button', { type: 'button', class: 'mh-goal-box is-toggle', role: 'checkbox', 'aria-checked': String(Boolean(o.feito)), 'aria-label': `${o.feito ? 'Desmarcar' : 'Marcar como feito'}: ${o.texto}`, onClick: () => onToggle(o, !o.feito) }, feito ? icon('check', { size: 12 }) : null)
+          : h('span', { class: 'mh-goal-box' }, feito ? icon('check', { size: 12 }) : null),
         h('span', { class: 'mh-goal-text' }, o.texto),
-        !feito && t ? h('button', { type: 'button', class: 'mh-goal-go', onClick: () => onOpen(t) }, t.titulo, ' ', icon('arrow', { size: 12 })) : null);
+        // Automática pendente: o atalho leva direto para onde se resolve (ex.: perfil, finanças).
+        !feito && o.tipo === 'auto' && o.acao?.rota ? h('a', { class: `mh-goal-go${o.id === nextOpen ? ' is-main' : ''}`, href: `#${o.acao.rota}` }, o.acao.rotulo || 'Resolver', ' ', icon('arrow', { size: 12 }))
+          : !feito && t ? h('button', { type: 'button', class: `mh-goal-go${o.id === nextOpen ? ' is-main' : ''}`, onClick: () => onOpen(t) }, o.id === nextOpen ? 'Fazer agora' : 'Abrir', ' ', icon('arrow', { size: 12 })) : null);
     })) : null);
 }
 
-export function MissionToolCard(t, { hint, onOpen, contributes }) {
-  return h('button', { type: 'button', class: `mh-tool c-${t.cor} ${t.destaque ? 'is-primary' : ''}`, onClick: () => onOpen(t), 'aria-label': `${t.titulo}: ${t.desc}` },
-    contributes ? h('span', { class: 'mh-tool-badge', title: 'Conta para o progresso da missão' }, icon('target', { size: 11 }), ' objetivo') : null,
-    h('span', { class: 'mh-tool-ic' }, hubIcon(t.ic, { size: t.destaque ? 34 : 30 })),
-    h('strong', { class: 'mh-tool-title' }, t.titulo),
-    h('span', { class: 'mh-tool-desc' }, t.desc),
-    hint ? h('span', { class: 'mh-tool-hint' }, hint) : null);
+// Ferramentas de apoio em linhas compactas (ícone, nome, uma frase), em vez de cartões grandes.
+// Ferramentas de apoio como cartões quadrados (ícone grande + nome + uma frase), em grade.
+export function MissionToolCard(t, { hint, onOpen }) {
+  return h('button', { type: 'button', class: `mh-tile c-${t.cor}`, onClick: () => onOpen(t) },
+    h('span', { class: 'mh-tile-ic' }, hubIcon(t.ic, { size: 24 })),
+    h('strong', {}, t.titulo),
+    h('small', {}, t.desc),
+    hint ? h('span', { class: 'mh-tile-hint' }, hint) : null);
 }
 
-export function MissionToolsGrid(tools, { hints = {}, onOpen, m }) {
-  const pending = new Set(m.objetivos.filter((o) => !o.feito).map((o) => o.id));
-  return h('section', { class: `mh-grid n-${tools.length}`, 'aria-label': 'Ferramentas da missão' },
-    tools.map((t) => MissionToolCard(t, { hint: hints[t.id], onOpen, contributes: Array.isArray(t.objetivos) && t.objetivos.some((id) => pending.has(id)) })));
+export function MissionToolsGrid(tools, { hints = {}, onOpen, title }) {
+  if (!tools.length) return null;
+  return h('section', { class: 'mh-rows', 'aria-label': title },
+    h('p', { class: 'mh-eyebrow' }, title),
+    h('div', { class: 'mh-tiles' }, tools.map((t) => MissionToolCard(t, { hint: hints[t.id], onOpen }))));
 }
 
 export function MissionCompletionFeedback(m, ctx, base) {
@@ -104,23 +109,21 @@ export function MissionCompletionFeedback(m, ctx, base) {
   if (m.status === 'concluida') {
     return h('section', { class: 'mh-card mh-done' }, h('span', { class: 'mh-done-ic' }, icon('check', { size: 22 })),
       h('div', {}, h('strong', {}, m.conclusao === 'requisito-atendido' ? 'Requisito já atendido' : 'Missão concluída!'),
-        h('p', {}, m.conclusao === 'requisito-atendido' ? 'Você informou que já tem isso. Se mudar, corrija em "Meu perfil".' : m.declarada ? 'Você informou que já tinha feito isso antes de usar a Estuvia.' : m.concluidaEm ? `Registrada em ${fmtDate(m.concluidaEm)}.` : '')),
+        h('p', {}, m.conclusao === 'requisito-atendido' ? 'Você informou que já tem isso. Se mudar, corrija em "Meu perfil".' : m.declarada ? 'Você informou que já tinha feito isso antes de usar a Estuvia.' : m.conclusao === 'automatica' ? 'A Estuvia conferiu as informações que você já deu: não precisa fazer mais nada aqui.' : m.concluidaEm ? `Registrada em ${fmtDate(m.concluidaEm)}.` : '')),
       h('div', { class: 'row wrap' },
-        next ? h('a', { class: 'btn btn-cta', href: `#/j/${journey.id}/m/${next.id}` }, `Próxima: ${next.label} ${next.titulo}`, ' ', icon('arrow', { size: 14 })) : h('a', { class: 'btn btn-ghost', href: `#/j/${journey.id}` }, 'Ver minha jornada'),
+        next ? h('a', { class: 'btn btn-cta', href: `#/j/${journey.id}/m/${next.id}` }, `Próximo passo: ${next.titulo}`, ' ', icon('arrow', { size: 14 })) : h('a', { class: 'btn btn-ghost', href: `#/j/${journey.id}` }, 'Ver minha jornada'),
         m.conclusao !== 'requisito-atendido' ? h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onClick: () => ctx.mutate(api.post(`${base}/reopen`, {})) }, icon('refresh', { size: 14 }), ' Reabrir') : null));
   }
   if (!m.podeConcluir) return null;
-  const chk = h('input', { type: 'checkbox', id: 'mh-confirm' });
+  // O botão é a própria confirmação ("Sim, fiz isso"): um clique, sem caixa de seleção à parte.
   const ev = m.evidencia ? h('input', { type: 'text', maxlength: 200, placeholder: m.evidencia.rotulo, 'aria-label': m.evidencia.rotulo }) : null;
-  const btn = h('button', { type: 'button', class: 'btn btn-cta', disabled: true }, icon('trophy', { size: 16 }), ' Concluir missão');
-  const sync = () => { btn.disabled = !chk.checked || Boolean(m.evidencia?.obrigatoria && !ev.value.trim()); };
-  chk.addEventListener('change', sync);
-  ev?.addEventListener('input', sync);
+  const btn = h('button', { type: 'button', class: 'btn btn-cta btn-lg', disabled: Boolean(m.evidencia?.obrigatoria) }, icon('check', { size: 16 }), ' Sim, fiz isso: concluir');
+  ev?.addEventListener('input', () => { btn.disabled = Boolean(m.evidencia?.obrigatoria && !ev.value.trim()); });
   btn.addEventListener('click', () => ctx.mutate(api.post(`${base}/complete`, { confirmo: true, ...(ev?.value.trim() ? { evidencia: ev.value.trim() } : {}) })));
   return h('section', { class: 'mh-card mh-finish' },
-    h('div', {}, h('strong', {}, 'Tudo pronto para concluir'), h('p', { class: 'small' }, m.definicao.criterio)),
+    h('span', { class: 'mh-done-ic' }, icon('trophy', { size: 20 })),
+    h('div', {}, h('strong', {}, 'Tudo pronto!'), h('p', { class: 'small' }, m.definicao.criterio || 'Você fez tudo o que esta missão pede.')),
     ev ? h('label', { class: 'mh-form' }, h('span', {}, `${m.evidencia.rotulo}${m.evidencia.obrigatoria ? '' : ' (opcional)'}`), ev) : null,
-    h('label', { class: 'check', for: 'mh-confirm' }, chk, h('span', {}, 'Confirmo que realizei o que esta missão pede.')),
     btn);
 }
 
@@ -176,15 +179,32 @@ export function MissionHub(m, ctx) {
   // Missão que usa documentos (ex.: 2.1 Passaporte): o que você consegue aqui vai para a Carteira (Documentos).
   const docsCard = (m.docsCarteira || m.documentos.length) && !base_.some((t) => t.painel === 'documentos') && m.status !== 'nao-aplicavel'
     ? { id: 'documentos-missao', painel: 'documentos', titulo: 'Documentos desta missão', desc: 'Guarde na sua Carteira: vale para todas as etapas.', ic: 'file', cor: 'verde' } : null;
-  const tools = [
-    ...base_.slice(0, 1), docsCard, ...base_.slice(1),
-    { id: 'anotacoes', painel: 'anotacoes', titulo: 'Minhas anotações', desc: 'Lembretes, tarefas e dúvidas desta missão.', ic: 'edit', cor: 'amarelo' },
-    base_.some((t) => t.painel === 'ajuda') ? null : { id: 'ajuda', painel: 'ajuda', titulo: 'Pergunte ao Mentor', desc: `Ele já sabe que você está na Missão ${m.label}.`, ic: 'chat', cor: 'roxo' },
-    { id: 'comunidade', painel: 'comunidade', titulo: 'Experiências e fontes', desc: 'Relatos de outros estudantes e as fontes oficiais.', ic: 'users', cor: 'ciano' },
-  ].filter(Boolean);
+  const extrasList = [
+    { id: 'ajuda', painel: 'ajuda', titulo: 'Tirar uma dúvida', desc: 'O Mentor já sabe em que passo você está.', ic: 'chat', cor: 'roxo' },
+    { id: 'anotacoes', painel: 'anotacoes', titulo: 'Minhas anotações', desc: 'Lembretes e dúvidas desta missão.', ic: 'edit', cor: 'amarelo' },
+    { id: 'comunidade', painel: 'comunidade', titulo: 'Fontes oficiais e relatos', desc: 'De onde vem cada regra.', ic: 'users', cor: 'ciano' },
+  ];
+  const tools = [...base_.slice(0, 1), docsCard, ...base_.slice(1).filter((t) => t.painel !== 'ajuda'), ...extrasList].filter(Boolean);
+  // Ferramenta já oferecida como "Fazer agora/Abrir" na lista do que fazer não aparece de novo embaixo:
+  // um caminho por tarefa. As demais viram linhas compactas; ajuda e anotações ficam no fim.
+  const nextOpen = m.objetivos.find((o) => !o.feito);
+  const specific = (t, o) => Array.isArray(t.objetivos) && t.objetivos.includes(o.id);
+  const linked = (t) => active && m.objetivos.some((o) => !o.feito && (specific(t, o)
+    || (t.objetivos === '*' && o === nextOpen && !tools.some((x) => specific(x, o)))));
+  const support = tools.filter((t) => !extrasList.includes(t) && !linked(t))
+    .map((t) => (t.painel === 'guia' && m.status === 'concluida' ? { ...t, titulo: 'Rever o passo a passo', desc: 'O que você fez nesta missão.' } : t));
   const hints = {};
   const grid = h('div');
-  const drawGrid = () => mount(grid, MissionToolsGrid(tools, { hints, onOpen: open, m }));
+  // Minimalista: ferramentas de apoio e ajuda ficam recolhidas em "Mais opções" (o Mentor também está no botão flutuante).
+  const moreOpen = ctx.state.moreOpen ?? false;
+  const drawGrid = () => {
+    const det = h('details', { class: 'mh-more', open: moreOpen },
+      h('summary', {}, 'Mais opções', icon('chevron', { size: 14 })),
+      MissionToolsGrid(support, { hints, onOpen: open, title: 'Nesta missão' }),
+      MissionToolsGrid(extrasList, { hints, onOpen: open, title: 'Ajuda' }));
+    det.addEventListener('toggle', () => { ctx.state.moreOpen = det.open; });
+    mount(grid, det);
+  };
 
   // Dicas vivas nos cards (estado real, sem números inventados).
   const docsReady = m.documentos.filter((d) => ['pronto', 'enviado', 'nao-se-aplica'].includes(d.status)).length;
@@ -273,14 +293,12 @@ export function MissionHub(m, ctx) {
 
   drawGrid();
   return h('article', { class: `mh g-${m.status}` },
-    h('nav', { class: 'crumbs mh-crumbs', 'aria-label': 'Navegação' },
-      h('a', { href: `#/j/${journey.id}` }, journey.destino.universidade?.sigla || 'Jornada'), icon('chevron', { size: 12, cls: 'crumb-sep' }),
-      h('a', { href: `#/j/${journey.id}/r/${def.rodada}` }, def.rodadaSigla ? 'Financiamento' : `Rodada ${def.rodada}`), icon('chevron', { size: 12, cls: 'crumb-sep' }),
-      h('span', { 'aria-current': 'page' }, `Missão ${m.label}`)),
-    MissionOverviewHeader(m, journey),
-    MissionProgressCard(m, { descricao, tools, onOpen: open }),
+    h('a', { class: 'mh-back', href: `#/j/${journey.id}/r/${def.rodada}` }, icon('back', { size: 14 }), def.rodadaSigla ? 'Financiamento' : `Rodada ${def.rodada}`),
+    MissionOverviewHeader(m, { descricao }),
+    m.status === 'concluida' ? MissionCompletionFeedback(m, ctx, base) : null,
     alerts.length ? h('div', { class: 'mh-alerts' }, alerts) : null,
-    MissionCompletionFeedback(m, ctx, base),
+    m.status === 'nao-aplicavel' || m.status === 'ignorada' ? null : MissionProgressCard(m, { tools, onOpen: open, onToggle: (o, feito) => ctx.mutate(api.put(`${base}/objectives/${o.id}`, { feito })) }),
+    m.status === 'concluida' ? null : MissionCompletionFeedback(m, ctx, base),
     grid);
 }
 

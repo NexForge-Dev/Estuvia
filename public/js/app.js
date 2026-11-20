@@ -309,7 +309,7 @@ function renderNav() {
     // Celular: barra inferior com os 4 atalhos principais; "Menu" abre a lateral completa.
     tabbar.hidden = false;
     mount(tabbar,
-      NAV.slice(0, 4).map((n) => h('a', { href: `#${n.href}`, class: isActive(n) ? 'active' : '', 'aria-current': isActive(n) ? 'page' : false }, icon(n.icon, { size: 20 }), h('span', {}, n.label.replace('Minha ', '')))),
+      NAV.slice(0, 4).map((n) => h('a', { href: `#${n.href}`, class: isActive(n) ? 'active' : '', 'aria-current': isActive(n) ? 'page' : false }, icon(n.icon, { size: 20 }), h('span', {}, n.label.replace(/^Minha /, '').replace(/^./, (c) => c.toUpperCase())))),
       h('button', { type: 'button', class: NAV_MORE.some(isActive) ? 'active' : '', 'aria-label': 'Abrir menu completo', onClick: openSidebar }, icon('menu', { size: 20 }), h('span', {}, 'Menu')));
     mount(foot, h('a', { href: '#/perfil', class: `me-card ${path === '/perfil' ? 'active' : ''}` },
       h('span', { class: 'avatar' }, p.avatar || '🎓'),

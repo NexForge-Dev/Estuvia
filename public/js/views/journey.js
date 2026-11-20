@@ -5,8 +5,7 @@ import { h, toast } from '../ui.js';
 import { api } from '../api.js';
 import { state, loadJourney, cacheJourney, rerender } from '../app.js';
 import { icon } from '../icons.js';
-import { RoundCard } from '../components/RoundCard.js';
-import { JourneyProgress, DeadlinesPanel, FinancePanel, MilestonesPanel } from '../components/JourneyProgress.js';
+import { DeadlinesPanel, FinancePanel, MilestonesPanel } from '../components/JourneyProgress.js';
 import { ArrivalForm } from '../components/MissionGuide.js';
 import { showEvents, FoldPanel } from '../components/common.js';
 
@@ -62,7 +61,6 @@ export async function journeyView(jid) {
   const j = await loadJourney(jid, { fresh: true });
   const main = j.rodadas.filter((r) => !r.transversal);
   const fin = j.rodadas.find((r) => r.transversal);
-  const nextLocked = main.find((r) => !r.desbloqueada);
   const r7 = main.find((r) => r.numero === 7);
   const vistoOk = j.situacao.visto === 'aprovado' || main.find((r) => r.numero === 5)?.missoes.find((m) => m.id === '5.9')?.status === 'concluida';
 
@@ -77,22 +75,45 @@ export async function journeyView(jid) {
     prior.append(PriorProgressForm(j.id, etapas, { onDone: (r) => (r ? applyResult(r) : (priorPanel.open = false)) }));
   });
 
-  return h('div', { class: 'stack-lg' },
-    h('nav', { class: 'crumbs', 'aria-label': 'Navegação' }, h('a', { href: '#/jornadas' }, 'Minhas Jornadas'), icon('chevron', { size: 12, cls: 'crumb-sep' }), h('span', { 'aria-current': 'page' }, j.destino.universidade?.sigla || 'Jornada')),
-    JourneyProgress(j),
-    h('div', { class: 'layout-2' },
-      h('div', { class: 'stack-lg' },
-        h('section', {},
-          h('div', { class: 'section-head' }, h('h2', {}, 'Mapa da jornada'), h('span', { class: 'muted small' }, `${main.filter((r) => r.status === 'concluida').length} de ${main.length} rodadas concluídas`)),
-          h('div', { class: 'round-map' }, main.map((r) => RoundCard(r, { journeyId: j.id, atual: r.numero === j.rodadaAtual && r.desbloqueada, proxima: r === nextLocked })))),
-        h('section', {},
-          h('div', { class: 'section-head' }, h('h2', {}, 'Trilhas paralelas'), h('span', { class: 'muted small' }, 'Começam cedo para você não perder prazos nem dinheiro')),
-          h('div', { class: 'round-grid one' }, fin ? RoundCard(fin, { journeyId: j.id, atual: false }) : null),
-          early.length ? h('div', { class: 'panel early' },
-            h('h3', { class: 'panel-title' }, icon('unlock', { size: 16 }), 'Pode adiantar agora'),
-            h('ul', { class: 'early-list' }, early.slice(0, 6).map((m) => h('li', {}, h('a', { href: `#/j/${j.id}/m/${m.id}` }, h('strong', {}, m.titulo), h('small', {}, m.trilha.titulo)))))) : null)),
-      h('aside', { class: 'stack' },
-        r7 && !r7.desbloqueada && vistoOk ? h('section', { class: 'panel' }, h('h2', { class: 'panel-title' }, icon('plane', { size: 18 }), 'Já chegou à Espanha?'), ArrivalForm(j, applyResult)) : null,
-        DeadlinesPanel(j), FinancePanel(j), SituationPanel(j), priorPanel, MilestonesPanel(j))),
+  // Minimalista: destino, próximo passo e a lista das rodadas. Prazos, finanças, situação e marcos
+  // continuam disponíveis, recolhidos em "Mais opções".
+  const next = j.proximaMissao;
+  // Meio-termo: cartões com a imagem de cada rodada, mas só número, título e situação.
+  // A rodada atual fica maior, com barra de progresso.
+  const roundRow = (r, { label, sub } = {}) => {
+    const atual = r.numero === j.rodadaAtual && r.desbloqueada && !r.transversal;
+    const done = r.status === 'concluida';
+    const st = done ? 'is-done' : atual ? 'is-now' : r.desbloqueada ? 'is-open' : 'is-locked';
+    const bar = h('span');
+    bar.style.width = `${r.total ? Math.round((r.concluidas / r.total) * 100) : 0}%`;
+    return h('li', {}, h('a', { class: `jm-card ${st}`, href: `#/j/${j.id}/r/${r.numero}` },
+      h('span', { class: 'jm-img' },
+        h('img', { src: r.banner, alt: '', loading: 'lazy' }),
+        h('span', { class: 'jm-num' }, h('small', {}, r.transversal ? 'Trilha' : 'Rodada'), label || r.sigla || String(r.numero)),
+        done ? h('span', { class: 'jm-badge' }, icon('check', { size: 14 })) : !r.desbloqueada ? h('span', { class: 'jm-badge is-lock' }, icon('lock', { size: 13 })) : null),
+      h('span', { class: 'jm-text' },
+        atual ? h('span', { class: 'jm-here' }, 'Você está aqui') : null,
+        h('strong', {}, r.titulo),
+        h('small', {}, sub || (done ? 'Concluída' : r.desbloqueada ? `${r.concluidas} de ${r.total} missões feitas` : 'Abre depois da anterior')),
+        atual || (r.transversal && r.concluidas) ? h('span', { class: 'hm-bar' }, bar) : null)));
+  };
+  const more = h('details', { class: 'mh-more jm-more' }, h('summary', {}, 'Mais opções', icon('chevron', { size: 14 })),
+    h('div', { class: 'stack' },
+      early.length ? h('section', { class: 'panel early' }, h('h3', { class: 'panel-title' }, icon('unlock', { size: 16 }), 'Pode adiantar agora'),
+        h('ul', { class: 'early-list' }, early.slice(0, 6).map((m) => h('li', {}, h('a', { href: `#/j/${j.id}/m/${m.id}` }, h('strong', {}, m.titulo), h('small', {}, m.trilha.titulo)))))) : null,
+      DeadlinesPanel(j), FinancePanel(j), SituationPanel(j), priorPanel, MilestonesPanel(j)));
+
+  return h('div', { class: 'jm' },
+    h('header', { class: 'tm-head' },
+      h('small', {}, 'Sua jornada'),
+      h('h1', {}, j.destino.universidade?.nome || 'Andaluzia'),
+      h('p', { class: 'muted' }, [j.destino.programa?.nome || 'Mestrado a definir', j.destino.anoAcademico].filter(Boolean).join(' · '))),
+    next ? h('a', { class: 'hm-next', href: `#/j/${j.id}/m/${next.id}` },
+      h('small', {}, 'Seu próximo passo'), h('strong', {}, next.titulo),
+      h('span', { class: 'btn btn-cta btn-lg' }, next.status === 'disponivel' ? 'Começar' : 'Continuar', icon('arrow', { size: 16 }))) : null,
+    r7 && !r7.desbloqueada && vistoOk ? h('section', { class: 'panel' }, h('h2', { class: 'panel-title' }, icon('plane', { size: 18 }), 'Já chegou à Espanha?'), ArrivalForm(j, applyResult)) : null,
+    h('ol', { class: 'jm-rounds', 'aria-label': 'Rodadas da jornada' }, main.map((r) => roundRow(r))),
+    fin ? h('ul', { class: 'jm-rounds jm-side', 'aria-label': 'Em paralelo' }, roundRow(fin, { label: fin.sigla || 'F', sub: `Em paralelo · ${fin.concluidas} de ${fin.total}` })) : null,
+    more,
   );
 }
