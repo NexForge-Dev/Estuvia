@@ -83,6 +83,7 @@ export const MISSION_TOOLS = {
 const TOOL_LABEL = {
   elegibilidade: ['Verificar elegibilidade', 'Compare seu perfil com os requisitos.', 'scale'],
   'comparar-opcoes': ['Comparar minhas opções', 'Suas opções lado a lado.', 'scale'],
+  'nota-dua': ['Minha nota no DUA', 'Sua média na escala espanhola (5 a 10).', 'scale'],
   consulado: ['Meu consulado', 'Qual consulado atende você.', 'passport'],
   'email-consulado': ['E-mail ao consulado', 'Rascunho pronto para revisar.', 'mail'],
   'contato-academico': ['Contato acadêmico', 'Encontre e registre o contato oficial.', 'users'],
