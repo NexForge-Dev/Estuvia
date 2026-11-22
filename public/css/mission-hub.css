@@ -355,3 +355,5 @@ a.mh-goal-go { text-decoration: none; }
 /* "Próximo passo: <título da missão>" pode ser longo: quebra a linha em vez de alargar a tela no celular. */
 .mh > * { min-width: 0; }
 .mh-done .btn, .mh-finish .btn { white-space: normal; text-align: left; max-width: 100%; }
+.mh-alert > span { flex: 1 1 200px; }
+.mh-alert-btn { flex: none; }

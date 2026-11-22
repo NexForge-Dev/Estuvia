@@ -286,8 +286,12 @@ export function MissionHub(m, ctx) {
   }
   if (m.riscoInfo?.texto && m.riscoInfo.nivel !== 'baixo' && active) alerts.push(h('p', { class: 'mh-alert' }, icon('shield', { size: 14 }), ' ', h('strong', {}, 'Atenção: '), m.riscoInfo.texto));
   const other = m.alertas.filter((a) => a.tipo !== 'prazo');
-  if (other.length && active) alerts.push(h('p', { class: 'mh-alert' }, icon('alert', { size: 14 }), ' ', other[0].texto));
-  if (m.status === 'nao-aplicavel') alerts.push(h('p', { class: 'mh-alert' }, icon('minus', { size: 14 }), ' ', m.motivoNaoAplicavel || 'Esta missão não se aplica ao seu caso e não conta como pendência.'));
+  // Exigência não confirmada na ficha (2.5): a coordenação decide; quem confirmou que não precisa sai daqui.
+  const dispensar = (v) => ctx.mutate(api.put(`${base}/state`, { naoAplicavel: v }));
+  if (other.length && active) alerts.push(h('div', { class: 'mh-alert' }, icon('alert', { size: 14 }), ' ', h('span', {}, other[0].texto),
+    m.dispensavel ? h('button', { type: 'button', class: 'btn btn-ghost btn-sm mh-alert-btn', onClick: () => dispensar(true) }, 'A coordenação confirmou: não preciso de certificado') : null));
+  if (m.status === 'nao-aplicavel') alerts.push(h('div', { class: 'mh-alert' }, icon('minus', { size: 14 }), ' ', h('span', {}, m.motivoNaoAplicavel || 'Esta missão não se aplica ao seu caso e não conta como pendência.'),
+    m.dispensavel && m.naoAplicavelMarcado ? h('button', { type: 'button', class: 'btn btn-ghost btn-sm mh-alert-btn', onClick: () => dispensar(false) }, 'Voltar a considerar esta missão') : null));
   if (m.status === 'ignorada') alerts.push(h('p', { class: 'mh-alert' }, icon('minus', { size: 14 }), ' Você decidiu pular esta missão (é opcional).'));
   if (m.status === 'aguardando') alerts.push(h('p', { class: 'mh-alert' }, icon('hourglass', { size: 14 }), ` Aguardando resposta de terceiros. Quando ela chegar, registre em "${tools.find((t) => t.painel === 'guia')?.titulo || 'Passo a passo'}".`));
 

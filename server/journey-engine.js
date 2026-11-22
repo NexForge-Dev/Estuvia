@@ -115,9 +115,11 @@ const AUTO_RULES = {
   opcoesNoLimite: (ctx) => ctx.choices.length > 0 && ctx.choices.length <= 6,
   certificadoAtende: (ctx) => {
     const req = ctx.program?.idioma;
-    if (!req?.nivel) return false;
     const cert = ctx.profile.certificadoEspanhol;
     if (!cert || cert === 'nenhum') return false;
+    // Ficha sem nível confirmado: não há com o que comparar. O certificado declarado conta, e o alerta da
+    // missão continua pedindo a confirmação com a coordenação. Sem isso a 2.5 nunca concluía.
+    if (!req?.nivel) return true;
     return LANG_LEVELS.indexOf(ctx.profile.certificadoNivel) >= LANG_LEVELS.indexOf(req.nivel);
   },
   docsCandidaturaProntos: (ctx) => docsDone(ctx, ['passaporte', 'diploma', 'historico']),
@@ -150,7 +152,7 @@ const AUTO_HINTS = {
   temAnoAcademico: 'Marcado quando a jornada tem o ano acadêmico definido.',
   temOpcoes: 'Marcado quando há programas em "Minhas opções".',
   opcoesNoLimite: 'Marcado quando "Minhas opções" tem de 1 a 6 mestrados: a solicitação no DUA aceita no máximo 6.',
-  certificadoAtende: 'Marcado quando o certificado declarado no perfil atinge o nível exigido (declaração sua, não validação oficial).',
+  certificadoAtende: 'Marcado quando o certificado declarado no perfil atinge o nível exigido (declaração sua, não validação oficial). Se a ficha não informa o nível, vale o certificado declarado: confirme com a coordenação.',
   docsCandidaturaProntos: 'Marcado quando passaporte, diploma e histórico estão "Pronto", "Enviado" ou "Não se aplica" na área de documentos.',
   temCustos: 'Marcado quando você começa o planejamento financeiro ("Calcular meus custos") ou informa algum custo.',
   temRecursosInformados: 'Marcado quando você registra seus recursos no simulador.',
@@ -214,10 +216,15 @@ function applicability(mission, ctx, mp) {
   if (rule.tipo === 'requisito-programa' && rule.requisito === 'idioma') {
     if (!ctx.program) return { aplicavel: true, atencao: 'Defina o mestrado desta jornada para saber se esta missão é obrigatória.' };
     const req = ctx.program.idioma || { status: 'verificar' };
+    // Ficha sem exigência confirmada (sem nível, ou sem dizer como comprovar): quem decide é a coordenação.
+    // Quem confirmou que não precisa de certificado registra isso e a missão sai do caminho; sem essa
+    // saída a Rodada 3 nunca abria para esses mestrados.
+    const dispensavel = req.status === 'verificar' || Boolean(rule.exigeCertificado && req.status === 'requerido' && !req.certificado);
+    if (dispensavel && mp.naoAplicavel) return { aplicavel: false, dispensavel, motivo: 'Você confirmou com a coordenação que o seu mestrado não exige certificado de espanhol. Se isso mudar, volte a considerar esta missão.' };
     if (req.status === 'nao-requerido') return { aplicavel: false, motivo: req.fonte === 'O30' ? 'A ficha oficial do seu mestrado no DUA, onde a universidade publica os requisitos específicos de acesso (O2 art. 2), não lista exigência de idioma. Se a página do máster disser algo diferente, confirme com a coordenação.' : 'Seu mestrado não exige certificado de idioma.' };
-    if (req.status === 'verificar') return { aplicavel: true, atencao: 'A exigência de idioma do seu mestrado não está confirmada na ficha. Confirme com a coordenação.' };
+    if (req.status === 'verificar') return { aplicavel: true, dispensavel, atencao: 'A exigência de idioma do seu mestrado não está confirmada na ficha. Confirme com a coordenação.' };
     // A ficha diz o nível mas não diz como comprovar: não concluímos que o certificado é dispensado.
-    if (rule.exigeCertificado && !req.certificado) return { aplicavel: true, atencao: `A ficha oficial do seu mestrado exige espanhol ${req.nivel}, mas não diz como comprovar o nível. Pergunte à coordenação se aceitam outra comprovação além de um certificado (DELE ou SIELE) antes de decidir pela prova.` };
+    if (rule.exigeCertificado && !req.certificado) return { aplicavel: true, dispensavel, atencao: `A ficha oficial do seu mestrado exige espanhol ${req.nivel}, mas não diz como comprovar o nível. Pergunte à coordenação se aceitam outra comprovação além de um certificado (DELE ou SIELE) antes de decidir pela prova.` };
     return { aplicavel: true, info: `Seu mestrado exige espanhol ${req.nivel || ''}${req.certificado ? ' com certificado' : ''}.` };
   }
 
@@ -400,6 +407,8 @@ export function missionState(mission, ctx, cache = new Map()) {
     bloqueioExterno: Boolean(externo),
     alertas,
     info: app.info || null,
+    // Pode sair do caminho depois de o estudante confirmar com a coordenação (2.5 sem exigência confirmada).
+    dispensavel: Boolean(app.dispensavel),
     motivoNaoAplicavel: app.aplicavel ? null : app.motivo,
     prazo,
     concluidaEm: mp.concluidaEm || null,
@@ -994,7 +1003,7 @@ export function setMissionFlags(user, jr, missionId, { aguardando, naoAplicavel,
     mp.aguardando = Boolean(aguardando);
   }
   if (naoAplicavel !== undefined) {
-    if (!def.condicional && !def.opcional) throw new JourneyError(400, 'Esta missão é necessária para o seu perfil.');
+    if (!def.condicional && !def.opcional && !state.dispensavel) throw new JourneyError(400, 'Esta missão é necessária para o seu perfil.');
     mp.naoAplicavel = Boolean(naoAplicavel);
     if (mp.naoAplicavel) mp.aguardando = false;
   }
