@@ -351,3 +351,7 @@ a.mh-goal-go { text-decoration: none; }
 .mh-tile small { color: var(--muted); font-size: .8rem; line-height: 1.35; }
 .mh-tile-hint { font-size: .7rem; font-weight: 800; color: var(--c); background: color-mix(in srgb, var(--c) 12%, transparent); padding: 3px 9px; border-radius: 999px; }
 @media (prefers-reduced-motion: reduce) { .mh-tile { transition: none; } }
+
+/* "Próximo passo: <título da missão>" pode ser longo: quebra a linha em vez de alargar a tela no celular. */
+.mh > * { min-width: 0; }
+.mh-done .btn, .mh-finish .btn { white-space: normal; text-align: left; max-width: 100%; }

@@ -60,7 +60,7 @@ export async function financeView() {
     const dd = p.destino;
     return [h('section', { class: 'fp-intro card' },
       h('p', { class: 'eyebrow' }, 'Meu planejamento financeiro'),
-      h('h1', {}, 'Seu destino 🇪🇸'),
+      h('h1', {}, 'Seu destino'),
       h('div', { class: 'fp-dest' },
         h('strong', {}, dd.universidade?.nome || 'Universidade a definir'),
         h('span', {}, `${dd.cidade || '-'}, ${dd.pais}`),

@@ -323,7 +323,7 @@ export async function travelDashboardView() {
     return h('section', { class: 'tv-section tv-itin' },
       h('div', { class: 'tv-section-head' }, h('div', {}, h('h2', {}, 'Meu itinerário'), h('p', { class: 'muted' }, `${it.percurso}. Atualiza sozinho quando você muda a rota.`))),
       h('ol', { class: 'tv-timeline' },
-        h('li', { class: 'tv-seg s-origem' }, h('span', { class: 'tv-seg-node' }, icon('pin', { size: 16 })), h('div', { class: 'tv-seg-body' }, h('strong', {}, `${d.origem.nome || 'Sua cidade'} 🇧🇷`), h('span', { class: 'tv-seg-how' }, 'Saída')), h('span', { class: 'tv-seg-line', 'aria-hidden': 'true' })),
+        h('li', { class: 'tv-seg s-origem' }, h('span', { class: 'tv-seg-node' }, icon('pin', { size: 16 })), h('div', { class: 'tv-seg-body' }, h('strong', {}, d.origem.nome || 'Sua cidade'), h('span', { class: 'tv-seg-how' }, 'Saída')), h('span', { class: 'tv-seg-line', 'aria-hidden': 'true' })),
         it.etapas.map((e, i) => TravelSegment(e, i === it.etapas.length - 1))));
   }
 
