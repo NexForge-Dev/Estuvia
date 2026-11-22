@@ -62,7 +62,11 @@ function journeyCoherence(d) {
 const sameOpenDestination = (j, universidadeId, anoAcademico) => !j.programaId && j.universidadeId === universidadeId && (j.anoAcademico || null) === (anoAcademico || null);
 
 const summary = (user, jr) => {
-  const j = computeJourney(user, jr);
+  // Mesma visão de GET /:jid: missões que concluem sozinhas (dados mudaram em Finanças/Perfil) já
+  // aparecem concluídas na lista, sem esperar a jornada ser aberta. Só exibe; quem grava é GET /:jid.
+  const draft = structuredClone(jr);
+  applyRequirements(user, draft);
+  const j = computeJourney(user, draft);
   const atual = j.rodadas.find((r) => r.numero === j.rodadaAtual);
   return {
     id: j.id, criadaEm: j.criadaEm, status: j.status, destino: j.destino, progresso: j.progresso,

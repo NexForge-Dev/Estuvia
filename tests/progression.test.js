@@ -320,3 +320,19 @@ test('requisito já atendido: passaporte e documentos sem burocracia, com histó
   assert.notEqual(find(after, '2.1').status, 'concluida', 'corrigir a resposta desfaz só o que ela marcou');
   assert.equal(find(after, '1.2').status, 'concluida', 'missões feitas na plataforma continuam');
 });
+
+test('lista de jornadas já mostra a missão que concluiu sozinha (dados registrados fora da jornada)', async () => {
+  const c = client();
+  await c('POST', '/auth/register', { nome: 'Lia Ramos', email: 'lia.lista@exemplo.com', senha: 'segura123', aceite: true, maiorIdade: true });
+  await c('PUT', '/me/profile', PROFILE);
+  const id = (await c('POST', '/journeys', { programaId: 'ugr-master-universitario-estudios-asia-oriental', anoAcademico: '2027/28' })).data.journey.id;
+  for (const m of ['1.1', '1.2', '1.3', '1.4']) await doMission(c, id, m);
+  assert.equal((await c('GET', '/journeys')).data.journeys[0].proximaMissao.id, '1.5');
+  // Custos e recursos registrados em Finanças: a 1.5 fica cumprida sem passar pela rota da jornada.
+  const fin = (await c('GET', `/finance?journeyId=${id}`)).data;
+  await c('PUT', '/finance', { custos: { matricula: { valor: 1500, moeda: 'EUR' } } });
+  await c('POST', '/finance/resources', { tipo: Object.keys(fin.tiposRecurso)[0], descricao: 'Poupança', valor: 9000, moeda: 'EUR', status: 'disponivel' });
+  const s = (await c('GET', '/journeys')).data.journeys[0];
+  assert.notEqual(s.proximaMissao?.id, '1.5', 'a lista não pode mandar fazer uma missão já cumprida');
+  assert.equal(s.rodadaAtual.numero, 2);
+});
