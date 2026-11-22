@@ -39,9 +39,12 @@ export const ROUND_UNLOCK = [
   },
   {
     rodada: 6,
-    requisitos: [{ missao: '5.9' }],
+    // 4.6 vale para quem pede a autorização já na Espanha (Missão 5.10): ali a 5.9 "não se aplica" e,
+    // sem a matrícula, a rodada abria logo na Rodada 1 (com 6.4 pedindo a carta de admissão na bagagem).
+    // No consulado nada muda: a 5.9 só chega depois da 4.7.
+    requisitos: [{ missao: '4.6' }, { missao: '5.9' }],
     alternativas: [{ situacao: { campo: 'visto', valores: ['aprovado'] } }],
-    texto: 'Tenha o visto aprovado. A pesquisa de moradia e a comparação de passagens já estão liberadas antes disso.',
+    texto: 'Formalize a matrícula e, se for pedir pelo consulado, tenha o visto aprovado. A pesquisa de moradia e a comparação de passagens já estão liberadas antes disso.',
   },
   {
     rodada: 7,
