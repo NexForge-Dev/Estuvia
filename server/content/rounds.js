@@ -531,7 +531,7 @@ export const ROUNDS = [
         ],
         objetivos: [{ id: 'motivo', texto: 'Conferir no portal do DUA a situação e o motivo em cada mestrado' }, { id: 'prazo', texto: 'Decidir, dentro do prazo, se vou pedir revisão, corrigir documentos ou recorrer' }, { id: 'plano', texto: 'Definir o plano B: próxima fase, outros mestrados ou o próximo ano' }],
         regra: { tipo: 'situacao', campo: 'adjudicacao', valores: ['nao-admitido','exige-acao','excluido'] }, urgenteSe: { campo: 'adjudicacao', valores: ['nao-admitido','exige-acao','excluido'] },
-        prioridade: 'alta', tempoEstimado: '1 h', duracaoMin: 60, fontes: ['O2', 'O1'], tag: 'verificado', soDua: true, criterio: 'Próximo passo definido dentro dos prazos.',
+        prioridade: 'alta', tempoEstimado: '1 h', duracaoMin: 60, fontes: ['O8', 'O2', 'O1'], tag: 'verificado', soDua: true, criterio: 'Próximo passo definido dentro dos prazos.',
       },
     ],
   },
