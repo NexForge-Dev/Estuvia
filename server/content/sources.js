@@ -110,7 +110,7 @@ export const SOURCES = [
   {
     id: 'O12',
     orgao: 'AUIP: Asociación Universitaria Iberoamericana de Postgrado',
-    titulo: 'Programas de bolsas da AUIP (incl. Programa Federico García Lorca)',
+    titulo: 'Programas de bolsas da AUIP (mobilidade entre universidades andaluzas e iberoamericanas)',
     url: 'https://auip.org/',
     revisadoEm: '2026-11-17',
     tipo: 'oficial',

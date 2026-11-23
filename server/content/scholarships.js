@@ -11,12 +11,12 @@ export const SCHOLARSHIP_STATUS = {
 export const SCHOLARSHIPS = [
   {
     id: 'auip-garcia-lorca',
-    nome: 'Programa Federico García Lorca',
+    nome: 'Bolsas de mobilidade AUIP (universidades andaluzas e iberoamericanas)',
     entidade: 'AUIP: Asociación Universitaria Iberoamericana de Postgrado',
-    elegibilidade: 'Já ofereceu bolsas para mestrados oficiais de universidades públicas andaluzas a estudantes iberoamericanos. Confirme elegibilidade no edital vigente.',
-    abrangencia: 'Mestrados oficiais de universidades públicas andaluzas participantes (conforme edital).',
-    financia: 'Em edições anteriores, modalidades com matrícula, alojamento e manutenção.',
-    cobertura: 'Variável por modalidade, confirmar no edital.',
+    elegibilidade: 'Estudantes de pós-graduação de universidades associadas à AUIP; origem e destino precisam ser instituições associadas. Não é bolsa para cursar o mestrado inteiro. Na consulta de 23/11/2026, a AUIP não publicava bolsa de mestrado completo na Andaluzia.',
+    abrangencia: 'Estadias curtas (20 dias a 3 meses) entre universidades andaluzas e iberoamericanas associadas.',
+    financia: 'Ajuda de viagem de €1.500 (Andaluzia–América Latina) no edital 2027. Não cobre matrícula nem manutenção do mestrado.',
+    cobertura: 'Parcial: só deslocamento de uma estadia curta.',
     prazo: null,
     documentos: 'Definidos no edital.',
     status: 'sem-edital',
