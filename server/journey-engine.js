@@ -975,8 +975,18 @@ export function completeAutoMissions(user, jr, now = new Date()) {
     Object.assign(mp_(jr, def.id), { concluidaEm: now.toISOString(), automatica: true, aguardando: false });
     changed = true;
   }
+  // Missão de passo opcional quando o dado já existe (1.2 "Explorar universidades" para quem já escolheu
+  // o mestrado no onboarding): conclui sozinha, para não pedir uma exploração que já aconteceu.
+  for (const def of SKIPPABLE()) {
+    const mp = jr.missions[def.id];
+    if (mp?.concluidaEm || mp?.reaberta || !AUTO_RULES[def.concluiSozinhaSe]?.(ctx)) continue;
+    if (missionState(def, ctx).status === 'bloqueada') continue;
+    Object.assign(mp_(jr, def.id), { concluidaEm: now.toISOString(), automatica: true, aguardando: false });
+    changed = true;
+  }
   return changed;
 }
+const SKIPPABLE = () => ROUNDS.flatMap((r) => r.missoes.map((m) => ({ ...m, rodada: r.numero }))).filter((d) => d.concluiSozinhaSe);
 
 export const EXECUCAO = ['nao-comecei', 'fazendo', 'ajuda'];
 const mp_ = (jr, id) => (ensureJourney(jr).missions[id] ??= { objetivos: {} });

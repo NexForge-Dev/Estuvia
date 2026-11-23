@@ -18,6 +18,7 @@
 //   alertasProcesso[chave]          — alertas do processo do mestrado que deixam a missão em "atenção" (canal, fase, ficha)
 //   objetivo tipo 'escolha'         — valor escolhido entre opcoes (validado no servidor), gravado em dados[campo]
 //   soDua: true                     — passo do Distrito Único Andaluz: "não aplicável" para mestrado com procedimento próprio
+//   concluiSozinhaSe: regraAuto     — conclui sozinha quando a regra já vale (ex.: 1.2 com mestrado já escolhido)
 
 const SITUACAO = {
   adjudicacao: [['nao-enviada', 'Candidatura não enviada'], ['aguardando', 'Aguardando resultado'], ['admitido', 'Admitido(a) na 1ª preferência'], ['admitido-outra-opcao', 'Admitido(a) em outra opção, em lista de espera nas preferidas'], ['lista-espera', 'Só em lista de espera'], ['nao-admitido', 'Não admitido(a)'], ['exige-acao', 'Exige ação ou revisão (ex.: documentação pendente)'], ['excluido', 'Excluído(a) / perdi o direito no processo']],
@@ -43,7 +44,7 @@ export const JOURNEY_TEMPLATE = {
  *   dificuldade?: string, tutorial?: any, acoes?: any[], dependencias?: string[], requer?: any, aguardandoSe?: any, atencaoSe?: any,
  *   urgenteSe?: any, regra?: any, condicional?: boolean, condicaoTexto?: string, opcional?: boolean, aguardavel?: boolean,
  *   prioridade?: string, tempoEstimado?: string, duracaoMin?: number, documentos?: string[], fontes?: string[], tag?: string,
- *   prazo?: any, marco?: string, ferramenta?: string, processo?: boolean, alertasProcesso?: string[], soDua?: boolean }} Mission
+ *   prazo?: any, marco?: string, ferramenta?: string, processo?: boolean, alertasProcesso?: string[], soDua?: boolean, concluiSozinhaSe?: string }} Mission
  * @typedef {{ numero: number, titulo: string, missoes: Mission[], [campo: string]: any }} Round
  */
 
@@ -84,7 +85,7 @@ export const ROUNDS = [
           { id: 'portal', texto: 'Consultar o portal oficial de másteres' },
         ],
         prioridade: 'media', tempoEstimado: '1 h', duracaoMin: 60, fontes: ['O5', 'O4'], tag: 'verificado',
-        criterio: 'Universidades e programas explorados.', ferramenta: 'catalogo',
+        criterio: 'Universidades e programas explorados.', ferramenta: 'catalogo', concluiSozinhaSe: 'temProgramaPrincipal',
         acoes: [{ tipo: 'interna', rota: '/mestrados', rotulo: 'Abrir catálogo' }, { tipo: 'oficial', fonte: 'O5', rotulo: 'Portal de másteres do DUA' }],
       },
       {

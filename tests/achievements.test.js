@@ -86,7 +86,8 @@ test('vaga e visto registrados na situação da jornada liberam conquistas', asy
 
   r = await req('GET', '/achievements');
   assert.ok(won(r.data).has('primeiro-passo'));
-  assert.deepEqual(r.data.novas.map((a) => a.id), ['primeiro-passo']);
+  // Mestrado escolhido na criação: a 1.2 conclui sozinha e conta como primeira missão (como a 1.1 com perfil).
+  assert.deepEqual(r.data.novas.map((a) => a.id), ['primeiro-passo', 'primeira-missao']);
   assert.ok(r.data.novas[0].em);
 
   for (const [campo, valor] of [['adjudicacao', 'admitido'], ['matricula', 'vaga-confirmada'], ['visto', 'aprovado']]) {

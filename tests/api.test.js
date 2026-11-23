@@ -115,6 +115,9 @@ test('3: a Rodada 3 (DUA) começa bloqueada e só mostra a prévia', async () =>
 test('4/12: concluir missão exige objetivos + confirmação e atualiza dependentes, rodada e jornada', async () => {
   const blocked = await req('PUT', `/journeys/${jid}/missions/1.4/objectives/acesso`, { feito: true });
   assert.equal(blocked.status, 409, '1.4 depende de 1.3');
+  // Mestrado já escolhido: a 1.2 concluiu sozinha. Reaberta, ela volta a ser feita à mão (e não conclui de novo sozinha).
+  assert.equal(find((await req('GET', `/journeys/${jid}`)).data.journey, '1.2').status, 'concluida');
+  assert.equal((await req('POST', `/journeys/${jid}/missions/1.2/reopen`, {})).status, 200);
   await req('PUT', `/journeys/${jid}/missions/1.2/objectives/catalogo`, { feito: true });
   assert.equal((await req('POST', `/journeys/${jid}/missions/1.2/complete`, { confirmo: true })).status, 409, 'objetivos pendentes');
   await req('PUT', `/journeys/${jid}/missions/1.2/objectives/portal`, { feito: true });

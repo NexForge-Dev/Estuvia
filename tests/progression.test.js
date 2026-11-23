@@ -104,12 +104,15 @@ test('1–3: usuário novo começa na Rodada 1; rodadas futuras bloqueadas e sem
   assert.ok(prev.previa.objetivo && prev.rodadaDesbloqueio.texto);
 });
 
-test('caminho simples: perfil do cadastro conclui a 1.1 e o próximo passo segue a ordem (1.2, não 5.1 nem 1.5)', async () => {
+test('caminho simples: perfil do cadastro conclui a 1.1, mestrado já escolhido conclui a 1.2 e o próximo passo é a 1.3 (não 5.1 nem 1.5)', async () => {
   const j = (await req('GET', `/journeys/${jid}`)).data.journey;
   const m11 = find(j, '1.1');
   assert.equal(m11.status, 'concluida', 'o cadastro já preencheu o perfil');
   assert.equal(m11.conclusao, 'automatica');
-  assert.equal(j.proximaMissao.id, '1.2', 'objetivo automático cumprido (estado → 5.1) não fura a fila');
+  // Mestrado escolhido ao criar a jornada: "Explorar universidades" já aconteceu e não bloqueia a 1.3.
+  assert.equal(find(j, '1.2').status, 'concluida', '1.2 concluída sozinha com o mestrado definido');
+  assert.equal(find(j, '1.2').conclusao, 'automatica');
+  assert.equal(j.proximaMissao.id, '1.3', 'objetivo automático cumprido (estado → 5.1) não fura a fila');
   assert.equal(find(j, '1.5').status, 'bloqueada', 'Rodada 1 em sequência única');
   // Reabrir uma conclusão automática vale: ela não se conclui de novo sozinha.
   const re = await req('POST', `/journeys/${jid}/missions/1.1/reopen`, {});
@@ -136,11 +139,10 @@ test('10: trilhas financeiras e preparação do visto funcionam em paralelo', as
 
 test('4–7: missões e rodada desbloqueadas pelos pré-requisitos, com eventos de feedback', async () => {
   await doMission(req, jid, '1.1');
-  const d12 = await doMission(req, jid, '1.2');
-  assert.ok(d12.events.some((e) => e.tipo === 'desbloqueio' && e.missoes.some((m) => m.id === '1.3')), '1.3 liberada');
-  const done = d12.events.find((e) => e.tipo === 'missao-concluida');
+  const d13 = await doMission(req, jid, '1.3');
+  assert.ok(d13.events.some((e) => e.tipo === 'desbloqueio' && e.missoes.some((m) => m.id === '1.4')), '1.4 liberada');
+  const done = d13.events.find((e) => e.tipo === 'missao-concluida');
   assert.ok(done.resultado && done.journeyId === jid, 'feedback com o resultado da missão');
-  await doMission(req, jid, '1.3');
   const fin = (await req('GET', `/finance?journeyId=${jid}`)).data;
   await req('PUT', '/finance', { custos: { matricula: { valor: 1500, moeda: 'EUR' } } });
   await req('POST', '/finance/resources', { tipo: Object.keys(fin.tiposRecurso)[0], descricao: 'Poupança', valor: 9000, moeda: 'EUR', status: 'disponivel' });
@@ -189,7 +191,7 @@ test('13: duas jornadas do mesmo usuário progridem de forma independente', asyn
   const r = await req('POST', '/journeys', { programaId: 'ugr-master-universitario-estudios-asia-oriental', anoAcademico: '2027/28' });
   const j2 = r.data.journey;
   assert.equal(round(j2, 2).desbloqueada, false, 'a outra jornada começa do início');
-  assert.equal(find(j2, '1.2').status, 'disponivel');
+  assert.notEqual(find(j2, '1.4').status, 'concluida', 'o progresso da outra jornada não vaza');
   const j1 = (await req('GET', `/journeys/${jid}`)).data.journey;
   assert.equal(round(j1, 2).desbloqueada, true);
 });
@@ -335,4 +337,18 @@ test('lista de jornadas já mostra a missão que concluiu sozinha (dados registr
   const s = (await c('GET', '/journeys')).data.journeys[0];
   assert.notEqual(s.proximaMissao?.id, '1.5', 'a lista não pode mandar fazer uma missão já cumprida');
   assert.equal(s.rodadaAtual.numero, 2);
+});
+
+test('1.2 só conclui sozinha quando a jornada tem mestrado; sem mestrado continua sendo o próximo passo', () => {
+  const user = { profile: PROFILE, journeys: [], documents: {} };
+  const jr = { id: 'j-sem', anoAcademico: '2027/28', missions: {}, dados: {} };
+  engine.completeAutoMissions(user, jr);
+  assert.notEqual(find(engine.computeJourney(user, jr), '1.2').status, 'concluida', 'sem mestrado, explorar continua necessário');
+  jr.programaId = 'ugr-master-universitario-arqueologia';
+  assert.equal(engine.completeAutoMissions(user, jr), true);
+  assert.equal(find(engine.computeJourney(user, jr), '1.2').status, 'concluida');
+  // Reaberta pelo estudante: não volta a concluir sozinha.
+  delete jr.missions['1.2'].concluidaEm; jr.missions['1.2'].reaberta = true;
+  engine.completeAutoMissions(user, jr);
+  assert.notEqual(find(engine.computeJourney(user, jr), '1.2').status, 'concluida');
 });
