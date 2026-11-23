@@ -47,6 +47,7 @@ function novoEstudante(programaId) {
 }
 
 const missoes = (user, jr) => E.computeJourney(user, jr).rodadas.flatMap((r) => r.missoes);
+const statusDe = (user, jr, id) => missoes(user, jr).find((m) => m.id === id).status;
 
 /** Percorre a jornada até não haver mais o que fazer. Retorna os erros encontrados no caminho. */
 function percorrer(user, jr, { situacao = FELIZ, rota = 'consulado' } = {}) {
@@ -114,6 +115,8 @@ for (const id of MESTRADOS) {
     assert.deepEqual(p.rodadasFechadas, []);
     assert.deepEqual(p.presas.map((m) => `${m.id}:${m.status}`), []);
     assert.equal(p.jornada.status, 'concluida');
+    assert.equal(statusDe(user, jr, '4.8'), 'nao-aplicavel');
+    assert.equal(statusDe(user, jr, '5.11'), 'nao-aplicavel');
     detalhesAbrem(user, jr);
   });
 
@@ -134,6 +137,8 @@ test('não admitido: para na matrícula com motivo externo, sem erro, e retoma s
     const p = pendencias(user, jr);
     const m41 = p.presas.find((m) => m.id === '4.1');
     assert.ok(m41, `${resultado}: 4.1 deveria esperar a admissão`);
+    // A orientação "Resultado sem vaga" aparece e pode ser seguida (o caminhante a concluiu).
+    assert.equal(statusDe(user, jr, '4.8'), 'concluida', `${resultado}: 4.8 deveria orientar o estudante`);
     assert.equal(m41.bloqueioExterno, true, `${resultado}: o bloqueio da 4.1 é a decisão da universidade`);
     // Rodadas 1 a 3 e a trilha de financiamento ficam completas: nada do que dependia do estudante trava.
     for (const m of p.presas) assert.ok(m.rodada >= 4, `${resultado}: ${m.id} não deveria travar`);
@@ -164,6 +169,7 @@ test('visto indeferido: para no visto, a Rodada 6 não abre, e o visto aprovado 
   const p = pendencias(user, jr);
   assert.ok(p.rodadasFechadas.includes(6));
   assert.ok(p.presas.some((m) => m.id === '5.9'));
+  assert.equal(statusDe(user, jr, '5.11'), 'concluida', '5.11 deveria orientar sobre o recurso');
   for (const m of p.presas) assert.ok(m.rodada >= 5, `${m.id} não deveria travar com o visto indeferido`);
   detalhesAbrem(user, jr);
   E.setSituacao(jr, 'visto', 'aprovado');
@@ -188,4 +194,20 @@ test('canais especiais mostram o aviso certo', () => {
   assert.match(E.processFor(mitra.user, mitra.jr).alertas.canal, /NÃO usa o Distrito Único Andaluz/);
   const cir = novoEstudante(CIRURGIA);
   assert.match(E.processFor(cir.user, cir.jr).alertas.canal, /não aparece no catálogo do DUA/);
+});
+
+test('orientação de visto negado só vale para o pedido pelo consulado; a de resultado sem vaga, só para o DUA', () => {
+  const es = novoEstudante(ARQUEOLOGIA);
+  es.jr.dados.rotaVisto = 'espanha';
+  E.setSituacao(es.jr, 'adjudicacao', 'admitido');
+  E.setSituacao(es.jr, 'visto', 'indeferido');
+  assert.equal(statusDe(es.user, es.jr, '5.11'), 'nao-aplicavel');
+  const em = novoEstudante(MITRA);
+  E.setSituacao(em.jr, 'adjudicacao', 'nao-admitido');
+  assert.equal(statusDe(em.user, em.jr, '4.8'), 'nao-aplicavel');
+  const dua = novoEstudante(ARQUEOLOGIA);
+  E.setSituacao(dua.jr, 'adjudicacao', 'exige-acao');
+  assert.notEqual(statusDe(dua.user, dua.jr, '4.8'), 'nao-aplicavel');
+  const det = E.missionDetail(dua.user, dua.jr, '4.8');
+  assert.ok(JSON.stringify(det).includes('10 dias'));
 });
