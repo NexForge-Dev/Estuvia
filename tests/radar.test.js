@@ -324,6 +324,12 @@ test('catálogo DUA vincula o código sem duplicar o máster; ficha DUA alimenta
   const req = await student('caio@exemplo.com');
   const opp = (await req('GET', '/radar/opportunities?q=procesos%20negocio')).data.items[0];
   assert.deepEqual(opp.programa.idiomasExigidos, [{ idioma: 'espanhol', nivel: 'B1', obrigatorio: true }]);
+  // Ficha do DUA lida conta como ficha conferida, mesmo sem a página própria da universidade.
+  const fichaPropria = prog.ficha; delete prog.ficha;
+  const soDua = (await req('GET', '/radar/opportunities?q=procesos%20negocio')).data.items[0];
+  assert.equal(soDua.programa.fichaVerificada, true, 'sem o selo "Ficha ainda não conferida" com a ficha do DUA lida');
+  assert.equal(soDua.programa.fichaVerificadaEm, prog.fichaDua.verificadaEm);
+  if (fichaPropria) prog.ficha = fichaPropria;
   const det = (await req('GET', `/radar/opportunities/${opp.id}`)).data.opportunity;
   assert.equal(det.admissao.codigoDua, '404508');
   assert.match(det.admissao.url, /c_peticion=404508/);

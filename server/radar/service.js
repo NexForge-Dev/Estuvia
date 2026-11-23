@@ -187,7 +187,7 @@ function card(opp, { user = null, now = Date.now() } = {}) {
       nome: p.nome, ramos: p.ramos || [], codigo: p.codigo, tipoTitulo: p.tipoTitulo, ofertaCondicionada: Boolean(p.ofertaCondicionada),
       fichaUrl: p.fichaUrl, webPropria: cleanWeb(p.ficha?.webPropria || p.webPropria), cursoCatalogo: p.cursoCatalogo,
       creditos: p.ficha?.creditos ?? null, modalidade: p.ficha?.modalidade ?? null, idiomaEnsino: p.ficha?.idiomaEnsino ?? null,
-      duracaoEstimadaAnos: p.ficha?.duracaoEstimadaAnos ?? null, fichaVerificada: Boolean(p.ficha), fichaVerificadaEm: p.ficha?.verificadaEm || null,
+      duracaoEstimadaAnos: p.ficha?.duracaoEstimadaAnos ?? null, fichaVerificada: Boolean(p.ficha || p.fichaDua), fichaVerificadaEm: p.ficha?.verificadaEm || p.fichaDua?.verificadaEm || null,
       cursoFicha: p.ficha?.anoAcademico || null,
       // Da ficha do DUA (null enquanto não coletada: "não informado", nunca "não exige").
       idiomasExigidos: p.fichaDua ? fichaIdiomas(p.fichaDua).map(({ idioma, nivel, obrigatorio }) => ({ idioma, nivel, obrigatorio })) : null,
