@@ -145,7 +145,7 @@ T('diploma', 'academicos', 'Diploma de graduação', { icone: 'cap', partes: ['f
   oque: 'O documento oficial da sua universidade brasileira que comprova que você concluiu a graduação.',
   para: 'Comprovar a formação superior exigida para concorrer ao mestrado.',
   quando: 'O título precisa estar concluído e os direitos de expedição pagos até a data-limite da sua fase do DUA (ciclo 2026/27: Fase 1, 29/01; Fase 2, 04/09; Fase 3, 05/10).',
-  apostilaNota: 'Pode ser exigida na matrícula definitiva, conforme a universidade.', traducaoNota: 'Depende das regras do procedimento e da instituição.' });
+  apostilaNota: 'Não é pedida na candidatura. Na matrícula, a UGR exige o diploma original com Apostila da Haia para título de fora da União Europeia (O37): apostile no Brasil antes de viajar.', traducaoNota: 'Na candidatura, tradução simples para o espanhol (O1 art. 4). Na matrícula da UGR, documento em português não precisa de tradução juramentada (O37).' });
 T('certidao-conclusao', 'academicos', 'Certidão de conclusão da graduação', { icone: 'file', missoes: ['2.2'],
   oque: 'Certificação supletória da faculdade, enquanto o diploma não sai. Pelo procedimento do DUA, ela deve mostrar a data de pagamento dos direitos de expedição do título (ou que todos os requisitos para obtê-lo foram cumpridos).', para: 'Substituir o diploma na candidatura (O1 art. 4; O2 Tabla 3).' });
 T('historico', 'academicos', 'Histórico escolar completo da graduação', { icone: 'book',
@@ -309,7 +309,7 @@ T('complementar-consulado', 'visto', 'Documentação complementar solicitada pel
 
 // ===== 7. Saúde e seguro médico =====
 T('seguro', 'saude', 'Certificado do seguro médico válido na Espanha', { icone: 'shield', validade: 'data', missoes: ['5.5'], apostila: 'nao', fontes: ['O6'],
-  oque: 'O certificado do seguro saúde que cobre você durante toda a estadia na Espanha.', para: 'Exigido para o visto. Regra oficial: seguro de doença contratado com uma seguradora autorizada a operar na Espanha, com prestações semelhantes às da carteira comum básica do Sistema Nacional de Saúde (Ministerio de Inclusión). Seguro-viagem comum costuma não atender: confira antes de pagar.',
+  oque: 'O certificado do seguro saúde que cobre você durante toda a estadia na Espanha.', para: 'Exigido para o visto. Regra oficial: seguro de doença contratado com uma seguradora autorizada a operar na Espanha, com prestações semelhantes às da carteira comum básica do Sistema Nacional de Saúde (Ministerio de Inclusión), válido por toda a estadia prevista (lista do consulado). Seguro-viagem comum costuma não atender: confira antes de pagar.',
   onde: 'Com a seguradora. Confira com o consulado as coberturas exigidas.' });
 T('apolice-seguro', 'saude', 'Apólice completa do seguro', { icone: 'file', missoes: ['5.5'], apostila: 'nao',
   oque: 'O contrato completo do seguro.', para: 'Alguns consulados pedem a apólice além do certificado.', onde: 'Com a seguradora.' });

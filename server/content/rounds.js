@@ -171,6 +171,7 @@ export const ROUNDS = [
           { titulo: 'Solicite à universidade', texto: 'Peça o diploma ou verifique na convocatória qual documento substitutivo é aceito se ainda não o tiver.' },
           { titulo: 'Data-limite do título', texto: 'O título precisa estar concluído e os direitos de expedição pagos até a data-limite da sua fase (ciclo 2026/27: Fase 1, 29 de janeiro; Fase 2, 4 de setembro; Fase 3, 5 de outubro). Sem o diploma, vale a certificação supletória que mostre a data desse pagamento. Com título estrangeiro isso vale em TODAS as fases: a exceção para quem ainda cursa a graduação (requisitos 4 e 5) é só para universidade espanhola ou PARS andaluz, na Fase 3 (O1 art. 4; O2 arts. 2 e 3, Anexo I).' },
           { titulo: 'Homologação', texto: 'A verificação de equivalência para acesso ao mestrado não reconhece o diploma para outras finalidades (ex.: exercício profissional). Alguns mestrados exigem o título homologado: veja a Missão 2.8.' },
+          { titulo: 'Apostila: providencie antes de viajar', texto: 'Na candidatura a apostila não é exigida (O1 art. 4). Na matrícula, a UGR exige de quem tem título de fora da União Europeia o diploma ORIGINAL com a Apostila da Haia, mais uma cópia (O37). A apostila é feita no Brasil, em cartório (O18): faça antes de viajar, para não depender de alguém no Brasil depois. Em outra universidade, confira a página de matrícula dela.' },
         ],
         objetivos: [
           { id: 'obter', texto: 'Ter o diploma ou a certificação supletória com a data de pagamento da expedição' },
@@ -486,10 +487,13 @@ export const ROUNDS = [
       {
         id: '4.3', titulo: 'Realizar a ação dentro do prazo', resumo: 'Matricular (com o pagamento exigido) ou reservar.', objetivo: 'Garantir a vaga.',
         porque: 'Quem não se matricula nem reserva no prazo perde o direito no processo daquela fase e a vaga passa ao seguinte da lista (O1 art. 6; O2 art. 14.7).',
-        comoExecutar: [{ titulo: 'Reserva', texto: 'A reserva mantém você nas listas de maior preferência, mas precisa ser ratificada a cada nova adjudicação (Missão 3.10).' }],
+        comoExecutar: [
+          { titulo: 'Reserva', texto: 'A reserva mantém você nas listas de maior preferência, mas precisa ser ratificada a cada nova adjudicação (Missão 3.10).' },
+          { titulo: 'Matrícula na UGR', texto: 'Depois da admissão pelo DUA, a UGR envia ao e-mail informado na pré-inscrição as instruções da Automatrícula. Os passos são: 1) gravar a matrícula na Automatrícula; 2) pagar a carta de pago; 3) depois, entregar a documentação (Missão 7.3) (O37). Em outra universidade, siga as instruções que ela enviar.' },
+        ],
         objetivos: [{ id: 'acao', texto: 'Realizar a ação (e o pagamento exigido) no canal oficial' }, { id: 'comprovante', texto: 'Guardar o comprovante da ação' }, { id: 'situacao', texto: 'Situação da matrícula', tipo: 'situacao', campo: 'matricula', concluiQuandoNao: ['nao-iniciada'] }],
         dependencias: ['4.2'], requer: { campo: 'adjudicacao', valores: ADMITIDO, rotulo: 'Resultado: admitido(a)' }, urgenteSe: { campo: 'adjudicacao', valores: ADMITIDO },
-        prioridade: 'alta', tempoEstimado: '30 min', duracaoMin: 30, documentos: ['aceitacao-vaga'], fontes: ['O1', 'O2'], tag: 'verificado', marco: 'vaga-conquistada', criterio: 'Matrícula feita (com o pagamento exigido) ou vaga reservada, dentro do prazo.', processo: true,
+        prioridade: 'alta', tempoEstimado: '30 min', duracaoMin: 30, documentos: ['aceitacao-vaga'], fontes: ['O1', 'O2', 'O37'], tag: 'verificado', marco: 'vaga-conquistada', criterio: 'Matrícula feita (com o pagamento exigido) ou vaga reservada, dentro do prazo.', processo: true,
       },
       {
         id: '4.4', titulo: 'Conferir as taxas restantes da matrícula', resumo: 'Preço total, parcelas e o que já foi pago.', objetivo: 'Saber quanto falta pagar, como e até quando.',
@@ -507,9 +511,13 @@ export const ROUNDS = [
       {
         id: '4.6', titulo: 'Obter os comprovantes acadêmicos', resumo: 'Carta de admissão e comprovante de matrícula.', objetivo: 'Comprovantes acadêmicos em mãos.',
         porque: 'O consulado exige comprovação de admissão/matrícula.',
-        comoExecutar: [{ titulo: 'Matrícula provisória', texto: 'A matrícula é provisória até a universidade conferir a documentação. Na matrícula, ou quando pedirem, entregue originais ou cópias autênticas e, se exigida, tradução juramentada. Se faltar um requisito, admissão e matrícula são anuladas (O1 arts. 4 e 11; O2 arts. 9 e 16).' }],
-        objetivos: [{ id: 'carta', texto: 'Obter a carta de admissão/matrícula' }, { id: 'conferir', texto: 'Conferir nome, passaporte, curso e datas' }, { id: 'originais', texto: 'Entregar originais/cópias autênticas e traduções juramentadas, se a universidade pedir' }, { id: 'situacao', texto: 'Matrícula efetivada', tipo: 'situacao', campo: 'matricula', concluiQuandoNao: ['nao-iniciada', 'vaga-confirmada', 'reservada'] }],
-        dependencias: ['4.5'], prioridade: 'alta', tempoEstimado: '15 min', duracaoMin: 15, documentos: ['admissao'], fontes: ['O7'], tag: 'verificado', aguardavel: true,
+        comoExecutar: [
+          { titulo: 'Matrícula provisória', texto: 'A matrícula é provisória até a universidade conferir a documentação. Se faltar um requisito, admissão e matrícula são anuladas (O1 arts. 4 e 11; O2 arts. 9 e 16).' },
+          { titulo: 'Originais: depois de chegar', texto: 'Na UGR, a entrega dos originais é presencial no Servicio de Másteres, com cita prévia (CIGES), depois da Automatrícula, entre outubro e novembro (O37). Ela não precisa acontecer antes do visto: fica na Missão 7.3. Leve o diploma original já apostilado (Missão 2.2).' },
+          { titulo: 'Comprovante para o visto', texto: 'O consulado pede a admissão e o pagamento da matrícula (O7). Se a universidade não enviar uma carta de admissão, peça à escola de pós-graduação um comprovante de matrícula e guarde a carta de pago paga.' },
+        ],
+        objetivos: [{ id: 'carta', texto: 'Obter a carta de admissão/matrícula' }, { id: 'conferir', texto: 'Conferir nome, passaporte, curso e datas' }, { id: 'situacao', texto: 'Matrícula efetivada', tipo: 'situacao', campo: 'matricula', concluiQuandoNao: ['nao-iniciada', 'vaga-confirmada', 'reservada'] }],
+        dependencias: ['4.5'], prioridade: 'alta', tempoEstimado: '15 min', duracaoMin: 15, documentos: ['admissao'], fontes: ['O7', 'O37'], tag: 'verificado', aguardavel: true,
         marco: 'matricula-concluida', criterio: 'Matrícula efetivada e comprovantes obtidos.',
       },
       {
@@ -577,7 +585,8 @@ export const ROUNDS = [
       {
         id: '5.5', titulo: 'Contratar seguro saúde', resumo: 'Com as coberturas exigidas para o visto.', objetivo: 'Apólice válida que atenda ao consulado.',
         porque: 'Seguro sem as coberturas exigidas pode levar à negativa.',
-        objetivos: [{ id: 'coberturas', texto: 'Conferir as coberturas exigidas' }, { id: 'cotar', texto: 'Cotar seguradoras' }, { id: 'contratar', texto: 'Contratar e guardar a apólice' }],
+        comoExecutar: [{ titulo: 'O que o consulado exige', texto: 'Seguro com seguradora autorizada a operar na Espanha, pública ou privada, com prestações semelhantes às da carteira básica do Sistema Nacional de Saúde e válido por toda a estadia prevista (O6; O7). Seguro-viagem comum costuma não atender: confira antes de pagar.' }],
+        objetivos: [{ id: 'coberturas', texto: 'Conferir as coberturas exigidas e que a validade cobre toda a estadia' }, { id: 'cotar', texto: 'Cotar seguradoras' }, { id: 'contratar', texto: 'Contratar e guardar a apólice' }],
         dependencias: ['5.3'], prioridade: 'media', tempoEstimado: '2 h', duracaoMin: 60, documentos: ['seguro'], fontes: ['O6', 'O7'], tag: 'verificado', criterio: 'Seguro contratado.',
       },
       {
@@ -673,7 +682,7 @@ export const ROUNDS = [
         id: '6.4', titulo: 'Preparar documentos de viagem', resumo: 'Documentos essenciais e arquivos digitais.', objetivo: 'Pasta de viagem completa.',
         porque: 'Na chegada podem pedir comprovantes de matrícula, meios e moradia.',
         comoExecutar: [{ titulo: 'Pedido feito na Espanha (Missão 5.10)', texto: 'Você entra como turista, sem visto: leve passagem de volta, comprovante de hospedagem e de meios, que a fronteira pode pedir, e os documentos do pedido de autorização (antecedentes já apostilados e traduzidos).' }],
-        objetivos: [{ id: 'originais', texto: 'Passaporte (com visto, se pediu pelo consulado), admissão, seguro, meios e moradia na bagagem de mão' }, { id: 'digitais', texto: 'Cópias digitais acessíveis offline' }],
+        objetivos: [{ id: 'originais', texto: 'Passaporte (com visto, se pediu pelo consulado), admissão, seguro, meios, moradia e diploma original apostilado na bagagem de mão' }, { id: 'digitais', texto: 'Cópias digitais acessíveis offline' }],
         dependencias: ['5.9'], prioridade: 'media', tempoEstimado: '1 h', duracaoMin: 60, fontes: ['M'], tag: 'pratica', criterio: 'Pasta de viagem completa.',
       },
       {
@@ -709,7 +718,8 @@ export const ROUNDS = [
       { id: '7.2', titulo: 'Conferir documentos e condições da habitação', resumo: 'Contrato, estado do imóvel e inventário.', objetivo: 'Moradia conferida no primeiro dia.', porque: 'Registrar o estado do imóvel protege sua caução.',
         objetivos: [{ id: 'contrato', texto: 'Conferir o contrato com o que foi combinado' }, { id: 'fotos', texto: 'Fotografar o estado do imóvel' }], dependencias: ['7.1'], prioridade: 'media', tempoEstimado: '30 min', duracaoMin: 30, fontes: ['M'], tag: 'pratica', criterio: 'Moradia conferida.' },
       { id: '7.3', titulo: 'Localizar a universidade', resumo: 'Faculdade, secretaria e serviço internacional.', objetivo: 'Saber chegar e com quem falar.', porque: 'Alguns trâmites só são liberados após a apresentação.',
-        objetivos: [{ id: 'local', texto: 'Localizar a faculdade e a secretaria' }, { id: 'apresentar', texto: 'Apresentar-me na secretaria/serviço internacional' }], dependencias: ['7.1'], prioridade: 'media', tempoEstimado: '2 h', duracaoMin: 90, fontes: ['M'], tag: 'pratica', criterio: 'Apresentação feita.', ferramenta: 'guia-cidade' },
+        comoExecutar: [{ titulo: 'Entregar os originais', texto: 'A matrícula só deixa de ser provisória depois que a universidade confere os documentos (O2 art. 16). Na UGR: agende a cita no CIGES e entregue no Servicio de Másteres, entre outubro e novembro, o diploma original com Apostila da Haia e cópia, e o documento de identidade. Documento em português não precisa de tradução juramentada na UGR (O37).' }],
+        objetivos: [{ id: 'local', texto: 'Localizar a faculdade e a secretaria' }, { id: 'apresentar', texto: 'Apresentar-me na secretaria/serviço internacional' }, { id: 'originais', texto: 'Entregar os originais (diploma apostilado e cópia) para a universidade conferir a matrícula' }], dependencias: ['7.1'], prioridade: 'alta', tempoEstimado: '2 h', duracaoMin: 90, fontes: ['O37', 'O2', 'M'], tag: 'pratica', criterio: 'Apresentação feita e originais entregues.', ferramenta: 'guia-cidade' },
       { id: '7.4', titulo: 'Ativar os acessos acadêmicos', resumo: 'E-mail institucional, plataformas e cartão universitário.', objetivo: 'Acessos acadêmicos ativos.', porque: 'Comunicações do mestrado chegam pelos canais institucionais.',
         objetivos: [{ id: 'email', texto: 'Ativar o e-mail institucional' }, { id: 'cartao', texto: 'Obter o cartão universitário' }], dependencias: ['7.3'], prioridade: 'media', tempoEstimado: '1 h', duracaoMin: 60, fontes: ['M'], tag: 'pratica', criterio: 'Acessos ativos.' },
       { id: '7.5', titulo: 'Conferir horários, disciplinas e início das aulas', resumo: 'Calendário acadêmico do mestrado.', objetivo: 'Calendário acadêmico organizado.', porque: 'Evita perder a primeira semana de aulas ou prazos internos.',

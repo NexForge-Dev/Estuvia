@@ -211,3 +211,17 @@ test('orientação de visto negado só vale para o pedido pelo consulado; a de r
   const det = E.missionDetail(dua.user, dua.jr, '4.8');
   assert.ok(JSON.stringify(det).includes('10 dias'));
 });
+
+test('entrega dos originais fica depois da chegada (não bloqueia o visto) e o diploma pede apostila antes de viajar', async () => {
+  const objetivos = (id) => missionById(id).objetivos.map((o) => o.texto).join(' | ');
+  assert.doesNotMatch(objetivos('4.6'), /originais/i, '4.6 vem antes do visto: não pode exigir entrega presencial');
+  assert.match(objetivos('7.3'), /originais/i);
+  assert.match(JSON.stringify(missionById('2.2').comoExecutar), /Apostila da Haia/);
+  assert.match(objetivos('6.4'), /diploma original apostilado/);
+  assert.match(objetivos('5.5'), /toda a estadia/);
+  const { SOURCES } = await import('../server/content/sources.js');
+  for (const id of ['2.2', '4.3', '4.6', '7.3']) {
+    const texto = JSON.stringify(missionById(id));
+    for (const ref of texto.match(/\bO\d+\b/g) || []) assert.ok(SOURCES.some((s) => s.id === ref), `${id} cita ${ref}, que não existe`);
+  }
+});
