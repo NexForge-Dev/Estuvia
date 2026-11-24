@@ -322,13 +322,25 @@ export const community = {
   },
 };
 
+// Cada tipo de registro tem a sua cota: a atividade de um estudante (ou tentativas de login) não apaga a
+// trilha administrativa nem a de acessos.
+export const AUDIT_CAPS = { admin: 5000, acesso: 5000, atividade: 3000 };
+const AUDIT_SLACK = 100; // poda em blocos, para não refazer a tabela a cada registro
+const auditBucket = (action) => (/^(admin-|community-|radar\.|storage\.|account-)/.test(action) ? 'admin'
+  : /^(login|register|password)/.test(action) ? 'acesso' : 'atividade');
+
 export const audit = {
   async log(event) {
     const entry = { id: newId(), at: new Date().toISOString(), ...event };
     await writeWithRetry(() => {
       if (!db.audit.some((e) => e.id === entry.id)) db.audit.push(entry);
-      if (db.audit.length > 5000) { db.audit = db.audit.slice(-5000); mark('audit_log'); } // poda: exclusões
-      else markRow('audit_log', entry.id);
+      const tipo = auditBucket(entry.action);
+      const doTipo = db.audit.filter((e) => auditBucket(e.action) === tipo);
+      if (doTipo.length > AUDIT_CAPS[tipo]) { // poda: exclusões
+        const sair = new Set(doTipo.slice(0, doTipo.length - AUDIT_CAPS[tipo] + AUDIT_SLACK));
+        db.audit = db.audit.filter((e) => !sair.has(e));
+        mark('audit_log');
+      } else markRow('audit_log', entry.id);
     });
   },
   /**

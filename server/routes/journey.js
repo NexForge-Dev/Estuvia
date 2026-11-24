@@ -3,7 +3,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { users, newId, audit } from '../store.js';
-import { requireAuth } from '../security.js';
+import { requireAuth, journeyWriteLimiter } from '../security.js';
 import { updateUser, accountGone } from './guards.js';
 import { isoDate } from './validators.js';
 import { UNIVERSITIES, programById, registerProgramSource } from '../content/catalog.js';
@@ -94,7 +94,7 @@ router.get('/progress-stages', (req, res) => res.json({ etapas: STAGES }));
 // "O que você já tem?" — requisitos pessoais (valem para todas as jornadas) e editáveis a qualquer momento.
 const QUESTIONS = REQUIREMENTS.map(({ id, pergunta, opcoes, somenteNaEspanha }) => ({ id, pergunta, opcoes, somenteNaEspanha: Boolean(somenteNaEspanha) }));
 router.get('/requirements', (req, res) => res.json({ perguntas: QUESTIONS, respostas: req.user.requisitos || {} }));
-router.put('/requirements', async (req, res) => {
+router.put('/requirements', journeyWriteLimiter, async (req, res) => {
   const shape = Object.fromEntries(REQUIREMENTS.map((r) => [r.id, z.enum(r.opcoes.map(([v]) => v)).optional()]));
   const parsed = z.object({ respostas: z.object(shape).strict() }).strict().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Respostas inválidas.' });

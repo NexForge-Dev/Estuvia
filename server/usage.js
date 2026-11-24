@@ -37,6 +37,15 @@ const bucket = (a, day, mod) => {
   return (a.days[day][mod] ||= { v: 0, u: [], t: 0, n: 0 });
 };
 
+// Conta excluída: o id sai das estatísticas (a contagem de pessoas do dia continua, sem identificar ninguém).
+export function forgetUsage(userId) {
+  analytics.mutate((a) => {
+    for (const day of Object.values(a.days || {})) {
+      for (const b of Object.values(day)) b.u = (b.u || []).map((id) => (id === userId ? 'excluida' : id));
+    }
+  });
+}
+
 // Um acesso a `path`; `prev` = tempo gasto na tela anterior (medido no navegador).
 export function recordView(user, path, prev) {
   const mod = moduleOf(path);

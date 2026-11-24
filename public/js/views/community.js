@@ -212,7 +212,17 @@ function GroupsSection(ctx) {
     h('p', { class: 'small muted' }, `${g.membros} ${g.membros === 1 ? 'membro' : 'membros'} · ${g.publicacoes} publicações`),
     h('button', { type: 'button', class: `btn btn-sm ${g.participo ? 'btn-ghost' : ''}`, onClick: async () => {
       try { const r = await api.post(`/community/groups/${g.id}/join`); Object.assign(g, r.grupo); draw(); } catch (e) { toast(e.message, 'err'); }
-    } }, g.participo ? 'Sair do grupo' : 'Participar'))));
+    } }, g.participo ? 'Sair do grupo' : 'Participar'),
+    ctx.meta.moderador && !g.oficial ? removeGroup(g) : null)));
+  // Só a moderação vê. Pede um segundo clique antes de remover.
+  const removeGroup = (g) => {
+    let armed = false;
+    const b = h('button', { type: 'button', class: 'cm-link-btn', onClick: async () => {
+      if (!armed) { armed = true; b.textContent = 'Clique de novo para remover'; return; }
+      try { await api.del(`/community/mod/groups/${g.id}`); ctx.grupos.splice(ctx.grupos.indexOf(g), 1); draw(); toast('Grupo removido.', 'ok'); } catch (e) { toast(e.message, 'err'); }
+    } }, 'Remover grupo');
+    return b;
+  };
   draw();
 
   const err = h('p', { class: 'form-error', hidden: true });

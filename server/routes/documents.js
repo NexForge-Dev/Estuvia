@@ -363,23 +363,31 @@ const ACTIVE_PDF = /\/(JavaScript|JS|Launch|OpenAction|AA|EmbeddedFile|RichMedia
 // Nomes PDF aceitam escapes "#xx" (/J#61vaScript = /JavaScript): normaliza antes de procurar.
 const unescapeNames = (s) => s.replace(/\/[^\s/[\]<>(){}%]+/g, (n) => (n.includes('#') ? n.replace(/#([0-9a-fA-F]{2})/g, (_, x) => String.fromCharCode(parseInt(x, 16))) : n));
 // Fluxos de objetos (/Type /ObjStm, PDF 1.5+) guardam dicionários comprimidos: abre e confere também.
-const STREAM = /<<((?:(?!>>\s*stream)[\s\S]){0,4000})>>\s*stream\r?\n/g;
+// Varredura linear: cada trecho entre dois "stream" é lido uma vez só (um regex com contagem travava o servidor).
+const STREAM = /(?<!end)stream(?:\r\n|\n|\r)/g;
 const MAX_INFLATE = 30 * 1024 * 1024;
 export function pdfHasActiveContent(buf) {
   const text = buf.toString('latin1');
   const plain = unescapeNames(text);
   if (ACTIVE_PDF.test(plain)) return true;
   let budget = MAX_INFLATE;
+  let entrada = buf.length; // bytes comprimidos lidos: fluxos legítimos não se sobrepõem, então somam no máximo o arquivo
+  let from = 0;
+  let end = -1;
   for (const m of text.matchAll(STREAM)) {
-    const dict = unescapeNames(m[1]);
-    if (!/\/Type\s*\/ObjStm\b/.test(dict)) continue;
+    const dict = unescapeNames(text.slice(from, m.index));
     const start = m.index + m[0].length;
-    const end = text.indexOf('endstream', start);
+    from = start;
+    if (!/\/Type\s*\/ObjStm\b/.test(dict)) continue;
+    if (/\/Predictor\s+(?!1\b)\S/.test(dict)) return true; // bytes embaralhados por preditor: não dá para conferir
+    if (end < start) end = text.indexOf('endstream', start);
     if (end < 0) return true; // fluxo de objetos sem fim: não dá para conferir
+    entrada -= end - start;
+    if (entrada < 0) return true;
     let body = buf.subarray(start, end);
     if (/\/Filter\b/.test(dict)) {
       // Só FlateDecode (o filtro padrão) é aberto; outro filtro num fluxo de objetos não dá para conferir.
-      if (!/\/Filter\s*(\[\s*)?\/FlateDecode\s*\]?\s*(\/|$)/.test(dict)) return true;
+      if (!/\/Filter\s*(\[\s*)?\/FlateDecode\s*\]?\s*(\/|>>|$)/.test(dict)) return true;
       try { body = zlib.inflateSync(body, { maxOutputLength: budget, finishFlush: zlib.constants.Z_SYNC_FLUSH }); } catch { return true; }
       budget -= body.length;
       if (budget <= 0) return true;

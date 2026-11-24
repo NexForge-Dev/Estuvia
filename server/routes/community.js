@@ -265,15 +265,21 @@ function preparePost(c, user, data, { editingId } = {}) {
   const avisos = [];
   const texto = protectText(data.texto);
   const titulo = protectText(data.titulo || '');
+  // Todo campo de texto livre passa pela máscara, não só o corpo.
+  const opTitulo = protectText(data.oportunidade?.titulo || '');
+  const opInst = protectText(data.oportunidade?.instituicao || '');
+  const cidade = protectText(data.local?.cidade || '');
+  const pais = protectText(data.local?.pais || '');
   const op = data.oportunidade && {
     ...data.oportunidade,
+    titulo: opTitulo.texto, instituicao: opInst.texto,
     prazo: data.oportunidade.prazo || '',
     requisitos: data.oportunidade.requisitos.map((r) => protectText(r).texto),
   };
-  const masked = [...new Set([...texto.encontrados, ...titulo.encontrados])];
+  const masked = [...new Set([...texto.encontrados, ...titulo.encontrados, ...opTitulo.encontrados, ...opInst.encontrados, ...cidade.encontrados, ...pais.encontrados])];
   if (masked.length) avisos.push(`Removemos dados pessoais do texto (${masked.join(', ')}). Nunca publique documentos ou contatos pessoais.`);
 
-  const urls = [...new Set([...extractLinks(texto.texto), ...(op ? [op.linkOficial] : [])])];
+  const urls = [...new Set([...extractLinks(texto.texto), ...extractLinks(titulo.texto), ...(op ? [...extractLinks(op.titulo), ...extractLinks(op.instituicao)] : []), ...(op ? [op.linkOficial] : [])])];
   if (urls.length > 6) return { erro: [400, 'Muitos links: use no máximo 6.'] };
   const links = urls.map(analyzeLink);
   if (links.some((l) => !l.valido)) return { erro: [400, 'Há um link inválido no texto.'] };
@@ -291,7 +297,7 @@ function preparePost(c, user, data, { editingId } = {}) {
       radarOficial,
       tipo: data.tipo, categoria: data.categoria, natureza: data.tipo === 'oportunidade' && data.natureza === 'relato-pessoal' ? 'dica' : data.natureza,
       titulo: titulo.texto || op?.titulo || '', texto: texto.texto, links, imagens: data.imagens,
-      local: data.local ? { universidadeId: data.local.universidadeId || '', cidade: data.local.cidade || '', pais: data.local.pais || '' } : {},
+      local: data.local ? { universidadeId: data.local.universidadeId || '', cidade: cidade.texto, pais: pais.texto } : {},
       grupoId: data.grupoId || '', missaoId: data.missaoId || '', oportunidade: op || null,
     },
   };
@@ -321,7 +327,7 @@ router.post('/posts', communityWriteLimiter, async (req, res) => {
     if (mine.filter((p) => Date.parse(p.criadoEm) > Number(hourAgo)).length >= 8) return { erro: [429, 'Limite de publicações por hora atingido. Volte mais tarde.'] };
     const prep = preparePost(c, user, parsed.data);
     if (prep.erro) return prep;
-    const spam = spamSignals({ texto: prep.campos.texto, links: prep.campos.links, autor: user, recentes: mine });
+    const spam = spamSignals({ texto: prep.campos.texto, outros: [prep.campos.titulo, prep.campos.oportunidade?.titulo, prep.campos.oportunidade?.instituicao], links: prep.campos.links, autor: user, recentes: mine });
     if (spam.repetida) return { erro: [409, 'Você já publicou este mesmo texto nas últimas 24 horas.'] };
 
     let possivelDuplicata = null;
@@ -361,7 +367,7 @@ router.put('/posts/:id', communityWriteLimiter, async (req, res) => {
     if (prep.erro) return prep;
     // Mesmo filtro da criação: sem isto, publicava-se um texto inocente e depois se editava para spam.
     const recentes = c.posts.filter((p) => p.id !== post.id && p.autorId === user.id && Date.now() - Date.parse(p.criadoEm) < 86400000);
-    const spam = spamSignals({ texto: prep.campos.texto, links: prep.campos.links, autor: user, recentes });
+    const spam = spamSignals({ texto: prep.campos.texto, outros: [prep.campos.titulo, prep.campos.oportunidade?.titulo, prep.campos.oportunidade?.instituicao], links: prep.campos.links, autor: user, recentes });
     if (spam.repetida) return { erro: [409, 'Você já publicou este mesmo texto nas últimas 24 horas.'] };
     if (spam.revisar && post.moderacao.estado === 'publicado') {
       post.moderacao = { estado: 'em-revisao', motivos: spam.motivos };
@@ -369,7 +375,8 @@ router.put('/posts/:id', communityWriteLimiter, async (req, res) => {
     }
     joinOnPost(c, prep.campos.grupoId, user.id);
     // Qualquer mudança em algo já verificado exige nova conferência: sai do Radar até lá.
-    const changed = !sameJson(post.oportunidade, prep.campos.oportunidade) || post.texto !== prep.campos.texto;
+    const changed = ['oportunidade', 'texto', 'titulo', 'natureza', 'categoria', 'local', 'links', 'imagens']
+      .some((k) => !sameJson(post[k] ?? null, prep.campos[k] ?? null));
     if (post.verificacao && ['verificada', 'desatualizada'].includes(post.verificacao.status) && changed) {
       post.verificacao.status = 'em-verificacao';
       post.verificacao.historico.push({ status: 'em-verificacao', em: now(), por: 'sistema', nota: 'Editada pelo autor depois da verificação: precisa ser conferida de novo.' });
@@ -578,10 +585,11 @@ router.post('/groups', communityWriteLimiter, async (req, res) => {
   if (!parsed.success) return bad(res, parsed);
   const out = await community.mutate((c) => {
     if (c.groups.filter((g) => g.criadoPor === req.user.id).length >= 3) return { erro: [409, 'Você pode criar até 3 grupos.'] };
-    const id = slug(parsed.data.nome);
+    const nome = protectText(parsed.data.nome).texto;
+    const id = slug(nome);
     if (!id || c.groups.some((g) => g.id === id || fold(g.nome) === fold(parsed.data.nome))) return { erro: [409, 'Já existe um grupo com este nome.'] };
     const uni = universityById(parsed.data.universidadeId);
-    const g = { id, ...parsed.data, cidade: parsed.data.cidade || uni?.cidade || '', descricao: protectText(parsed.data.descricao || '').texto, oficial: false, criadoPor: req.user.id, membros: [req.user.id], criadoEm: now() };
+    const g = { id, ...parsed.data, nome, pais: protectText(parsed.data.pais).texto, cidade: protectText(parsed.data.cidade || uni?.cidade || '').texto, descricao: protectText(parsed.data.descricao || '').texto, oficial: false, criadoPor: req.user.id, membros: [req.user.id], criadoEm: now() };
     c.groups.push(g);
     return { grupo: groupView(c, g, req.user) };
   });
@@ -869,6 +877,20 @@ mod.post('/:alvo(posts|comments)/:id/moderation', async (req, res) => {
   });
   if (!ok) return res.status(404).json({ error: 'Conteúdo não encontrado.' });
   await audit.log({ action: 'community-moderation', userId: req.user.id, target: req.params.id, acao: parsed.data.acao });
+  res.json({ ok: true });
+});
+
+// Grupo criado por estudante com nome ou descrição abusivos: a equipe remove; as publicações voltam ao feed geral.
+mod.delete('/groups/:id', async (req, res) => {
+  const ok = await community.mutate((c) => {
+    const g = c.groups.find((x) => x.id === req.params.id);
+    if (!g || g.oficial) return false;
+    c.groups = c.groups.filter((x) => x !== g);
+    c.posts.filter((p) => p.grupoId === g.id).forEach((p) => { p.grupoId = ''; });
+    return true;
+  });
+  if (!ok) return res.status(404).json({ error: 'Grupo não encontrado.' });
+  await audit.log({ action: 'community-group-removed', userId: req.user.id, target: req.params.id });
   res.json({ ok: true });
 });
 

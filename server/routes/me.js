@@ -6,6 +6,7 @@ import { updateUser, accountGone } from './guards.js';
 import { communityExport, purgeCommunityUser } from './community.js';
 import { forgetUser, exportUser } from '../radar/service.js';
 import { purgeUserDocuments } from './documents.js';
+import { forgetUsage } from '../usage.js';
 import { personalTips } from '../tips.js';
 import { programById } from '../content/catalog.js';
 import { DOCUMENTS, DOC_STATUS } from '../content/documents.js';
@@ -170,7 +171,7 @@ router.get('/export', (req, res) => {
     docFiles: (docFiles || []).map(({ iv, tag, ...f }) => f), docRecords: u.docRecords || {}, docConditions: u.docConditions || {}, docConsent: u.docConsent || null, docPrefs: u.docPrefs || {},
     // Registros de segurança da própria conta (acessos, IP e dispositivo). Eventos ligados só pelo e-mail
     // (ex.: "login-failed" de quem digitou este e-mail) foram causados por terceiros: saem sem IP e navegador deles.
-    atividade: audit.recent(5000, (e) => e.userId === u.id || (e.email && e.email === u.email))
+    atividade: audit.recent(20000, (e) => e.userId === u.id || (e.email && e.email === u.email))
       .map((e) => { if (e.userId === u.id) return e; const { ip, ua, ...rest } = e; return rest; }),
     comunidade: communityExport(u.id), radar: exportUser(u.id),
   });
@@ -186,6 +187,7 @@ router.delete('/', authUserLimiter, async (req, res) => {
   await forgetUser(req.user.id); // inscrições e alertas do Radar
   await purgeUserDocuments(req.user.id); // arquivos cifrados da carteira de documentos
   await users.remove(req.user.id);
+  forgetUsage(req.user.id); // estatística de uso por módulo
   await audit.log({ action: 'account-deleted', userId: req.user.id });
   clearSession(res);
   res.json({ ok: true });

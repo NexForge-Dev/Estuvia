@@ -86,7 +86,7 @@ export function MyFolder({ onChange } = {}) {
         h('a', { href: f.url, target: '_blank', rel: 'noopener' }, f.docNome),
         h('small', {}, `${f.nome} · ${fmtDate(f.criadoEm)} · ${fmtSize(f.tamanho)}`)),
       h('div', { class: 'mf-actions' },
-        h('a', { class: 'icon-btn sm', href: `${f.url}?download=1`, title: 'Baixar', 'aria-label': `Baixar ${f.docNome}` }, icon('arrow', { size: 14, cls: 'mf-down' })),
+        h('a', { class: 'icon-btn sm', href: `${f.url}${f.url.includes('?') ? '&' : '?'}download=1`, title: 'Baixar', 'aria-label': `Baixar ${f.docNome}` }, icon('arrow', { size: 14, cls: 'mf-down' })),
         h('button', { type: 'button', class: 'icon-btn sm', title: 'Excluir', 'aria-label': `Excluir ${f.docNome}`, onClick: () => { confirm.hidden = false; } }, icon('trash', { size: 14 }))),
       confirm);
   }

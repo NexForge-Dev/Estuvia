@@ -60,6 +60,9 @@ function rememberDevice(res, user) {
   });
 }
 
+const currentFails = (u) => (u?.loginFalhas && Date.now() - Date.parse(u.loginFalhas.desde) < LOCK_WINDOW_MS ? u.loginFalhas.n : 0);
+const pending = new Map(); // contas com senha sendo conferida agora (por instância)
+
 async function registerFailure(user, { trusted = false } = {}) {
   const now = Date.now();
   await users.touch(user.id, (u) => {
@@ -126,10 +129,21 @@ router.post('/login', authLimiter, async (req, res) => {
     const min = Math.max(1, Math.ceil((until - Date.now()) / 60000));
     return res.status(429).json({ error: `Muitas tentativas erradas nesta conta. Tente de novo em ${min} min ou use "Esqueci minha senha".` });
   }
-  const ok = await verifyPassword(senha, user ? user.passwordHash : await dummyHash());
+  // Tentativas simultâneas contam antes da conferência da senha: sem isto, 40 pedidos ao mesmo tempo passavam
+  // pelo bloqueio de 10, porque todos liam o contador antes de qualquer erro ser gravado.
+  const emCurso = user ? (pending.get(user.id) || 0) : 0;
+  const falhas = trusted ? deviceFails(user) : currentFails(user);
+  if (user && emCurso && falhas + emCurso >= LOCK_FAILS) return res.status(429).json({ error: 'Muitas tentativas ao mesmo tempo nesta conta. Aguarde alguns segundos.' });
+  let ok = false;
+  if (user) pending.set(user.id, emCurso + 1);
+  try {
+    ok = await verifyPassword(senha, user ? user.passwordHash : await dummyHash());
+    if (user && !ok) await registerFailure(user, { trusted });
+  } finally {
+    if (user) { const n = (pending.get(user.id) || 1) - 1; if (n > 0) pending.set(user.id, n); else pending.delete(user.id); }
+  }
   if (!user || !ok) {
     await audit.log({ action: 'login-failed', email: email.toLowerCase(), ...clientInfo(req) });
-    if (user) await registerFailure(user, { trusted });
     return res.status(401).json({ error: 'E-mail ou senha incorretos.' });
   }
   if (user.loginFalhas || user.loginLock || user.loginFalhasDispositivo) await users.touch(user.id, (u) => { delete u.loginFalhas; delete u.loginLock; delete u.loginFalhasDispositivo; });
@@ -172,7 +186,7 @@ router.post('/change-password', requireAuth, authUserLimiter, async (req, res) =
     return res.status(401).json({ error: 'Senha atual incorreta.' });
   }
   const passwordHash = await hashPassword(parsed.data.nova);
-  const user = await users.update(req.user.id, (u) => { u.passwordHash = passwordHash; u.tokenVersion += 1; });
+  const user = await users.update(req.user.id, (u) => { u.passwordHash = passwordHash; u.tokenVersion += 1; delete u.passwordReset; });
   await audit.log({ action: 'password-changed', userId: user.id });
   issueSession(res, user);
   res.json({ ok: true });

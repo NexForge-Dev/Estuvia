@@ -161,6 +161,7 @@ router.get('/logs', (req, res) => {
 router.get('/users/:id', (req, res) => {
   const u = users.findById(req.params.id);
   if (!u) return res.status(404).json({ error: 'Usuário não encontrado.' });
+  audit.log({ action: 'admin-student-view', userId: req.user.id, targetId: u.id }).catch(() => {});
   const p = u.profile || {};
   res.json({
     user: {
@@ -214,12 +215,14 @@ router.post('/users/:id/notes', async (req, res) => {
   const note = { id: newId(), texto: parsed.data.texto, em: new Date().toISOString(), por: req.user.email };
   const user = await users.touch(req.params.id, (u) => { u.adminNotes = [...(u.adminNotes || []), note].slice(-200); });
   if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' }); // excluído durante a requisição
+  await audit.log({ action: 'admin-note-added', userId: req.user.id, targetId: req.params.id });
   res.status(201).json({ notas: user.adminNotes.slice().reverse() });
 });
 router.delete('/users/:id/notes/:noteId', async (req, res) => {
   if (!users.findById(req.params.id)) return res.status(404).json({ error: 'Usuário não encontrado.' });
   const user = await users.touch(req.params.id, (u) => { u.adminNotes = (u.adminNotes || []).filter((n) => n.id !== req.params.noteId); });
   if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' }); // excluído durante a requisição
+  await audit.log({ action: 'admin-note-removed', userId: req.user.id, targetId: req.params.id });
   res.json({ notas: user.adminNotes.slice().reverse() });
 });
 

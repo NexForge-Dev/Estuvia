@@ -82,10 +82,10 @@ export function protectText(text) {
 
 // ---------- Spam ----------
 
-export function spamSignals({ texto, links, autor, recentes }) {
+export function spamSignals({ texto, outros = [], links, autor, recentes }) {
   const motivos = [];
   let score = 0;
-  const lower = texto.toLowerCase();
+  const lower = [texto, ...outros].filter(Boolean).join('\n').toLowerCase(); // título e edital também contam
   const terms = SPAM_TERMS.filter((t) => new RegExp(`(^|[^\\p{L}])${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^\\p{L}])`, 'u').test(lower));
   if (terms.length) { score += 2 * terms.length; motivos.push(`Termos típicos de spam: ${terms.join(', ')}.`); }
   if (links.length > 3) { score += 2; motivos.push('Muitos links na mesma publicação.'); }

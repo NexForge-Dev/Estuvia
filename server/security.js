@@ -201,6 +201,8 @@ export const authLimiter = limiter(15, 60, 'Muitas tentativas. Aguarde alguns mi
 export const authUserLimiter = limiter(15, 20, 'Muitas tentativas. Aguarde alguns minutos e tente de novo.', perUser);
 export const assistantLimiter = limiter(60, 40, 'Você atingiu o limite de perguntas por hora. Volte daqui a pouco!', perUser);
 export const communityWriteLimiter = limiter(10, 60, 'Você está publicando rápido demais. Aguarde alguns minutos.', perUser);
+// Respostas do estudante que gravam no registro de atividade: cota por conta.
+export const journeyWriteLimiter = limiter(10, 120, 'Muitas alterações seguidas. Aguarde alguns minutos.', perUser);
 export const documentUploadLimiter = limiter(10, 30, 'Muitos envios de arquivo seguidos. Aguarde alguns minutos.', perUser);
 // Limite geral, antes da autenticação (por IP): alto o bastante para várias pessoas no mesmo IP,
 // já que cada tela faz várias chamadas; as escritas sensíveis têm limites próprios por conta.
