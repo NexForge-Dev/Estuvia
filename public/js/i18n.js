@@ -2,6 +2,7 @@
 // preserva o texto original em cada nó para permitir trocar de idioma sem recarregar.
 import { Select } from './components/Select.js';
 import { FLOW_TRANSLATIONS } from './i18n-flow.js';
+import { SCREEN_TRANSLATIONS, SCREEN_PATTERNS } from './i18n-telas-es.js';
 import { h } from './ui.js';
 
 const STORAGE_KEY = 'estuvia:lang';
@@ -1638,9 +1639,10 @@ const PATTERNS = [
   { re: /^(\d+) de (\d+) objetivo concluído$/, es: (m) => `${m[1]} de ${m[2]} objetivo completado`, en: (m) => `${m[1]} of ${m[2]} objective completed` },
 ];
 
+const ALL_PATTERNS = [...SCREEN_PATTERNS, ...PATTERNS];
 const DICT = { es: {}, en: {} };
 // O dicionário principal prevalece em caso de chave repetida.
-for (const [pt, pair] of Object.entries({ ...FLOW_TRANSLATIONS, ...TRANSLATIONS })) {
+for (const [pt, pair] of Object.entries({ ...SCREEN_TRANSLATIONS, ...FLOW_TRANSLATIONS, ...TRANSLATIONS })) {
   if (pair[0] && pair[0] !== pt) DICT.es[pt] = pair[0];
   if (pair[1] && pair[1] !== pt) DICT.en[pt] = pair[1];
 }
@@ -1676,7 +1678,7 @@ function translateSource(text) {
   const dict = DICT[current];
   if (dict && Object.prototype.hasOwnProperty.call(dict, core)) return leading + dict[core] + trailing;
 
-  for (const p of PATTERNS) {
+  for (const p of ALL_PATTERNS) {
     const match = core.match(p.re);
     if (match) {
       const fn = p[current];

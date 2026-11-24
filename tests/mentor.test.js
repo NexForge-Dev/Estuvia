@@ -322,6 +322,8 @@ test('finanças: sem recursos pergunta; "tenho €2.000" simula sem gravar; apoi
   await users.update(uid, (u) => { u.finance = antes; });
   const v = await say('Quanto preciso comprovar para o visto?');
   assert.equal(v.data.intencao, 'comprovar-visto');
+  assert.equal((await say('¿Cuánto tengo que acreditar para el visado?')).data.intencao, 'comprovar-visto');
+  assert.equal((await say('¿Qué hago ahora?')).data.intencao, (await say('O que faço agora?')).data.intencao);
   assert.match(v.data.texto, /7\.200/);
   assert.match((await say('O que é a Fase 1 do DUA?')).data.texto, /[Ff]ase 1/);
   const e = await say('Como consigo economizar €100 por mês?');

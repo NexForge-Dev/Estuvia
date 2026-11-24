@@ -41,11 +41,23 @@ const msg = (mensagem, rotulo = mensagem) => ({ tipo: 'mensagem', mensagem, rotu
 const rota = (r, rotulo) => ({ tipo: 'rota', rota: r, rotulo });
 const ask = (acao, rotulo) => ({ tipo: 'acao', acao, rotulo });
 
+// Perguntas frequentes em espanhol: viram a frase equivalente, para cair na mesma intenção.
+/** @type {Array<[RegExp, string]>} */
+const SPANISH = [
+  [/\bque (hago|tengo que hacer) (ahora|hoy)\b/, 'o que faco agora'],
+  [/\bcuanto\b.*\b(acreditar|demostrar|justificar)\b.*\bvisado\b/, 'quanto preciso comprovar para o visto'],
+  [/\bque documentos\b.*\bfaltan\b/, 'quais documentos ainda faltam'],
+  [/\bcuales son mis plazos\b/, 'quais sao os meus prazos'],
+  [/\bque (tengo que|debo|necesito) preparar para el visado\b/, 'o que preciso preparar para o visto'],
+  [/\borganiza\w* mi semana\b/, 'organize minha semana'],
+];
+const fromSpanish = (t) => SPANISH.find(([re]) => re.test(t))?.[1] || t;
+
 class Turn {
   constructor(user, { mensagem, contexto, historico }) {
     this.ctx = makeCtx(user, contexto || {});
     this.raw = mensagem;
-    this.t = normalize(mensagem);
+    this.t = fromSpanish(normalize(mensagem));
     this.historico = historico || [];
     this.usadas = [];
   }
