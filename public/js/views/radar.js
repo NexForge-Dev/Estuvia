@@ -18,11 +18,22 @@ const sentence = (s) => String(s || '').toLowerCase().replace(/(^|[.:;!?]\s+)(\p
 function admissionPanel(o) {
   const a = o.admissao;
   const title = h('h2', {}, icon('scale', { size: 18 }), 'Como funciona a seleção');
+  if (o.admissaoVariantes) {
+    return h('section', { class: 'rd-panel', id: 'admissao' }, title,
+      h('p', { class: 'small' }, 'Este máster tem mais de um código no DUA: escolha um grupo ao se candidatar. Os requisitos são os da ficha dele.'),
+      o.admissaoVariantes.map((v) => h('div', { class: 'stack' },
+        h('h3', {}, `${MODALIDADE[v.modalidade]} · código ${v.codigoDua} · ${v.vagas} vagas`),
+        admissionBody(v))));
+  }
   if (!a) {
     return h('section', { class: 'rd-panel', id: 'admissao' }, title,
       h('p', { class: 'rd-nodata' }, icon('alert', { size: 16 }), 'Ainda não conferimos a ficha deste máster no Distrito Único Andaluz (critérios, pesos e graduações aceitas). Até lá, consulte a ficha oficial.'),
       ext(o.programa.fichaUrl, 'Ficha oficial do máster'));
   }
+  return h('section', { class: 'rd-panel', id: 'admissao' }, title, admissionBody(a));
+}
+
+function admissionBody(a) {
   const bar = (peso) => {
     const fill = h('span', { class: 'rd-bar-fill' });
     fill.style.width = `${Math.max(0, Math.min(100, peso || 0))}%`; // CSSOM: a CSP não permite style=""
@@ -33,7 +44,7 @@ function admissionPanel(o) {
     : null);
   const obrigatorios = a.requisitos.filter((r) => r.obrigatorio);
   const outros = a.requisitos.filter((r) => !r.obrigatorio);
-  return h('section', { class: 'rd-panel', id: 'admissao' }, title,
+  return [
     h('p', { class: 'small muted' }, `Ficha oficial do Distrito Único Andaluz, conferida em ${fmtDT(a.verificadaEm)}.${a.inicioCurso ? ` Início do curso: ${fmt(a.inicioCurso)}.` : ''}`),
     h('h3', {}, 'Critérios e pesos'),
     a.somenteNotaExpediente && a.criterios.length <= 1
@@ -48,11 +59,11 @@ function admissionPanel(o) {
     degreeList(PREF_LABEL.alta, a.titulacoes.alta),
     degreeList(PREF_LABEL.media, a.titulacoes.media),
     degreeList(PREF_LABEL.baixa, a.titulacoes.baixa),
-    degreeList('Admissão condicionada a requisito adicional', a.titulacoes.condicionadas.map((t) => t.nome)),
+    degreeList('Admissão condicionada a requisito adicional', a.titulacoes.condicionadas.map((t) => [`${t.nome}.`, ...a.requisitos.filter((r) => t.requisitos.includes(r.codigo)).map((r) => r.texto)].join(' '))),
     degreeList('Outras graduações com acesso', a.titulacoes.outras),
-    h('p', { class: 'small muted' }, 'Vagas e preço não constam desta ficha. Nenhuma destas informações garante admissão: a decisão é da comissão do máster.'),
+    h('p', { class: 'small muted' }, a.modalidade ? 'As vagas são o total anual publicado na web do máster. Nenhuma destas informações garante admissão: a decisão é da comissão do máster.' : 'Vagas e preço não constam desta ficha. Nenhuma destas informações garante admissão: a decisão é da comissão do máster.'),
     ext(a.url, 'Abrir a ficha no DUA'),
-  );
+  ];
 }
 
 // Quanto a média do estudante vale na escala espanhola, quando a ficha usa a nota na seleção.
@@ -107,7 +118,7 @@ function chips(c) {
   const p = c.programa;
   return h('ul', { class: 'rd-chips', 'aria-label': 'Informações do programa' },
     p.ramos.map((r) => h('li', {}, r)),
-    p.modalidade ? h('li', {}, MODALIDADE[p.modalidade]) : null,
+    p.modalidades ? p.modalidades.map((m) => h('li', {}, MODALIDADE[m])) : p.modalidade ? h('li', {}, MODALIDADE[p.modalidade]) : null,
     p.creditos ? h('li', {}, `${p.creditos} ECTS${p.duracaoEstimadaAnos ? ` · ~${String(p.duracaoEstimadaAnos).replace('.', ',')} ano(s)` : ''}`) : null,
     p.tipoTitulo === 'duplo' ? h('li', {}, 'Dupla titulação') : null,
     p.tipoTitulo === 'erasmus-mundus' ? h('li', {}, 'Erasmus Mundus') : null,

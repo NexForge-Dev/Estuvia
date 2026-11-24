@@ -28,7 +28,7 @@ export function filterPrograms(programas, f, universidades = []) {
     if (f.universidade && p.universidadeId !== f.universidade) return false;
     if (f.cidade && u.cidade !== f.cidade) return false;
     if (f.area && !(p.ramos || []).includes(f.area)) return false;
-    if (f.modalidade && p.modalidade !== f.modalidade) return false;
+    if (f.modalidade && !(p.modalidades || [p.modalidade]).includes(f.modalidade)) return false;
     if (f.espanhol) {
       if (!p.espanhol) return false; // sem ficha conferida: não presumimos nada
       if (f.espanhol === 'nao-exige') { if (p.espanhol.exige) return false; }

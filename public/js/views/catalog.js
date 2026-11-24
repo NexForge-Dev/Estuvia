@@ -82,7 +82,7 @@ export async function catalogView() {
         h('p', { class: 'eyebrow' }, `${u.sigla || ''} · ${u.cidade || ''}`),
         h('h3', {}, displayName(p.nome)),
         h('div', { class: 'mest-tags' },
-          p.modalidade ? h('span', { class: 'mest-tag' }, MODALIDADE[p.modalidade] || p.modalidade) : null,
+          ...(p.modalidades || [p.modalidade]).filter(Boolean).map((m) => h('span', { class: 'mest-tag' }, MODALIDADE[m] || m)),
           p.creditos ? h('span', { class: 'mest-tag' }, `${p.creditos} ECTS`) : null,
           ...(p.ramos || []).slice(0, 1).map((r) => h('span', { class: 'mest-tag' }, r)),
           h('span', { class: 'mest-tag mest-tag-state' }, `${p.estadoLabel} · ${p.anoAcademico}`)),
@@ -101,9 +101,10 @@ export async function catalogView() {
 
   function draw() {
     const choices = state.me.user.choices || [];
+    const meus = programas.filter((p) => p.naJornada);
     const cidades = [...new Set(universidades.filter((u) => u.total).map((u) => u.cidade))].sort();
     const areas = [...new Set(programas.flatMap((p) => p.ramos || []))].sort();
-    const modalidades = [...new Set(programas.map((p) => p.modalidade).filter(Boolean))].sort();
+    const modalidades = [...new Set(programas.flatMap((p) => p.modalidades || [p.modalidade]).filter(Boolean))].sort();
     const comUni = universidades.filter((u) => u.total).length;
     const fonte = cat.fontes.find((s) => s.id === 'dua-catalogo')?.verificadaEm;
     const search = h('input', { type: 'search', class: 'mest-search', placeholder: 'Buscar por nome, universidade, cidade ou código…', 'aria-label': 'Buscar mestrado', value: filters.q });
@@ -127,6 +128,10 @@ export async function catalogView() {
         h('h1', {}, icon('cap', { size: 26 }), ' Mestrados'),
         h('p', { class: 'muted' }, `${programas.length} mestrados oficiais em ${comUni} ${comUni === 1 ? 'universidade pública' : 'universidades públicas'} da Andaluzia${fonte ? ', do catálogo do Distrito Único Andaluz (DUA)' : ', pelos catálogos oficiais das universidades (a coleta do DUA ainda não rodou)'}. Critérios de seleção, idioma e graduações aceitas vêm da ficha oficial de cada mestrado, quando já coletada.`),
         fonte ? h('p', { class: 'muted small' }, icon('shield', { size: 12 }), ` Catálogo verificado em ${fmtDate(fonte)}. Confirme sempre na ficha oficial antes de se candidatar.`) : null)),
+      // O mestrado da jornada fica no topo: é o que o estudante mais consulta.
+      meus.length ? h('section', { class: 'panel', id: 'meu-mestrado' },
+        h('h2', { class: 'panel-title' }, icon('flag', { size: 18 }), 'Seu mestrado'),
+        h('div', { class: 'program-grid' }, meus.map((p) => card(p, choices)))) : null,
       choicesPanel(choices),
       choices.length >= 2 ? h('section', { class: 'panel', id: 'comparar' },
         h('h2', { class: 'panel-title' }, icon('scale', { size: 18 }), 'Comparar minhas opções lado a lado'),

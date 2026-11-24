@@ -140,6 +140,16 @@ const ES = {
   'Histórico acadêmico oficial': 'Certificación académica oficial',
   'Certificado de idioma, se o máster exigir': 'Certificado de idioma, si el máster lo exige',
   'Documentos específicos pedidos pela ficha (currículo, cartas…)': 'Documentos específicos que pide la ficha (currículum, cartas…)',
+  'Seu mestrado': 'Tu máster',
+  'Aceita a sua graduação com condições': 'Admite tu titulación con condiciones',
+  'Requisitos obrigatórios': 'Requisitos obligatorios',
+  'Remover das opções': 'Quitar de las opciones',
+  'Fichas do máster: Distrito Único Andaluz': 'Fichas del máster: Distrito Único Andaluz',
+  'Fichas do DUA e web do máster': 'Fichas del DUA y web del máster',
+  'Este máster tem mais de um código no DUA: escolha um grupo ao se candidatar. Os requisitos são os da ficha dele.': 'Este máster tiene más de un código en el DUA: elige un grupo al presentar la solicitud. Los requisitos son los de su ficha.',
+  'As vagas são o total anual publicado na web do máster. Nenhuma destas informações garante admissão: a decisão é da comissão do máster.': 'Las plazas son el total anual que publica la web del máster. Nada de esto garantiza la admisión: la decisión corresponde a la comisión del máster.',
+  'Adequação do currículo ao perfil do máster': 'Adecuación del currículum al perfil del máster',
+  '30 presenciais + 20 híbridas': '30 presenciales + 20 híbridas',
   'Como funciona a seleção': 'Cómo funciona la selección',
   'Critérios e pesos': 'Criterios y ponderación',
   'Nota média do histórico': 'Nota media del expediente',
@@ -786,13 +796,17 @@ const ES = {
 export const SCREEN_TRANSLATIONS = Object.fromEntries(Object.entries(ES).map(([pt, es]) => [pt, [es]]));
 
 // Pesos da seleção vêm numa frase só ("Nota média do histórico 40% · Currículo 30%"): troca os nomes conhecidos.
-const CRITERIA = [['Nota média do histórico', 'Nota media del expediente'], ['Currículo', 'Currículum'], ['Conhecimento de idiomas', 'Conocimiento de idiomas'], ['Experiência profissional', 'Experiencia profesional'], ['Outros méritos', 'Otros méritos']];
+const CRITERIA = [['Nota média do histórico', 'Nota media del expediente'], ['Adequação do currículo ao perfil do máster', 'Adecuación del currículum al perfil del máster'], ['Currículo', 'Currículum'], ['Conhecimento de idiomas', 'Conocimiento de idiomas'], ['Experiência profissional', 'Experiencia profesional'], ['Outros méritos', 'Otros méritos']];
 const criteria = (s) => CRITERIA.reduce((o, [a, b]) => o.split(a).join(b), s);
 const word = (s) => ES[s] || s;
 
 export const SCREEN_PATTERNS = [
   { re: /^((?!Seleção).*\d+%.* · .*|Nota média do histórico \d+%|Currículo \d+%)$/, es: (m) => criteria(m[0]) },
   { re: /^Seleção: (.+)\. Graduações com preferência: (\d+) alta, (\d+) média, (\d+) baixa\. Título equivalente \(caso comum do diploma estrangeiro\): preferência (.+)\.$/, es: (m) => `Selección: ${criteria(m[1])}. Titulaciones por preferencia: ${m[2]} alta, ${m[3]} media, ${m[4]} baja. Título equivalente (caso habitual del título extranjero): preferencia ${m[5].replace(/baixa/g, 'baja').replace(/média/g, 'media')}.` },
+  { re: /^(Presencial|Híbrida) · código (\S+) · (\d+) vagas$/, es: (m) => `${m[1]} · código ${m[2]} · ${m[3]} plazas` },
+  { re: /^Este máster tem (\d+) códigos no DUA, cada um com a sua ficha\. Compare os dois em "Como funciona a seleção"\.$/, es: (m) => `Este máster tiene ${m[1]} códigos en el DUA, cada uno con su ficha. Compáralos en «Cómo funciona la selección».` },
+  { re: /^Inglês B1 no grupo presencial; língua estrangeira B1 no híbrido\. Para quem não tem o espanhol como língua materna, a web do máster pede também espanhol (..), que não consta das fichas do DUA\. Texto oficial: “(.+)”$/, es: (m) => `Inglés B1 en el grupo presencial; lengua extranjera B1 en el híbrido. A quien no tiene el español como lengua materna, la web del máster le pide además español ${m[1]}, que no consta en las fichas del DUA. Texto oficial: «${m[2]}»` },
+  { re: /^Admissão condicionada a requisito adicional \((\d+)\)$/, es: (m) => `Admisión condicionada a un requisito adicional (${m[1]})` },
   { re: /^Olá, (.+)$/, es: (m) => `Hola, ${m[1]}` },
   { re: /^(\d+) de (\d+) missões feitas$/, es: (m) => `${m[1]} de ${m[2]} misiones hechas` },
   { re: /^(\d+) de (\d+) feitas$/, es: (m) => `${m[1]} de ${m[2]} hechas` },

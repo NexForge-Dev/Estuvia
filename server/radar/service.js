@@ -9,6 +9,7 @@ import { EVENT_TYPES, tick } from './notify.js';
 import { parseAcademicYear, todayMadrid, daysBetween } from './dates.js';
 import { bootstrap, ensureSources, duaSheetUrl } from './pipeline.js';
 import { MANUAL_DUA_LINKS } from '../content/program-channels.js';
+import { variantFichas } from '../content/variant-fichas.js';
 import { languageRequirements } from './connectors/dua-program.js';
 
 // Idiomas exigidos recalculados a partir dos requisitos da ficha guardada: correções do interpretador valem
@@ -126,6 +127,17 @@ export function spanishRequirement(p) {
 
 const langLabel = (i) => `${i.idioma.replace(/^./, (c) => c.toUpperCase())} ${i.nivel || '(nível não informado na ficha)'}`;
 
+/** Mestrado com vários códigos no DUA (content/variant-fichas.js): uma ficha por código. null nos demais. */
+function admissionVariants(p) {
+  const v = p && !p.fichaDua ? variantFichas(p.id) : null;
+  if (!v) return null;
+  const rotulo = (c) => Object.entries(v.rotulos).find(([k]) => c.original.startsWith(k))?.[1] || c.descricao;
+  return v.variantes.map(({ codigo, modalidade, vagas, ficha }) => {
+    const a = admissionFromDua({ duaCodigo: codigo, fichaDua: { ...ficha, verificadaEm: v.verificadaEm } });
+    return { ...a, modalidade, vagas, criterios: a.criterios.map((c) => ({ ...c, descricao: rotulo(c) })) };
+  });
+}
+
 function admissionFromDua(p) {
   const f = p?.fichaDua;
   if (!f) return null;
@@ -187,6 +199,7 @@ function card(opp, { user = null, now = Date.now() } = {}) {
       nome: p.nome, ramos: p.ramos || [], codigo: p.codigo, tipoTitulo: p.tipoTitulo, ofertaCondicionada: Boolean(p.ofertaCondicionada),
       fichaUrl: p.fichaUrl, webPropria: cleanWeb(p.ficha?.webPropria || p.webPropria), cursoCatalogo: p.cursoCatalogo,
       creditos: p.ficha?.creditos ?? null, modalidade: p.ficha?.modalidade ?? null, idiomaEnsino: p.ficha?.idiomaEnsino ?? null,
+      modalidades: admissionVariants(p)?.map((v) => v.modalidade) || null,
       duracaoEstimadaAnos: p.ficha?.duracaoEstimadaAnos ?? null, fichaVerificada: Boolean(p.ficha || p.fichaDua), fichaVerificadaEm: p.ficha?.verificadaEm || p.fichaDua?.verificadaEm || null,
       cursoFicha: p.ficha?.anoAcademico || null,
       // Da ficha do DUA (null enquanto não coletada: "não informado", nunca "não exige").
@@ -207,7 +220,7 @@ function card(opp, { user = null, now = Date.now() } = {}) {
     referenciaHistorica: windows.length ? null : historicalReference(opp),
     vagas: avail
       ? { ofertadas: avail.vagasOfertadas, remanescentes: avail.vagasRemanescentes ?? null, fonte: avail.fonte, data: avail.dataInformacao, aviso: 'Vagas ofertadas não significam vagas disponíveis agora.' }
-      : { ofertadas: null, texto: 'Consultar oferta oficial do ciclo correspondente.' },
+      : { ofertadas: variantFichas(opp.programId)?.vagas.texto || null, texto: 'Consultar oferta oficial do ciclo correspondente.' },
     candidatura: channel ? { url: channel.url, rotulo: channel.rotulo } : null,
     verificacao: verification(state, windows, health, opp),
     compatibilidade: user ? compatibility(user.profile, p) : null,
@@ -308,7 +321,16 @@ export function programCatalog({ user = null, now = Date.now() } = {}) {
   const byId = new Map(d.programs.map((p) => [p.id, p]));
   const programas = all.map((c) => {
     const p = byId.get(c.programId) || {};
-    const grad = curso && p.fichaDua ? matchDegree(curso, p.fichaDua) : null;
+    const variantes = admissionVariants(p);
+    const vf = variantes && variantFichas(p.id);
+    const fichas = vf ? vf.variantes.map((v) => v.ficha) : p.fichaDua ? [p.fichaDua] : [];
+    const grads = curso ? fichas.map((f) => matchDegree(curso, f)) : [];
+    // Vários códigos: só afirma o que vale em todas as fichas.
+    const igual = grads.length && grads.every((g) => g?.tipo === grads[0]?.tipo && g?.preferencia === grads[0]?.preferencia) ? grads[0] : null;
+    // Estas fichas só admitem "titulación equivalente" (caso do diploma estrangeiro) com um requisito adicional.
+    const grad = vf && igual?.tipo === 'lista' && fichas.every((f) => f.condicionadas.some((t) => /EQUIVALENTE/.test(t.nome))) ? { tipo: 'condicionada' } : igual;
+    const pesosDe = (v) => JSON.stringify(v.criterios.map((x) => [x.original, x.peso]));
+    const pesos = variantes && variantes.every((v) => pesosDe(v) === pesosDe(variantes[0])) ? variantes[0].criterios.map(({ descricao, peso }) => ({ descricao, peso })) : null;
     return {
       id: c.programId,
       oportunidadeId: c.id,
@@ -319,13 +341,14 @@ export function programCatalog({ user = null, now = Date.now() } = {}) {
       universidadeId: c.universidade.id,
       ramos: c.programa.ramos,
       modalidade: c.programa.modalidade || null,
+      modalidades: c.programa.modalidades,
       creditos: c.programa.creditos,
-      codigoDua: p.duaCodigo || null,
-      espanhol: spanishSummary(p),
-      criterios: p.fichaDua ? (p.fichaDua.baremo || []).map((x) => ({ descricao: criterioPt(x.descricao), peso: x.peso ?? null })) : null,
+      codigoDua: p.duaCodigo || (variantes ? variantes.map((v) => v.codigoDua).join(' · ') : null),
+      espanhol: vf ? { exige: true, nivel: vf.espanhol.nivel } : spanishSummary(p),
+      criterios: p.fichaDua ? (p.fichaDua.baremo || []).map((x) => ({ descricao: criterioPt(x.descricao), peso: x.peso ?? null })) : pesos,
       requisitos: p.fichaDua ? (p.fichaDua.requisitos || []).length : null,
       fichaDuaUrl: p.duaCodigo ? duaSheetUrl(p.duaCodigo) : null,
-      fichaVerificadaEm: p.fichaDua?.verificadaEm || null,
+      fichaVerificadaEm: p.fichaDua?.verificadaEm || vf?.verificadaEm || null,
       webPropria: c.programa.webPropria || null,
       graduacao: grad ? { tipo: grad.tipo, preferencia: grad.preferencia || null } : null,
       naJornada: c.naJornada,
@@ -370,6 +393,8 @@ export function opportunityDetail(id, { user = null, now = Date.now() } = {}) {
   const p = d.programs.find((x) => x.id === opp.programId);
   const sources = [...new Set([...windows.map((w) => w.sourceId), 'ugr-catalogo', p?.ficha ? 'ugr-fichas' : null, p?.fichaDua ? 'dua-fichas' : null].filter(Boolean))].map(sourceById).filter(Boolean);
   const admissao = admissionFromDua(p);
+  const admissaoVariantes = admissionVariants(p);
+  const vf = admissaoVariantes && variantFichas(p.id);
   const reqAcademico = admissao
     ? { tipo: 'academico', status: 'verificado', fonte: 'Ficha do máster: Distrito Único Andaluz', url: admissao.url,
       texto: [
@@ -377,12 +402,18 @@ export function opportunityDetail(id, { user = null, now = Date.now() } = {}) {
         `Graduações com preferência: ${admissao.titulacoes.alta.length} alta, ${admissao.titulacoes.media.length} média, ${admissao.titulacoes.baixa.length} baixa.`,
         admissao.equivalentes.length ? `Título equivalente (caso comum do diploma estrangeiro): preferência ${admissao.equivalentes.map((e) => e.preferencia).filter(Boolean).join('/') || 'não informada'}.` : 'Diploma estrangeiro: a universidade enquadra sua graduação na lista por equivalência de área.',
       ].join(' ') }
+    : vf
+    ? { tipo: 'academico', status: 'verificado', fonte: 'Fichas do máster: Distrito Único Andaluz', url: admissaoVariantes[0].url,
+      texto: `Este máster tem ${admissaoVariantes.length} códigos no DUA, cada um com a sua ficha. Compare os dois em "Como funciona a seleção".` }
     : { tipo: 'academico', texto: 'Título universitário que dê acesso a estudos de pós-graduação no país emissor. Requisitos específicos (área de formação, critérios de seleção) constam da ficha oficial do máster.', fonte: 'Ficha oficial: UGR', url: p?.fichaUrl, status: 'consultar-ficha' };
   const reqIdioma = admissao
     ? { tipo: 'idioma', status: 'verificado', fonte: 'Ficha do máster: Distrito Único Andaluz', url: admissao.url,
       texto: admissao.idiomas.length
         ? `${admissao.idiomas.map((i) => `${langLabel(i)}${i.obrigatorio ? ', obrigatório' : ''}${i.estrangeiros ? ' para quem não é nativo' : ''}`).join('; ')}. Texto oficial: “${admissao.idiomas.map((i) => i.texto).join('” / “')}”`
         : 'A ficha do DUA não traz exigência de idioma. As aulas costumam ser em espanhol: confirme o idioma de ensino na web do máster.' }
+    : vf
+    ? { tipo: 'idioma', status: 'verificado', fonte: 'Fichas do DUA e web do máster', url: vf.espanhol.url,
+      texto: `${vf.idiomas} Para quem não tem o espanhol como língua materna, a web do máster pede também espanhol ${vf.espanhol.nivel}, que não consta das fichas do DUA. Texto oficial: “${vf.espanhol.texto}”` }
     : { tipo: 'idioma', texto: c.programa.idiomaEnsino ? `Idioma de ensino: ${c.programa.idiomaEnsino}.` : 'Idioma de ensino e nível exigido não constam da ficha coletada. Não presuma: confirme na web do máster ou com a coordenação.', fonte: 'Ficha oficial: UGR', url: c.programa.webPropria || p?.fichaUrl, status: c.programa.idiomaEnsino ? 'verificado' : 'nao-informado' };
   const cycleKey = `${opp.procedimentoId}:${opp.anoAcademico}`;
   const history = d.revisions
@@ -398,6 +429,7 @@ export function opportunityDetail(id, { user = null, now = Date.now() } = {}) {
       eventos: events.filter((e) => e.fase === w.fase).sort((a, b) => a.ordem - b.ordem).map((e) => ({ tipo: e.tipo, rotulo: e.rotulo, inicio: e.inicio, fim: e.fim, texto: e.textoOriginal })),
     })),
     admissao,
+    admissaoVariantes,
     requisitos: [
       reqAcademico,
       reqIdioma,

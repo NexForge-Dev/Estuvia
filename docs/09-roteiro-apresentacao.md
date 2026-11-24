@@ -3,7 +3,7 @@
 Caminho percorrido em 24/11/2026 num navegador automatizado, com uma aluna fictícia. Os tempos de fala são estimativas.
 
 **Preparação (na véspera):**
-- Crie uma conta de aluno de demonstração, faça o onboarding com um mestrado da UGR e conclua a Rodada 1. Não use dados de pessoas reais.
+- Crie uma conta de aluno de demonstração, faça o onboarding com o Máster en Gestión y Tecnologías de Procesos de Negocio (UGR) e conclua a Rodada 1. Não use dados de pessoas reais.
 - Em Financiamento, preencha moradia, matrícula, passagem e seguro: sem isso a tela mostra "Estimativa parcial".
 - Abra as telas uma vez antes, para o servidor já estar acordado (a primeira carga pode levar alguns segundos).
 - Para reunião em espanhol, troque o idioma para Español antes de começar: as telas deste roteiro foram conferidas nesse idioma em 24/11/2026. O conteúdo detalhado de outras missões e o inglês ainda têm partes em português.
@@ -14,7 +14,7 @@ Caminho percorrido em 24/11/2026 num navegador automatizado, com uma aluna fict�
 | 2 | Entrar → Início | Mostrar que há **um** próximo passo | 0:20 |
 | 3 | Minha jornada | As 8 rodadas; abrir a Rodada 2 | 1:00 |
 | 4 | Missão | Marcar os itens → **Sim, fiz isso: concluir** | 0:45 |
-| 5 | Mais → Mestrados | Clicar em UGR → **Ver detalhes**: pesos da seleção e fonte | 1:00 |
+| 5 | Mais → Mestrados | **Seu mestrado** (no topo) → **Ver detalhes**: os dois códigos do DUA, pesos e requisitos | 1:00 |
 | 6 | Documentos | Carteira por etapa, o que falta | 0:30 |
 | 7 | Financiamento | Custo × comprovação do visto, separados | 0:40 |
 | 8 | Agenda | **Organizar semana** → **Aprovar** | 0:40 |
