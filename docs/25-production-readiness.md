@@ -42,7 +42,7 @@ Roles come only from the server-side `role` field: `admin` (only the `ADMIN_EMAI
 1. Stop the process (or accept a crash-consistent copy: writes are atomic renames).
 2. Copy `db.json`, `radar.json`, `docfiles/`, `media/`, `document-rules.json` together. Store `DOCUMENTS_KEY` separately.
 3. Restore by putting the files back and starting with the **same** `DOCUMENTS_KEY`.
-4. Test a restore before launch. No automated backup exists yet.
+4. Production (Supabase): daily automated copy with a verified restore, see [32](32-backup.md).
 
 ## Verified in this audit
 
