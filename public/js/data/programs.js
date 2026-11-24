@@ -4,7 +4,7 @@ const norm = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toL
 
 export function spanishText(es) {
   if (es === null) return 'Ficha do DUA ainda não conferida';
-  if (!es.exige) return 'Não exige espanhol';
+  if (!es.exige) return 'Ficha do DUA sem exigência de espanhol'; // a universidade ainda pode pedir: não afirmamos que não exige
   return es.nivel ? `Espanhol ${es.nivel}` : 'Exige espanhol (nível não informado)';
 }
 

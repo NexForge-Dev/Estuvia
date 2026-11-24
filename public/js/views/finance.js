@@ -71,13 +71,13 @@ export async function financeView() {
   }
 
   // Orçamento estimado no onboarding/perfil: só referência ao lado do custo; não é recurso comprovado.
-  function declared(o) {
+  function declared(o, parcial) {
     if (!o || o.situacao === 'nao-informado') return null;
     if (o.situacao === 'nao-sei') return h('p', { class: 'small muted fp-declared' }, icon('help', { size: 14 }), 'No cadastro você disse que ainda não sabe seu orçamento. Use "Contar quanto já tenho" quando souber.');
     const diff = o.diferenca;
     return h('p', { class: 'small muted fp-declared' }, icon('euro', { size: 14 }),
       `Sua estimativa no cadastro: ${eur(o.valor)}`,
-      diff === null ? '' : diff >= 0 ? ` · cobre esta estimativa de custo (sobram ≈ ${eur(diff)})` : ` · ≈ ${eur(-diff)} abaixo desta estimativa de custo`,
+      diff === null ? '' : diff >= 0 ? ` · cobre ${parcial ? 'o que já tem valor; ainda faltam itens nesta conta' : `esta estimativa de custo (sobram ≈ ${eur(diff)})`}` : ` · ≈ ${eur(-diff)} abaixo desta estimativa de custo`,
       '. Para o visto, vale o que você conseguir comprovar.');
   }
 
@@ -91,7 +91,7 @@ export async function financeView() {
         h('strong', { class: 'fp-big' }, eur(p.orcamento)),
         p.cambio ? h('p', { class: 'fp-brl' }, `≈ ${brl(p.orcamento * p.cambio)}`, h('small', {}, ` · câmbio R$ ${p.cambio.toFixed(2).replace('.', ',')} (${fx.origem === 'manual' ? 'informado por você' : `${fx.fonte}, ${fmtDate(fx.data)}${fx.desatualizada ? ', pode estar desatualizado' : ''}`})`)) : h('p', { class: 'fp-brl muted' }, h('a', { href: '#/financiamento#cambio', onClick: (e) => { e.preventDefault(); go('cambio'); } }, 'Informe o câmbio'), ' para ver em reais.'),
         p.jaPago ? h('p', { class: 'small muted' }, `Já pago: ${eur(p.jaPago)} · falta desembolsar ${eur(p.aDesembolsar)}`) : null,
-        declared(p.orcamentoDeclarado),
+        declared(p.orcamentoDeclarado, p.parcial),
         p.parcial ? h('button', { class: 'fp-partial', type: 'button', onClick: () => { const det = document.getElementById('custos'); if (det) det.open = true; go('custos'); } }, icon('alert', { size: 14 }), `Estimativa parcial: ${p.faltamInformar.length} item(ns) sem valor. Completar`) : h('span', { class: 'tag tag-ok' }, 'Todos os itens com valor')),
       h('div', { class: 'fp-cards' },
         stat('Custos de instalação', eur(p.instalacao), p.reembolsavel ? `inclui ${eur(p.reembolsavel)} de caução (costuma voltar)` : 'pagos uma vez', 'luggage'),
@@ -239,7 +239,7 @@ export async function financeView() {
       return c.rota ? h('a', { class: 'btn btn-ghost btn-sm', href: `#${c.rota}` }, 'Abrir', icon('arrow', { size: 12 })) : null;
     };
     return h('section', { class: 'fp-alt', id: 'alternativas' },
-      h('div', { class: 'fp-alt-head' }, h('h2', {}, `Ainda faltam ${eur(p.deficit)} para sua meta.`), h('p', {}, 'Vamos encontrar um caminho para você.'),
+      h('div', { class: 'fp-alt-head' }, h('h2', {}, p.deficitVisto > p.falta ? `Ainda faltam ${eur(p.deficit)} para comprovar no visto.` : `Ainda faltam ${eur(p.deficit)} para sua meta.`), h('p', {}, 'Vamos encontrar um caminho para você.'),
         p.deficitVisto > p.falta ? h('p', { class: 'small muted' }, `O maior valor aqui é a comprovação do visto (${eur(p.exigenciaVisto)}).`) : null),
       h('div', { class: 'fp-alt-grid' }, p.caminhos.map((c) => h('article', { class: 'fp-alt-card card' },
         h('span', { class: 'fp-stat-ic' }, icon(c.icone || 'wand', { size: 18 })), h('strong', {}, c.titulo), h('p', { class: 'small muted' }, c.texto), action(c)))),

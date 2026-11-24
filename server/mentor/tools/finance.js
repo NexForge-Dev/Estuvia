@@ -55,13 +55,15 @@ export const calculateFinancialGap = defineTool({
     ensureFinance(ctx.user);
     const jr = pickJourney(ctx.user, journeyId || ctx.contexto.journeyId);
     const s = summary(ctx.user, jr);
-    const necessario = Math.max(s.exigenciaVisto.valor, s.orcamento.valor);
-    const out = { necessario, base: s.orcamento.valor > s.exigenciaVisto.valor ? 'orçamento estimado' : 'exigência estimada do visto', garantidos: s.garantidos, naoGarantidos: s.naoGarantidos, deficit: s.deficit, custosIncompletos: s.custosIncompletos, informouRecursos: s.informouRecursos, custosInformados: s.orcamento.custosInformados, exigenciaVisto: s.exigenciaVisto, orcamento: s.orcamento };
+    // A conta mostrada tem de fechar: necessário e diferença saem da MESMA medida (a de maior diferença).
+    const peloVisto = s.deficit ? s.deficitVisto >= s.deficitOrcamento : s.exigenciaVisto.valor >= s.orcamento.valor;
+    const necessario = peloVisto ? s.exigenciaVisto.valor : s.orcamento.valor;
+    const out = { necessario, base: peloVisto ? 'exigência estimada do visto' : 'orçamento estimado', garantidos: s.garantidos, naoGarantidos: s.naoGarantidos, deficit: s.deficit, custosIncompletos: s.custosIncompletos, informouRecursos: s.informouRecursos, custosInformados: s.orcamento.custosInformados, exigenciaVisto: s.exigenciaVisto, orcamento: s.orcamento };
     if (simularDisponivel !== undefined) {
       const cambio = ctx.user.finance?.cambio || null;
       const v = simularMoeda === 'BRL' ? (cambio ? simularDisponivel / cambio : null) : simularDisponivel;
       if (v === null) throw new ToolError('sem-cambio', 'Para simular em reais preciso da cotação do euro. Cadastre o câmbio no planejamento financeiro.');
-      out.simulacao = { valorEur: Math.round(v), deficitDepois: Math.max(0, Math.round(necessario - s.garantidos - v)), aviso: 'Simulação: nada foi gravado.' };
+      out.simulacao = { valorEur: Math.round(v), deficitDepois: Math.max(0, Math.round((s.deficit === null ? necessario - s.garantidos : s.deficit) - v)), aviso: 'Simulação: nada foi gravado.' };
     }
     if (economiaMensal) {
       const meses = s.deficit ? Math.ceil(s.deficit / economiaMensal) : 0;

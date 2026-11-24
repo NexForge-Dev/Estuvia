@@ -416,8 +416,9 @@ export function WeeklyPlanner({ initialWeek, autoOrganize = false } = {}) {
     if (!sc) return;
     const days = shownDays();
     const first = data.events.filter((e) => days.includes(e.data)).map((e) => toMin(e.inicio)).sort((a, b) => a - b)[0];
-    const target = days.includes(todayIso()) ? nowMin() - 60 : first ?? 8 * 60;
-    sc.scrollTop = Math.max(0, (clampMin(target) - START_H * 60 - 15) * PX_PER_MIN);
+    // O primeiro bloco da semana sempre aparece, mesmo que já passe do horário dele hoje.
+    const target = Math.min(first ?? Infinity, days.includes(todayIso()) ? nowMin() - 60 : Infinity);
+    sc.scrollTop = Math.max(0, (clampMin(Number.isFinite(target) ? target : 8 * 60) - START_H * 60 - 15) * PX_PER_MIN);
   }
 
   // ---------- Proposta da IA ----------
@@ -462,6 +463,7 @@ export function WeeklyPlanner({ initialWeek, autoOrganize = false } = {}) {
     try {
       const itens = proposal.proposta.map(({ prioridadeLabel, ...p }) => Object.fromEntries(Object.entries(p).filter(([, v]) => v !== undefined && v !== null)));
       data = await api.post('/planner/approve', proposal.substituir?.length ? { itens, substituir: proposal.substituir } : { itens });
+      scrolled = false; // mostra os blocos que acabaram de entrar
       toast(data.repetidos && !data.criados ? 'Esses horários já estavam na sua agenda.' : `${data.criados} atividade(s) adicionadas à sua agenda.`, 'ok');
       proposal = null;
       draw();

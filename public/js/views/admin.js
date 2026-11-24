@@ -511,7 +511,7 @@ export async function adminStudentView(id) {
           stat(e.diasAtivos, 'Dias com acesso'),
           stat(rel.jornadas.length ? `${Math.max(...rel.jornadas.map((j) => j.progresso || 0))}%` : '-', 'Progresso da jornada'),
         ),
-        h('p', { class: 'rd-footnote' }, `Cadastro em ${fmtDate(e.cadastro)} (há ${daysLabel(e.diasDesdeCadastro)}) · ${e.logins} login(s), último ${relTime(e.ultimoLogin)} · Mentor: ${e.mentor?.mensagens || 0} mensagem(ns) · Assistente: ${e.assistente?.mensagens || 0}`)),
+        h('p', { class: 'rd-footnote' }, `Cadastro em ${fmtDate(e.cadastro)} (${daysLabel(e.diasDesdeCadastro) === 'hoje' ? 'hoje' : `há ${daysLabel(e.diasDesdeCadastro)}`}) · ${e.logins ? `${e.logins} login(s), último ${relTime(e.ultimoLogin)}` : 'nenhum novo login desde o cadastro'} · Mentor: ${e.mentor?.mensagens || 0} mensagem(ns) · Assistente: ${e.assistente?.mensagens || 0}`)),
 
       panel(`Pontos de atenção (${rel.alertas.length})`, 'alert',
         rel.alertas.length ? h('ul', { class: 'adm-alerts' }, rel.alertas.map((a) => h('li', { class: `adm-alerts-${a.nivel}` }, tag(a.nivel === 'alto' ? 'Urgente' : a.nivel === 'medio' ? 'Atenção' : 'Info', TONE.alerta[a.nivel]), h('span', {}, a.texto))))

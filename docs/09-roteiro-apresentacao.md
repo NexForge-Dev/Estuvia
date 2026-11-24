@@ -1,15 +1,30 @@
-# 09 — Roteiro de apresentação (≈10 min)
+# 09 — Roteiro de apresentação (≈ 7 min)
 
-**Preparação:** `npm install && npm start`, janela anônima em `http://localhost:3000`. (Com `ANTHROPIC_API_KEY` o Mentor usa o Claude; sem ela, responde com a base verificada — apresente isso como resiliência.)
+Caminho percorrido em 24/11/2026 num navegador automatizado, com uma aluna fictícia. Os tempos de fala são estimativas.
 
-1. **Problema (30 s).** Dezenas de sites, prazos e documentos; um erro custa meses.
-2. **Cadastro + onboarding (1 min).** 6 etapas (origem, formação, idiomas, orçamento, destino, documentos) com o resumo "Seu perfil até agora" se atualizando. No destino, escolha a UGR e, em "Já sei qual mestrado quero", um mestrado do Radar. Mostre a revisão e o resultado real: rodada inicial, missões não aplicáveis, progresso reconhecido.
-3. **Início (1 min).** Hero da jornada, progresso, **alertas inteligentes**, Agenda AI, prazos, finanças.
-4. **Minhas Jornadas → Rodadas (1 min).** Cards com capa e "Acessar Rodadas"; cards de rodada com estado e %; trilha F de financiamento.
-5. **Trilha (1 min).** Zigue-zague, "Você está aqui", bloqueios por dependência, botão "Continuar minha jornada".
-6. **Conteúdo da missão (2 min).** Abra 1.2: cards → Documentos e checklist (marque objetivos) → Executar → "Concluí" → confirmação. Volte à trilha: o nó ficou verde. Abra 6.1 e 9.4 para mostrar **cards diferentes por tipo**.
-7. **Decisão externa (1 min).** Em Rodadas → Situação: "Admitido(a)". A 4.1 vira **crítica**; a Agenda sugere replanejar.
-8. **Financiamento (1 min).** Registre €3.000: aparece o déficit e os caminhos; salve uma bolsa (tarefas criadas); marque como concedida e veja o simulador mudar.
-9. **Agenda AI (1 min).** "Organizar minha semana com IA" → proposta tracejada → Aprovar → arraste um bloco.
-10. **Mentor (30 s).** "Não tenho dinheiro suficiente" → resposta com números reais e ações que exigem clique.
-11. **Fecho (30 s).** Segurança (senhas scrypt, CSRF, CSP, sem documentos no servidor), 42 testes, próximos passos (banco, catálogo verificado, notificações).
+**Preparação (na véspera):**
+- Crie uma conta de aluno de demonstração, faça o onboarding com um mestrado da UGR e conclua a Rodada 1. Não use dados de pessoas reais.
+- Em Financiamento, preencha moradia, matrícula, passagem e seguro: sem isso a tela mostra "Estimativa parcial".
+- Abra as telas uma vez antes, para o servidor já estar acordado (a primeira carga pode levar alguns segundos).
+- Deixe a interface em português: espanhol e inglês ainda estão incompletos no catálogo e no Radar.
+
+| # | Tela | O que fazer | Tempo |
+|---|---|---|---|
+| 1 | Página inicial | Só o topo: a promessa e o mini-passo jogável | 0:40 |
+| 2 | Entrar → Início | Mostrar que há **um** próximo passo | 0:20 |
+| 3 | Minha jornada | As 8 rodadas; abrir a Rodada 2 | 1:00 |
+| 4 | Missão | Marcar os itens → **Sim, fiz isso: concluir** | 0:45 |
+| 5 | Mais → Mestrados | Clicar em UGR → **Ver detalhes**: pesos da seleção e fonte | 1:00 |
+| 6 | Documentos | Carteira por etapa, o que falta | 0:30 |
+| 7 | Financiamento | Custo × comprovação do visto, separados | 0:40 |
+| 8 | Agenda | **Organizar semana** → **Aprovar** | 0:40 |
+| 9 | Mentor | "O que faço agora?" e "Quanto preciso comprovar para o visto?" | 0:40 |
+| 10 | Painel (conta admin) | Ficha de acompanhamento da aluna | 1:00 |
+
+**Pule na demonstração:** Radar (o ciclo 2027/28 ainda não foi publicado, então quase tudo aparece como "Não anunciado"), troca de idioma, aba Eventos do painel, páginas Privacidade e Termos (ainda são rascunho).
+
+**O que não afirmar:**
+- Não há vínculo com a Junta de Andalucía, o DUA ou a universidade.
+- As vagas da Fase 1 por mestrado não têm fonte pública conhecida.
+- O Mentor roda em Modo Guiado, sem modelo de linguagem, até a chave da IA ser configurada.
+- Ainda não há estudantes reais usando a plataforma (beta fechado previsto para 15/12/2026).

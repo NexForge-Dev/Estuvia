@@ -52,6 +52,8 @@ export function workItems(user, today) {
     const sigla = j.destino.universidade?.sigla || 'Jornada';
     for (const m of j.rodadas.flatMap((r) => r.missoes)) {
       if (m.opcional && m.objetivosFeitos === 0) continue;
+      // Comprar passagem só entra na semana com o visto aprovado (pesquisar e cotar continua livre em Minha viagem).
+      if (m.id === '6.3' && jr.situacao?.visto !== 'aprovado' && jr.dados?.rotaVisto !== 'espanha') continue;
       const base = { journeyId: jr.id, missaoId: m.id, jornada: sigla, categoria: CATEGORY_BY_ROUND[m.rodada] };
       if (['atencao', 'em-andamento', 'disponivel'].includes(m.status)) {
         const restante = m.objetivosTotal ? 1 - m.objetivosFeitos / m.objetivosTotal : 1;

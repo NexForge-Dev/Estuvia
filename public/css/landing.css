@@ -72,8 +72,8 @@ body.landing-mode main { max-width: none; padding: 0; }
 .lp-float p { margin: 2px 0 0; font-size: .8rem; color: var(--muted); line-height: 1.4; }
 .lp-float-icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; flex: none; background: var(--accent-soft); color: var(--accent); }
 .lp-ic-warn { background: var(--warn-soft); color: var(--warn); }
-.lp-float-mentor { right: -18px; bottom: 0; }
-.lp-float-agenda { left: -26px; top: 0; animation-delay: -3s; }
+.lp-float-mentor { right: -18px; bottom: -44px; }
+.lp-float-agenda { right: -18px; top: -34px; animation-delay: -3s; }
 @keyframes lp-float { 50% { transform: translateY(-8px); } }
 
 /* ---------- Números ---------- */

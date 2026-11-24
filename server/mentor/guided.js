@@ -128,6 +128,7 @@ const INTENTS = [
   { id: 'bolsa-concedida', test: (t) => /(ganhei|consegui|fui aprovad\w*|me (deram|concederam)).{0,20}\bbolsa\b|\bbolsa\b.{0,20}(concedida|aprovada|saiu)/.test(t), run: scholarshipGranted },
   { id: 'salvar-bolsa', test: (t) => /\b(salv\w*|acompanh\w*|quero)\b.*\bbolsa\b/.test(t) && SCHOLARSHIPS.some((s) => t.includes(normalize(s.nome)) || t.includes(normalize(s.entidade).split(' ')[0])), run: saveScholarshipIntent },
   { id: 'bolsas', test: (t) => /\b(bolsa|bolsas|beca|becas)\b/.test(t), run: scholarships },
+  { id: 'comprovar-visto', test: (t) => /\bvisto\b/.test(t) && /quanto/.test(t) && /\b(comprov\w*|demonstr\w*)/.test(t), run: visaFunds },
   { id: 'financas', test: (t) => /quanto (de )?(dinheiro )?(ainda )?(me )?(falta|preciso)|nao tenho dinheiro|dinheiro suficiente|\borcamento\b|quanto vou gastar|comprova\w* (financeira|de renda|de recursos)|meios economicos/.test(t) && !/\b(aluguel|caucao|moradia)\b/.test(t), run: money },
   // Radar
   { id: 'avise-me', test: (t) => /\b(avis\w*|alert\w*|notifi\w*|me lembr\w*)\b.*\b(quando|abr\w*|abertura|inscri\w*|candidat\w*|calendario|datas?)\b/.test(t), run: notifyMe },
@@ -564,6 +565,20 @@ async function money(u) {
     cartoes: [financeCard(d, { recursos: s.ok ? s.dados.recursos : [], caminhos: s.ok ? s.dados.caminhos.slice(0, 3) : [] })],
     sugestoes: d.deficit ? [msg('Procure bolsas que aceitam brasileiros.'), msg('Como consigo economizar €100 por mês?', 'Plano de economia'), msg('Quais são meus maiores gastos?')] : [rota('/financiamento', 'Abrir planejamento')],
     fontes: [d.exigenciaVisto?.fonte && { titulo: 'Regra de meios econômicos (IPREM)', url: null, orgao: d.exigenciaVisto.fonte }],
+  });
+}
+
+async function visaFunds(u) {
+  const r = await u.use('calculate_financial_gap', {});
+  if (!r.ok) return errorReply(u, 'comprovar-visto', r.erro);
+  const v = r.dados.exigenciaVisto;
+  const s = await u.use('get_financial_summary', {});
+  const meses = s.ok ? s.dados.meses : null;
+  return reply(u, 'comprovar-visto', {
+    texto: `A referência para o visto é **${eur(v.valor)}**: ${eur(v.ipremMensal)} por mês (100% do IPREM de ${v.ipremAno})${meses ? ` × ${meses} meses` : ''}. O dinheiro reservado para pagar a matrícula não conta.${r.dados.informouRecursos ? `\n\nVocê registrou **${eur(r.dados.garantidos)} garantidos**${s.ok && s.dados.deficitVisto ? `; para essa referência faltam **${eur(s.dados.deficitVisto)}**` : ', o que cobre essa referência'}.` : ''}\n\nQuem decide o valor e os comprovantes aceitos é o consulado do seu estado.`,
+    cartoes: [],
+    sugestoes: [rota('/financiamento', 'Abrir planejamento'), msg('O que preciso preparar para o visto?')],
+    fontes: [v.fonte && { titulo: 'Regra de meios econômicos (IPREM)', url: null, orgao: v.fonte }],
   });
 }
 
@@ -1011,7 +1026,8 @@ async function memory(u) {
 }
 
 async function glossary(u) {
-  const g = glossaryTerm(u.raw);
+  // "O que é a Fase 1 do DUA?" pede a fase, não a definição de DUA.
+  const g = /\bfase\s*[123]\b/.test(u.t) ? null : glossaryTerm(u.raw);
   if (g) return reply(u, 'glossario', { texto: `**${g.termo}:** ${g.texto}`, sugestoes: [msg('O que faço agora?')] });
   return fallback(u);
 }
@@ -1095,7 +1111,7 @@ async function fallback(u) {
     const c = publicChunk(k[0].chunk);
     return reply(u, 'base', {
       texto: `${c.texto}\n\n_${c.naturezaLabel}${c.fonte ? ` · ${c.fonte.orgao}` : ''}${c.verificadoEm ? ` · verificado em ${fmtDate(c.verificadoEm)}` : ''}._`,
-      cartoes: k.length > 1 ? [{ tipo: 'fontes', trechos: k.map((x) => publicChunk(x.chunk)) }] : [],
+      cartoes: k.length > 1 ? [{ tipo: 'fontes', trechos: k.slice(1).map((x) => publicChunk(x.chunk)) }] : [],
       fontes: [c.fonte],
       sugestoes: [msg('Explique mais simples.', 'Explicar mais simples'), msg('O que faço agora?')],
     });

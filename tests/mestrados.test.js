@@ -128,7 +128,7 @@ test('filtros de espanhol e de graduação nunca presumem o que a ficha não diz
 
 test('textos de idioma e graduação', () => {
   assert.equal(spanishText(null), 'Ficha do DUA ainda não conferida');
-  assert.equal(spanishText({ exige: false }), 'Não exige espanhol');
+  assert.equal(spanishText({ exige: false }), 'Ficha do DUA sem exigência de espanhol');
   assert.equal(spanishText({ exige: true, nivel: 'B2' }), 'Espanhol B2');
   assert.equal(degreeText({ tipo: 'lista', preferencia: 'media' }).tom, 'ok');
   assert.equal(degreeText({ tipo: 'fora' }).tom, 'bad');

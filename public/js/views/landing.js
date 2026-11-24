@@ -231,14 +231,16 @@ function quiz(rounds, facts, logged) {
     const Q = QUESTIONS[i];
     const progress = h('span', { class: 'bar-fill' });
     progress.style.width = `${(i / QUESTIONS.length) * 100}%`;
-    box.append(
+    // append nativo escreve "null" na tela quando recebe null.
+    box.append(...[
       h('div', { class: 'lp-quiz-top' }, h('span', {}, `Pergunta ${i + 1} de ${QUESTIONS.length}`), h('span', { class: 'bar' }, progress)),
       h('h3', {}, Q.q),
       h('div', { class: 'lp-quiz-opts' }, Q.opts.map(([v, label]) => h('button', {
         type: 'button', class: `lp-opt${answers[Q.id] === v ? ' is-on' : ''}`,
         onClick: () => { answers[Q.id] = v; i += 1; draw(); },
       }, h('span', {}, label), icon('arrow', { size: 14 })))),
-      i > 0 ? h('button', { type: 'button', class: 'lp-quiz-back', onClick: () => { i -= 1; draw(); } }, icon('back', { size: 14 }), 'Voltar') : null);
+      i > 0 ? h('button', { type: 'button', class: 'lp-quiz-back', onClick: () => { i -= 1; draw(); } }, icon('back', { size: 14 }), 'Voltar') : null,
+    ].filter(Boolean));
   };
 
   const result = () => {

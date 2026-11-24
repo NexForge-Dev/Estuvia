@@ -81,7 +81,7 @@ export function insights(user, { now = new Date(), limit = 6 } = {}) {
 
     // Documentos pendentes da rodada de documentação, quando ela está em andamento.
     if (st.permissoes.documentos !== false && [2, 3].includes(j.rodadaAtual)) {
-      const pend = requiredDocuments(user, jr, 'dua').filter((d) => d.pendente && d.exigencia === 'requerido');
+      const pend = requiredDocuments(user, jr, 'dua').filter((d) => d.pendente && d.exigencia === 'requerido' && d.missoes.some((m) => /^[123]\./.test(m)));
       if (pend.length) add({ id: sig('docs', jr.id, pend.map((d) => d.id).join(',')), tipo: 'documentos', permissao: 'documentos', prioridade: 'media', titulo: `${pend.length} documento(s) da candidatura pendente(s)`, texto: `Ainda faltam: ${pend.slice(0, 3).map((d) => d.nome).join(', ')}${pend.length > 3 ? '…' : ''}.`, acao: say('Quais documentos ainda faltam?', 'Ver pendências'), origem: 'regra:documentos-pendentes', base: { journeyId: jr.id } });
     }
 

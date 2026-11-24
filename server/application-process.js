@@ -117,7 +117,7 @@ export function applicationProcess(program, { calendario = { windows: [], events
   const OFERTA = {
     'nao-dua': 'Este máster não participa das fases do DUA: tem procedimento próprio.',
     'canal-nao-confirmado': 'O canal de candidatura deste máster não está confirmado no DUA.',
-    'nao-confirmado': 'Cada universidade decide em quais másteres reserva vagas para a Fase 1, e nenhuma fonte pública lista isso por máster (o catálogo do DUA devolve a mesma lista em qualquer fase). Confirme no portal do DUA ao montar a solicitação da Fase 1, ou com a universidade.',
+    'nao-confirmado': 'Cada universidade decide em quais másteres reserva vagas para a Fase 1, e não encontramos fonte pública que liste isso por máster (o catálogo do DUA devolve a mesma lista em qualquer fase). Confirme no portal do DUA ao montar a solicitação da Fase 1, ou com a universidade.',
     geral: 'Fase ordinária do procedimento, aberta a estudantes espanhóis e estrangeiros (O2 art. 3).',
     'se-sobrar': 'Só há vagas se sobrarem depois da Fase 2 (O2 art. 3).',
   };

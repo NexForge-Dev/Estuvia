@@ -314,6 +314,16 @@ test('finanças: sem recursos pergunta; "tenho €2.000" simula sem gravar; apoi
   assert.equal(card.garantidos, 2000, 'só o disponível conta');
   assert.equal(card.naoGarantidos, 3000);
   assert.equal(card.deficit, Math.max(0, card.necessario - 2000));
+  // Mesmo quando o orçamento é maior que a exigência do visto, a conta mostrada fecha (necessário − garantidos = diferença).
+  const antes = structuredClone(users.findById(uid).finance);
+  await users.update(uid, (u) => { u.finance.itens = { ...u.finance.itens, moradia: { valor: 300, moeda: 'EUR', status: 'estimado' }, matricula: { valor: 2500, moeda: 'EUR', status: 'pago' } }; u.finance.recursos[0].valor = 5200; });
+  const h = (await say('Quanto dinheiro ainda falta?')).data.cartoes.find((c) => c.tipo === 'financas');
+  assert.equal(h.deficit, Math.max(0, h.necessario - h.garantidos), JSON.stringify(h));
+  await users.update(uid, (u) => { u.finance = antes; });
+  const v = await say('Quanto preciso comprovar para o visto?');
+  assert.equal(v.data.intencao, 'comprovar-visto');
+  assert.match(v.data.texto, /7\.200/);
+  assert.match((await say('O que é a Fase 1 do DUA?')).data.texto, /[Ff]ase 1/);
   const e = await say('Como consigo economizar €100 por mês?');
   assert.equal(e.data.intencao, 'economizar');
 });
