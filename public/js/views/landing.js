@@ -98,7 +98,7 @@ function hero(primary, logged) {
       h('div', { class: 'lp-hero-copy' },
         h('span', { class: 'lp-pill' }, 'Mestrado oficial na Espanha, começando por Granada'),
         h('h1', {}, 'Seu mestrado na Espanha, um passo de cada vez.'),
-        h('p', { class: 'lp-lead' }, 'Escolher o curso, se candidatar no DUA, juntar o dinheiro, tirar o visto, achar onde morar e se regularizar na chegada. A Estuvia põe tudo isso numa lista de passos, com os prazos oficiais e os documentos de cada um.'),
+        h('p', { class: 'lp-lead' }, 'Escolher o curso, se candidatar no DUA, juntar o dinheiro, tirar o visto, achar onde morar e se regularizar na chegada. A Estuvia põe tudo isso numa lista de passos, com os documentos de cada um e os prazos oficiais, assim que são publicados.'),
         h('div', { class: 'lp-ctas' }, primary(),
           logged ? null
             : h('a', { href: '#diagnostico', class: 'btn btn-ghost btn-lg', onClick: scrollTo('diagnostico') }, icon('target', { size: 16 }), 'Descobrir onde estou')),
@@ -520,7 +520,7 @@ function footer(appName, logged) {
     h('div', { class: 'lp-wrap lp-footer-inner' },
       h('div', {},
         h('a', { class: 'brand', href: '#/' }, h('span', { class: 'brand-mark', 'aria-hidden': 'true' }), h('span', {}, appName)),
-        h('p', {}, 'A Estuvia orienta e organiza: candidatura, matrícula, visto e demais pedidos oficiais são feitos nos sistemas competentes. Confirme sempre nas fontes oficiais do seu ciclo.')),
+        h('p', {}, 'A Estuvia é um projeto independente, sem vínculo com a Junta de Andalucía, o Distrito Único Andaluz ou as universidades. Ela orienta e organiza: candidatura, matrícula, visto e demais pedidos oficiais são feitos nos sistemas competentes. Confirme sempre nas fontes oficiais do seu ciclo.')),
       h('nav', { class: 'lp-footer-links', 'aria-label': 'Links do rodapé' },
         logged ? h('a', { href: '#/fontes' }, 'Central de fontes') : null, // a central exige login
         logged ? null : [

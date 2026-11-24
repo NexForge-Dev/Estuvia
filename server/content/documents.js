@@ -99,7 +99,7 @@ const LEGACY = [
     etapa: 'estadia', icone: 'euro', descricao: 'O comprovante de pagamento da taxa do cartão de estrangeiro.', acao: 'Pagar e salvar o comprovante', prepara: '8.5',
     comoObter: ['Confira a taxa na fonte oficial.', 'Pague e leve o comprovante ao atendimento.'] },
   { id: 'tie', nome: 'TIE (cartão de estrangeiro)', finalidade: 'estadia', exigencia: 'requerido', fonte: 'O6', dica: 'Retire o cartão quando ele for emitido.',
-    etapa: 'estadia', icone: 'user', descricao: 'O cartão que identifica você como estrangeiro residente na Espanha.', acao: 'Retirar minha TIE', prepara: '8.8',
+    etapa: 'estadia', icone: 'user', descricao: 'O cartão físico que identifica você como estrangeiro com autorização de estância por estudos na Espanha.', acao: 'Retirar minha TIE', prepara: '8.8',
     comoObter: ['Acompanhe o aviso de emissão.', 'Retire o cartão pessoalmente no local indicado.'] },
 ];
 

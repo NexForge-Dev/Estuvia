@@ -1,13 +1,13 @@
 // Glossário em linguagem simples: quem nunca passou pelo processo não precisa pesquisar termos.
 // As definições explicam o sentido geral; a regra exata de cada caso continua na fonte oficial.
 export const GLOSSARY = [
-  { termo: 'DUA', re: /\bDUA\b|Distrito Único Andaluz/i, texto: 'Distrito Único Andaluz: o site único onde você se candidata aos mestrados das universidades públicas da Andaluzia.' },
+  { termo: 'DUA', re: /\bDUA\b|Distrito Único Andaluz/i, texto: 'Distrito Único Andaluz: o sistema de admissão comum das universidades públicas da Andaluzia. A candidatura aos mestrados é feita numa só solicitação, no portal dele.' },
   { termo: 'Máster oficial', re: /m[aá]ster (universitario|oficial)/i, texto: 'Mestrado reconhecido pelo governo espanhol (diferente de um "título propio", que é um curso da própria universidade).' },
   { termo: 'Adjudicação', re: /adjudica/i, texto: 'É a divulgação do resultado: em cada lista você aparece como admitido, em lista de espera ou não admitido.' },
   { termo: 'Lista de espera', re: /lista de espera/i, texto: 'Você ainda não tem a vaga, mas pode ser chamado se alguém desistir. É preciso acompanhar as próximas listas.' },
   { termo: 'Matrícula', re: /matr[ií]cula/i, texto: 'É o passo que garante a sua vaga de verdade, normalmente com pagamento de taxas. Ser admitido não é o mesmo que estar matriculado.' },
   { termo: 'Homologação', re: /homologa/i, texto: 'Reconhecimento oficial do diploma estrangeiro. Para se candidatar a mestrado oficial, normalmente não é preciso fazer antes.' },
-  { termo: 'Apostila de Haia', re: /apostil/i, texto: 'Um selo oficial que valida um documento brasileiro no exterior. Só faça quando a lista oficial pedir.' },
+  { termo: 'Apostila de Haia', re: /apostil/i, texto: 'Um selo oficial que valida um documento brasileiro no exterior. Na candidatura ao DUA não é pedida; a universidade pode exigi-la na matrícula (a UGR exige no diploma), e é feita no Brasil: providencie antes de viajar.' },
   { termo: 'Tradução juramentada', re: /tradu[cç][aã]o (juramentada|oficial)/i, texto: 'Tradução feita por tradutor oficial. Só é necessária quando a lista oficial pedir.' },
   { termo: 'Consulado', re: /consulad|consular/i, texto: 'Escritório do governo da Espanha no Brasil. É lá que você pede o visto. Cada consulado atende alguns estados.' },
   { termo: 'Visto de estudos', re: /visto/i, texto: 'Autorização para estudar na Espanha. Em regra, você pede antes de viajar, no consulado que atende o seu estado; quem já está na Espanha pode pedir lá a autorização de estância (Missão 5.10).' },

@@ -57,9 +57,9 @@ const TRANSLATIONS = {
     'Planifica, organiza y ejecuta tu trayectoria para estudiar un máster en España: misiones, plazos, documentos, finanzas, vivienda y viaje.',
     "Plan, organise and execute your journey to study a master's in Spain: missions, deadlines, documents, finances, housing and travel.",
   ],
-  'A Estuvia orienta e organiza: candidatura, matrícula, visto e demais pedidos oficiais são feitos nos sistemas competentes. Confirme sempre nas fontes oficiais do seu ciclo.': [
-    'Estuvia orienta y organiza: la solicitud, la matrícula, el visado y demás trámites oficiales se realizan en los sistemas competentes. Confirma siempre en las fuentes oficiales de tu ciclo.',
-    'Estuvia guides and organizes: applications, enrolment, visas and other official requests are made in the competent systems. Always confirm in the official sources for your cycle.',
+  'A Estuvia é um projeto independente, sem vínculo com a Junta de Andalucía, o Distrito Único Andaluz ou as universidades. Ela orienta e organiza: candidatura, matrícula, visto e demais pedidos oficiais são feitos nos sistemas competentes. Confirme sempre nas fontes oficiais do seu ciclo.': [
+    'Estuvia es un proyecto independiente, sin vínculo con la Junta de Andalucía, el Distrito Único Andaluz ni las universidades. Orienta y organiza: la solicitud, la matrícula, el visado y demás trámites oficiales se realizan en los sistemas competentes. Confirma siempre en las fuentes oficiales de tu ciclo.',
+    'Estuvia is an independent project, with no affiliation to the Junta de Andalucía, the Distrito Único Andaluz or the universities. It guides and organizes: applications, enrolment, visas and other official requests are made in the competent systems. Always confirm in the official sources for your cycle.',
   ],
   'Central de fontes': ['Central de fuentes', 'Source hub'],
 
@@ -312,9 +312,9 @@ const TRANSLATIONS = {
   'Seções da página': ['Secciones de la página', 'Page sections'],
   'Mestrado oficial na Espanha, começando por Granada': ['Máster oficial en España, empezando por Granada', 'Official master\'s in Spain, starting with Granada'],
   'Seu mestrado na Espanha, um passo de cada vez.': ['Tu máster en España, un paso a la vez.', 'Your master\'s in Spain, one step at a time.'],
-  'Escolher o curso, se candidatar no DUA, juntar o dinheiro, tirar o visto, achar onde morar e se regularizar na chegada. A Estuvia põe tudo isso numa lista de passos, com os prazos oficiais e os documentos de cada um.': [
-    'Elegir el curso, solicitar en el DUA, reunir el dinero, sacar el visado, encontrar dónde vivir y regularizarte a la llegada. Estuvia pone todo eso en una lista de pasos, con los plazos oficiales y los documentos de cada uno.',
-    'Choosing the course, applying to the DUA, saving the money, getting the visa, finding a place to live and registering on arrival. Estuvia puts all of that into a list of steps, with the official deadlines and documents for each one.',
+  'Escolher o curso, se candidatar no DUA, juntar o dinheiro, tirar o visto, achar onde morar e se regularizar na chegada. A Estuvia põe tudo isso numa lista de passos, com os documentos de cada um e os prazos oficiais, assim que são publicados.': [
+    'Elegir el curso, solicitar en el DUA, reunir el dinero, sacar el visado, encontrar dónde vivir y regularizarte a la llegada. Estuvia pone todo eso en una lista de pasos, con los documentos de cada uno y los plazos oficiales en cuanto se publican.',
+    'Choosing the course, applying to the DUA, saving the money, getting the visa, finding a place to live and registering on arrival. Estuvia puts all of that into a list of steps, with the documents for each one and the official deadlines as soon as they are published.',
   ],
   'Começar minha jornada': ['Empezar mi trayectoria', 'Start my journey'],
   'Ir para o meu painel': ['Ir a mi panel', 'Go to my dashboard'],

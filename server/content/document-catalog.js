@@ -170,7 +170,7 @@ T('tcc-info', 'academicos', 'Comprovação das informações do TCC', { icone: '
   oque: 'Declaração ou documento com título, nota e orientador do seu TCC.', para: 'Quando o programa considera o trabalho de conclusão na avaliação.' });
 T('equivalencia-nota', 'academicos', 'Declaração de equivalência de nota média ao sistema espanhol', { icone: 'scale', apostila: 'nao', traducao: 'nao', fontes: ['O31', 'O2'],
   oque: 'Declaração (DENM) que converte a média do seu diploma estrangeiro para a escala espanhola (0 a 10). Você mesmo a gera, gratuitamente, num conversor oficial; é uma declaração por titulação.',
-  para: 'No DUA (Fases 2 e 3) é opcional: anexada com a declaração responsável assinada, ela é usada no lugar da fórmula Ce = 5 + 5 × (Co − Cm) / (CM − Cm) aplicada com a escala do seu histórico (O2 art. 12.2). Compare os dois resultados antes de decidir.',
+  para: 'No DUA é opcional, nas três fases: anexada com a declaração responsável assinada, ela é usada no lugar da fórmula Ce = 5 + 5 × (Co − Cm) / (CM − Cm) aplicada com a escala do seu histórico (O1 art. 7; O2 art. 12.2). Compare os dois resultados antes de decidir.',
   onde: 'No site do Ministerio de Ciencia, Innovación y Universidades (substitui o antigo procedimento da ANECA), com o histórico e a escala de notas em mãos. Dúvidas: notamedia.uni@ciencia.gob.es.' });
 T('outros-diplomas', 'academicos', 'Diplomas de outras graduações', { icone: 'cap', multiplos: true,
   oque: 'Diplomas de outros cursos superiores que você concluiu.', para: 'Quando você quer que outra formação seja considerada.' });
@@ -472,7 +472,7 @@ T('certificados-profissionais', 'trabalho', 'Diplomas e certificados profissiona
 T('reconhecimento-profissional', 'trabalho', 'Reconhecimento profissional (profissões regulamentadas)', { icone: 'shield',
   oque: 'Reconhecimento para exercer profissões regulamentadas na Espanha.', para: 'Só para profissões regulamentadas.' });
 T('autonomo-docs', 'trabalho', 'Documentação para trabalho por conta própria', { icone: 'edit',
-  oque: 'Registros para trabalhar como autônomo.', para: 'Só se for trabalhar por conta própria (confira se a sua autorização permite).' });
+  oque: 'Registros para trabalhar como autônomo.', para: 'Só se for trabalhar por conta própria: a autorização de estudos já permite, se for compatível com as aulas e até 30 horas por semana (RD 1155/2024, art. 57).' });
 T('fiscal-docs', 'trabalho', 'Documentação fiscal pertinente', { icone: 'file',
   oque: 'Documentos de impostos ligados ao trabalho.', para: 'Cumprir obrigações fiscais.' });
 

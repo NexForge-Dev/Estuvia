@@ -6,7 +6,7 @@
 // Fontes conferidas em 13/11/2026 (texto publicado no BOJA, artigos citados literalmente):
 //   O1 Acuerdo de 12 de diciembre de 2025 (BOJA 245, 22/12/2025; Resolución de 15/12/2025): Fase 1, só estrangeiros.
 //   O2 Acuerdo de 20 de abril de 2026 (BOJA 84, 05/05/2026; Resolución de 28/04/2026): Fases 2 e 3.
-// Ciclo: estes acordos regem o curso 2026/27. Os do curso 2027/28 ainda não foram publicados (13/11/2026):
+// Ciclo: estes acordos regem o curso 2026/27. Os do curso 2027/28 ainda não foram publicados (24/11/2026):
 // para jornadas de outro ciclo o processo é mostrado como referência, com pendência explícita.
 
 export const PROCEDURE_REVIEWED = '2026-11-13';
@@ -39,7 +39,7 @@ export const DUA_MASTERES = {
     {
       fase: 2,
       publico: 'todos',
-      quem: r('Quem cumpre os requisitos 1 a 3 do art. 2 (título concluído: espanhol, de país do EEES ou de fora do EEES, como o brasileiro), além de quem ficou em lista de espera na Fase 1 e confirmou que deseja continuar. As vagas que sobram da Fase 1 se somam a esta fase.', 'O2', 'arts. 2 e 3'),
+      quem: r('Quem cumpre os requisitos 1 a 3 do art. 2 (título concluído: espanhol, de país do EEES ou de fora do EEES, como o brasileiro), além de quem ficou em lista de espera na Fase 1 e confirmou que deseja continuar, e de quem pediu na Fase 1 e a coordenação do máster decidiu adjudicar na Fase 2. As vagas que sobram da Fase 1 se somam a esta fase.', 'O2', 'arts. 2 e 3'),
       titulo: r('Os direitos de expedição do título devem estar pagos até a data-limite da fase (4 de setembro de 2026). Na mesma data vence a acreditação de idioma do Máster em Profesorado.', 'O2', 'Anexo I', { eventoTipo: 'pagamento-titulo' }),
       pagamento: r('A matrícula segue os preços públicos e os prazos de pagamento da universidade. O acordo não fixa pagamento a cuenta nesta fase.', 'O2', 'art. 14.7', { status: 'conforme-universidade' }),
     },
@@ -55,11 +55,11 @@ export const DUA_MASTERES = {
   // Título estrangeiro não homologado (caso do estudante brasileiro). docId = item da Carteira (content/documents.js).
   documentos: [
     { docId: 'passaporte', ...r('Passaporte (ou NIE / certificado de residência).', 'O1', 'art. 4; O2 Tabla 3'), obrigatorio: true },
-    { docId: 'diploma', ...r('Diploma, ou certificação supletória que mostre a data de pagamento dos direitos de expedição do título.', 'O1', 'art. 4; O2 Tabla 3'), obrigatorio: true },
+    { docId: 'diploma', ...r('Diploma, ou certificação supletória que mostre a data de pagamento dos direitos de expedição do título. Na Fase 1 vale também a certificação de que você cumpre todos os requisitos para obter o título (O1 art. 4); a tabela das Fases 2 e 3 só cita o pagamento (O2 Tabla 3).', 'O1', 'art. 4; O2 Tabla 3'), obrigatorio: true },
     { docId: 'historico', ...r('Histórico acadêmico oficial com notas, carga (créditos ou meses) e NOTA MÉDIA final. Se não estiver como exigido, considera-se nota 5.', 'O1', 'art. 4; O2 Tabla 3'), obrigatorio: true },
     { docId: 'escala-notas', ...r('Certificado oficial da universidade ou órgão do país de origem com a nota mínima aprovatória e a máxima possível. Para título de fora do EEES, faltar o histórico OU este certificado faz valer a nota mínima aprovatória.', 'O2', 'Tabla 3 (requisito 3); O1 arts. 4 e 7'), obrigatorio: false, consequencia: 'Sem ele, a sua média vira a nota mínima aprovatória (5) na conversão.' },
     { docId: 'acesso-pos', ...r('Declaração do órgão oficial do país de origem de que o título permite cursar pós-graduação, conforme o modelo do Anexo II (disponível no portal de solicitações).', 'O1', 'art. 4; O2 Tabla 3'), obrigatorio: true },
-    { docId: 'equivalencia-nota', ...r('Fases 2 e 3: opcionalmente, a "Declaración de equivalencia de notas medias" preenchida no site do Ministério, com a declaração responsável assinada. Sem ela, a média é convertida pela fórmula Ce = 5 + 5 × (Co − Cm) / (CM − Cm).', 'O2', 'art. 12.2'), obrigatorio: false, fases: [2, 3], consequencia: 'Não é obrigatória: sem ela vale a conversão pela fórmula oficial.' },
+    { docId: 'equivalencia-nota', ...r('Opcional nas três fases: a "Declaración de equivalencia de notas medias" preenchida no site do Ministério, com a declaração responsável assinada. Sem ela, a média é convertida pela fórmula Ce = 5 + 5 × (Co − Cm) / (CM − Cm).', 'O1', 'art. 7; O2 art. 12.2'), obrigatorio: false, fases: [1, 2, 3], consequencia: 'Não é obrigatória: sem ela vale a conversão pela fórmula oficial.' },
     { docId: 'especificos', ...r('Documentação específica que o máster exigir (publicada desde o início do prazo), anexada eletronicamente dentro do prazo da fase.', 'O2', 'art. 9; O1 art. 4.b'), obrigatorio: 'conforme-master' },
   ],
 
@@ -70,7 +70,7 @@ export const DUA_MASTERES = {
     { id: 'ratificar', ...r('Após CADA lista de adjudicação é obrigatório agir no prazo: matricular-se, reservar a vaga e/ou confirmar a permanência na lista de espera. Reservas e confirmações precisam ser ratificadas em cada nova adjudicação.', 'O1', 'art. 6; O2 art. 14.7', { original: 'las reservas y/o confirmaciones deberán ratificarse en cada nueva adjudicación' }) },
     { id: 'decai', ...r('Quem não age no prazo perde o direito no processo daquela fase e a vaga passa ao seguinte da lista.', 'O1', 'art. 6; O2 art. 14.7', { original: 'decaerá en su derecho en el proceso de admisión' }) },
     { id: 'opcoes-apos-lista', ...r('Admitido na 1ª preferência: matrícula. Admitido em outra opção: matricular-se (renunciando às listas de maior preferência) ou reservar a vaga e continuar nas listas preferidas. Sem vaga: confirmar que deseja continuar nas listas. Admitido provisoriamente por documentação pendente: aguardar a próxima adjudicação, confirmando participação.', 'O2', 'art. 14.7; O1 art. 6') },
-    { id: 'resultas', ...r('Nas listas de resultas (Fases 2 e 3) a matrícula é obrigatória, sem possibilidade de reserva.', 'O2', 'art. 4.b') },
+    { id: 'resultas', ...r('Na última adjudicação da Fase 1 (a 3ª) e das Fases 2 e 3 (a 2ª), e nas listas de resultas, quem recebe vaga deve matricular-se: não há reserva. Para continuar concorrendo a opções preferidas, confirme também a lista de espera.', 'O2', 'art. 4.b e Anexo I; O1 art. 6.6 e Anexo I') },
     { id: 'alegacoes', ...r('Depois de cada lista há prazo de alegações/revisão, pedido no portal. Não se aceitam revisões de listas anteriores da mesma fase. Quem tem vaga provisória e quer reordenar preferências usa a alegação.', 'O1', 'arts. 6 e 10; O2 arts. 14.2 e 17') },
     { id: 'mudar-pedidos', ...r('Após cada lista é possível acrescentar másteres (Fase 1: sem lista de espera ou com lista menor que 30% das vagas; total sempre até 6), mudar a ordem ou desistir de algum.', 'O1', 'art. 6; O2 art. 14.2') },
     { id: 'admissao-nao-valida', ...r('Ser admitido não confirma os requisitos: a matrícula é provisória até a universidade conferir a documentação. Se faltar um requisito, admissão e matrícula são anuladas.', 'O1', 'art. 11; O2 art. 16') },

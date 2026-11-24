@@ -2,7 +2,7 @@
 // empresa e o texto inteiro precisa de revisão jurídica antes do lançamento comercial.
 import { h } from '../ui.js';
 
-const UPDATED = '29/10/2026'; // mude junto com LEGAL_VERSION em server/content/legal.js
+const UPDATED = '24/11/2026'; // mude junto com LEGAL_VERSION em server/content/legal.js
 
 function legalPage(title, intro, sections) {
   return h('article', { class: 'auth card legal stack' },
@@ -51,7 +51,7 @@ export function privacyView() {
       ['8. Seus direitos',
         'Você pode confirmar o tratamento, acessar, corrigir, exportar (Perfil → Baixar meus dados), excluir a conta (Perfil → Excluir minha conta e meus dados), revogar o consentimento dos documentos (Documentos → Privacidade, o que apaga os arquivos) e reclamar à ANPD. Para outros pedidos, escreva para [PREENCHER: e-mail de privacidade]; respondemos em até 15 dias.'],
       ['9. Cookies',
-        'Usamos apenas um cookie essencial de sessão (httpOnly), necessário para manter você conectado. Não usamos cookies de publicidade ou de terceiros.'],
+        'Usamos só cookies essenciais (httpOnly): o de sessão, que mantém você conectado, e o de dispositivo conhecido (180 dias), que evita que tentativas de terceiros bloqueiem o seu acesso. Não usamos cookies de publicidade ou de terceiros.'],
       ['10. Segurança',
         'Senhas com hash, conexão HTTPS, arquivos cifrados em repouso, controle de acesso por papel e registros de auditoria. Nenhum sistema é 100% seguro; em caso de incidente relevante, avisaremos você e a ANPD conforme a lei.'],
       ['11. Menores de idade',
@@ -69,7 +69,7 @@ export function termsView() {
         'A Estuvia é oferecida por [PREENCHER: razão social], CNPJ [PREENCHER], [PREENCHER: endereço]. Contato: [PREENCHER: e-mail de suporte].'],
       ['2. O que a plataforma faz (e o que não faz)',
         'A Estuvia orienta e organiza sua jornada de mobilidade acadêmica: missões, prazos, documentos, finanças, moradia, viagem e um Mentor. Candidaturas, matrícula, visto e demais pedidos oficiais são feitos por você nos sistemas competentes (universidades, Distrito Único Andaluz, consulados). Não garantimos admissão, visto, bolsa ou qualquer resultado oficial.',
-        'Informações oficiais (prazos, valores como o IPREM, requisitos) podem mudar. Confirme sempre na fonte oficial indicada. Programas marcados como "demonstração" são exemplos.'],
+        'Informações oficiais (prazos, valores como o IPREM, requisitos) podem mudar. Confirme sempre na fonte oficial indicada.'],
       ['3. Sua conta',
         'Você é responsável pelas informações que cadastra e pela guarda da sua senha. Avise-nos se suspeitar de uso indevido. Podemos suspender contas que violem estes termos.'],
       ['4. Uso aceitável',

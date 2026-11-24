@@ -56,7 +56,7 @@ export function ApplicationProcess(p) {
       }))),
 
     section('Documentos da solicitação (título estrangeiro não homologado)',
-      h('ul', { class: 'mc-list' }, p.documentos.map((d) => h('li', {}, chip(d.origem), ' ', d.texto, d.obrigatorio === false ? h('em', { class: 'small muted' }, ` Não anexar: ${d.consequencia || 'há consequência na avaliação.'}`) : null, ref(d)))),
+      h('ul', { class: 'mc-list' }, p.documentos.map((d) => h('li', {}, chip(d.origem), ' ', d.texto, d.obrigatorio === false ? h('em', { class: 'small muted' }, ` Se não anexar: ${d.consequencia || 'há consequência na avaliação.'}`) : null, ref(d)))),
       h('p', { class: 'small muted' }, p.idiomaDocumentos.texto, ref(p.idiomaDocumentos))),
 
     section('Requisitos deste mestrado (ficha do DUA)',

@@ -726,7 +726,7 @@ async function howToApply(u) {
         : `Para ${o.anoAcademico}, ainda não há calendário oficial confirmado do seu mestrado.`
     : 'Primeiro, vamos confirmar se o prazo do seu mestrado está aberto.';
   return reply(u, 'como-inscrever', {
-    texto: `Você vai usar o portal do **Distrito Único Andaluz (DUA)**, é o site único onde se faz a candidatura aos mestrados das universidades públicas da Andaluzia.\n\n${situacao}\n\n**Próximo passo:** ${u.jr ? 'Missão 3.1, acessar o portal do DUA.' : 'escolher o mestrado e criar sua jornada.'}`,
+    texto: `Você vai usar o portal do **Distrito Único Andaluz (DUA)**, o sistema de admissão comum onde se faz, numa só solicitação, a candidatura aos mestrados das universidades públicas da Andaluzia.\n\n${situacao}\n\n**Próximo passo:** ${u.jr ? 'Missão 3.1, acessar o portal do DUA.' : 'escolher o mestrado e criar sua jornada.'}`,
     cartoes: o ? [{ tipo: 'oportunidades', itens: [o] }] : [],
     sugestoes: [u.jr ? rota(`/j/${u.jr.id}/r/3`, 'Abrir a Rodada 3') : rota('/jornadas/nova', 'Criar minha jornada'), o && !o.acompanhando && !o.abertura && msg('Avise-me quando abrirem as candidaturas do meu mestrado', 'Avise-me quando abrir')],
   });
