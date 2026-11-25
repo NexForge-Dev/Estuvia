@@ -21,7 +21,9 @@ Runbook curto para colocar a Estuvia no ar. A arquitetura de produção é **Ver
 | `JWT_SECRET`, `DOCUMENTS_KEY` | ≥ 32 caracteres, só de produção. **Sem a `DOCUMENTS_KEY` os documentos ficam ilegíveis:** guarde em dois lugares seguros |
 | `ALLOWED_ORIGIN` | URL pública (ex.: `https://app.estuvia.com`): proteção CSRF e links de recuperação de senha |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Conta do painel `#/admin` (senha ≥ 12, letras e números) |
-| `RESEND_API_KEY`, `EMAIL_FROM` | Recuperação de senha. Sem elas, "Esqueci a senha" responde 503 |
+| `INVITE_CODES` | Beta fechado: só se cadastra quem tem um dos códigos (vírgula entre eles, 8+ caracteres). Vazio = cadastro aberto. Link: `https://<domínio>/#/cadastro/<código>` |
+| `SUPPORT_EMAIL` | Contato mostrado aos estudantes |
+| `RESEND_API_KEY`, `EMAIL_FROM` | Recuperação de senha. Sem elas, "Esqueci a senha" responde 503 (no painel: aluno → **Gerar link de nova senha**) |
 | `MENTOR_PROVIDER=anthropic`, `ANTHROPIC_API_KEY`, `AI_DAILY_TOKENS_PER_USER` | Opcional: Mentor com IA. Sem elas, Modo Guiado |
 | `RADAR_IMPORT_ONLY_HOSTS=www.juntadeandalucia.es` | Fontes do DUA só por importação (ver seção 4) |
 | `CRON_SECRET` | 16+ caracteres. Liga a coleta agendada do Radar (`/api/cron/radar`); o Vercel Cron envia o segredo sozinho |

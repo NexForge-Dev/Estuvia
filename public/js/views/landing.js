@@ -530,7 +530,8 @@ function footer(appName, logged) {
           h('a', { href: '#/entrar' }, 'Entrar'),
           h('a', { href: '#/cadastro' }, 'Criar conta')],
         h('a', { href: '#/privacidade' }, 'Privacidade'),
-        h('a', { href: '#/termos' }, 'Termos de uso'))),
+        h('a', { href: '#/termos' }, 'Termos de uso'),
+        state.app?.suporte ? h('a', { href: `mailto:${state.app.suporte}` }, 'Falar com a equipe') : null)),
     h('p', { class: 'lp-wrap lp-copy' }, `© ${new Date().getFullYear()} ${appName}`));
 }
 

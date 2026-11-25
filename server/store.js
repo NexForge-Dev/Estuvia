@@ -324,16 +324,29 @@ export const community = {
 
 // Cada tipo de registro tem a sua cota: a atividade de um estudante (ou tentativas de login) não apaga a
 // trilha administrativa nem a de acessos.
-export const AUDIT_CAPS = { admin: 5000, acesso: 5000, atividade: 3000 };
+// Registros de acesso (entrada, cadastro, senha) ficam ACCESS_DAYS dias e depois são descartados (Marco Civil,
+// art. 15: 6 meses); o teto de quantidade deles é só proteção da base. Tentativas que falharam têm cota própria,
+// para ninguém apagar os acessos de verdade errando senhas em massa.
+export const ACCESS_DAYS = 184; // 6 meses do calendário têm no máximo 184 dias
+export const AUDIT_CAPS = { admin: 5000, acesso: 20000, tentativa: 5000, atividade: 3000 };
 const AUDIT_SLACK = 100; // poda em blocos, para não refazer a tabela a cada registro
 const auditBucket = (action) => (/^(admin-|community-|radar\.|storage\.|account-)/.test(action) ? 'admin'
-  : /^(login|register|password)/.test(action) ? 'acesso' : 'atividade');
+  : /^login-/.test(action) ? 'tentativa'
+    : /^(login|register|password)/.test(action) ? 'acesso' : 'atividade');
+const DAY_MS = 24 * 3600 * 1000;
+const olderThan = (e, dias, now) => Date.parse(e.at) < now - dias * DAY_MS && ['acesso', 'tentativa'].includes(auditBucket(e.action));
 
 export const audit = {
   async log(event) {
     const entry = { id: newId(), at: new Date().toISOString(), ...event };
     await writeWithRetry(() => {
       if (!db.audit.some((e) => e.id === entry.id)) db.audit.push(entry);
+      // Limpeza por prazo, com um dia de folga: no máximo uma vez por dia.
+      const now = Date.now();
+      if (db.audit.some((e) => olderThan(e, ACCESS_DAYS + 1, now))) {
+        db.audit = db.audit.filter((e) => !olderThan(e, ACCESS_DAYS, now));
+        mark('audit_log');
+      }
       const tipo = auditBucket(entry.action);
       const doTipo = db.audit.filter((e) => auditBucket(e.action) === tipo);
       if (doTipo.length > AUDIT_CAPS[tipo]) { // poda: exclusões

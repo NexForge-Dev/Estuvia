@@ -41,6 +41,9 @@ if (!jwtSecret || jwtSecret.length < 32) {
   if (!process.env.DATA_FILE) console.warn('[config] JWT_SECRET não definido, usando segredo local de desenvolvimento (data/.dev-secret).');
 }
 
+const supportEmail = (process.env.SUPPORT_EMAIL || '').trim();
+const inviteList = (process.env.INVITE_CODES || '').split(',').map((c) => c.trim().toLowerCase()).filter(Boolean);
+
 export const config = {
   appName: process.env.APP_NAME || 'Estuvia',
   port: Number(process.env.PORT) || 3000,
@@ -78,7 +81,20 @@ export const config = {
   // A IA só é ativada quando há credencial; sem ela o assistente usa a base local (modo offline).
   aiEnabled: Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN),
   allowedOrigin: process.env.ALLOWED_ORIGIN || null,
+  // Contato de suporte mostrado aos estudantes (rodapé, login e mensagens "fale com a equipe").
+  supportEmail: /^[^\s@<>"']+@[^\s@<>"']+\.[^\s@<>"']{2,}$/.test(supportEmail) ? supportEmail : null,
+  // Beta fechado: com INVITE_CODES definida, só se cadastra quem tem um dos códigos (separados por vírgula).
+  // Definida sem nenhum código válido (8+ caracteres), o cadastro fica FECHADO: um erro de digitação não abre a porta.
+  inviteOnly: inviteList.length > 0,
+  inviteCodes: inviteList.filter((c) => /^[a-z0-9-]{8,64}$/.test(c)),
 };
+
+/** Frase com o contato do suporte, para as mensagens que mandam falar com a equipe. */
+export const supportHint = () => (config.supportEmail ? `Fale com a equipe: ${config.supportEmail}` : 'Fale com a equipe Estuvia.');
+
+if (config.inviteCodes.length < inviteList.length) {
+  console.warn(`[config] INVITE_CODES: ${inviteList.length - config.inviteCodes.length} código(s) ignorado(s) (use 8 a 64 letras, números ou hífen).${config.inviteCodes.length ? '' : ' Nenhum código válido: cadastro fechado.'}`);
+}
 
 if (isProd && (process.env.MODERATOR_EMAILS || process.env.RADAR_ADMIN_EMAILS)) {
   console.warn('[config] MODERATOR_EMAILS/RADAR_ADMIN_EMAILS são ignorados em produção: conceda papéis em #/admin (Usuários → Papel).');

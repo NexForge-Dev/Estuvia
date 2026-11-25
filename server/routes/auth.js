@@ -4,9 +4,10 @@ import { z } from 'zod';
 import { users, audit, newId } from '../store.js';
 import { hashPassword, verifyPassword, needsRehash, issueSession, clearSession, requireAuth, authLimiter, authUserLimiter, dummyHash, clientInfo } from '../security.js';
 import { publicUser } from './me.js';
-import { config } from '../config.js';
+import { config, supportHint } from '../config.js';
 import { LEGAL_VERSION, MIN_AGE } from '../content/legal.js';
 import { sendEmail, emailEnabled } from '../email.js';
+import { RESET_TTL_MS, hashToken, newResetToken, resetLink } from '../password-reset.js';
 
 const router = Router();
 
@@ -23,7 +24,17 @@ const registerSchema = z.object({
   senha: password,
   aceite: z.literal(true, { error: 'É preciso aceitar os termos e a política de privacidade.' }),
   maiorIdade: z.literal(true, { error: `A Estuvia é só para maiores de ${MIN_AGE} anos.` }),
+  convite: z.string().trim().max(64).optional(),
 });
+
+// Beta fechado (INVITE_CODES). Comparação em tempo constante, por hash: não revela quantas letras acertaram.
+const sha = (s) => crypto.createHash('sha256').update(s).digest();
+function validInvite(code) {
+  const got = sha(String(code || '').trim().toLowerCase());
+  let ok = false;
+  for (const c of config.inviteCodes) if (crypto.timingSafeEqual(got, sha(c))) ok = true;
+  return ok;
+}
 
 const loginSchema = z.object({
   email: z.email('E-mail inválido.').max(120),
@@ -82,6 +93,11 @@ router.post('/register', authLimiter, async (req, res) => {
   const parsed = registerSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: firstError(parsed) });
   const { nome, email, senha } = parsed.data;
+
+  // Antes de procurar o e-mail: sem convite, a resposta não revela quem já tem conta.
+  if (config.inviteOnly && !validInvite(parsed.data.convite)) {
+    return res.status(403).json({ error: 'Código de convite inválido. A Estuvia está em teste fechado: confira o código que você recebeu.' });
+  }
 
   // O e-mail do admin é reservado: a conta é criada só pelo servidor (ADMIN_EMAIL no .env).
   if (users.findByEmail(email) || (config.adminEmail && email.toLowerCase() === config.adminEmail)) {
@@ -159,7 +175,7 @@ router.post('/login', authLimiter, async (req, res) => {
   }
   if (user.blocked) {
     await audit.log({ action: 'login-blocked', userId: user.id, ...clientInfo(req) });
-    return res.status(403).json({ error: 'Sua conta está suspensa. Fale com a equipe Estuvia.' });
+    return res.status(403).json({ error: `Sua conta está suspensa. ${supportHint()}` });
   }
   await audit.log({ action: 'login', userId: user.id, ...clientInfo(req), ...(until ? { durante: 'bloqueio', dispositivo: 'conhecido' } : {}) });
   issueSession(res, user);
@@ -195,9 +211,7 @@ router.post('/change-password', requireAuth, authUserLimiter, async (req, res) =
 // ---------- Recuperação de senha por e-mail ----------
 // Resposta sempre igual (não revela se o e-mail tem conta). O token vale 1 hora, só é guardado como hash
 // e é de uso único; redefinir a senha encerra todas as sessões abertas.
-const RESET_TTL_MS = 60 * 60 * 1000;
 const RESET_COOLDOWN_MS = 60 * 1000;
-const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
 const RESET_SENT = 'Se houver uma conta com este e-mail, enviamos um link para criar uma nova senha. Confira também o spam.';
 
 router.post('/forgot-password', authLimiter, async (req, res) => {
@@ -207,16 +221,16 @@ router.post('/forgot-password', authLimiter, async (req, res) => {
   const origin = config.allowedOrigin || (config.isProd ? null : `${req.protocol}://${req.get('host')}`);
   // Sem provedor de e-mail em produção o envio sempre falharia: responde 503 para TODOS os e-mails, antes de
   // procurar a conta. (Antes, só e-mails com conta recebiam 503, o que revelava quem está cadastrado.)
-  if (!origin || (config.isProd && !emailEnabled())) return res.status(503).json({ error: 'Recuperação de senha indisponível no momento. Fale com a equipe.' });
+  if (!origin || (config.isProd && !emailEnabled())) return res.status(503).json({ error: `Recuperação de senha indisponível no momento. ${supportHint()}` });
   const user = users.findByEmail(parsed.data.email);
   // A senha do administrador vem do .env (admin-seed.js): não é redefinida por e-mail.
   if (!user || user.blocked || user.role === 'admin') return res.json({ ok: true, message: RESET_SENT });
   // No máximo um e-mail por minuto por conta (o limite por IP não impede encher a caixa de alguém trocando de IP).
   // O link anterior continua valendo; a resposta é a mesma.
-  if (user.passwordReset && user.passwordReset.expiresAt - RESET_TTL_MS > Date.now() - RESET_COOLDOWN_MS) return res.json({ ok: true, message: RESET_SENT });
-  const token = crypto.randomBytes(32).toString('base64url');
-  await users.update(user.id, (u) => { u.passwordReset = { hash: hashToken(token), expiresAt: Date.now() + RESET_TTL_MS }; });
-  const link = `${origin}/#/redefinir-senha/${token}`;
+  if (user.passwordReset && !user.passwordReset.admin && user.passwordReset.expiresAt - RESET_TTL_MS > Date.now() - RESET_COOLDOWN_MS) return res.json({ ok: true, message: RESET_SENT });
+  const token = newResetToken();
+  await users.update(user.id, (u) => { u.passwordReset = token.registro; });
+  const link = resetLink(origin, token.valor);
   const sent = await sendEmail({
     to: user.email,
     subject: `${config.appName}: crie uma nova senha`,

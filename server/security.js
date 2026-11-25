@@ -3,7 +3,7 @@ import { promisify } from 'node:util';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
-import { config } from './config.js';
+import { config, supportHint } from './config.js';
 import { users } from './store.js';
 
 /** @type {(senha: string | Buffer, sal: Buffer, tamanho: number, opcoes?: crypto.ScryptOptions) => Promise<Buffer>} */
@@ -92,7 +92,7 @@ export function requireAuth(req, res, next) {
     if (!user || user.tokenVersion !== payload.v) throw new Error('sessão inválida');
     if (user.blocked) {
       clearSession(res);
-      return res.status(403).json({ error: 'Sua conta está suspensa. Fale com a equipe Estuvia.' });
+      return res.status(403).json({ error: `Sua conta está suspensa. ${supportHint()}` });
     }
     req.user = user;
     trackActivity(req, user);

@@ -20,7 +20,7 @@ const router = Router();
 const overview = ROUNDS.map(({ numero, sigla, titulo, etapa, banner, icone, resumo, transversal }) => ({ numero, sigla: sigla || null, titulo, etapa, banner, icone, resumo, transversal: Boolean(transversal), missoes: [] }));
 
 // ---------- Público: painel explicativo, login e cadastro ----------
-router.get('/app', (req, res) => res.json({ nome: config.appName, ia: config.aiEnabled ? 'claude' : 'offline' }));
+router.get('/app', (req, res) => res.json({ nome: config.appName, ia: config.aiEnabled ? 'claude' : 'offline', convite: config.inviteOnly, suporte: config.supportEmail }));
 router.get('/journey', (req, res) => res.json({ template: JOURNEY_TEMPLATE, rounds: overview, milestones: MILESTONES, tags: TAGS, situacao: SITUACAO }));
 
 // Dados da landing (quiz e Mentor de exemplo): os mesmos da plataforma, com fonte e status.

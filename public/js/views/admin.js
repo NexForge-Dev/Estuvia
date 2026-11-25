@@ -28,7 +28,7 @@ const EVENT = {
   register: ['Cadastro', 'ok'], login: ['Entrou', 'ok'], 'login-failed': ['Login falhou', 'bad'], 'login-blocked': ['Login de conta suspensa', 'bad'],
   'password-changed': ['Trocou a senha', 'info'], 'account-deleted': ['Excluiu a conta', 'bad'], 'admin-created': ['Conta admin criada', 'info'],
   'admin-password-synced': ['Senha admin atualizada pelo .env', 'info'], 'admin-block': ['Admin suspendeu conta', 'bad'], 'admin-unblock': ['Admin reativou conta', 'info'], 'admin-role': ['Admin alterou papel', 'info'],
-  'admin-logout-user': ['Admin encerrou sessões', 'info'], 'admin-ai-check': ['Admin testou a IA', 'info'], 'admin-status-check': ['Admin verificou o status', 'info'], 'community-moderation': ['Moderação da comunidade', 'info'],
+  'admin-logout-user': ['Admin encerrou sessões', 'info'], 'admin-reset-link': ['Admin gerou link de nova senha', 'info'], 'admin-ai-check': ['Admin testou a IA', 'info'], 'admin-status-check': ['Admin verificou o status', 'info'], 'community-moderation': ['Moderação da comunidade', 'info'],
   'community-verification': ['Verificação na comunidade', 'info'], 'community-opportunity-change': ['Oportunidade alterada', 'info'],
   'journey.round-unlocked': ['Rodada desbloqueada', 'ok'], 'requirements.updated': ['Atualizou requisitos', 'info'],
 };
@@ -489,6 +489,32 @@ export async function adminStudentView(id) {
       act(() => api.post(`/admin/users/${u.id}/notes`, { texto: noteInput.value.trim() }), 'Anotação salva.');
     });
 
+    // Link de nova senha: pede a senha do admin e mostra o link uma única vez.
+    const resetBox = h('section', { class: 'card stack', hidden: true });
+    const openReset = () => {
+      const pw = h('input', { type: 'password', class: 'auth-input', autocomplete: 'current-password', required: true, 'aria-label': 'Sua senha de administrador' });
+      const form = h('form', { class: 'stack' },
+        h('p', {}, h('strong', {}, 'Link de nova senha'), ` para ${p.email}`),
+        h('p', { class: 'small muted' }, 'Quem tiver o link entra na conta. Confirme que o pedido veio da própria pessoa e envie só a ela, por um contato que você já conhece. Vale 1 hora e funciona uma vez.'),
+        h('label', { class: 'stack small' }, 'Sua senha de administrador', pw),
+        h('button', { class: 'btn btn-sm', type: 'submit' }, 'Gerar link'));
+      form.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        try {
+          const g = await api.post(`/admin/users/${u.id}/reset-link`, { senha: pw.value });
+          const field = h('input', { class: 'auth-input', readonly: true, value: g.link, 'aria-label': 'Link de nova senha' });
+          mount(resetBox,
+            h('p', {}, h('strong', {}, 'Link pronto'), ` (vale ${g.validoMin} min). Copie agora: ele não aparece de novo.`), field,
+            h('button', { class: 'btn btn-sm', type: 'button', onClick: async () => {
+              try { await navigator.clipboard.writeText(g.link); toast('Link copiado.', 'ok'); } catch { field.select(); toast('Selecione e copie o link.', 'err'); }
+            } }, 'Copiar link'));
+        } catch (ex) { toast(ex.message, 'err'); }
+      });
+      mount(resetBox, form);
+      resetBox.hidden = false;
+      pw.focus();
+    };
+
     mount(root,
       h('a', { href: '#/admin', class: 'adm-back small' }, icon('back', { size: 14 }), 'Voltar ao painel'),
 
@@ -502,6 +528,7 @@ export async function adminStudentView(id) {
             u.admin ? null : h('label', { class: 'small row' }, 'Papel ',
               h('select', { 'aria-label': 'Papel da conta', onChange: (ev) => act(() => api.post(`/admin/users/${u.id}/role`, { papel: ev.target.value }), 'Papel atualizado.') },
                 [['estudante', 'Estudante'], ['moderador', 'Moderação da comunidade'], ['radar', 'Equipe do Radar']].map(([v, l]) => h('option', { value: v, selected: (u.papel || 'estudante') === v }, l)))),
+            u.admin || u.bloqueado ? null : h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onClick: openReset }, icon('lock', { size: 14 }), 'Gerar link de nova senha'),
             h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onClick: () => act(() => api.post(`/admin/users/${u.id}/logout`), 'Sessões encerradas.') }, icon('lock', { size: 14 }), 'Encerrar sessões'),
             h('button', { class: `btn btn-sm ${u.bloqueado ? '' : 'adm-btn-danger'}`, type: 'button', onClick: () => act(() => api.post(`/admin/users/${u.id}/block`, { bloqueado: !u.bloqueado }), u.bloqueado ? 'Conta reativada.' : 'Conta suspensa.') },
               icon(u.bloqueado ? 'unlock' : 'shield', { size: 14 }), u.bloqueado ? 'Reativar conta' : 'Suspender conta'))),
@@ -512,6 +539,8 @@ export async function adminStudentView(id) {
           stat(rel.jornadas.length ? `${Math.max(...rel.jornadas.map((j) => j.progresso || 0))}%` : '-', 'Progresso da jornada'),
         ),
         h('p', { class: 'rd-footnote' }, `Cadastro em ${fmtDate(e.cadastro)} (${daysLabel(e.diasDesdeCadastro) === 'hoje' ? 'hoje' : `há ${daysLabel(e.diasDesdeCadastro)}`}) · ${e.logins ? `${e.logins} login(s), último ${relTime(e.ultimoLogin)}` : 'nenhum novo login desde o cadastro'} · Mentor: ${e.mentor?.mensagens || 0} mensagem(ns) · Assistente: ${e.assistente?.mensagens || 0}`)),
+
+      resetBox,
 
       panel(`Pontos de atenção (${rel.alertas.length})`, 'alert',
         rel.alertas.length ? h('ul', { class: 'adm-alerts' }, rel.alertas.map((a) => h('li', { class: `adm-alerts-${a.nivel}` }, tag(a.nivel === 'alto' ? 'Urgente' : a.nivel === 'medio' ? 'Atenção' : 'Info', TONE.alerta[a.nivel]), h('span', {}, a.texto))))

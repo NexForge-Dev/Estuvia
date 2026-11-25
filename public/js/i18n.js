@@ -14,6 +14,12 @@ export const LANGUAGES = [
 ];
 
 const TRANSLATIONS = {
+  // Beta fechado e suporte (2026-11-25)
+  'Código de convite': ['Código de invitación', 'Invite code'],
+  'A Estuvia está em teste fechado. Use o código que você recebeu.': ['Estuvia está en pruebas cerradas. Usa el código que recibiste.', 'Estuvia is in a closed test. Use the code you received.'],
+  'Informe o código de convite.': ['Indica el código de invitación.', 'Enter your invite code.'],
+  'Código de convite inválido. A Estuvia está em teste fechado: confira o código que você recebeu.': ['Código de invitación no válido. Estuvia está en pruebas cerradas: revisa el código que recibiste.', 'Invalid invite code. Estuvia is in a closed test: check the code you received.'],
+  'Falar com a equipe': ['Contactar con el equipo', 'Contact the team'],
   // Telas simplificadas (2026-11-20)
   'Seu próximo passo': ['Tu próximo paso', 'Your next step'],
   'Sua rodada agora': ['Tu ronda ahora', 'Your current round'],

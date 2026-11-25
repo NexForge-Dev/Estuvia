@@ -100,6 +100,9 @@ const checkPassword = (f, { strong = false } = {}) => {
   return true;
 };
 
+// Contato da equipe (SUPPORT_EMAIL no servidor); sem ele, nada aparece.
+const support = () => (state.app?.suporte ? h('p', { class: 'auth-foot' }, h('span', {}, 'Precisa de ajuda?'), ' ', h('a', { href: `mailto:${state.app.suporte}` }, state.app.suporte)) : null);
+
 // ---------- Telas ----------
 
 export function loginView() {
@@ -131,12 +134,14 @@ export function loginView() {
     title: 'Bem-vindo de volta',
     subtitle: 'Sua jornada continua exatamente de onde você parou.',
     body: form,
-    foot: h('p', { class: 'auth-foot' }, 'Ainda não tem conta? ', h('a', { href: '#/cadastro' }, 'Crie a sua grátis')),
+    foot: h('div', {}, h('p', { class: 'auth-foot' }, 'Ainda não tem conta? ', h('a', { href: '#/cadastro' }, 'Crie a sua grátis')), support()),
   });
 }
 
-export function registerView() {
+// Beta fechado: o campo do convite só aparece quando o servidor exige. O link #/cadastro/<código> já o preenche.
+export function registerView(codigo) {
   const err = errorBox();
+  const convite = state.app?.convite ? input('Código de convite', { name: 'convite', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', required: true, maxlength: 64, value: codigo || '' }, 'A Estuvia está em teste fechado. Use o código que você recebeu.') : null;
   const nome = input('Como quer ser chamado(a)?', { name: 'nome', autocomplete: 'given-name', required: true, maxlength: 60 });
   const email = input('E-mail', { name: 'email', type: 'email', autocomplete: 'email', required: true, inputmode: 'email' });
   const senha = input('Senha', { name: 'senha', type: 'password', autocomplete: 'new-password', required: true, minlength: 8 }, 'Mínimo de 8 caracteres, com letras e números.');
@@ -148,7 +153,7 @@ export function registerView() {
   maior.addEventListener('change', () => { maiorErr.hidden = true; });
   const btn = submitButton('Criar conta e começar');
   const form = h('form', { class: 'auth-form', novalidate: true },
-    nome, email, senha,
+    convite, nome, email, senha,
     h('div', { class: 'auth-consent' },
       h('label', { class: 'check', for: 'auth-aceite' }, aceite,
         h('span', {}, 'Li e aceito os ', h('a', { href: '#/termos', target: '_blank', rel: 'noopener' }, 'Termos de Uso'), ' e a ', h('a', { href: '#/privacidade', target: '_blank', rel: 'noopener' }, 'Política de Privacidade'), '. A Estuvia orienta, mas não substitui os sistemas oficiais.')),
@@ -160,26 +165,26 @@ export function registerView() {
     e.preventDefault();
     err.hidden = true;
     const n = nome.input.value.trim();
-    const ok = [n.length >= 2 || (nome.setError('Informe como quer ser chamado(a), com pelo menos 2 letras.'), false), checkEmail(email), checkPassword(senha, { strong: true })];
+    const ok = [!convite || convite.input.value.trim().length > 0 || (convite.setError('Informe o código de convite.'), false), n.length >= 2 || (nome.setError('Informe como quer ser chamado(a), com pelo menos 2 letras.'), false), checkEmail(email), checkPassword(senha, { strong: true })];
     if (!aceite.checked) { aceiteErr.hidden = false; ok.push(false); }
     if (!maior.checked) { maiorErr.hidden = false; ok.push(false); }
     if (ok.includes(false)) return (form.querySelector('[aria-invalid="true"]') || (aceite.checked ? maior : aceite)).focus();
     await busy(btn, async () => {
       try {
-        await api.post('/auth/register', { nome: n, email: email.input.value.trim(), senha: senha.input.value, aceite: true, maiorIdade: true });
+        await api.post('/auth/register', { nome: n, email: email.input.value.trim(), senha: senha.input.value, aceite: true, maiorIdade: true, ...(convite ? { convite: convite.input.value.trim() } : {}) });
         await refreshMe();
         toast('Conta criada. Agora vamos montar a sua jornada.', 'ok');
         go('/jornadas/nova');
       } catch (ex) { showError(err, ex.message); }
     });
   });
-  queueMicrotask(() => nome.input.focus());
+  queueMicrotask(() => (convite && !codigo ? convite : nome).input.focus());
   return shell({
     tabs: tabs('register'),
     title: 'Comece sua jornada',
     subtitle: 'Grátis. Leva 1 minuto e você não precisa enviar nenhum documento.',
     body: form,
-    foot: h('p', { class: 'auth-foot' }, 'Já tem conta? ', h('a', { href: '#/entrar' }, 'Entrar')),
+    foot: h('div', {}, h('p', { class: 'auth-foot' }, 'Já tem conta? ', h('a', { href: '#/entrar' }, 'Entrar')), support()),
   });
 }
 
@@ -208,7 +213,7 @@ export function forgotPasswordView() {
     title: 'Esqueci minha senha',
     subtitle: 'Informe o e-mail da sua conta. Enviaremos um link para você criar uma nova senha.',
     body: h('div', {}, form, done),
-    foot: h('p', { class: 'auth-foot' }, h('a', { href: '#/entrar' }, '← Voltar para o login')),
+    foot: h('div', {}, h('p', { class: 'auth-foot' }, h('a', { href: '#/entrar' }, '← Voltar para o login')), support()),
   });
 }
 

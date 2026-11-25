@@ -104,7 +104,7 @@ const routes = [
   { path: /^\/$/, view: () => (state.me ? homeView() : landingView()) },
   { path: /^\/sobre$/, view: landingView },
   { path: /^\/entrar$/, view: loginView, guestOnly: true },
-  { path: /^\/cadastro$/, view: registerView, guestOnly: true },
+  { path: /^\/cadastro(?:\/([\w-]{8,64}))?$/, view: registerView, guestOnly: true },
   { path: /^\/esqueci-senha$/, view: forgotPasswordView, guestOnly: true },
   { path: /^\/redefinir-senha\/([\w-]{20,100})$/, view: resetPasswordView },
   { path: /^\/privacidade$/, view: privacyView },
@@ -165,7 +165,7 @@ document.addEventListener('visibilitychange', () => {
 });
 
 export const go = (path) => { location.hash = `#${path}`; };
-export const isFocusPath = (path) => /^\/(entrar|cadastro|esqueci-senha|redefinir-senha\/[\w-]+|jornadas\/nova)$/.test(path);
+export const isFocusPath = (path) => /^\/(entrar|cadastro(?:\/[\w-]{8,64})?|esqueci-senha|redefinir-senha\/[\w-]+|jornadas\/nova)$/.test(path);
 export const currentPath = () => location.hash.replace(/^#/, '').split('#')[0] || '/';
 export const currentAnchor = () => location.hash.split('#')[2] || null;
 
@@ -202,6 +202,11 @@ async function render() {
   document.body.classList.toggle('focus-mode', isFocusPath(path));
   renderNav();
   document.getElementById('footer-fontes')?.toggleAttribute('hidden', !state.me); // a central exige login
+  const contato = document.getElementById('footer-suporte');
+  if (contato && state.app?.suporte && !contato.firstChild) {
+    contato.append(h('span', {}, 'Precisa de ajuda?'), ' ', h('a', { href: `mailto:${state.app.suporte}` }, state.app.suporte));
+    contato.hidden = false;
+  }
   if (!isAdminMode()) mountMentorLauncher();
   else document.getElementById('assistant-root')?.replaceChildren();
   // Avisos ao vivo (Radar, preços de passagem) enquanto o estudante estiver logado.

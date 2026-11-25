@@ -4,7 +4,10 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { isoDate } from './validators.js';
 import { users, audit, newId } from '../store.js';
-import { requireAuth, requireAdmin, isAdmin, ROLES } from '../security.js';
+import { requireAuth, requireAdmin, isAdmin, ROLES, authUserLimiter, verifyPassword, clientInfo } from '../security.js';
+import { config } from '../config.js';
+import { emailEnabled, sendEmail } from '../email.js';
+import { RESET_TTL_MS, newResetToken, resetLink } from '../password-reset.js';
 import { usageReport, userUsage, moduleLabel } from '../usage.js';
 import { studentRow, studentReport, enrollmentOverview } from '../admin-student.js';
 import { aiStatus, checkAI } from '../ai-health.js';
@@ -236,6 +239,30 @@ router.post('/users/:id/logout', async (req, res) => {
   res.json({ user: summary(user) });
 });
 
+
+// Link para o aluno criar uma nova senha (quem esqueceu e não recebe e-mail). O admin entrega o link à pessoa.
+// Como o link dá acesso à conta, exige a senha do admin de novo e fica registrado. A senha atual só muda
+// quando o link é usado, e o aluno é avisado por e-mail se houver envio configurado.
+router.post('/users/:id/reset-link', authUserLimiter, async (req, res) => {
+  const parsed = z.object({ senha: z.string().min(1).max(128) }).strict().safeParse(req.body);
+  if (!parsed.success || !(await verifyPassword(parsed.data.senha, req.user.passwordHash))) {
+    return res.status(403).json({ error: 'Sua senha de administrador está incorreta.' });
+  }
+  const target = users.findById(req.params.id);
+  if (!target) return res.status(404).json({ error: 'Usuário não encontrado.' });
+  if (isAdmin(target)) return res.status(400).json({ error: 'A senha do administrador é trocada nas variáveis do servidor.' });
+  if (target.blocked) return res.status(400).json({ error: 'A conta está suspensa: reative antes de gerar o link.' });
+  const origin = config.allowedOrigin || (config.isProd ? null : `${req.protocol}://${req.get('host')}`);
+  if (!origin) return res.status(503).json({ error: 'Defina ALLOWED_ORIGIN no servidor para gerar o link.' });
+  const token = newResetToken({ admin: true });
+  const user = await users.update(target.id, (u) => { u.passwordReset = token.registro; });
+  if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' }); // excluído durante a requisição
+  await audit.log({ action: 'admin-reset-link', userId: req.user.id, targetId: user.id, ...clientInfo(req) });
+  if (emailEnabled()) {
+    await sendEmail({ to: user.email, subject: `${config.appName}: link de nova senha`, text: 'A equipe gerou um link para você criar uma nova senha, a seu pedido. Se não foi você quem pediu, avise a equipe: sua senha continua a mesma enquanto o link não for usado.' });
+  }
+  res.json({ link: resetLink(origin, token.valor), validoMin: RESET_TTL_MS / 60000 });
+});
 
 // ---------- Carteira de documentos: revisão editorial das exigências (sem mexer nas telas) ----------
 router.get('/document-rules', (req, res) => {
